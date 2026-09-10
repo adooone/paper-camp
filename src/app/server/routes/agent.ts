@@ -286,7 +286,12 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       async ({ planId, phaseIndex }) => {
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
-        return agent.start(resolved.plan, phaseIndex);
+        return agent.start(
+          resolved.plan,
+          phaseIndex,
+          () => status.runChecksAndWait(),
+          () => status.getCachedOrRunChecks(),
+        );
       },
     ),
 

@@ -74,6 +74,54 @@ describe('commitPhase', () => {
   }, 65_000);
 });
 
+describe('commitVerifyFix', () => {
+  it('commits files changed since the run start as a style commit when no fix attempt ran', async () => {
+    const root = await makeGitRoot();
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const startSnapshot = await hooks.snapshotWorkingTree();
+
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), `${PLAN_MD}\nReformatted.\n`);
+
+    const plan = { id: 'IDEA-1', title: 'Test plan', kind: 'feat', tags: [] } as never;
+    await hooks.commitVerifyFix(plan, [], startSnapshot);
+
+    const { stdout } = await run('git', ['log', '-1', '--pretty=%s'], { cwd: root });
+    expect(stdout.trim()).toBe('style(plans): format');
+
+    const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
+    expect(status.trim()).toBe('');
+  });
+
+  it('commits as a fix commit naming the checks that were red', async () => {
+    const root = await makeGitRoot();
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const startSnapshot = await hooks.snapshotWorkingTree();
+
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), `${PLAN_MD}\nFixed.\n`);
+
+    const plan = { id: 'IDEA-1', title: 'Test plan', kind: 'feat', tags: [] } as never;
+    await hooks.commitVerifyFix(plan, ['lint', 'test'], startSnapshot);
+
+    const { stdout } = await run('git', ['log', '-1', '--pretty=%s'], { cwd: root });
+    expect(stdout.trim()).toBe('fix(plans): lint, test');
+  });
+
+  it('commits nothing when nothing changed since the run start', async () => {
+    const root = await makeGitRoot();
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const startSnapshot = await hooks.snapshotWorkingTree();
+
+    const plan = { id: 'IDEA-1', title: 'Test plan', kind: 'feat', tags: [] } as never;
+    await hooks.commitVerifyFix(plan, [], startSnapshot);
+
+    const { stdout } = await run('git', ['log', '-1', '--pretty=%s'], { cwd: root });
+    expect(stdout.trim()).toBe('init');
+  });
+});
+
 describe('annotateFixRun', () => {
   it('persists the run stamp to the corpus without committing it', async () => {
     const root = await makeGitRoot();

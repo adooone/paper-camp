@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
-import type { PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
+import type { FailingCheck, PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildAgentPrompt,
@@ -275,6 +275,26 @@ describe('buildFixPassPrompt', () => {
     expect(prompt).toContain('git checkout');
     expect(prompt).toContain('git diff');
   });
+
+  it('names the commands that reproduce a consistency or docs failure (IDEA-255)', () => {
+    const prompt = buildFixPassPrompt(plan, 'run', 'all phases', [
+      { name: 'consistency', output: '' },
+      { name: 'docs', output: '' },
+    ]);
+    expect(prompt).toContain('pnpm run consistency');
+    expect(prompt).toContain('paper-camp doctor');
+  });
+
+  it("passes each failing check's captured output into the prompt under its name (IDEA-255)", () => {
+    const prompt = buildFixPassPrompt(plan, 'run', 'all phases', [
+      { name: 'consistency', output: 'knip: unused export `foo` in bar.ts' },
+      { name: 'docs', output: 'Subject "widgets" is not in the roadmap vocabulary' },
+      { name: 'lint', output: '' },
+    ]);
+    expect(prompt).toContain('consistency:\nknip: unused export `foo` in bar.ts');
+    expect(prompt).toContain('docs:\nSubject "widgets" is not in the roadmap vocabulary');
+    expect(prompt).not.toContain('lint:\n');
+  });
 });
 
 describe('buildFixItemPrompt', () => {
@@ -424,7 +444,7 @@ describe('startRunAllPhases', () => {
       checks++;
       // Baseline (call 1) is clean; the single verify after the last phase
       // (call 2) is red once, triggering one fix pass, then green on retry.
-      return checks === 2 ? ['test'] : [];
+      return checks === 2 ? [{ name: 'test', output: '' }] : [];
     });
     expect(await waitForStatus(manager, settled)).toBe('done');
     // call 1: phase 1, cold. call 2: phase 2, resumes phase 1's session.
@@ -477,7 +497,7 @@ describe('startRunAllPhases', () => {
       calls++;
       // Baseline (call 1) is clean; the single verify after the last phase (call 2)
       // and every re-check after that is red, so the fix loop exhausts its cap.
-      return calls === 1 ? [] : ['test'];
+      return calls === 1 ? [] : [{ name: 'test', output: '' }];
     });
     expect(await waitForStatus(manager, settled)).toBe('error');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
@@ -504,7 +524,7 @@ describe('startRunAllPhases', () => {
       calls++;
       // Baseline (call 1) is clean. Red on phase 1's first gate (call 2), green
       // on the retry after the fix pass; green thereafter.
-      return calls === 2 ? ['test'] : [];
+      return calls === 2 ? [{ name: 'test', output: '' }] : [];
     });
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
@@ -580,7 +600,7 @@ process.exit(1)
       calls++;
       // Baseline (call 1) is clean; the single verify after the last phase is red,
       // so the fix pass runs and immediately declares a blocker instead of retrying.
-      return calls === 1 ? [] : ['test'];
+      return calls === 1 ? [] : [{ name: 'test', output: '' }];
     });
     expect(await waitForStatus(manager, settled)).toBe('error');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
@@ -607,7 +627,7 @@ process.exit(1)
 
     // 'test' is red from the baseline call onward, every call — a pre-existing
     // failure this run never introduced, so it must never trigger a fix pass.
-    manager.startRunAllPhases(plan, async () => ['test']);
+    manager.startRunAllPhases(plan, async () => [{ name: 'test', output: '' }]);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain('tolerating pre-existing red check(s): test');
@@ -1064,6 +1084,77 @@ describe('start (single phase)', () => {
     expect(manager.start(plan, 0)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
+  });
+
+  it('verifies after the phase, same sweep run-all uses (IDEA-255)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const manager = createAgentManager(root);
+    const runProjectChecks = vi.fn(async () => []);
+
+    expect(manager.start(plan, 0, runProjectChecks)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('[verify] running lint/format/test/consistency/docs');
+    // Baseline call before the phase, then one verify call after it finishes.
+    expect(runProjectChecks).toHaveBeenCalledTimes(2);
+  });
+
+  it('runs a fix pass when the verify sweep finds red, and commits the fix (IDEA-255)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.buildArgs = (prompt) =>
+      prompt.includes('Only make the failing checks pass')
+        ? ['-e', 'process.exit(0)']
+        : ['-e', FLIP_NEXT_CHECKBOX];
+    const onVerifyFixCommit = vi.fn(async () => {});
+    const manager = createAgentManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      onVerifyFixCommit,
+    );
+
+    let calls = 0;
+    const runProjectChecks = vi.fn(async () => {
+      calls++;
+      // Baseline (call 1) is clean; the post-phase verify (call 2) is red, then
+      // green on the retry after the fix pass.
+      return calls === 2 ? ([{ name: 'test', output: '' }] as FailingCheck[]) : [];
+    });
+
+    expect(manager.start(plan, 0, runProjectChecks)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('[fix] phase — fix attempt 1/2');
+    expect(lines).toContain('[commit] fix — test');
+    expect(onVerifyFixCommit).toHaveBeenCalledOnce();
+  });
+
+  it('escalates when checks stay red after the fix-attempt cap (IDEA-255)', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.buildArgs = (prompt) =>
+      prompt.includes('Only make the failing checks pass')
+        ? ['-e', 'process.exit(0)']
+        : ['-e', FLIP_NEXT_CHECKBOX];
+    const manager = createAgentManager(root);
+
+    let calls = 0;
+    const runProjectChecks = vi.fn(async () => {
+      calls++;
+      return calls === 1 ? [] : ([{ name: 'test', output: '' }] as FailingCheck[]);
+    });
+
+    expect(manager.start(plan, 0, runProjectChecks)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain(
+      '[blocked] phase — project checks still failing after 2 fix attempt(s)',
+    );
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('project checks (test) are still failing after 2 fix attempt(s)');
   });
 
   it('surfaces a rate-limit snapshot on the running task before the run finishes (IDEA-225)', async () => {

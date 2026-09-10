@@ -4,6 +4,7 @@ title: Verify once, after the last phase
 type: feat
 status: review
 created: 2026-09-10
+updated: 2026-09-10
 tags:
   - server
   - agent
@@ -85,13 +86,18 @@ demand.
 - [x] Target 3–5 phases in the drafting prompts
       `BREVITY_CONTRACT` in `prompts.ts`, plus the plan-draft rule that steps editing the same files are one phase.
       run: 1m59s · 44 in · 5.5k out · sonnet-5
+- [x] [manual] Verify once after a single phase or fix run
 
 ### Fixes
-- [ ] Commit what the biome fixer changed in the final sweep
+- [x] Commit what the biome fixer changed in the final sweep
       `runChecksAndWait` runs `npx biome check . --write` before the checks, but `startRunAllPhases` only calls `onVerifyFixCommit` when a fix attempt ran, so formatting the fixer applied to already-committed phases is left uncommitted when the sweep passes first time. Commit any files changed since `startSnapshot` whenever the sweep ends green, as `style(<area>): format` when no fix attempt ran and as the `fix` commit otherwise.
-- [ ] Verify a single phase or fix run the same way
+      run: 2m39s · 76 in · 9.2k out · sonnet-5
+- [x] Verify a single phase or fix run the same way
       `start` and the single-fix launch commit the agent's work with no sweep, and the trimmed phase prompt no longer asks the agent for lint or tests, so a manual *Run* on one phase can land red code that nothing checks. Extract the end-of-run verify and fix block from `startRunAllPhases` into one function and run it after a single `phase` or `fix` task finishes, with the same baseline and cap.
-- [ ] Reuse on-demand check results as the baseline
+      run: 24m54s · 254 in · 98.7k out · sonnet-5
+- [x] Reuse on-demand check results as the baseline
       `getCachedOrRunChecks` only reuses a previous full sweep at the same HEAD, so the Stack's own lint, test, and consistency results never count and the run still pays the sweep up front. Record the HEAD each check result was produced on in `desk-checks.ts` and `status.ts`, take the baseline from those results when every check has one on the current HEAD, and run only the checks that are missing.
-- [ ] Tell the fix pass how to see consistency and docs failures
+      run: 9m20s · 94 in · 36.6k out · sonnet-5
+- [x] Tell the fix pass how to see consistency and docs failures
       `buildFixPassPrompt` names check-types, biome, and vitest only, so a run whose sweep introduced a `consistency` or `docs` failure sends the agent looking in the wrong place. Pass each failing check's captured output into the prompt under its name, and name `pnpm run consistency` and `paper-camp doctor` as the commands that reproduce them.
+      run: 12m2s · 150 in · 40.5k out · sonnet-5

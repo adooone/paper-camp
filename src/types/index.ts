@@ -721,6 +721,13 @@ export interface CheckResult {
 
 export type CheckName = 'lint' | 'format' | 'test' | 'consistency' | 'docs' | 'build';
 
+/** A failing check's captured output, so the fix pass can be told what actually
+ * broke instead of just its name (IDEA-255). */
+export interface FailingCheck {
+  name: CheckName;
+  output: string;
+}
+
 export type CapabilityStatus = 'ok' | 'warn' | 'missing';
 
 export interface CapabilityResult {

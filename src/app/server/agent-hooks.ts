@@ -87,15 +87,16 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commit(files, title, refs, { noVerify: true });
   }
 
-  // The one commit for the run's end-of-run verify+fix pass (IDEA-255) — separate
-  // from commitPhase because it isn't tied to a single phase/fix list entry.
+  // The one commit for the run's end-of-run verify+fix pass (IDEA-255) — runs even
+  // when no fix attempt was needed, since the sweep's biome fixer can still reformat.
   async function commitVerifyFix(
     plan: PlanEntry,
     checkNames: CheckName[],
     startSnapshot: GitStatusEntry[],
   ): Promise<void> {
     const area = resolveCommitScope(plan);
-    const title = `fix(${area}): ${checkNames.join(', ')}`;
+    const title =
+      checkNames.length > 0 ? `fix(${area}): ${checkNames.join(', ')}` : `style(${area}): format`;
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     const files = changedSince(startSnapshot, await git.getStatus());
     if (files.length === 0) return;

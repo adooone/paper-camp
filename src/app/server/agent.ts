@@ -26,6 +26,7 @@ import {
   type DefaultAgentsMap,
   type DeskConfig,
   type EntityEntry,
+  type FailingCheck,
   type FixReviewResult,
   type GitStatusEntry,
   type IdeaEntry,
@@ -257,22 +258,26 @@ export function buildFixPassPrompt(
   plan: PlanEntry,
   label: string,
   itemText: string,
-  introducedChecks: CheckName[],
+  introducedChecks: FailingCheck[],
 ): string {
   const subject = label.startsWith('fix') ? 'fix' : label === 'run' ? 'run' : 'phase';
   const scope =
     introducedChecks.length > 0
-      ? `The check(s) this ${subject} broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before it started are pre-existing or known-flaky and are not your concern.`
+      ? `The check(s) this ${subject} broke: ${introducedChecks.map((c) => c.name).join(', ')}. Only fix those — other checks that were already red before it started are pre-existing or known-flaky and are not your concern.`
       : "The project's lint/format/type-check/test checks are failing.";
+  const output = introducedChecks
+    .filter((c) => c.output.trim())
+    .map((c) => `${c.name}:\n${c.output.trim()}`)
+    .join('\n\n');
   return `${scope} This is after ${label}, "${itemText}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
 
-Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
+${output ? `${output}\n\n` : ''}Only make the failing checks pass — change nothing else: no new features, no refactors, no unrelated cleanup, no edits outside what the failures require, and do not touch the plan file.
 
 ${DESTRUCTIVE_GIT_BAN}
 
 ${FOREGROUND_COMMANDS_ONLY}
 
-Run \`pnpm run check-types\`, \`npx biome check . --write\`, and \`npx vitest run\` to see what's red, fix exactly that, then stop.
+Run \`pnpm run check-types\`, \`npx biome check . --write\`, \`npx vitest run\`, \`pnpm run consistency\`, and \`paper-camp doctor\` to see what's red, fix exactly that, then stop.
 
 If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
 }
@@ -939,18 +944,132 @@ export function createAgentManager(
     return entity ? entityToPlan(entity) : undefined;
   }
 
-  function start(plan: PlanEntry, phaseIndex: number): Result {
+  function start(
+    plan: PlanEntry,
+    phaseIndex: number,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ): Result {
     const blocked = admit('phase', plan.id);
     if (blocked) return blocked;
     const phase = plan.phases[phaseIndex];
     if (!phase) {
       return { ok: false, error: 'Phase not found' };
     }
-    const prompt = buildAgentPrompt(plan, phase, phaseIndex);
-    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
-      taskKind: 'phase',
-      phaseIndex,
-    });
+
+    const defaultAgents = readDefaultAgentIds(root);
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'phase' });
+
+    const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
+    const task = registerAndStart(
+      newTask({
+        taskKind: 'phase',
+        planTitle: plan.title,
+        planId: plan.id,
+        phaseIndex,
+        agentId,
+        adapter,
+        proc: stubProc,
+      }),
+    );
+
+    (async () => {
+      try {
+        const getBaseline = getBaselineChecks ?? runProjectChecks;
+        const toleratedRed = new Set<CheckName>(
+          getBaseline ? (await getBaseline()).map((c) => c.name) : [],
+        );
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
+        if (toleratedRed.size > 0) {
+          pushLine(
+            task,
+            `[verify] tolerating pre-existing red check(s): ${[...toleratedRed].join(', ')}`,
+          );
+        }
+
+        const prompt = buildAgentPrompt(plan, phase, phaseIndex, [...toleratedRed]);
+        const resultPromise = runPhaseProcess(task, adapter, prompt, model, effort, {
+          guardSuperseded: true,
+        });
+        // Captured in parallel with the internal readline reader (both see every
+        // chunk) — only used as a fallback below when no line gave a reason.
+        let stdout = '';
+        task.proc.stdout?.on('data', (d: Buffer) => {
+          stdout += d.toString();
+        });
+        const { ok: exitedOk, timedOut, stderr, sessionId } = await resultPromise;
+
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
+        if (isStopping(task)) {
+          void setStatus(task, 'done');
+          return;
+        }
+
+        if (timedOut) {
+          task.errorReason = `phase — no progress for ${PHASE_TIMEOUT_MS / 60000}min`;
+          pushLine(task, `[timeout] phase — no progress for ${PHASE_TIMEOUT_MS / 60000}min`);
+          void setStatus(task, 'error');
+          return;
+        }
+
+        if (!exitedOk) {
+          if (task.errorReason === undefined) {
+            const errText = extractFailureText(stdout, stderr, `${adapter.command} failed`);
+            task.errorReason = errText;
+            pushLine(task, errText);
+          }
+          void setStatus(task, 'error');
+          return;
+        }
+
+        const progressed = await didTaskProgress(task);
+        if (!progressed) {
+          pushLine(task, noProgressWarning(task));
+          void setStatus(task, 'done');
+          return;
+        }
+
+        if (runProjectChecks) {
+          const ok = await verifyAndFix(
+            task,
+            plan,
+            adapter,
+            model,
+            effort,
+            toleratedRed,
+            sessionId,
+            runProjectChecks,
+            'phase',
+            phase.text,
+            `Phase ${phaseIndex + 1} ("${phase.text}")`,
+          );
+          if (!ok) return;
+        }
+
+        void setStatus(task, 'done');
+      } catch (err) {
+        if (isSuperseded(task)) {
+          if (!isTaskDone(task)) finalizeSuperseded(task);
+        } else {
+          task.errorReason ??= (err as Error).message;
+          pushLine(task, `Phase run failed: ${(err as Error).message}`);
+          void setStatus(task, 'error');
+        }
+      }
+    })();
+
+    return { ok: true };
   }
 
   function startForPlan(
@@ -1321,7 +1440,7 @@ export function createAgentManager(
     effort: string | undefined,
     attempt: number,
     attemptCap: number,
-    introducedChecks: CheckName[],
+    introducedChecks: FailingCheck[],
     resume: string | undefined,
   ): Promise<{
     ok: boolean;
@@ -1339,6 +1458,139 @@ export function createAgentManager(
       if (!ok && !timedOut && stderr.trim()) pushLine(task, stderr.trim());
       return { ok, timedOut, sessionId, lastTurnContextTokens };
     });
+  }
+
+  // Shared by run-all's end-of-run sweep and a single phase/fix task's own verify.
+  // Returns false once it has already driven the task to a terminal status.
+  async function verifyAndFix(
+    task: AgentTask,
+    plan: PlanEntry,
+    adapter: AgentAdapter,
+    model: string | undefined,
+    effort: string | undefined,
+    toleratedRed: Set<CheckName>,
+    sessionId: string | undefined,
+    runProjectChecks: () => Promise<FailingCheck[]>,
+    label: string,
+    itemText: string,
+    context: string,
+  ): Promise<boolean> {
+    pushLine(task, '[verify] running lint/format/test/consistency/docs');
+    const startSnapshot: GitStatusEntry[] = snapshotWorkingTree ? await snapshotWorkingTree() : [];
+    let failing = await runProjectChecks();
+    if (isSuperseded(task)) {
+      finalizeSuperseded(task);
+      return false;
+    }
+    if (isStopping(task)) {
+      void setStatus(task, 'done');
+      return false;
+    }
+    let introduced = failing.filter((c) => !toleratedRed.has(c.name));
+    const introducedAtStart = introduced;
+    let verifyOk = introduced.length === 0;
+
+    let fixAttempt = 0;
+    let fixBlocker: string | undefined;
+    let fixSessionId = sessionId;
+    while (!verifyOk && fixAttempt < FIX_ATTEMPT_CAP) {
+      if (isSuperseded(task) || isStopping(task)) break;
+      fixAttempt++;
+      task.fixAttempt = fixAttempt;
+      task.fixAttemptCap = FIX_ATTEMPT_CAP;
+
+      const {
+        timedOut: fixTimedOut,
+        sessionId: newSessionId,
+        lastTurnContextTokens,
+      } = await runFixPass(
+        task,
+        plan,
+        label,
+        itemText,
+        adapter,
+        model,
+        effort,
+        fixAttempt,
+        FIX_ATTEMPT_CAP,
+        introduced,
+        fixSessionId,
+      );
+      if (newSessionId) fixSessionId = newSessionId;
+      if (lastTurnContextTokens !== undefined && lastTurnContextTokens > SESSION_CONTEXT_LIMIT) {
+        fixSessionId = undefined;
+      }
+      if (isSuperseded(task)) {
+        finalizeSuperseded(task);
+        return false;
+      }
+      if (task.blocker) {
+        fixBlocker = task.blocker;
+        task.blocker = undefined;
+        break;
+      }
+      if (fixTimedOut) {
+        pushLine(task, `[fix] ${label} — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`);
+      }
+
+      pushLine(
+        task,
+        `[verify] re-running lint/format/test/consistency/docs (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
+      );
+      failing = await runProjectChecks();
+      if (isSuperseded(task)) {
+        finalizeSuperseded(task);
+        return false;
+      }
+      introduced = failing.filter((c) => !toleratedRed.has(c.name));
+      verifyOk = introduced.length === 0;
+    }
+    task.fixAttempt = undefined;
+    task.fixAttemptCap = undefined;
+
+    if (isStopping(task)) {
+      void setStatus(task, 'done');
+      return false;
+    }
+
+    if (verifyOk && onVerifyFixCommit) {
+      const introducedNames = introducedAtStart.map((c) => c.name);
+      pushLine(
+        task,
+        fixAttempt > 0 ? `[commit] fix — ${introducedNames.join(', ')}` : '[commit] style — format',
+      );
+      await onVerifyFixCommit(plan, introducedNames, startSnapshot);
+    }
+
+    if (fixBlocker) {
+      task.errorReason ??= fixBlocker;
+      pushLine(task, `[blocked] ${label} — agent needs a decision: ${fixBlocker}`);
+      await escalateToLog(
+        task,
+        plan.id,
+        `${context}'s final verify — the fix pass needs a decision: ${fixBlocker}`,
+      );
+      void setStatus(task, 'error');
+      return false;
+    }
+
+    if (!verifyOk) {
+      const introducedNames = introduced.map((c) => c.name).join(', ');
+      task.errorReason = `${label} — project checks (${introducedNames}) still failing after ${fixAttempt} fix attempt(s)`;
+      pushLine(
+        task,
+        `[blocked] ${label} — project checks still failing after ${fixAttempt} fix attempt(s)`,
+      );
+      await escalateToLog(
+        task,
+        plan.id,
+        `${context} finished but project checks (${introducedNames}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
+      );
+      void setStatus(task, 'error');
+      return false;
+    }
+
+    return true;
   }
 
   type QueueKind = 'phase' | 'fix';
@@ -1495,8 +1747,8 @@ export function createAgentManager(
 
   function startRunAllPhases(
     plan: PlanEntry,
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ): Result {
     const blocked = admit('run-all', plan.id);
     if (blocked) return blocked;
@@ -1542,7 +1794,9 @@ export function createAgentManager(
         // Checks already red before this run aren't the fix loop's concern; reused
         // from the current HEAD's last sweep when one exists (IDEA-255).
         const getBaseline = getBaselineChecks ?? runProjectChecks;
-        let toleratedRed = new Set<CheckName>(getBaseline ? await getBaseline() : []);
+        let toleratedRed = new Set<CheckName>(
+          getBaseline ? (await getBaseline()).map((c) => c.name) : [],
+        );
         if (isSuperseded(task)) {
           finalizeSuperseded(task);
           return;
@@ -1629,120 +1883,20 @@ export function createAgentManager(
         pushLine(task, `All ${summary} completed`);
 
         if (runProjectChecks) {
-          pushLine(task, '[verify] running lint/format/test/consistency/docs');
-          const startSnapshot: GitStatusEntry[] = snapshotWorkingTree
-            ? await snapshotWorkingTree()
-            : [];
-          let failing = await runProjectChecks();
-          if (isSuperseded(task)) {
-            finalizeSuperseded(task);
-            return;
-          }
-          if (isStopping(task)) {
-            void setStatus(task, 'done');
-            return;
-          }
-          let introduced = failing.filter((c) => !toleratedRed.has(c));
-          const introducedAtStart = introduced;
-          let verifyOk = introduced.length === 0;
-
-          let fixAttempt = 0;
-          let fixBlocker: string | undefined;
-          let sessionId = fixResult.sessionId;
-          while (!verifyOk && fixAttempt < FIX_ATTEMPT_CAP) {
-            if (isSuperseded(task) || isStopping(task)) break;
-            fixAttempt++;
-            task.fixAttempt = fixAttempt;
-            task.fixAttemptCap = FIX_ATTEMPT_CAP;
-
-            const {
-              timedOut: fixTimedOut,
-              sessionId: fixSessionId,
-              lastTurnContextTokens,
-            } = await runFixPass(
-              task,
-              plan,
-              'run',
-              'all phases',
-              adapter,
-              model,
-              effort,
-              fixAttempt,
-              FIX_ATTEMPT_CAP,
-              introduced,
-              sessionId,
-            );
-            if (fixSessionId) sessionId = fixSessionId;
-            if (
-              lastTurnContextTokens !== undefined &&
-              lastTurnContextTokens > SESSION_CONTEXT_LIMIT
-            ) {
-              sessionId = undefined;
-            }
-            if (isSuperseded(task)) {
-              finalizeSuperseded(task);
-              return;
-            }
-            if (task.blocker) {
-              fixBlocker = task.blocker;
-              task.blocker = undefined;
-              break;
-            }
-            if (fixTimedOut) {
-              pushLine(task, `[fix] run — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`);
-            }
-
-            pushLine(
-              task,
-              `[verify] re-running lint/format/test/consistency/docs (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
-            );
-            failing = await runProjectChecks();
-            if (isSuperseded(task)) {
-              finalizeSuperseded(task);
-              return;
-            }
-            introduced = failing.filter((c) => !toleratedRed.has(c));
-            verifyOk = introduced.length === 0;
-          }
-          task.fixAttempt = undefined;
-          task.fixAttemptCap = undefined;
-
-          if (isStopping(task)) {
-            void setStatus(task, 'done');
-            return;
-          }
-
-          if (verifyOk && fixAttempt > 0 && onVerifyFixCommit) {
-            pushLine(task, `[commit] fix — ${introducedAtStart.join(', ')}`);
-            await onVerifyFixCommit(plan, introducedAtStart, startSnapshot);
-          }
-
-          if (fixBlocker) {
-            task.errorReason ??= fixBlocker;
-            pushLine(task, `[blocked] run — agent needs a decision: ${fixBlocker}`);
-            await escalateToLog(
-              task,
-              plan.id,
-              `Run-all's final verify — the fix pass needs a decision: ${fixBlocker}`,
-            );
-            void setStatus(task, 'error');
-            return;
-          }
-
-          if (!verifyOk) {
-            task.errorReason = `run — project checks (${introduced.join(', ')}) still failing after ${fixAttempt} fix attempt(s)`;
-            pushLine(
-              task,
-              `[blocked] run — project checks still failing after ${fixAttempt} fix attempt(s)`,
-            );
-            await escalateToLog(
-              task,
-              plan.id,
-              `Run-all finished but project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
-            );
-            void setStatus(task, 'error');
-            return;
-          }
+          const ok = await verifyAndFix(
+            task,
+            plan,
+            adapter,
+            model,
+            effort,
+            toleratedRed,
+            fixResult.sessionId,
+            runProjectChecks,
+            'run',
+            'all phases',
+            'Run-all',
+          );
+          if (!ok) return;
         }
 
         if (onRunComplete) {
@@ -1958,8 +2112,8 @@ export function createAgentManager(
   // Re-launches a run-all/single-phase task parked with errorKind 'auth' instead of
   // leaving it failed; `start`/`startRunAllPhases` pick up the checkbox it never flipped.
   async function resumeAuthParkedTasks(
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ): Promise<{ resumed: string[] }> {
     const parked = [...tasks.values()].filter(
       (task) =>
@@ -1978,7 +2132,7 @@ export function createAgentManager(
         task.taskKind === 'run-all'
           ? startRunAllPhases(plan, runProjectChecks, getBaselineChecks)
           : task.phaseIndex !== undefined
-            ? start(plan, task.phaseIndex)
+            ? start(plan, task.phaseIndex, runProjectChecks, getBaselineChecks)
             : { ok: false as const, error: 'Missing phase index' };
       if (result.ok) {
         task.errorKind = undefined;
@@ -1992,8 +2146,8 @@ export function createAgentManager(
   // reply resolves it, picking back up at whichever phase/fix is still unchecked.
   async function resumeQuestionParkedTasks(
     planId: string,
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ): Promise<{ resumed: boolean }> {
     const task = [...tasks.values()].find(
       (t) =>
@@ -2087,7 +2241,12 @@ export interface AgentManagerState {
 }
 
 export interface AgentManager {
-  start: (plan: PlanEntry, phaseIndex: number) => Result;
+  start: (
+    plan: PlanEntry,
+    phaseIndex: number,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ) => Result;
   startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
   startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
   startPrReview: (plan: PlanEntry, prompt: string, headSha: string, prUrl: string) => Result;
@@ -2099,17 +2258,17 @@ export interface AgentManager {
   startBatchDraft: (ids: string[]) => Result;
   startRunAllPhases: (
     plan: PlanEntry,
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
   resumeAuthParkedTasks: (
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Promise<{ resumed: string[] }>;
   resumeQuestionParkedTasks: (
     planId: string,
-    runProjectChecks?: () => Promise<CheckName[]>,
-    getBaselineChecks?: () => Promise<CheckName[]>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Promise<{ resumed: boolean }>;
   startSuggest: (prompt: string) => Promise<Result>;
   startGitSyncRecovery: (prompt: string) => Result;

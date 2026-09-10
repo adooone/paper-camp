@@ -5,14 +5,17 @@ import { join } from 'node:path';
 import { deskConfigSchema } from '@/core/parse';
 import type { CheckStatus, DeskCheck, DeskCheckState } from '../../types';
 
-interface CheckRuntime {
+export interface CheckRuntime {
   status: CheckStatus;
   lastRun: string | null;
   output: string;
+  // The HEAD this result was produced against — lets a baseline reuse it instead
+  // of re-running the check when nothing has changed since (IDEA-255).
+  headSha: string | null;
 }
 
 function emptyRuntime(): CheckRuntime {
-  return { status: 'stale', lastRun: null, output: '' };
+  return { status: 'stale', lastRun: null, output: '', headSha: null };
 }
 
 export class MissingFixCmdError extends Error {}
@@ -63,6 +66,7 @@ export function loadManifestChecks(root: string): DeskCheck[] {
 
 export function createDeskCheckManager(
   root: string,
+  getHeadSha?: () => Promise<string>,
   state: DeskCheckManagerState = createEmptyCheckState(),
 ) {
   const { runtimes, inFlight, clients } = state;
@@ -87,11 +91,12 @@ export function createDeskCheckManager(
     }
   }
 
-  function setResult(name: string, status: CheckStatus, output: string) {
+  function setResult(name: string, status: CheckStatus, output: string, headSha: string | null) {
     const runtime = runtimeFor(name);
     runtime.status = status;
     runtime.output = output;
     runtime.lastRun = new Date().toISOString();
+    runtime.headSha = headSha;
     broadcast(name);
   }
 
@@ -105,11 +110,12 @@ export function createDeskCheckManager(
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
 
     const promise = (async () => {
-      setResult(name, 'running', '');
+      setResult(name, 'running', '', null);
       const { code, output } = await run(check.cmd, root);
       inFlight.delete(name);
       const status = code === 0 ? 'pass' : 'fail';
-      setResult(name, status, output);
+      const headSha = getHeadSha ? await getHeadSha() : null;
+      setResult(name, status, output, headSha);
       return status;
     })();
     inFlight.set(name, promise);

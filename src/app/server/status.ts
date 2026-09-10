@@ -6,7 +6,7 @@ import { getPrMapFetchedAt } from '@/core/git-pr';
 import { findConsistencyIssues } from '@/core/parse';
 import { readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
-import type { CheckName, CheckResult, CheckStatus } from '../../types';
+import type { CheckName, CheckResult, CheckStatus, FailingCheck } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import type { DeskCheckManager } from './desk-checks';
 import { loadManifestChecks } from './desk-checks';
@@ -44,9 +44,12 @@ export interface StatusManagerState {
   running: Set<CheckName>;
   queued: Set<CheckName>;
   clients: Set<ServerResponse>;
-  // The last full sweep's result, tagged with the HEAD it ran against — lets a
-  // run-all's baseline skip re-running checks nothing has changed since (IDEA-255).
-  lastSweep: { headSha: string; failing: CheckName[] } | null;
+  // The HEAD `snapshot.consistency`'s result was produced against — lets a
+  // baseline reuse a result the Stack already produced (IDEA-255).
+  consistencyHeadSha: string | null;
+  // Docs has no on-demand Stack check to hold a live snapshot, so its cached
+  // result and the HEAD it was produced on travel together here (IDEA-255).
+  docs: { headSha: string; passed: boolean; output: string } | null;
 }
 
 export function createEmptyStatusState(): StatusManagerState {
@@ -57,7 +60,8 @@ export function createEmptyStatusState(): StatusManagerState {
     running: new Set<CheckName>(),
     queued: new Set<CheckName>(),
     clients: new Set<ServerResponse>(),
-    lastSweep: null,
+    consistencyHeadSha: null,
+    docs: null,
   };
 }
 
@@ -124,9 +128,10 @@ export function createStatusManager(
       stderr += d.toString();
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', async (code) => {
       running.delete(name);
       const output = stdout + stderr;
+      state.consistencyHeadSha = await git.getHeadSha();
       if (code === 0) {
         setResult(name, 'pass', output);
       } else {
@@ -134,16 +139,17 @@ export function createStatusManager(
       }
     });
 
-    proc.on('error', (err) => {
+    proc.on('error', async (err) => {
       running.delete(name);
+      state.consistencyHeadSha = await git.getHeadSha();
       setResult(name, 'fail', `Failed to spawn process: ${err.message}`);
     });
   }
 
   // Kept independent of runCheck's running/queued dedup (that gate is for on-demand
   // Stack clicks) — a sweep racing a manual click is rare and each run is read-only.
-  function runConsistencyAndWait(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
+  function runConsistencyAndWait(): Promise<{ passed: boolean; output: string }> {
+    return new Promise((resolve) => {
       setResult('consistency', 'running', '', CONSISTENCY_COMMAND);
       const proc = spawn(CONSISTENCY_COMMAND, {
         cwd: root,
@@ -157,57 +163,78 @@ export function createStatusManager(
       proc.stderr?.on('data', (d: Buffer) => {
         output += d.toString();
       });
-      proc.on('close', (code) => {
+      proc.on('close', async (code) => {
         const pass = code === 0;
+        state.consistencyHeadSha = await git.getHeadSha();
         setResult('consistency', pass ? 'pass' : 'fail', output);
-        resolve(pass);
+        resolve({ passed: pass, output });
       });
-      proc.on('error', (err) => {
-        setResult('consistency', 'fail', `Failed to spawn process: ${err.message}`);
-        resolve(false);
+      proc.on('error', async (err) => {
+        state.consistencyHeadSha = await git.getHeadSha();
+        const errOutput = `Failed to spawn process: ${err.message}`;
+        setResult('consistency', 'fail', errOutput);
+        resolve({ passed: false, output: errOutput });
       });
     });
   }
 
   // Mirrors the Stack panel's Docs stamp (IDEA-156): doc findings computed from
   // the corpus, not a spawned command.
-  async function runDocsCheck(): Promise<boolean> {
+  async function runDocsCheck(): Promise<{ passed: boolean; output: string }> {
     const [{ entries }, roadmapRaw] = await Promise.all([
       readWorkEntries(campFile(root, 'ideas')),
       readMaybe(join(root, 'ROADMAP.md')),
     ]);
     const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
-    return findConsistencyIssues(entries, subjectVocabulary).length === 0;
+    const issues = findConsistencyIssues(entries, subjectVocabulary);
+    return { passed: issues.length === 0, output: issues.map((issue) => issue.message).join('\n') };
   }
 
-  // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting nits
-  // can't hard-fail an autonomous run-all phase.
-  function runChecksAndWait(): Promise<CheckName[]> {
-    return new Promise<CheckName[]>((resolve) => {
+  async function runDocsCheckAndCache(): Promise<{ passed: boolean; output: string }> {
+    const [result, headSha] = await Promise.all([runDocsCheck(), git.getHeadSha()]);
+    state.docs = { headSha, ...result };
+    return result;
+  }
+
+  async function runManifestCheck(
+    name: 'lint' | 'test',
+    hasVitest: boolean,
+  ): Promise<{ passed: boolean; output: string }> {
+    if (name === 'test' && !hasVitest) return { passed: true, output: '' };
+    // A run already in flight predates this call — wait it out so the fresh
+    // runCheck below reports on the current code, not a stale join.
+    const stale = checks.getState().inFlight.get(name);
+    if (stale) await stale;
+    const status = await checks.runCheck(name);
+    return {
+      passed: status === 'pass',
+      output: checks.getState().runtimes.get(name)?.output ?? '',
+    };
+  }
+
+  // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
+  // nits can't hard-fail an autonomous run-all phase; always runs every check.
+  function runChecksAndWait(): Promise<FailingCheck[]> {
+    return new Promise<FailingCheck[]>((resolve) => {
       const runChecks = async () => {
         const manifestChecks = loadManifestChecks(root);
         const names = (['lint', 'test'] as const).filter((n) =>
           manifestChecks.some((c) => c.name === n),
         );
         const hasVitest = repoHasVitest(root);
-        const [passed, consistencyPassed, docsPassed] = await Promise.all([
-          Promise.all(
-            names.map(async (name) => {
-              if (name === 'test' && !hasVitest) return true;
-              // A run already in flight predates this fix pass — wait it out so the
-              // fresh runCheck below reports on post-fix code, not a stale join.
-              const stale = checks.getState().inFlight.get(name);
-              if (stale) await stale;
-              return (await checks.runCheck(name)) === 'pass';
-            }),
-          ),
+        const [deskResults, consistencyResult, docsResult] = await Promise.all([
+          Promise.all(names.map((name) => runManifestCheck(name, hasVitest))),
           runConsistencyAndWait(),
-          runDocsCheck(),
+          runDocsCheckAndCache(),
         ]);
-        const failing: CheckName[] = names.filter((_, i) => !passed[i]);
-        if (!consistencyPassed) failing.push('consistency');
-        if (!docsPassed) failing.push('docs');
-        state.lastSweep = { headSha: await git.getHeadSha(), failing };
+        const failing: FailingCheck[] = [];
+        names.forEach((name, i) => {
+          if (!deskResults[i].passed) failing.push({ name, output: deskResults[i].output });
+        });
+        if (!consistencyResult.passed) {
+          failing.push({ name: 'consistency', output: consistencyResult.output });
+        }
+        if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });
         resolve(failing);
       };
 
@@ -217,14 +244,59 @@ export function createStatusManager(
     });
   }
 
-  // A sweep already produced on the current HEAD is still valid — skip re-running
-  // the 80s+ suite when nothing has changed since (IDEA-255).
-  async function getCachedOrRunChecks(): Promise<CheckName[]> {
+  // Reuses each check's own last result when it was produced on the current
+  // HEAD, whether from an earlier sweep or an on-demand Stack click (IDEA-255).
+  async function getCachedOrRunChecks(): Promise<FailingCheck[]> {
     const headSha = await git.getHeadSha();
-    if (state.lastSweep && state.lastSweep.headSha === headSha) {
-      return state.lastSweep.failing;
+    const manifestChecks = loadManifestChecks(root);
+    const names = (['lint', 'test'] as const).filter((n) =>
+      manifestChecks.some((c) => c.name === n),
+    );
+    const hasVitest = repoHasVitest(root);
+    const runtimes = checks.getState().runtimes;
+
+    const deskFresh = (name: 'lint' | 'test'): boolean => {
+      if (name === 'test' && !hasVitest) return true;
+      const runtime = runtimes.get(name);
+      return (
+        runtime?.headSha === headSha && (runtime.status === 'pass' || runtime.status === 'fail')
+      );
+    };
+    const consistencyFresh =
+      state.consistencyHeadSha === headSha &&
+      (snapshot.consistency.status === 'pass' || snapshot.consistency.status === 'fail');
+    const docsFresh = state.docs?.headSha === headSha;
+
+    const [deskResults, consistencyResult, docsResult] = await Promise.all([
+      Promise.all(
+        names.map((name) => {
+          if (!deskFresh(name)) return runManifestCheck(name, hasVitest);
+          const runtime = runtimes.get(name);
+          return Promise.resolve({
+            passed: runtime?.status !== 'fail',
+            output: runtime?.output ?? '',
+          });
+        }),
+      ),
+      consistencyFresh
+        ? Promise.resolve({
+            passed: snapshot.consistency.status === 'pass',
+            output: snapshot.consistency.output,
+          })
+        : runConsistencyAndWait(),
+      docsFresh
+        ? Promise.resolve({ passed: state.docs?.passed ?? false, output: state.docs?.output ?? '' })
+        : runDocsCheckAndCache(),
+    ]);
+    const failing: FailingCheck[] = [];
+    names.forEach((name, i) => {
+      if (!deskResults[i].passed) failing.push({ name, output: deskResults[i].output });
+    });
+    if (!consistencyResult.passed) {
+      failing.push({ name: 'consistency', output: consistencyResult.output });
     }
-    return runChecksAndWait();
+    if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });
+    return failing;
   }
 
   return {
