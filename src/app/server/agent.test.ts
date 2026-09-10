@@ -295,6 +295,14 @@ describe('buildFixPassPrompt', () => {
     expect(prompt).toContain('docs:\nSubject "widgets" is not in the roadmap vocabulary');
     expect(prompt).not.toContain('lint:\n');
   });
+
+  it('keeps only the tail of a long check output (IDEA-255)', () => {
+    const output = `${'x'.repeat(5000)}FAIL at the end`;
+    const prompt = buildFixPassPrompt(plan, 'run', 'all phases', [{ name: 'test', output }]);
+    expect(prompt).toContain('test:\n…');
+    expect(prompt).toContain('FAIL at the end');
+    expect(prompt).not.toContain('x'.repeat(4001));
+  });
 });
 
 describe('buildFixItemPrompt', () => {
@@ -1264,7 +1272,9 @@ ${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
 
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(currentStatus(manager)?.lines.join('\n')).toBe('real failure reason');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('real failure reason');
+    expect(lines).not.toContain('permissions.allow entries');
   });
 });
 

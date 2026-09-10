@@ -66,6 +66,13 @@ const FIX_ATTEMPT_CAP = 2;
 const SESSION_CONTEXT_LIMIT = 120_000;
 const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
+// A failing test run can print tens of kilobytes; the fix pass only needs the end.
+const CHECK_OUTPUT_TAIL_CHARS = 4000;
+
+function tailOfOutput(output: string): string {
+  if (output.length <= CHECK_OUTPUT_TAIL_CHARS) return output;
+  return `…${output.slice(-CHECK_OUTPUT_TAIL_CHARS)}`;
+}
 const DESTRUCTIVE_GIT_BAN =
   "Never run `git stash`, `git reset`, or `git checkout` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only `git diff` or `git show HEAD:<file>` instead.";
 const FOREGROUND_COMMANDS_ONLY =
@@ -267,7 +274,7 @@ export function buildFixPassPrompt(
       : "The project's lint/format/type-check/test checks are failing.";
   const output = introducedChecks
     .filter((c) => c.output.trim())
-    .map((c) => `${c.name}:\n${c.output.trim()}`)
+    .map((c) => `${c.name}:\n${tailOfOutput(c.output.trim())}`)
     .join('\n\n');
   return `${scope} This is after ${label}, "${itemText}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
 
@@ -749,6 +756,7 @@ export function createAgentManager(
   ): Promise<{
     ok: boolean;
     timedOut: boolean;
+    stdout: string;
     stderr: string;
     sessionId?: string;
     usage?: RunUsage;
@@ -769,10 +777,12 @@ export function createAgentManager(
     let sessionId: string | undefined;
     let usage: RunUsage | undefined;
     let lastTurnContextTokens: number | undefined;
+    let stdout = '';
     if (proc.stdout) {
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
         if (opts.guardSuperseded && isSuperseded(task)) return;
+        stdout += `${line}\n`;
         task.lastStreamAt = Date.now();
         const parsed = adapter.parseLine(line);
         if (parsed?.milestone) noteAnchor(task, parsed.milestone);
@@ -803,6 +813,7 @@ export function createAgentManager(
 
     return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({
       ...result,
+      stdout,
       stderr,
       sessionId,
       usage,
@@ -956,87 +967,43 @@ export function createAgentManager(
     if (!phase) {
       return { ok: false, error: 'Phase not found' };
     }
-
-    const defaultAgents = readDefaultAgentIds(root);
-    const {
-      id: agentId,
-      adapter,
-      model,
-      effort,
-    } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'phase' });
-
-    const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
-    const task = registerAndStart(
-      newTask({
-        taskKind: 'phase',
-        planTitle: plan.title,
-        planId: plan.id,
-        phaseIndex,
-        agentId,
-        adapter,
-        proc: stubProc,
-      }),
-    );
+    const task = startOrchestrated('phase', plan, phaseIndex);
+    const { adapter, model, effort } = resolveAgent({
+      agentId: plan.agent,
+      defaultAgents: readDefaultAgentIds(root),
+      taskKind: 'phase',
+    });
 
     (async () => {
       try {
-        const getBaseline = getBaselineChecks ?? runProjectChecks;
-        const toleratedRed = new Set<CheckName>(
-          getBaseline ? (await getBaseline()).map((c) => c.name) : [],
+        const toleratedRed = await readBaseline(task, getBaselineChecks ?? runProjectChecks);
+        if (isSuperseded(task)) {
+          finalizeSuperseded(task);
+          return;
+        }
+
+        const result = await runQueue(
+          task,
+          plan,
+          'phase',
+          [{ item: phase, i: phaseIndex }],
+          plan.phases.length,
+          adapter,
+          model,
+          effort,
+          toleratedRed,
+          undefined,
         );
-        if (isSuperseded(task)) {
+        if (result.exit === 'superseded') {
           finalizeSuperseded(task);
           return;
         }
-        if (toleratedRed.size > 0) {
-          pushLine(
-            task,
-            `[verify] tolerating pre-existing red check(s): ${[...toleratedRed].join(', ')}`,
-          );
-        }
-
-        const prompt = buildAgentPrompt(plan, phase, phaseIndex, [...toleratedRed]);
-        const resultPromise = runPhaseProcess(task, adapter, prompt, model, effort, {
-          guardSuperseded: true,
-        });
-        // Captured in parallel with the internal readline reader (both see every
-        // chunk) — only used as a fallback below when no line gave a reason.
-        let stdout = '';
-        task.proc.stdout?.on('data', (d: Buffer) => {
-          stdout += d.toString();
-        });
-        const { ok: exitedOk, timedOut, stderr, sessionId } = await resultPromise;
-
-        if (isSuperseded(task)) {
-          finalizeSuperseded(task);
-          return;
-        }
-        if (isStopping(task)) {
+        if (result.exit === 'stopping') {
           void setStatus(task, 'done');
           return;
         }
-
-        if (timedOut) {
-          task.errorReason = `phase — no progress for ${PHASE_TIMEOUT_MS / 60000}min`;
-          pushLine(task, `[timeout] phase — no progress for ${PHASE_TIMEOUT_MS / 60000}min`);
+        if (result.failed > 0) {
           void setStatus(task, 'error');
-          return;
-        }
-
-        if (!exitedOk) {
-          if (task.errorReason === undefined) {
-            const errText = extractFailureText(stdout, stderr, `${adapter.command} failed`);
-            task.errorReason = errText;
-            pushLine(task, errText);
-          }
-          void setStatus(task, 'error');
-          return;
-        }
-
-        const progressed = await didTaskProgress(task);
-        if (!progressed) {
-          pushLine(task, noProgressWarning(task));
-          void setStatus(task, 'done');
           return;
         }
 
@@ -1048,7 +1015,7 @@ export function createAgentManager(
             model,
             effort,
             toleratedRed,
-            sessionId,
+            result.sessionId,
             runProjectChecks,
             'phase',
             phase.text,
@@ -1070,6 +1037,50 @@ export function createAgentManager(
     })();
 
     return { ok: true };
+  }
+
+  // A task the manager drives itself through runPhaseProcess, so it registers with
+  // a stub process and swaps in each real agent process as it goes.
+  function startOrchestrated(
+    taskKind: 'phase' | 'run-all',
+    plan: PlanEntry,
+    phaseIndex?: number,
+  ): AgentTask {
+    const { id: agentId, adapter } = resolveAgent({
+      agentId: plan.agent,
+      defaultAgents: readDefaultAgentIds(root),
+      taskKind,
+    });
+    const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
+    return registerAndStart(
+      newTask({
+        taskKind,
+        planTitle: plan.title,
+        planId: plan.id,
+        ...(phaseIndex !== undefined && { phaseIndex }),
+        agentId,
+        adapter,
+        proc: stubProc,
+      }),
+    );
+  }
+
+  // Checks already red before a run aren't the fix loop's concern; reused from the
+  // current HEAD's last results when they exist (IDEA-255).
+  async function readBaseline(
+    task: AgentTask,
+    getBaseline: (() => Promise<FailingCheck[]>) | undefined,
+  ): Promise<Set<CheckName>> {
+    const toleratedRed = new Set<CheckName>(
+      getBaseline ? (await getBaseline()).map((c) => c.name) : [],
+    );
+    if (toleratedRed.size > 0) {
+      pushLine(
+        task,
+        `[verify] tolerating pre-existing red check(s): ${[...toleratedRed].join(', ')}`,
+      );
+    }
+    return toleratedRed;
   }
 
   function startForPlan(
@@ -1640,6 +1651,7 @@ export function createAgentManager(
       const {
         ok: exitedOk,
         timedOut,
+        stdout,
         stderr,
         sessionId: newSessionId,
         usage: phaseUsage,
@@ -1667,7 +1679,7 @@ export function createAgentManager(
         await escalateToLog(
           task,
           plan.id,
-          `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${task.blocker}`,
+          `${task.taskKind === 'run-all' ? 'Run-all' : 'Phase run'} parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${task.blocker}`,
         );
         task.blocker = undefined;
         break;
@@ -1685,20 +1697,23 @@ export function createAgentManager(
 
       if (!exitedOk) {
         failed++;
-        if (stderr.trim()) pushLine(task, stderr.trim());
-        task.errorReason = task.errorReason
-          ? `${kind} ${i + 1} — ${task.errorReason}`
-          : `${kind} ${i + 1} — agent error`;
-        pushLine(
-          task,
-          task.errorReason
-            ? `[fail] ${kind} ${i + 1} — ${task.errorReason}, stopping`
-            : `[fail] ${kind} ${i + 1} — agent error, stopping`,
-        );
+        if (task.errorReason === undefined) {
+          const errText = extractFailureText(stdout, stderr, 'agent error');
+          task.errorReason = errText;
+          pushLine(task, errText);
+        }
+        task.errorReason = `${kind} ${i + 1} — ${task.errorReason}`;
+        pushLine(task, `[fail] ${task.errorReason}, stopping`);
         break;
       }
 
       const progressed = await didTaskProgress(task);
+      // A single phase run by hand is left for the human to check off; only a
+      // run-all treats an unflipped checkbox as a stop.
+      if (!progressed && task.taskKind === 'phase') {
+        pushLine(task, noProgressWarning(task));
+        break;
+      }
       if (!progressed) {
         failed++;
         task.errorReason =
@@ -1763,25 +1778,12 @@ export function createAgentManager(
       return { ok: false, error: 'No unchecked phases to run' };
     }
 
-    const defaultAgents = readDefaultAgentIds(root);
-    const {
-      id: agentId,
-      adapter,
-      model,
-      effort,
-    } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'run-all' });
-
-    const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
-    const task = registerAndStart(
-      newTask({
-        taskKind: 'run-all',
-        planTitle: plan.title,
-        planId: plan.id,
-        agentId,
-        adapter,
-        proc: stubProc,
-      }),
-    );
+    const task = startOrchestrated('run-all', plan);
+    const { adapter, model, effort } = resolveAgent({
+      agentId: plan.agent,
+      defaultAgents: readDefaultAgentIds(root),
+      taskKind: 'run-all',
+    });
 
     (async () => {
       try {
@@ -1791,21 +1793,10 @@ export function createAgentManager(
           return;
         }
 
-        // Checks already red before this run aren't the fix loop's concern; reused
-        // from the current HEAD's last sweep when one exists (IDEA-255).
-        const getBaseline = getBaselineChecks ?? runProjectChecks;
-        let toleratedRed = new Set<CheckName>(
-          getBaseline ? (await getBaseline()).map((c) => c.name) : [],
-        );
+        let toleratedRed = await readBaseline(task, getBaselineChecks ?? runProjectChecks);
         if (isSuperseded(task)) {
           finalizeSuperseded(task);
           return;
-        }
-        if (toleratedRed.size > 0) {
-          pushLine(
-            task,
-            `[verify] tolerating pre-existing red check(s): ${[...toleratedRed].join(', ')}`,
-          );
         }
 
         const phaseResult = await runQueue(
