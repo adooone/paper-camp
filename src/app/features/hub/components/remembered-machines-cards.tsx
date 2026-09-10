@@ -1,6 +1,6 @@
 import { runtimeRowLabel } from '@/app/services/hub';
 import type { MachineProjectSummary } from '@/types/index';
-import { Button, Card, ListItem } from '@dendelion/paper-ui';
+import { Button, Card, ListItem, Stamp } from '@dendelion/paper-ui';
 import { type MachineReach, useRememberedMachines } from '../hooks';
 
 export interface MachineProjectRowProps {
@@ -9,13 +9,22 @@ export interface MachineProjectRowProps {
 }
 
 /** A missing project's folder is gone — greyed and unclickable instead of
- * opening an empty desk, but still listed so the user can see it needs `rm`. */
+ * opening an empty desk, but still listed so the user can see it needs `rm`.
+ * A busy one gets the same Running stamp the project list shows, from the
+ * same `busy` flag, so the two lists agree on what an agent is doing. */
 export const MachineProjectRow = ({ project, onOpen }: MachineProjectRowProps) => (
   <ListItem
     size="small"
     className={`min-w-0 ${project.missing ? 'cursor-not-allowed opacity-50' : ''}`}
     disabled={project.missing}
     onClick={project.missing ? undefined : onOpen}
+    action={
+      project.busy ? (
+        <Stamp size="small" variant="success">
+          Running
+        </Stamp>
+      ) : undefined
+    }
   >
     <span className="truncate">{project.name}</span>
     {project.slug !== project.name && (

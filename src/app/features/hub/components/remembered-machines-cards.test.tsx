@@ -31,6 +31,17 @@ describe('MachineProjectRow', () => {
     expect(tree.props.className).toMatch(/cursor-not-allowed/);
     expect(tree.props.onClick).toBeUndefined();
   });
+
+  it('has no action stamp for an idle project', () => {
+    const tree = MachineProjectRow({ project: project({ busy: false }), onOpen: vi.fn() });
+    expect(tree.props.action).toBeUndefined();
+  });
+
+  it('shows a Running stamp for a busy project, the same as the project list', () => {
+    const tree = MachineProjectRow({ project: project({ busy: true }), onOpen: vi.fn() });
+    expect(tree.props.action.props.variant).toBe('success');
+    expect(tree.props.action.props.children).toBe('Running');
+  });
 });
 
 describe('MachineProjectRow', () => {

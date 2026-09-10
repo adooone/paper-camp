@@ -68,7 +68,8 @@ panels within a route.
 - [x] Stamp running agents on hub project rows
       `use-runtime-statuses.ts` also polls `/api/agent/status` and carries the task's plan title.
       run: 7m38s · 152 in · 29.6k out · sonnet-5
-- [ ] Mark a busy mounted project on the machine card
+- [x] Mark a busy mounted project on the machine card
+      run: 3m33s · 38 in · 7.2k out · sonnet-5
 - [ ] Remember the last route visited under each project
 - [ ] Open a machine link into the remembered or only project
 - [ ] Drop the first-run redirect to Settings
