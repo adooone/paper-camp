@@ -732,6 +732,29 @@ export const DEFAULT_NIGHT_CONFIG: Required<Pick<NightConfig, 'ceiling' | 'floor
     maxChunks: 3,
   };
 
+export type NightGateBlockReason =
+  | 'dashboard-active'
+  | 'task-running'
+  | 'no-capacity-snapshot'
+  | 'five-hour-ceiling'
+  | 'seven-day-floor'
+  | 'outside-window';
+
+export interface NightGateStatus {
+  open: boolean;
+  reasons: NightGateBlockReason[];
+  fiveHourUtilizationPct: number | null;
+  sevenDayUtilizationPct: number | null;
+}
+
+export const MACHINE_NIGHT_PATH = '/api/machine/night' as const;
+
+export interface MachineNightGateResponse {
+  slug: string | null;
+  projectMissing: boolean;
+  gate: NightGateStatus | null;
+}
+
 export interface PaperCampConfig {
   /** Corpus format version (see CORPUS_FORMAT_VERSION) — the shape this file and the
    * entity frontmatter it sits alongside conform to, not the npm package version. */

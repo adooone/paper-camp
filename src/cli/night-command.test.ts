@@ -1,7 +1,11 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { type Server, createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { writeDaemonState } from '../core/daemon-state';
+import { MACHINE_NIGHT_PATH, MACHINE_PROJECTS_PATH } from '../types/index';
 import { runScan } from './index';
 import { readNightConfig, resolveNightConfig, runNight } from './night-command';
 
@@ -152,6 +156,7 @@ describe('runNight', () => {
     expect(statusLogs.output).toContain('ceiling (5h):   40%');
     expect(statusLogs.output).toContain('floor (7d):     65%');
     expect(statusLogs.output).toContain('maxChunks:      2');
+    expect(statusLogs.output).toContain('gate:           unknown — start the daemon');
 
     const offAgainLogs = captureLogs();
     const cleared = await runNight('off');
@@ -163,5 +168,60 @@ describe('runNight', () => {
     await runNight('status');
     finalStatusLogs.restore();
     expect(finalStatusLogs.output).toContain('night shift is off');
+  });
+
+  it('prints the live gate from a running daemon', async () => {
+    const configDir = await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-scan-');
+    await makeProjectDir(scanRoot, 'demo');
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    const servers: Server[] = [];
+    const server = createServer((req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      if (req.url === MACHINE_PROJECTS_PATH) {
+        res.end(JSON.stringify({ projects: [] }));
+        return;
+      }
+      if (req.url === MACHINE_NIGHT_PATH) {
+        res.end(
+          JSON.stringify({
+            slug: 'demo',
+            projectMissing: false,
+            gate: {
+              open: false,
+              reasons: ['task-running'],
+              fiveHourUtilizationPct: 10,
+              sevenDayUtilizationPct: 20,
+            },
+          }),
+        );
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+    servers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, () => resolve((server.address() as AddressInfo).port));
+    });
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.30.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: false,
+    });
+
+    try {
+      const logs = captureLogs();
+      await runNight('status');
+      logs.restore();
+      expect(logs.output).toContain('gate:           blocked — an agent task is running');
+    } finally {
+      await Promise.all(servers.map((s) => new Promise((r) => s.close(r))));
+    }
   });
 });

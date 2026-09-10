@@ -1,7 +1,12 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../../types/index';
+import {
+  MACHINE_NIGHT_PATH,
+  MACHINE_PROJECTS_PATH,
+  type MachineNightGateResponse,
+  type MachineProjectSummary,
+} from '../../types/index';
 import { machineConfigDir } from '../machine-registry';
 import { formatDuration } from '../phase-run';
 
@@ -118,6 +123,20 @@ export async function fetchMachineProjects(port: number): Promise<MachineProject
  * (pids get reused, ports get taken by something else). */
 export async function probeMachineEndpoint(port: number): Promise<boolean> {
   return (await fetchMachineProjects(port)) !== null;
+}
+
+export async function fetchMachineNightGate(
+  port: number,
+): Promise<MachineNightGateResponse | null> {
+  try {
+    const response = await fetch(`http://localhost:${port}${MACHINE_NIGHT_PATH}`, {
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as MachineNightGateResponse;
+  } catch {
+    return null;
+  }
 }
 
 /** The one truth every lifecycle command reads: a state file, a live pid, and

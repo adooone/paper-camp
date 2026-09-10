@@ -1,7 +1,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
-import { applyCorsHeaders, handlePreflight, isForbiddenRequest, isTrustedHost } from './api';
+import {
+  applyCorsHeaders,
+  createApiMiddleware,
+  handlePreflight,
+  isForbiddenRequest,
+  isTrustedHost,
+} from './api';
 
 describe('isTrustedHost', () => {
   afterEach(() => {
@@ -228,6 +234,38 @@ describe('applyCorsHeaders', () => {
     const { res, headers } = fakeRes();
     applyCorsHeaders(fakeReq({}), res);
     expect(headers()).toEqual({});
+  });
+});
+
+describe('createApiMiddleware getLastRequestAt', () => {
+  function fakeApiReq(host: string): IncomingMessage {
+    return {
+      method: 'GET',
+      url: '/api/package-name',
+      headers: { host },
+    } as unknown as IncomingMessage;
+  }
+
+  it('is null until a trusted /api request is handled', async () => {
+    const middleware = createApiMiddleware('/tmp/paper-camp-api-test-fake-root');
+    expect(middleware.getLastRequestAt()).toBeNull();
+
+    const { res } = fakeRes();
+    const before = Date.now();
+    await middleware(fakeApiReq('localhost:3333'), res, () => {});
+    const after = Date.now();
+
+    const lastRequestAt = middleware.getLastRequestAt();
+    expect(lastRequestAt).not.toBeNull();
+    expect(lastRequestAt as number).toBeGreaterThanOrEqual(before);
+    expect(lastRequestAt as number).toBeLessThanOrEqual(after);
+  });
+
+  it('does not record a request that fails the Host/Origin check', async () => {
+    const middleware = createApiMiddleware('/tmp/paper-camp-api-test-fake-root');
+    const { res } = fakeRes();
+    await middleware(fakeApiReq('evil.com'), res, () => {});
+    expect(middleware.getLastRequestAt()).toBeNull();
   });
 });
 

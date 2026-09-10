@@ -123,8 +123,9 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Score the chunks into a health map
       Derive churn, size, coverage, open findings, and last-reviewed age per chunk into `papercamp/night.json`, and show it as the Stats *Code health* card.
       run: 13m22s · 142 in · 51.8k out · sonnet-5
-- [ ] Gate the shift in the daemon
+- [x] Gate the shift in the daemon
       Idle desk, no running task, both rate-limit windows, and the optional clock window, rechecked after every pass.
+      run: 14m27s · 176 in · 53.6k out · sonnet-5
 - [ ] Run a pass read-only
       Built-in and custom checks against one chunk in a throwaway worktree, with Edit/Write/NotebookEdit off, turn and cost caps, and a confirming pass that assigns severity.
 - [ ] Report findings as night suggestions

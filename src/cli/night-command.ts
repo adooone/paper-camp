@@ -1,6 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
+  daemonStatePath,
+  fetchMachineNightGate,
+  readRunningDaemonState,
+} from '../core/daemon-state';
+import {
   type MachineProject,
   type MachineRegistry,
   clearNightProject,
@@ -9,7 +14,12 @@ import {
   saveRegistry,
   setNightProject,
 } from '../core/machine-registry';
-import { DEFAULT_NIGHT_CONFIG, type NightConfig } from '../types/index';
+import {
+  DEFAULT_NIGHT_CONFIG,
+  type MachineNightGateResponse,
+  type NightConfig,
+  type NightGateBlockReason,
+} from '../types/index';
 
 export async function readNightConfig(root: string): Promise<NightConfig | undefined> {
   const raw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(() => null);
@@ -51,6 +61,32 @@ function formatNightSettings(resolved: ResolvedNightConfig): string {
   return lines.join('\n');
 }
 
+const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
+  'dashboard-active': 'dashboard active in the last 30m',
+  'task-running': 'an agent task is running',
+  'no-capacity-snapshot': 'no capacity snapshot yet',
+  'five-hour-ceiling': '5h ceiling exceeded',
+  'seven-day-floor': '7d floor exceeded',
+  'outside-window': 'outside the configured window',
+};
+
+function formatGateLine(response: MachineNightGateResponse | null): string {
+  if (!response) {
+    return '  gate:           unknown — start the daemon (`paper-camp daemon` or `paper-camp start`) to evaluate it live';
+  }
+  if (response.projectMissing) {
+    return '  gate:           unknown — the selected project is no longer registered';
+  }
+  if (!response.gate) {
+    return '  gate:           unknown — no project selected';
+  }
+  if (response.gate.open) {
+    return '  gate:           open';
+  }
+  const reasons = response.gate.reasons.map((reason) => GATE_REASON_LABEL[reason]).join(', ');
+  return `  gate:           blocked — ${reasons}`;
+}
+
 async function printNightStatus(registry: MachineRegistry): Promise<void> {
   if (!registry.night) {
     console.log('paper-camp: night shift is off');
@@ -66,6 +102,10 @@ async function printNightStatus(registry: MachineRegistry): Promise<void> {
   console.log(`paper-camp: night shift runs for "${project.slug}" (${project.path})`);
   const config = await readNightConfig(project.path);
   console.log(formatNightSettings(resolveNightConfig(config)));
+
+  const daemonState = await readRunningDaemonState(daemonStatePath());
+  const gateResponse = daemonState ? await fetchMachineNightGate(daemonState.port) : null;
+  console.log(formatGateLine(gateResponse));
 }
 
 export async function runNight(target: string | undefined): Promise<boolean> {
