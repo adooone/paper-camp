@@ -20,6 +20,8 @@ export interface DaemonState {
   share: boolean;
   tailnet: boolean;
   autoUpdate?: boolean;
+  autoUpdateLastCheckedAt?: string;
+  autoUpdatePendingVersion?: string | null;
   links?: DaemonLinks;
 }
 
@@ -59,6 +61,10 @@ function isDaemonState(value: unknown): value is DaemonState {
     typeof v.share === 'boolean' &&
     typeof v.tailnet === 'boolean' &&
     (v.autoUpdate === undefined || typeof v.autoUpdate === 'boolean') &&
+    (v.autoUpdateLastCheckedAt === undefined || typeof v.autoUpdateLastCheckedAt === 'string') &&
+    (v.autoUpdatePendingVersion === undefined ||
+      v.autoUpdatePendingVersion === null ||
+      typeof v.autoUpdatePendingVersion === 'string') &&
     (v.links === undefined || isDaemonLinks(v.links))
   );
 }
@@ -131,6 +137,17 @@ export function formatDaemonStatusLine(state: DaemonState): string {
     `paper-camp: daemon running — pid ${state.pid}, port ${state.port}, ` +
     `v${state.version}, up ${uptime}${flags ? `, ${flags}` : ''}`
   );
+}
+
+export function formatAutoUpdateStatusLine(state: DaemonState): string {
+  if (!(state.autoUpdate ?? true)) return 'paper-camp: auto-update off';
+  const checked = state.autoUpdateLastCheckedAt
+    ? `last checked ${formatDuration(Date.now() - Date.parse(state.autoUpdateLastCheckedAt))} ago`
+    : 'no check yet';
+  const pending = state.autoUpdatePendingVersion
+    ? `, ${state.autoUpdatePendingVersion} pending`
+    : '';
+  return `paper-camp: auto-update on, ${checked}${pending}`;
 }
 
 /** Unlike the daemon banner, which prints only the single best way in, status

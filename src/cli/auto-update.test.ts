@@ -96,6 +96,7 @@ function fakeDeps(overrides: Partial<AutoUpdateDeps> = {}): AutoUpdateDeps {
     isBusy: vi.fn(() => false),
     runInstall: vi.fn(),
     restart: vi.fn(),
+    recordCheck: vi.fn(),
     ...overrides,
   };
 }
@@ -117,12 +118,14 @@ describe('pollForUpdate', () => {
     expect(deps.isBusy).not.toHaveBeenCalled();
     expect(deps.runInstall).not.toHaveBeenCalled();
     expect(deps.restart).not.toHaveBeenCalled();
+    expect(deps.recordCheck).toHaveBeenCalledWith(null);
   });
 
   it('does nothing when the registry check fails', async () => {
     const deps = fakeDeps({ checkLatestVersion: vi.fn().mockResolvedValue(null) });
     await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
     expect(deps.isBusy).not.toHaveBeenCalled();
+    expect(deps.recordCheck).toHaveBeenCalledWith(null);
   });
 
   it('logs the wait once while busy, and again only once a newer version shows up', async () => {
@@ -146,6 +149,8 @@ describe('pollForUpdate', () => {
     );
     expect(waitLines).toHaveLength(1);
     expect(waitLines[0][0]).toBe('paper-camp: update to 0.29.1 waiting for the machine to go idle');
+    expect(deps.recordCheck).toHaveBeenCalledTimes(2);
+    expect(deps.recordCheck).toHaveBeenCalledWith('0.29.1');
   });
 
   it('installs and restarts once idle, logging the install output', async () => {
@@ -168,6 +173,7 @@ describe('pollForUpdate', () => {
     expect(logSpy.mock.calls.map(([line]) => line)).toContain(
       'paper-camp: update to 0.29.1 installed, restarting',
     );
+    expect(deps.recordCheck).toHaveBeenCalledWith(null);
   });
 
   it('logs a failed install with its output and does not restart', async () => {

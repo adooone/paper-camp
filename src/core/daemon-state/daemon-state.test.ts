@@ -10,12 +10,22 @@ import {
   type DaemonLinks,
   type DaemonState,
   fetchMachineProjects,
+  formatAutoUpdateStatusLine,
   formatDaemonLinks,
   formatDaemonStatusLine,
   readRunningDaemonState,
   removeDaemonState,
   writeDaemonState,
 } from './daemon-state';
+
+const baseDaemonState: DaemonState = {
+  pid: 1,
+  port: 4333,
+  version: '0.27.0',
+  startedAt: new Date().toISOString(),
+  share: false,
+  tailnet: false,
+};
 
 describe('writeDaemonState / removeDaemonState', () => {
   const dirs: string[] = [];
@@ -168,6 +178,30 @@ describe('readRunningDaemonState', () => {
     expect(await readRunningDaemonState(path)).toEqual(state);
     await expect(access(path)).resolves.toBeUndefined();
   });
+
+  it('round-trips the auto-update check time and pending version', async () => {
+    const path = await makeStatePath();
+    const port = await listenOnFreePort((req, res) => {
+      if (req.url === MACHINE_PROJECTS_PATH) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ projects: [] }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+    const state: DaemonState = {
+      ...baseState,
+      pid: process.pid,
+      port,
+      autoUpdate: true,
+      autoUpdateLastCheckedAt: '2026-09-10T00:00:00.000Z',
+      autoUpdatePendingVersion: '0.29.1',
+    };
+    await writeDaemonState(path, state);
+
+    expect(await readRunningDaemonState(path)).toEqual(state);
+  });
 });
 
 describe('fetchMachineProjects', () => {
@@ -251,6 +285,45 @@ describe('formatDaemonStatusLine', () => {
     };
 
     expect(formatDaemonStatusLine(state)).toContain('share, tailnet');
+  });
+});
+
+describe('formatAutoUpdateStatusLine', () => {
+  it('reports off when the daemon was started with --no-auto-update', () => {
+    expect(formatAutoUpdateStatusLine({ ...baseDaemonState, autoUpdate: false })).toBe(
+      'paper-camp: auto-update off',
+    );
+  });
+
+  it('defaults to on when the field predates this daemon.json version', () => {
+    expect(formatAutoUpdateStatusLine(baseDaemonState)).toBe(
+      'paper-camp: auto-update on, no check yet',
+    );
+  });
+
+  it('reports how long ago the last check ran', () => {
+    const state: DaemonState = {
+      ...baseDaemonState,
+      autoUpdate: true,
+      autoUpdateLastCheckedAt: new Date(Date.now() - 65_000).toISOString(),
+    };
+
+    expect(formatAutoUpdateStatusLine(state)).toBe(
+      'paper-camp: auto-update on, last checked 1m5s ago',
+    );
+  });
+
+  it('names the pending version while an update waits for the machine to go idle', () => {
+    const state: DaemonState = {
+      ...baseDaemonState,
+      autoUpdate: true,
+      autoUpdateLastCheckedAt: new Date().toISOString(),
+      autoUpdatePendingVersion: '0.29.1',
+    };
+
+    expect(formatAutoUpdateStatusLine(state)).toBe(
+      'paper-camp: auto-update on, last checked 0s ago, 0.29.1 pending',
+    );
   });
 });
 

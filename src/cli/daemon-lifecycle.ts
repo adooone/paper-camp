@@ -7,6 +7,7 @@ import {
   daemonLogPath,
   daemonStatePath,
   fetchMachineProjects,
+  formatAutoUpdateStatusLine,
   formatDaemonLinks,
   formatDaemonStatusLine,
   isProcessAlive,
@@ -312,6 +313,7 @@ export async function runLs(): Promise<void> {
 export async function runStatus(): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
+  if (state) console.log(formatAutoUpdateStatusLine(state));
   if (state?.links) {
     const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
     const links = formatDaemonLinks(state.links);

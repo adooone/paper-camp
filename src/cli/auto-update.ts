@@ -51,6 +51,7 @@ export interface AutoUpdateDeps {
   isBusy: () => boolean;
   runInstall: (version: string) => Promise<InstallResult>;
   restart: () => void;
+  recordCheck: (pendingVersion: string | null) => void | Promise<void>;
 }
 
 export interface AutoUpdateState {
@@ -72,6 +73,7 @@ export async function pollForUpdate(
   const check = await deps.checkLatestVersion(currentVersion);
   if (!check || !check.isNewer) {
     state.waitingForIdleVersion = null;
+    await deps.recordCheck(null);
     return;
   }
 
@@ -82,9 +84,11 @@ export async function pollForUpdate(
       );
       state.waitingForIdleVersion = check.latestVersion;
     }
+    await deps.recordCheck(check.latestVersion);
     return;
   }
   state.waitingForIdleVersion = null;
+  await deps.recordCheck(null);
 
   const result = await deps.runInstall(check.latestVersion);
   const output = result.output.trim();
@@ -99,13 +103,18 @@ export async function pollForUpdate(
   deps.restart();
 }
 
-export function startAutoUpdatePolling(currentVersion: string, isBusy: () => boolean): () => void {
+export function startAutoUpdatePolling(
+  currentVersion: string,
+  isBusy: () => boolean,
+  recordCheck: (pendingVersion: string | null) => void | Promise<void>,
+): () => void {
   const state = createAutoUpdateState();
   const deps: AutoUpdateDeps = {
     checkLatestVersion,
     isBusy,
     runInstall: runNpmInstall,
     restart: () => spawnRestart(process.argv[1]),
+    recordCheck,
   };
   const tick = () => void pollForUpdate(currentVersion, state, deps);
   const timer = setInterval(tick, AUTO_UPDATE_POLL_INTERVAL_MS);

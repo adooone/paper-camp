@@ -69,6 +69,7 @@ other than the daemon's own package.
       run: 12m4s · 82 in · 33.2k out · sonnet-5
 - [x] Add `paper-camp update` for one check and install on demand
       run: 6m32s · 68 in · 21.5k out · sonnet-5
-- [ ] Report auto-update state, last check, and pending version in `paper-camp status`
+- [x] Report auto-update state, last check, and pending version in `paper-camp status`
+      run: 7m48s · 104 in · 24.5k out · sonnet-5
 - [ ] Carry the pending version to the hub's machine card
       Extend the `/api/machine/projects` payload and stamp the waiting version until the restart clears the mismatch.

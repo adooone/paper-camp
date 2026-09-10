@@ -306,8 +306,6 @@ export async function startDaemonServer({
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
-  const stopAutoUpdatePolling =
-    (autoUpdate ?? true) ? startAutoUpdatePolling(PAPER_CAMP_VERSION, checkMachineBusy) : undefined;
   const { mount } = createProjectMounter(
     defaultRegistryPath(),
     (project) => createProjectApi(project, pairingState, persistPairing, checkMachineBusy),
@@ -331,6 +329,7 @@ export async function startDaemonServer({
 
   const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
+  let stopAutoUpdatePolling: (() => void) | undefined;
   const shutdown = async () => {
     stopAutoUpdatePolling?.();
     tunnel?.process.kill();
@@ -388,7 +387,7 @@ export async function startDaemonServer({
     buildRegistrationLinkForMachine,
   );
 
-  const daemonState: DaemonState = {
+  let daemonState: DaemonState = {
     pid: process.pid,
     port,
     version: PAPER_CAMP_VERSION,
@@ -404,6 +403,22 @@ export async function startDaemonServer({
     },
   };
   await writeDaemonState(statePath, daemonState);
+
+  if (autoUpdate ?? true) {
+    const recordAutoUpdateCheck = async (pendingVersion: string | null) => {
+      daemonState = {
+        ...daemonState,
+        autoUpdateLastCheckedAt: new Date().toISOString(),
+        autoUpdatePendingVersion: pendingVersion,
+      };
+      await writeDaemonState(statePath, daemonState);
+    };
+    stopAutoUpdatePolling = startAutoUpdatePolling(
+      PAPER_CAMP_VERSION,
+      checkMachineBusy,
+      recordAutoUpdateCheck,
+    );
+  }
 
   console.log(
     formatDaemonBanner(
