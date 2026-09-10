@@ -31,7 +31,7 @@ import {
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
-import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
+import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import {
   type NetworkRegistration,
@@ -256,6 +256,8 @@ export function withRequestedNetwork(
 export function formatDaemonBanner(
   localLink: string,
   network: NetworkRegistration,
+  tailnetLink: string | undefined,
+  tunnelLink: string | undefined,
   color: boolean,
 ): string {
   return formatDevBanner({
@@ -263,6 +265,8 @@ export function formatDaemonBanner(
     localUrl: localLink,
     networkLink: network.link,
     networkBlocked: network.blocked,
+    tailnetLink,
+    tunnelLink,
     color,
   });
 }
@@ -334,17 +338,8 @@ export async function startDaemonServer({
   await writeDaemonState(statePath, daemonState);
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
-  console.log(
-    formatDaemonBanner(
-      localLink,
-      withRequestedNetwork(
-        await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
-        Boolean(tailnet || share),
-      ),
-      color,
-    ),
-  );
 
+  let tailnetLink: string | undefined;
   if (tailnet) {
     const tailnetStatus = await readTailnetStatus();
     if (!tailnetStatus) {
@@ -352,23 +347,35 @@ export async function startDaemonServer({
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
-        const tailnetLink = buildRegistrationLinkForMachine(
+        tailnetLink = buildRegistrationLinkForMachine(
           `https://${tailnetStatus.selfDnsName}/`,
           pairingState.token,
         );
-        console.log(formatTailnetLine(tailnetLink, color));
       } else {
         console.error(tailnetFailureMessage(result.output));
       }
     }
   }
 
+  let tunnelLink: string | undefined;
   if (share) {
     tunnel = await startQuickTunnel(port);
     const tunnelHost = new URL(tunnel.url).hostname;
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
-    const tunnelLink = buildRegistrationLinkForMachine(tunnel.url, pairingState.token);
-    console.log(formatShareLine(tunnelLink, color));
+    tunnelLink = buildRegistrationLinkForMachine(tunnel.url, pairingState.token);
   }
+
+  console.log(
+    formatDaemonBanner(
+      localLink,
+      withRequestedNetwork(
+        await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
+        Boolean(tailnet || share),
+      ),
+      tailnetLink,
+      tunnelLink,
+      color,
+    ),
+  );
 }

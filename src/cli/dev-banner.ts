@@ -23,6 +23,8 @@ export interface DevBannerInput {
   localUrl: string;
   networkLink?: string;
   networkBlocked?: boolean;
+  tailnetLink?: string;
+  tunnelLink?: string;
   color: boolean;
 }
 
@@ -33,30 +35,27 @@ function entry(label: string, url: string, color: boolean): string {
   return `${bold(label)}\n  ${link(url)}`;
 }
 
-export function formatDevBanner({
-  version,
-  localUrl,
-  networkLink,
-  networkBlocked,
-  color,
-}: DevBannerInput): string {
+/** The single best way in, ranked highest reachability first: a Tailnet
+ * serve link beats a Tunnel link beats whatever host address was found. */
+function bestEntry({ localUrl, networkLink, tailnetLink, tunnelLink }: DevBannerInput): {
+  label: string;
+  url: string;
+} {
+  if (tailnetLink) return { label: 'Tailnet', url: tailnetLink };
+  if (tunnelLink) return { label: 'Tunnel', url: tunnelLink };
+  if (networkLink) return { label: 'Network', url: networkLink };
+  return { label: 'This host', url: localUrl };
+}
+
+export function formatDevBanner(input: DevBannerInput): string {
+  const { version, networkBlocked, tailnetLink, tunnelLink, color } = input;
   const { dim, yellow } = palette(color);
-  const lines = [
-    `${yellow('⛺ Paper Camp')} ${dim(`v${version}`)}`,
-    '',
-    entry('This host', localUrl, color),
-  ];
-  if (networkLink) lines.push(entry('Network', networkLink, color));
-  else if (networkBlocked) lines.push(dim('Other devices need HTTPS — add --tailnet or --share.'));
+  const { label, url } = bestEntry(input);
+  const lines = [`${yellow('⛺ Paper Camp')} ${dim(`v${version}`)}`, '', entry(label, url, color)];
+  if (!tailnetLink && !tunnelLink && !input.networkLink && networkBlocked) {
+    lines.push(dim('Other devices need HTTPS — add --tailnet or --share.'));
+  }
   return lines.join('\n');
-}
-
-export function formatShareLine(tunnelLink: string, color: boolean): string {
-  return entry('Tunnel', tunnelLink, color);
-}
-
-export function formatTailnetLine(tailnetLink: string, color: boolean): string {
-  return entry('Tailnet', tailnetLink, color);
 }
 
 const ESC = String.fromCharCode(27);

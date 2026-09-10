@@ -333,21 +333,26 @@ describe('formatDaemonBanner', () => {
     'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
   const networkLink =
     'https://paper-camp.vercel.app/?runtime=http://100.80.79.13:4333&token=shared-token';
+  const tailnetLink =
+    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
+  const tunnelLink =
+    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
   const reachable = { link: networkLink, blocked: false };
 
-  it('carries the hosted-client Local link and the resolved Network link', () => {
-    const banner = formatDaemonBanner(localLink, reachable, false);
-    expect(banner).toContain(`This host\n  ${localLink}`);
+  it('carries the resolved Network link over the loopback link', () => {
+    const banner = formatDaemonBanner(localLink, reachable, undefined, undefined, false);
     expect(banner).toContain(`Network\n  ${networkLink}`);
+    expect(banner).not.toContain('This host');
   });
 
   it('never prints the pairing token as its own bare line', () => {
-    const banner = formatDaemonBanner(localLink, reachable, false);
+    const banner = formatDaemonBanner(localLink, reachable, undefined, undefined, false);
     expect(banner).not.toMatch(/^Pairing token:/m);
   });
 
-  it('omits the Network row when the machine has no reachable address', () => {
-    const banner = formatDaemonBanner(localLink, { blocked: false }, false);
+  it('falls back to the loopback link when the machine has no reachable address', () => {
+    const banner = formatDaemonBanner(localLink, { blocked: false }, undefined, undefined, false);
+    expect(banner).toContain(`This host\n  ${localLink}`);
     expect(banner).not.toContain('Network\n');
   });
 
@@ -357,15 +362,37 @@ describe('formatDaemonBanner', () => {
     const banner = formatDaemonBanner(
       localLink,
       withRequestedNetwork({ blocked: true }, true),
+      undefined,
+      undefined,
       false,
     );
     expect(banner).not.toContain('add --tailnet or --share');
   });
 
-  it('prints the remedy instead of the Network row when the pair is blocked', () => {
-    const banner = formatDaemonBanner(localLink, { blocked: true }, false);
+  it('prints the remedy alongside the loopback link when the pair is blocked', () => {
+    const banner = formatDaemonBanner(localLink, { blocked: true }, undefined, undefined, false);
     expect(banner).not.toContain('Network\n');
     expect(banner).toContain('add --tailnet or --share');
+  });
+
+  it('prefers the Tailnet link over the Tunnel link, Network link, and loopback link', () => {
+    const banner = formatDaemonBanner(localLink, reachable, tailnetLink, tunnelLink, false);
+    expect(banner).toContain(`Tailnet\n  ${tailnetLink}`);
+    expect(banner).not.toContain('Network');
+    expect(banner).not.toContain('Tunnel\n');
+    expect(banner).not.toContain('This host');
+  });
+
+  it('prefers the Tunnel link over the Network link and loopback link when there is no Tailnet link', () => {
+    const banner = formatDaemonBanner(localLink, reachable, undefined, tunnelLink, false);
+    expect(banner).toContain(`Tunnel\n  ${tunnelLink}`);
+    expect(banner).not.toContain('Network');
+  });
+
+  it('prints exactly one link entry', () => {
+    const banner = formatDaemonBanner(localLink, reachable, tailnetLink, tunnelLink, false);
+    const linkLines = banner.split('\n').filter((line) => line.startsWith('  http'));
+    expect(linkLines).toHaveLength(1);
   });
 });
 

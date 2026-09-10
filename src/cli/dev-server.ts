@@ -7,7 +7,7 @@ import {
 } from '../app/server/pairing';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
-import { formatDevBanner, formatShareLine, formatTailnetLine } from './dev-banner';
+import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { buildRegistrationLinkForRuntime, networkRegistrationLink } from './registration-link';
 import {
@@ -107,16 +107,8 @@ export async function startDevServer({
 
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
   const network = await networkRegistrationLink(port, apiMiddleware.pairing.token);
-  console.log(
-    formatDevBanner({
-      version: PAPER_CAMP_VERSION,
-      localUrl: localLink,
-      networkLink: network.link,
-      networkBlocked: network.blocked && !tailnet && !share,
-      color,
-    }),
-  );
 
+  let tailnetLink: string | undefined;
   if (tailnet) {
     const tailnetStatus = await readTailnetStatus();
     if (!tailnetStatus) {
@@ -124,23 +116,34 @@ export async function startDevServer({
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
-        const tailnetLink = buildRegistrationLinkForRuntime(
+        tailnetLink = buildRegistrationLinkForRuntime(
           `https://${tailnetStatus.selfDnsName}/`,
           apiMiddleware.pairing.token,
         );
-        console.log(formatTailnetLine(tailnetLink, color));
       } else {
         console.error(tailnetFailureMessage(result.output));
       }
     }
   }
 
+  let tunnelLink: string | undefined;
   if (share) {
     tunnel = await startQuickTunnel(port);
     const tunnelHost = new URL(tunnel.url).hostname;
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
-    const tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, apiMiddleware.pairing.token);
-    console.log(formatShareLine(tunnelLink, color));
+    tunnelLink = buildRegistrationLinkForRuntime(tunnel.url, apiMiddleware.pairing.token);
   }
+
+  console.log(
+    formatDevBanner({
+      version: PAPER_CAMP_VERSION,
+      localUrl: localLink,
+      networkLink: network.link,
+      networkBlocked: network.blocked && !tailnet && !share,
+      tailnetLink,
+      tunnelLink,
+      color,
+    }),
+  );
 }

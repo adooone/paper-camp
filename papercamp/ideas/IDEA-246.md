@@ -60,8 +60,9 @@ explains and which the browser owns. Remembering scroll position or open
 panels within a route.
 
 ### Phases
-- [ ] Print the single best link in the banner
+- [x] Print the single best link in the banner
       Tailnet when `--tailnet` produced one, else Tunnel, else the host link.
+      run: 6m17s · 78 in · 26.5k out · sonnet-5
 - [ ] List every known link in `paper-camp status`
 - [ ] Stamp running agents on hub project rows
       `use-runtime-statuses.ts` also polls `/api/agent/status` and carries the task's plan title.

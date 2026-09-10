@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDevBanner, formatShareLine, formatTailnetLine, linkifyUrls } from './dev-banner';
+import { formatDevBanner, linkifyUrls } from './dev-banner';
 
 const input = {
   version: '0.21.1',
@@ -8,21 +8,20 @@ const input = {
 };
 
 describe('formatDevBanner', () => {
-  it('greets with the version and lists Local and Network links', () => {
-    const banner = formatDevBanner({ ...input, color: false });
+  it('greets with the version and prints the This host link when nothing better was found', () => {
+    const banner = formatDevBanner({ ...input, networkLink: undefined, color: false });
     expect(banner).toContain('Paper Camp');
     expect(banner).toContain('v0.21.1');
     expect(banner).toContain('This host\n  http://localhost:3333');
+  });
+
+  it('prefers the Network link over the loopback link', () => {
+    const banner = formatDevBanner({ ...input, color: false });
     expect(banner).toContain(`Network\n  ${input.networkLink}`);
+    expect(banner).not.toContain('This host');
   });
 
-  it('omits the Network row and its hint when the machine has no reachable address', () => {
-    const banner = formatDevBanner({ ...input, networkLink: undefined, color: false });
-    expect(banner).toContain('This host');
-    expect(banner).not.toContain('Network');
-  });
-
-  it('prints the HTTPS remedy instead of the Network row when the pair is blocked', () => {
+  it('prints the HTTPS remedy instead of any link row when the pair is blocked', () => {
     const banner = formatDevBanner({
       ...input,
       networkLink: undefined,
@@ -30,7 +29,6 @@ describe('formatDevBanner', () => {
       color: false,
     });
     expect(banner).toContain('This host');
-    expect(banner).not.toContain('Network\n');
     expect(banner).toContain('add --tailnet or --share');
   });
 
@@ -40,10 +38,46 @@ describe('formatDevBanner', () => {
     expect(banner).not.toContain('add --tailnet or --share');
   });
 
-  it('wraps each link in an OSC 8 hyperlink with color, so a wrapped URL stays clickable', () => {
-    const banner = formatDevBanner({ ...input, color: true });
+  it('prefers Tailnet over Tunnel, Network, and the loopback link', () => {
+    const banner = formatDevBanner({
+      ...input,
+      tailnetLink: 'https://paper-camp.vercel.app/?runtime=https://box.tailnet.ts.net/&token=abc',
+      tunnelLink: 'https://paper-camp.vercel.app/?runtime=https://foo.trycloudflare.com&token=abc',
+      color: false,
+    });
+    expect(banner).toContain(
+      'Tailnet\n  https://paper-camp.vercel.app/?runtime=https://box.tailnet.ts.net/&token=abc',
+    );
+    expect(banner).not.toContain('Network');
+    expect(banner).not.toContain('Tunnel\n');
+  });
+
+  it('prefers Tunnel over Network and the loopback link when there is no Tailnet link', () => {
+    const banner = formatDevBanner({
+      ...input,
+      tunnelLink: 'https://paper-camp.vercel.app/?runtime=https://foo.trycloudflare.com&token=abc',
+      color: false,
+    });
+    expect(banner).toContain(
+      'Tunnel\n  https://paper-camp.vercel.app/?runtime=https://foo.trycloudflare.com&token=abc',
+    );
+    expect(banner).not.toContain('Network');
+  });
+
+  it('prints exactly one link entry', () => {
+    const banner = formatDevBanner({
+      ...input,
+      tailnetLink: 'https://paper-camp.vercel.app/?runtime=https://box.tailnet.ts.net/&token=abc',
+      tunnelLink: 'https://paper-camp.vercel.app/?runtime=https://foo.trycloudflare.com&token=abc',
+      color: false,
+    });
+    const linkLines = banner.split('\n').filter((line) => line.startsWith('  http'));
+    expect(linkLines).toHaveLength(1);
+  });
+
+  it('wraps the link in an OSC 8 hyperlink with color, so a wrapped URL stays clickable', () => {
+    const banner = formatDevBanner({ ...input, networkLink: undefined, color: true });
     expect(banner).toContain(`\x1b]8;;${input.localUrl}\x1b\\${input.localUrl}\x1b]8;;\x1b\\`);
-    expect(banner).toContain(`\x1b]8;;${input.networkLink}\x1b\\`);
   });
 
   it('emits no escape codes without color, so piped output stays clean', () => {
@@ -59,22 +93,6 @@ describe('formatDevBanner', () => {
     expect(banner.replaceAll(colorCode, '').replaceAll(hyperlinkWrapper, '')).toBe(
       formatDevBanner({ ...input, color: false }),
     );
-  });
-});
-
-describe('formatShareLine', () => {
-  it('labels the tunnel link on its own line', () => {
-    const line = formatShareLine('https://foo-bar.trycloudflare.com', false);
-    expect(line).toContain('Tunnel\n  ');
-    expect(line).toContain('https://foo-bar.trycloudflare.com');
-  });
-});
-
-describe('formatTailnetLine', () => {
-  it('labels the tailnet link on its own line', () => {
-    const line = formatTailnetLine('https://paper-camp.vercel.app/?runtime=…', false);
-    expect(line).toContain('Tailnet\n  ');
-    expect(line).toContain('https://paper-camp.vercel.app/?runtime=…');
   });
 });
 
