@@ -61,8 +61,9 @@ other than the daemon's own package.
 - [x] Record the auto-update setting on the daemon
       `--no-auto-update` on `start`, an `autoUpdate` field in `daemon.json` beside `tailnet` and `share`, carried through `restartOptionsFromState`.
       run: 5m7s · 90 in · 14.8k out · sonnet-5
-- [ ] Ask the registry for the latest version
+- [x] Ask the registry for the latest version
       A core check that fetches the `latest` dist-tag and compares it to `PAPER_CAMP_VERSION`.
+      run: 3m13s · 46 in · 7.9k out · sonnet-5
 - [ ] Install and restart the daemon when the machine is idle
       The 30-minute poll, gated on the existing `isMachineBusy`, logging the wait once and a failed install with its output.
 - [ ] Add `paper-camp update` for one check and install on demand
