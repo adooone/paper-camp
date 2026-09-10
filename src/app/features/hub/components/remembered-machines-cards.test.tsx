@@ -1,6 +1,11 @@
 import type { MachineProjectSummary } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
-import { MachineProjectRow, machineReachMessage } from './remembered-machines-cards';
+import {
+  MachineProjectRow,
+  PendingUpdateStamp,
+  machineReachMessage,
+  pendingUpdateStampLabel,
+} from './remembered-machines-cards';
 
 const project = (overrides: Partial<MachineProjectSummary> = {}): MachineProjectSummary => ({
   slug: 'demo',
@@ -62,6 +67,29 @@ describe('MachineProjectRow', () => {
     });
     const [, slug] = tree.props.children as [unknown, unknown];
     expect(slug).toBe(false);
+  });
+});
+
+describe('pendingUpdateStampLabel', () => {
+  it('is null when nothing is pending', () => {
+    expect(pendingUpdateStampLabel(null)).toBeNull();
+  });
+
+  it('names the pending version', () => {
+    expect(pendingUpdateStampLabel('0.29.1')).toBe('Update to 0.29.1');
+  });
+});
+
+describe('PendingUpdateStamp', () => {
+  it('renders nothing when nothing is pending', () => {
+    expect(PendingUpdateStamp({ pendingUpdateVersion: null })).toBeNull();
+  });
+
+  it('shows the pending version in an info stamp', () => {
+    const tree = PendingUpdateStamp({ pendingUpdateVersion: '0.29.1' });
+    const stamp = tree?.props.children;
+    expect(stamp.props.variant).toBe('info');
+    expect(stamp.props.children).toBe('Update to 0.29.1');
   });
 });
 

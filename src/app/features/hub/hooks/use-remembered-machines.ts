@@ -16,6 +16,7 @@ export interface RememberedMachine {
   machineUrl: string;
   reach: MachineReach;
   projects: MachineProjectSummary[];
+  pendingUpdateVersion: string | null;
 }
 
 export interface UseRememberedMachinesResult {
@@ -32,6 +33,9 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
   const [projectsByMachine, setProjectsByMachine] = useState<
     Record<string, MachineProjectSummary[]>
   >({});
+  const [pendingUpdateVersionByMachine, setPendingUpdateVersionByMachine] = useState<
+    Record<string, string | null>
+  >({});
   const mounted = useRef(true);
 
   const reach = useCallback((machineUrl: string) => {
@@ -42,13 +46,17 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
         current[machineUrl] === 'loading' ? { ...current, [machineUrl]: 'waiting' } : current,
       );
     }, WAITING_AFTER_MS);
-    fetchMachineProjects(machineUrl).then((projects) => {
+    fetchMachineProjects(machineUrl).then((result) => {
       clearTimeout(slow);
       if (!mounted.current) return;
-      setProjectsByMachine((current) => ({ ...current, [machineUrl]: projects ?? [] }));
+      setProjectsByMachine((current) => ({ ...current, [machineUrl]: result?.projects ?? [] }));
+      setPendingUpdateVersionByMachine((current) => ({
+        ...current,
+        [machineUrl]: result?.pendingUpdateVersion ?? null,
+      }));
       setReachByMachine((current) => ({
         ...current,
-        [machineUrl]: projects === null ? 'unreachable' : 'ready',
+        [machineUrl]: result === null ? 'unreachable' : 'ready',
       }));
     });
   }, []);
@@ -69,6 +77,7 @@ export function useRememberedMachines(chosenRuntimeUrls: string[]): UseRemembere
       projectsByMachine[machineUrl] ?? [],
       chosenRuntimeUrls,
     ),
+    pendingUpdateVersion: pendingUpdateVersionByMachine[machineUrl] ?? null,
   }));
 
   return {

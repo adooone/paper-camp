@@ -1,6 +1,6 @@
 import { runtimeRowLabel } from '@/app/services/hub';
 import type { MachineProjectSummary } from '@/types/index';
-import { Button, Card, ListItem, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, ListItem, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { type MachineReach, useRememberedMachines } from '../hooks';
 
 export interface MachineProjectRowProps {
@@ -33,6 +33,25 @@ export const MachineProjectRow = ({ project, onOpen }: MachineProjectRowProps) =
   </ListItem>
 );
 
+export const pendingUpdateStampLabel = (pendingUpdateVersion: string | null): string | null =>
+  pendingUpdateVersion ? `Update to ${pendingUpdateVersion}` : null;
+
+export const PendingUpdateStamp = ({
+  pendingUpdateVersion,
+}: {
+  pendingUpdateVersion: string | null;
+}) => {
+  const label = pendingUpdateStampLabel(pendingUpdateVersion);
+  if (!label) return null;
+  return (
+    <Tooltip content="Waiting for every project on this machine to go idle before installing.">
+      <Stamp size="small" variant="info">
+        {label}
+      </Stamp>
+    </Tooltip>
+  );
+};
+
 /** What the card says while the machine's project list is not on screen —
  * the browser's own local-network prompt is invisible to the page, so the
  * card has to name it. */
@@ -62,7 +81,7 @@ export const RememberedMachinesCards = ({ chosenRuntimeUrls }: RememberedMachine
 
   return (
     <>
-      {machines.map(({ machineUrl, reach, projects }) => {
+      {machines.map(({ machineUrl, reach, projects, pendingUpdateVersion }) => {
         const host = runtimeRowLabel(machineUrl);
         const message = machineReachMessage(reach, host, projects.length);
         return (
@@ -72,7 +91,10 @@ export const RememberedMachinesCards = ({ chosenRuntimeUrls }: RememberedMachine
             texture="kraft"
             className="flex flex-1 flex-col gap-2 text-left"
           >
-            <p className="m-0 font-semibold">{host}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="m-0 font-semibold">{host}</p>
+              <PendingUpdateStamp pendingUpdateVersion={pendingUpdateVersion} />
+            </div>
             {message && <p className="m-0 font-handwritten text-sm opacity-70">{message}</p>}
             {reach === 'unreachable' && (
               <div>

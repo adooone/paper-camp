@@ -1,4 +1,4 @@
-import type { MachineProjectSummary } from '@/types/index';
+import type { MachineProjectSummary, MachineProjectsResponse } from '@/types/index';
 
 /**
  * A project is chosen once it's embedded under a mount prefix or paired with
@@ -119,8 +119,8 @@ export function resolveMachineProjectSlug(
 export async function detectThisMachine(
   mountPrefix: string,
   origin: string,
-  fetchMachineProjects: (machineUrl: string) => Promise<MachineProjectSummary[] | null>,
-): Promise<MachineProjectSummary[] | null> {
+  fetchMachineProjects: (machineUrl: string) => Promise<MachineProjectsResponse | null>,
+): Promise<MachineProjectsResponse | null> {
   if (mountPrefix !== '') return null;
   return fetchMachineProjects(origin);
 }

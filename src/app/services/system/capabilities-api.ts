@@ -4,7 +4,7 @@ import {
   type CapabilityResult,
   type ConnectionResult,
   MACHINE_PROJECTS_PATH,
-  type MachineProjectSummary,
+  type MachineProjectsResponse,
   type TailnetPeerRuntime,
 } from '@/types/index';
 import { apiUrl } from '../api-base';
@@ -91,15 +91,20 @@ export const fetchTailnetPeerRuntimes = async (
  * The registry holds machines this client is not currently pointed at, so the
  * base URL is explicit rather than taken from `apiUrl` — same shape as
  * `fetchRuntimeVersionAt` above, one level up (a machine, not a single project).
+ * `pendingUpdateVersion` defaults to `null` for an older daemon that predates
+ * this field, rather than dropping the whole response over one missing key.
  */
 export const fetchMachineProjects = async (
   machineUrl: string,
-): Promise<MachineProjectSummary[] | null> => {
+): Promise<MachineProjectsResponse | null> => {
   try {
     const response = await fetch(`${machineUrl}${MACHINE_PROJECTS_PATH}`);
     if (!response.ok) return null;
-    const body = (await response.json()) as { projects: MachineProjectSummary[] };
-    return body.projects;
+    const body = (await response.json()) as Partial<MachineProjectsResponse>;
+    return {
+      projects: body.projects ?? [],
+      pendingUpdateVersion: body.pendingUpdateVersion ?? null,
+    };
   } catch {
     return null;
   }

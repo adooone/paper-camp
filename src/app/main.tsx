@@ -46,10 +46,10 @@ if (!rootElement) throw new Error('#root element not found');
 // A machine link opens that machine's project list — unless this browser
 // already opened one there, or the machine has only one, then it opens directly.
 async function chooseMachineProject(machineUrl: string): Promise<boolean> {
-  const projects = await fetchMachineProjects(machineUrl);
-  if (!projects) return false;
+  const result = await fetchMachineProjects(machineUrl);
+  if (!result) return false;
   const chosenRuntimeUrls = listProjects(storage).map(projectEntryId);
-  const slug = resolveMachineProjectSlug(machineUrl, projects, chosenRuntimeUrls);
+  const slug = resolveMachineProjectSlug(machineUrl, result.projects, chosenRuntimeUrls);
   if (!slug) return false;
   window.location.assign(
     runtimeAdditionUrl(

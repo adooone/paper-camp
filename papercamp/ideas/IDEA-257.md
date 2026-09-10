@@ -2,7 +2,7 @@
 id: IDEA-257
 title: The daemon updates itself
 type: feat
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - cli
@@ -71,5 +71,6 @@ other than the daemon's own package.
       run: 6m32s · 68 in · 21.5k out · sonnet-5
 - [x] Report auto-update state, last check, and pending version in `paper-camp status`
       run: 7m48s · 104 in · 24.5k out · sonnet-5
-- [ ] Carry the pending version to the hub's machine card
+- [x] Carry the pending version to the hub's machine card
       Extend the `/api/machine/projects` payload and stamp the waiting version until the restart clears the mismatch.
+      run: 15m22s · 218 in · 49.3k out · sonnet-5

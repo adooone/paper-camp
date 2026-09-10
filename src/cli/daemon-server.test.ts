@@ -430,6 +430,7 @@ describe('createDaemonRequestHandler', () => {
   async function startHandler(
     registryPath: string,
     serveToolbar?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>,
+    getPendingUpdateVersion?: () => string | null,
   ): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
@@ -446,6 +447,7 @@ describe('createDaemonRequestHandler', () => {
       mount,
       mounted,
       localLink,
+      getPendingUpdateVersion,
       serveToolbar,
     );
     const server = createServer((req, res) => {
@@ -487,7 +489,20 @@ describe('createDaemonRequestHandler', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       projects: [{ slug: 'demo', name: 'Demo', mounted: false, busy: false, missing: false }],
+      pendingUpdateVersion: null,
     });
+  });
+
+  it('carries a pending update version at /api/machine/projects', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port } = await startHandler(registryPath, undefined, () => '0.29.1');
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
+
+    expect(await response.json()).toMatchObject({ pendingUpdateVersion: '0.29.1' });
   });
 
   it('reports a project as mounted after a request has built its middleware', async () => {
@@ -511,6 +526,7 @@ describe('createDaemonRequestHandler', () => {
           interruptedCount: 0,
         },
       ],
+      pendingUpdateVersion: null,
     });
   });
 
@@ -561,6 +577,7 @@ describe('createDaemonRequestHandler', () => {
       projects: [
         { slug: 'deleted-repo', name: 'Deleted', mounted: false, busy: false, missing: true },
       ],
+      pendingUpdateVersion: null,
     });
   });
 

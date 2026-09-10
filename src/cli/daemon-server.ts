@@ -183,6 +183,7 @@ export function createDaemonRequestHandler(
   mount: (slug: string) => Promise<MountResult>,
   mounted: ReadonlyMap<string, ApiMiddleware>,
   localLink: string,
+  getPendingUpdateVersion: () => string | null = () => null,
   // A seam for tests to serve a fake toolbar bundle without a real dist/toolbar on disk.
   serveToolbar: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = serveToolbarAsset,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
@@ -211,7 +212,7 @@ export function createDaemonRequestHandler(
         return;
       }
       const projects = await readMachineProjectSummaries(registryPath, mounted);
-      sendJson(res, 200, { projects });
+      sendJson(res, 200, { projects, pendingUpdateVersion: getPendingUpdateVersion() });
       return;
     }
 
@@ -306,6 +307,7 @@ export async function startDaemonServer({
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
+  let pendingUpdateVersion: string | null = null;
   const { mount } = createProjectMounter(
     defaultRegistryPath(),
     (project) => createProjectApi(project, pairingState, persistPairing, checkMachineBusy),
@@ -318,6 +320,7 @@ export async function startDaemonServer({
     mount,
     mounted,
     localLink,
+    () => pendingUpdateVersion,
   );
 
   const server = createServer((req, res) => {
@@ -406,6 +409,7 @@ export async function startDaemonServer({
 
   if (autoUpdate ?? true) {
     const recordAutoUpdateCheck = async (pendingVersion: string | null) => {
+      pendingUpdateVersion = pendingVersion;
       daemonState = {
         ...daemonState,
         autoUpdateLastCheckedAt: new Date().toISOString(),

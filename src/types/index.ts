@@ -812,6 +812,14 @@ export interface MachineProjectSummary {
   interruptedCount?: number;
 }
 
+/** The full body a daemon answers `MACHINE_PROJECTS_PATH` with. `pendingUpdateVersion`
+ *  is machine-level, not per-project — set while auto-update has found a newer release
+ *  but is waiting for every project to go idle before installing it. */
+export interface MachineProjectsResponse {
+  projects: MachineProjectSummary[];
+  pendingUpdateVersion: string | null;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;
