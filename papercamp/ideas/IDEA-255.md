@@ -73,8 +73,9 @@ demand.
 - [x] Drop the per-phase verify from `runQueue`
       A phase ends when the agent stops: commit, tick, next phase — no checks, no fix loop between items.
       run: 1m51s · 28 in · 9.5k out · sonnet-5
-- [ ] Verify once after the last phase
+- [x] Verify once after the last phase
       `startRunAllPhases` runs the biome fixer, lint, tests, consistency and docs once, sends introduced red to the fix pass under the same cap, commits a landed fix as its own `fix` commit, and stamps review only after.
+      run: 18m1s · 220 in · 81.2k out · sonnet-5
 - [ ] Take the baseline from the checks' last results
       Reuse results already produced on the current HEAD; run the sweep up front only when none exist.
 - [ ] Keep one session for the whole run

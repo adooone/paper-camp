@@ -191,6 +191,7 @@ export function createApiMiddleware(
     hooks.setRunReview,
     hooks.commitCorpus,
     hooks.annotateFixRun,
+    hooks.commitVerifyFix,
     hooks.snapshotWorkingTree,
     () => activity.notifyChanged(),
     agentState,

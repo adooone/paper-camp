@@ -3,10 +3,14 @@ import { readFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { getPrMapFetchedAt } from '@/core/git-pr';
+import { findConsistencyIssues } from '@/core/parse';
+import { readWorkEntries } from '@/core/readers';
+import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { CheckName, CheckResult, CheckStatus } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import type { DeskCheckManager } from './desk-checks';
 import { loadManifestChecks } from './desk-checks';
+import { campFile, readMaybe } from './helpers';
 
 interface StatusSnapshot {
   // Codebase consistency (knip + depcruise) — mirrors the CI "Consistency" job.
@@ -130,6 +134,46 @@ export function createStatusManager(
     });
   }
 
+  // Kept independent of runCheck's running/queued dedup (that gate is for on-demand
+  // Stack clicks) — a sweep racing a manual click is rare and each run is read-only.
+  function runConsistencyAndWait(): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
+      setResult('consistency', 'running', '', CONSISTENCY_COMMAND);
+      const proc = spawn(CONSISTENCY_COMMAND, {
+        cwd: root,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: true,
+      });
+      let output = '';
+      proc.stdout?.on('data', (d: Buffer) => {
+        output += d.toString();
+      });
+      proc.stderr?.on('data', (d: Buffer) => {
+        output += d.toString();
+      });
+      proc.on('close', (code) => {
+        const pass = code === 0;
+        setResult('consistency', pass ? 'pass' : 'fail', output);
+        resolve(pass);
+      });
+      proc.on('error', (err) => {
+        setResult('consistency', 'fail', `Failed to spawn process: ${err.message}`);
+        resolve(false);
+      });
+    });
+  }
+
+  // Mirrors the Stack panel's Docs stamp (IDEA-156): doc findings computed from
+  // the corpus, not a spawned command.
+  async function runDocsCheck(): Promise<boolean> {
+    const [{ entries }, roadmapRaw] = await Promise.all([
+      readWorkEntries(campFile(root, 'ideas')),
+      readMaybe(join(root, 'ROADMAP.md')),
+    ]);
+    const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
+    return findConsistencyIssues(entries, subjectVocabulary).length === 0;
+  }
+
   // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting nits
   // can't hard-fail an autonomous run-all phase.
   function runChecksAndWait(): Promise<CheckName[]> {
@@ -140,17 +184,24 @@ export function createStatusManager(
           manifestChecks.some((c) => c.name === n),
         );
         const hasVitest = repoHasVitest(root);
-        const passed = await Promise.all(
-          names.map(async (name) => {
-            if (name === 'test' && !hasVitest) return true;
-            // A run already in flight predates this fix pass — wait it out so the
-            // fresh runCheck below reports on post-fix code, not a stale join.
-            const stale = checks.getState().inFlight.get(name);
-            if (stale) await stale;
-            return (await checks.runCheck(name)) === 'pass';
-          }),
-        );
-        resolve(names.filter((_, i) => !passed[i]));
+        const [passed, consistencyPassed, docsPassed] = await Promise.all([
+          Promise.all(
+            names.map(async (name) => {
+              if (name === 'test' && !hasVitest) return true;
+              // A run already in flight predates this fix pass — wait it out so the
+              // fresh runCheck below reports on post-fix code, not a stale join.
+              const stale = checks.getState().inFlight.get(name);
+              if (stale) await stale;
+              return (await checks.runCheck(name)) === 'pass';
+            }),
+          ),
+          runConsistencyAndWait(),
+          runDocsCheck(),
+        ]);
+        const failing: CheckName[] = names.filter((_, i) => !passed[i]);
+        if (!consistencyPassed) failing.push('consistency');
+        if (!docsPassed) failing.push('docs');
+        resolve(failing);
       };
 
       const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });

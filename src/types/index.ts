@@ -718,7 +718,7 @@ export interface CheckResult {
   output: string;
 }
 
-export type CheckName = 'lint' | 'format' | 'test' | 'consistency' | 'build';
+export type CheckName = 'lint' | 'format' | 'test' | 'consistency' | 'docs' | 'build';
 
 export type CapabilityStatus = 'ok' | 'warn' | 'missing';
 

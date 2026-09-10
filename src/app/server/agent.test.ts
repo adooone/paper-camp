@@ -307,8 +307,8 @@ describe('startRunAllPhases', () => {
 
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(commits).toEqual([0, 1]);
-    // Baseline call before phase 1, then one gate check per phase.
-    expect(runProjectChecks).toHaveBeenCalledTimes(3);
+    // Baseline call before phase 1, then one verify call after the last phase.
+    expect(runProjectChecks).toHaveBeenCalledTimes(2);
     expect(onRunComplete).toHaveBeenCalledOnce();
 
     const after = parseEntityFile(
@@ -381,7 +381,7 @@ describe('startRunAllPhases', () => {
     expect(resumes).toEqual([undefined, 'sess-1']);
   });
 
-  it('resumes a same-run fix pass and the next phase from the running session id', async () => {
+  it("resumes the fix pass from the last phase's running session id", async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const resumes: (string | undefined)[] = [];
     let call = 0;
@@ -398,13 +398,13 @@ describe('startRunAllPhases', () => {
     let checks = 0;
     manager.startRunAllPhases(plan, async () => {
       checks++;
-      // Baseline (call 1) is clean; the gate after phase 1 is red once, triggering
-      // one fix pass, then green for the rest of the run.
+      // Baseline (call 1) is clean; the single verify after the last phase
+      // (call 2) is red once, triggering one fix pass, then green on retry.
       return checks === 2 ? ['test'] : [];
     });
     expect(await waitForStatus(manager, settled)).toBe('done');
-    // call 1: phase 1, cold. call 2: fix pass, resumes phase 1's session.
-    // call 3: phase 2, resumes the fix pass's session.
+    // call 1: phase 1, cold. call 2: phase 2, resumes phase 1's session.
+    // call 3: the run's fix pass, resumes phase 2's session.
     expect(resumes).toEqual([undefined, 'sess-1', 'sess-2']);
   });
 
@@ -451,18 +451,17 @@ describe('startRunAllPhases', () => {
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
       calls++;
-      // Baseline (call 1) is clean; every gate check after that is red, so the
-      // fix loop exhausts its cap instead of being tolerated as pre-existing.
+      // Baseline (call 1) is clean; the single verify after the last phase (call 2)
+      // and every re-check after that is red, so the fix loop exhausts its cap.
       return calls === 1 ? [] : ['test'];
     });
     expect(await waitForStatus(manager, settled)).toBe('error');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain('fix attempt 1/2');
     expect(lines).toContain('fix attempt 2/2');
-    expect(lines).toContain(
-      '[blocked] phase 1 — project checks still failing after 2 fix attempt(s)',
-    );
-    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(lines).toContain('[blocked] run — project checks still failing after 2 fix attempt(s)');
+    // Both phases land regardless — only the run's own fix commit is withheld.
+    expect(onPhaseCommit).toHaveBeenCalledTimes(2);
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
@@ -555,8 +554,8 @@ process.exit(1)
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
       calls++;
-      // Baseline (call 1) is clean; the gate after phase 1 is red, so the fix
-      // pass runs and immediately declares a blocker instead of retrying.
+      // Baseline (call 1) is clean; the single verify after the last phase is red,
+      // so the fix pass runs and immediately declares a blocker instead of retrying.
       return calls === 1 ? [] : ['test'];
     });
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -564,9 +563,9 @@ process.exit(1)
     expect(lines).toContain('fix attempt 1/2');
     expect(lines).not.toContain('fix attempt 2/2');
     expect(lines).toContain(
-      '[blocked] phase 1 — agent needs a decision: which auth flow should the fix use?',
+      '[blocked] run — agent needs a decision: which auth flow should the fix use?',
     );
-    expect(onPhaseCommit).not.toHaveBeenCalled();
+    expect(onPhaseCommit).toHaveBeenCalledTimes(2);
     expect(onRunComplete).not.toHaveBeenCalled();
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
@@ -855,6 +854,7 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
       undefined,
       undefined,
       undefined,
+      undefined,
       hooks.snapshotWorkingTree,
     );
 
@@ -972,6 +972,7 @@ describe('machine-wide busy gate', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(
       root,
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -1534,6 +1535,7 @@ describe('boot reconciliation', () => {
     // state object, as vite.app.config.ts's watcher does across a server edit.
     const secondManager = createAgentManager(
       root,
+      undefined,
       undefined,
       undefined,
       undefined,

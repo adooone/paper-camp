@@ -4,7 +4,7 @@ import { parseEntityFile } from '@/core/parse';
 import { mergeRun } from '@/core/phase-run';
 import { computePlanContentHash } from '@/core/serialize';
 import { todayDateString } from '@/core/serialize';
-import type { GitStatusEntry, PhaseItem, PlanEntry, RunUsage } from '@/types/index';
+import type { CheckName, GitStatusEntry, PhaseItem, PlanEntry, RunUsage } from '@/types/index';
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
@@ -87,6 +87,21 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commit(files, title, refs, { noVerify: true });
   }
 
+  // The one commit for the run's end-of-run verify+fix pass (IDEA-255) — separate
+  // from commitPhase because it isn't tied to a single phase/fix list entry.
+  async function commitVerifyFix(
+    plan: PlanEntry,
+    checkNames: CheckName[],
+    startSnapshot: GitStatusEntry[],
+  ): Promise<void> {
+    const area = resolveCommitScope(plan);
+    const title = `fix(${area}): ${checkNames.join(', ')}`;
+    const refs = plan.id ? `Refs: ${plan.id}` : undefined;
+    const files = changedSince(startSnapshot, await git.getStatus());
+    if (files.length === 0) return;
+    await git.commit(files, title, refs, { noVerify: true });
+  }
+
   async function setRunReview(plan: PlanEntry): Promise<void> {
     if (!plan.id) return;
     const ideasDir = campFile(root, 'ideas');
@@ -121,6 +136,7 @@ export function createAgentHooks(root: string, git: GitManager) {
   return {
     stampAuditDate,
     commitPhase,
+    commitVerifyFix,
     setRunReview,
     commitCorpus,
     annotateFixRun: annotatePhaseRun,

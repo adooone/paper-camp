@@ -256,9 +256,10 @@ export function buildFixPassPrompt(
   itemText: string,
   introducedChecks: CheckName[],
 ): string {
+  const subject = label.startsWith('fix') ? 'fix' : label === 'run' ? 'run' : 'phase';
   const scope =
     introducedChecks.length > 0
-      ? `The check(s) this ${label.startsWith('fix') ? 'fix' : 'phase'} broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before it started are pre-existing or known-flaky and are not your concern.`
+      ? `The check(s) this ${subject} broke: ${introducedChecks.join(', ')}. Only fix those — other checks that were already red before it started are pre-existing or known-flaky and are not your concern.`
       : "The project's lint/format/type-check/test checks are failing.";
   return `${scope} This is after ${label}, "${itemText}", of the plan "${plan.title}" (${plan.id ?? 'no id'}).
 
@@ -355,6 +356,11 @@ export function createAgentManager(
     planId: string,
     fixIndex: number,
     run: { usage: RunUsage; kind: 'fix' },
+  ) => Promise<void>,
+  onVerifyFixCommit?: (
+    plan: PlanEntry,
+    checkNames: CheckName[],
+    startSnapshot: GitStatusEntry[],
   ) => Promise<void>,
   snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
   onCorpusChanged?: () => void,
@@ -1595,21 +1601,130 @@ export function createAgentManager(
         if (failed > 0) {
           pushLine(task, `Run stopped after ${summary} completed, 1 failed`);
           void setStatus(task, 'error');
-        } else {
-          pushLine(task, `All ${summary} completed`);
-          if (onRunComplete) {
-            try {
-              pushLine(task, '[review] setting plan status to review');
-              await onRunComplete(plan);
-            } catch (err) {
-              pushLine(
-                task,
-                `Warning: could not set plan status to review: ${(err as Error).message}`,
-              );
-            }
-          }
-          void setStatus(task, 'done');
+          return;
         }
+
+        pushLine(task, `All ${summary} completed`);
+
+        if (runProjectChecks) {
+          pushLine(task, '[verify] running lint/format/test/consistency/docs');
+          const startSnapshot: GitStatusEntry[] = snapshotWorkingTree
+            ? await snapshotWorkingTree()
+            : [];
+          let failing = await runProjectChecks();
+          if (isSuperseded(task)) {
+            finalizeSuperseded(task);
+            return;
+          }
+          if (isStopping(task)) {
+            void setStatus(task, 'done');
+            return;
+          }
+          let introduced = failing.filter((c) => !toleratedRed.has(c));
+          const introducedAtStart = introduced;
+          let verifyOk = introduced.length === 0;
+
+          let fixAttempt = 0;
+          let fixBlocker: string | undefined;
+          let sessionId = fixResult.sessionId;
+          while (!verifyOk && fixAttempt < FIX_ATTEMPT_CAP) {
+            if (isSuperseded(task) || isStopping(task)) break;
+            fixAttempt++;
+            task.fixAttempt = fixAttempt;
+            task.fixAttemptCap = FIX_ATTEMPT_CAP;
+
+            const { timedOut: fixTimedOut, sessionId: fixSessionId } = await runFixPass(
+              task,
+              plan,
+              'run',
+              'all phases',
+              adapter,
+              model,
+              effort,
+              fixAttempt,
+              FIX_ATTEMPT_CAP,
+              introduced,
+              sessionId,
+            );
+            if (fixSessionId) sessionId = fixSessionId;
+            if (isSuperseded(task)) {
+              finalizeSuperseded(task);
+              return;
+            }
+            if (task.blocker) {
+              fixBlocker = task.blocker;
+              task.blocker = undefined;
+              break;
+            }
+            if (fixTimedOut) {
+              pushLine(task, `[fix] run — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`);
+            }
+
+            pushLine(
+              task,
+              `[verify] re-running lint/format/test/consistency/docs (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
+            );
+            failing = await runProjectChecks();
+            if (isSuperseded(task)) {
+              finalizeSuperseded(task);
+              return;
+            }
+            introduced = failing.filter((c) => !toleratedRed.has(c));
+            verifyOk = introduced.length === 0;
+          }
+          task.fixAttempt = undefined;
+          task.fixAttemptCap = undefined;
+
+          if (isStopping(task)) {
+            void setStatus(task, 'done');
+            return;
+          }
+
+          if (verifyOk && fixAttempt > 0 && onVerifyFixCommit) {
+            pushLine(task, `[commit] fix — ${introducedAtStart.join(', ')}`);
+            await onVerifyFixCommit(plan, introducedAtStart, startSnapshot);
+          }
+
+          if (fixBlocker) {
+            task.errorReason ??= fixBlocker;
+            pushLine(task, `[blocked] run — agent needs a decision: ${fixBlocker}`);
+            await escalateToLog(
+              task,
+              plan.id,
+              `Run-all's final verify — the fix pass needs a decision: ${fixBlocker}`,
+            );
+            void setStatus(task, 'error');
+            return;
+          }
+
+          if (!verifyOk) {
+            task.errorReason = `run — project checks (${introduced.join(', ')}) still failing after ${fixAttempt} fix attempt(s)`;
+            pushLine(
+              task,
+              `[blocked] run — project checks still failing after ${fixAttempt} fix attempt(s)`,
+            );
+            await escalateToLog(
+              task,
+              plan.id,
+              `Run-all finished but project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
+            );
+            void setStatus(task, 'error');
+            return;
+          }
+        }
+
+        if (onRunComplete) {
+          try {
+            pushLine(task, '[review] setting plan status to review');
+            await onRunComplete(plan);
+          } catch (err) {
+            pushLine(
+              task,
+              `Warning: could not set plan status to review: ${(err as Error).message}`,
+            );
+          }
+        }
+        void setStatus(task, 'done');
       } catch (err) {
         if (isSuperseded(task)) {
           if (!isTaskDone(task)) finalizeSuperseded(task);
