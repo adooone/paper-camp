@@ -577,6 +577,7 @@ export interface DefaultAgentsMap {
   feedback: AgentConfig;
   codeReview: AgentConfig;
   deskDiscovery: AgentConfig;
+  nightShift: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -587,6 +588,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
   codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
   deskDiscovery: { agent: 'claude-code' },
+  nightShift: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
 };
 
 /** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
@@ -711,6 +713,23 @@ export interface NightWindow {
   to: string;
 }
 
+export const NIGHT_CHECK_IDS = [
+  'bugs',
+  'dead-code',
+  'performance',
+  'tests',
+  'docs',
+  'security',
+  'a11y',
+] as const;
+
+export type NightCheckId = (typeof NIGHT_CHECK_IDS)[number];
+
+export interface NightCustomCheck {
+  name: string;
+  prompt: string;
+}
+
 /** Night shift settings (IDEA-241) for the one project `paper-camp daemon` reviews unattended. */
 export interface NightConfig {
   /** Five-hour rate-limit window ceiling, percent utilisation; a pass never starts above it. */
@@ -723,14 +742,46 @@ export interface NightConfig {
   roots?: string[];
   /** Chunks reviewed per night, highest health score first. */
   maxChunks?: number;
+  checks?: Partial<Record<NightCheckId, boolean>>;
+  customChecks?: NightCustomCheck[];
+  maxTurns?: number;
+  maxCostUsd?: number;
 }
 
-export const DEFAULT_NIGHT_CONFIG: Required<Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks'>> =
-  {
-    ceiling: 50,
-    floor: 70,
-    maxChunks: 3,
-  };
+export const DEFAULT_NIGHT_CONFIG: Required<
+  Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks' | 'maxTurns' | 'maxCostUsd'>
+> = {
+  ceiling: 50,
+  floor: 70,
+  maxChunks: 3,
+  maxTurns: 20,
+  maxCostUsd: 1,
+};
+
+export type NightFindingSeverity = 'critical' | 'high' | 'normal';
+
+export interface NightRawFinding {
+  file: string;
+  line: number | null;
+  message: string;
+}
+
+export interface NightFinding extends NightRawFinding {
+  severity: NightFindingSeverity;
+}
+
+export interface NightPassUsage {
+  numTurns: number;
+  costUsd: number;
+  cappedByTurns: boolean;
+}
+
+export interface NightChunkPassResult {
+  chunkPath: string;
+  reviewedCommit: string;
+  findings: NightFinding[];
+  usage: NightPassUsage;
+}
 
 export type NightGateBlockReason =
   | 'dashboard-active'

@@ -40,6 +40,7 @@ export const useSettingsPage = () => {
       feedback: current?.feedback ?? DEFAULT_AGENTS.feedback,
       codeReview: current?.codeReview ?? DEFAULT_AGENTS.codeReview,
       deskDiscovery: current?.deskDiscovery ?? DEFAULT_AGENTS.deskDiscovery,
+      nightShift: current?.nightShift ?? DEFAULT_AGENTS.nightShift,
       [key]: newEntry,
     };
     if (key === 'codeReview' && agentConfigsEqual(newEntry, updated.phase)) {

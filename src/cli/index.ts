@@ -395,12 +395,12 @@ program
   });
 
 program
-  .command('night <target>')
+  .command('night <target> [chunk]')
   .description(
-    'Choose the one registered project `paper-camp daemon` runs the night shift for: a slug, "off", or "status"',
+    'Choose the one registered project `paper-camp daemon` runs the night shift for: a slug, "off", "status", or "run <chunk>" to run a pass now',
   )
-  .action(async (target: string) => {
-    if (!(await runNight(target))) process.exitCode = 1;
+  .action(async (target: string, chunk: string | undefined) => {
+    if (!(await runNight(target, chunk))) process.exitCode = 1;
   });
 
 program
@@ -635,6 +635,9 @@ export async function runAudit(root: string): Promise<boolean> {
         deskDiscovery: rawAgents.deskDiscovery
           ? coerceAgentConfig(rawAgents.deskDiscovery)
           : DEFAULT_AGENTS.deskDiscovery,
+        nightShift: rawAgents.nightShift
+          ? coerceAgentConfig(rawAgents.nightShift)
+          : DEFAULT_AGENTS.nightShift,
       }
     : DEFAULT_AGENTS;
   const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });

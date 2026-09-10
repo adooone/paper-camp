@@ -8,6 +8,9 @@ import { writeDaemonState } from '../core/daemon-state';
 import { MACHINE_NIGHT_PATH, MACHINE_PROJECTS_PATH } from '../types/index';
 import { runScan } from './index';
 import { readNightConfig, resolveNightConfig, runNight } from './night-command';
+import { runNightChunkPass } from './night-pass';
+
+vi.mock('./night-pass', () => ({ runNightChunkPass: vi.fn() }));
 
 const dirs: string[] = [];
 
@@ -83,6 +86,8 @@ describe('resolveNightConfig', () => {
       ceiling: 50,
       floor: 70,
       maxChunks: 3,
+      maxTurns: 20,
+      maxCostUsd: 1,
       window: undefined,
       roots: undefined,
     });
@@ -95,6 +100,8 @@ describe('resolveNightConfig', () => {
       ceiling: 40,
       floor: 60,
       maxChunks: 5,
+      maxTurns: 20,
+      maxCostUsd: 1,
       window: undefined,
       roots: ['src/app'],
     });
@@ -223,5 +230,121 @@ describe('runNight', () => {
     } finally {
       await Promise.all(servers.map((s) => new Promise((r) => s.close(r))));
     }
+  });
+});
+
+describe('runNight("run", chunk)', () => {
+  afterEach(() => {
+    vi.mocked(runNightChunkPass).mockReset();
+  });
+
+  it('requires a chunk argument', async () => {
+    await useConfigDir();
+    const errors = captureErrors();
+    const ok = await runNight('run');
+    errors.restore();
+    expect(ok).toBe(false);
+    expect(errors.output).toContain('Usage: paper-camp night run <chunk>');
+  });
+
+  it('fails when night shift is off', async () => {
+    await useConfigDir();
+    const errors = captureErrors();
+    const ok = await runNight('run', 'src/core');
+    errors.restore();
+    expect(ok).toBe(false);
+    expect(errors.output).toContain('night shift is off');
+  });
+
+  it('fails when no checks are enabled', async () => {
+    await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    const allOff = {
+      checks: {
+        bugs: false,
+        'dead-code': false,
+        performance: false,
+        tests: false,
+        docs: false,
+        security: false,
+        a11y: false,
+      },
+    };
+    await makeProjectDir(scanRoot, 'demo', allOff);
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    const errors = captureErrors();
+    const ok = await runNight('run', 'src/core');
+    errors.restore();
+    expect(ok).toBe(false);
+    expect(errors.output).toContain('no checks are enabled');
+    expect(runNightChunkPass).not.toHaveBeenCalled();
+  });
+
+  it('runs the pass with the configured agent and prints confirmed findings', async () => {
+    await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    const projectDir = join(scanRoot, 'demo');
+    await mkdir(join(projectDir, 'papercamp'), { recursive: true });
+    await writeFile(
+      join(projectDir, 'papercamp', 'config.json'),
+      JSON.stringify({
+        night: { maxTurns: 5, maxCostUsd: 0.25 },
+        defaultAgents: { nightShift: { agent: 'claude-code', model: 'opus', effort: 'high' } },
+      }),
+      'utf-8',
+    );
+    await writeFile(
+      join(projectDir, 'papercamp', 'night.json'),
+      JSON.stringify({
+        chunks: [{ path: 'src/core', lastReviewedCommit: 'abc1234', lastReviewedAt: null }],
+      }),
+      'utf-8',
+    );
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    vi.mocked(runNightChunkPass).mockResolvedValue({
+      chunkPath: 'src/core',
+      reviewedCommit: 'deadbeefdeadbeef',
+      findings: [{ file: 'src/core/a.ts', line: 3, message: 'off by one', severity: 'high' }],
+      usage: { numTurns: 4, costUsd: 0.12, cappedByTurns: false },
+    });
+
+    const logs = captureLogs();
+    const ok = await runNight('run', 'src/core');
+    logs.restore();
+
+    expect(ok).toBe(true);
+    expect(runNightChunkPass).toHaveBeenCalledWith(
+      expect.objectContaining({
+        root: projectDir,
+        chunkPath: 'src/core',
+        sinceCommit: 'abc1234',
+        agentConfig: { agent: 'claude-code', model: 'opus', effort: 'high' },
+        maxTurns: 5,
+        maxCostUsd: 0.25,
+      }),
+    );
+    expect(logs.output).toContain('reviewed "src/core" at deadbee');
+    expect(logs.output).toContain('1 confirmed finding(s)');
+    expect(logs.output).toContain('[high] src/core/a.ts:3 — off by one');
+  });
+
+  it('reports a thrown error rather than crashing', async () => {
+    await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    await makeProjectDir(scanRoot, 'demo');
+    await runScan(scanRoot);
+    await runNight('demo');
+    vi.mocked(runNightChunkPass).mockRejectedValue(new Error('worktree add failed'));
+
+    const errors = captureErrors();
+    const ok = await runNight('run', 'src/core');
+    errors.restore();
+
+    expect(ok).toBe(false);
+    expect(errors.output).toContain('night pass failed — worktree add failed');
   });
 });

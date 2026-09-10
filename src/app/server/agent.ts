@@ -205,6 +205,9 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         deskDiscovery: rawAgents.deskDiscovery
           ? coerceAgentConfig(rawAgents.deskDiscovery)
           : DEFAULT_AGENTS.deskDiscovery,
+        nightShift: rawAgents.nightShift
+          ? coerceAgentConfig(rawAgents.nightShift)
+          : DEFAULT_AGENTS.nightShift,
       };
     }
     if (config.defaultAgent) {
@@ -217,6 +220,7 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
         feedback: { agent: id },
         codeReview: { agent: id },
         deskDiscovery: { agent: id },
+        nightShift: { agent: id },
       };
     }
     return DEFAULT_AGENTS;

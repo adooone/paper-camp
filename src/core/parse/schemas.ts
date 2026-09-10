@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AGENT_IDS } from '../../types/index';
+import { AGENT_IDS, NIGHT_CHECK_IDS } from '../../types/index';
 
 export const agentConfigSchema = z.preprocess(
   (v) => (typeof v === 'string' ? { agent: v } : v),
@@ -200,12 +200,21 @@ export const nightWindowSchema = z.object({
   to: z.string(),
 });
 
+export const nightCustomCheckSchema = z.object({
+  name: z.string(),
+  prompt: z.string(),
+});
+
 export const nightConfigSchema = z.object({
   ceiling: z.number().optional(),
   floor: z.number().optional(),
   window: nightWindowSchema.optional(),
   roots: z.array(z.string()).optional(),
   maxChunks: z.number().int().positive().optional(),
+  checks: z.record(z.enum(NIGHT_CHECK_IDS), z.boolean()).optional(),
+  customChecks: z.array(nightCustomCheckSchema).optional(),
+  maxTurns: z.number().int().positive().optional(),
+  maxCostUsd: z.number().positive().optional(),
 });
 
 export const paperCampConfigSchema = z.object({
@@ -238,6 +247,7 @@ export const paperCampConfigSchema = z.object({
       feedback: agentConfigSchema,
       codeReview: agentConfigSchema,
       deskDiscovery: agentConfigSchema,
+      nightShift: agentConfigSchema,
     })
     .optional(),
   desk: deskConfigSchema.optional(),

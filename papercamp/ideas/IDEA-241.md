@@ -126,8 +126,9 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Gate the shift in the daemon
       Idle desk, no running task, both rate-limit windows, and the optional clock window, rechecked after every pass.
       run: 14m27s · 176 in · 53.6k out · sonnet-5
-- [ ] Run a pass read-only
+- [x] Run a pass read-only
       Built-in and custom checks against one chunk in a throwaway worktree, with Edit/Write/NotebookEdit off, turn and cost caps, and a confirming pass that assigns severity.
+      run: 28m37s · 340 in · 141.4k out · sonnet-5
 - [ ] Report findings as night suggestions
       Write confirmed findings to `papercamp/suggestions.md` with `source: night`, drop overlaps, expire stale ones on read, and log each pass as `night-review`.
 - [ ] Surface the night report on the Ideas page

@@ -135,6 +135,9 @@ export const readRoutes: ReadRoute[] = [
           deskDiscovery: config.defaultAgents.deskDiscovery
             ? coerceAgentConfig(config.defaultAgents.deskDiscovery)
             : DEFAULT_AGENTS.deskDiscovery,
+          nightShift: config.defaultAgents.nightShift
+            ? coerceAgentConfig(config.defaultAgents.nightShift)
+            : DEFAULT_AGENTS.nightShift,
         };
       }
       // A malformed desk manifest (IDEA-119) is dropped rather than crashing the page,
