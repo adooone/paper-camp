@@ -682,6 +682,34 @@ export interface CiReleaseState {
   releasedVersion: string | null;
 }
 
+export interface NightWindow {
+  /** Local time, "HH:MM", the shift may start after. */
+  from: string;
+  /** Local time, "HH:MM", the shift stops passing after. */
+  to: string;
+}
+
+/** Night shift settings (IDEA-241) for the one project `paper-camp daemon` reviews unattended. */
+export interface NightConfig {
+  /** Five-hour rate-limit window ceiling, percent utilisation; a pass never starts above it. */
+  ceiling?: number;
+  /** Seven-day rate-limit window floor, percent utilisation — the setting to tune first. */
+  floor?: number;
+  /** Optional local-time clock window on top of the two rate-limit gates. */
+  window?: NightWindow;
+  /** Top-level folders to score as chunks; unset scores every folder one level under `src/`. */
+  roots?: string[];
+  /** Chunks reviewed per night, highest health score first. */
+  maxChunks?: number;
+}
+
+export const DEFAULT_NIGHT_CONFIG: Required<Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks'>> =
+  {
+    ceiling: 50,
+    floor: 70,
+    maxChunks: 3,
+  };
+
 export interface PaperCampConfig {
   /** Corpus format version (see CORPUS_FORMAT_VERSION) — the shape this file and the
    * entity frontmatter it sits alongside conform to, not the npm package version. */
@@ -707,6 +735,8 @@ export interface PaperCampConfig {
     /** Manual build for the Stack's Build action; no universal default. */
     build?: string;
   };
+  /** Night shift gate and scoring settings (IDEA-241); merge with DEFAULT_NIGHT_CONFIG for unset fields. */
+  night?: NightConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';

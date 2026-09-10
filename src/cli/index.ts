@@ -64,6 +64,7 @@ import {
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
+import { runNight } from './night-command';
 import { buildSessionFocus } from './session-focus';
 
 function fail(message: string): void {
@@ -391,6 +392,15 @@ program
   )
   .action(async (dir: string) => {
     if (!(await runScan(dir))) process.exitCode = 1;
+  });
+
+program
+  .command('night <target>')
+  .description(
+    'Choose the one registered project `paper-camp daemon` runs the night shift for: a slug, "off", or "status"',
+  )
+  .action(async (target: string) => {
+    if (!(await runNight(target))) process.exitCode = 1;
   });
 
 program

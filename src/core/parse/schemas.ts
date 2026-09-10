@@ -195,6 +195,19 @@ export const deskConfigSchema = z.object({
   ci: deskCiSchema.optional(),
 });
 
+export const nightWindowSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+});
+
+export const nightConfigSchema = z.object({
+  ceiling: z.number().optional(),
+  floor: z.number().optional(),
+  window: nightWindowSchema.optional(),
+  roots: z.array(z.string()).optional(),
+  maxChunks: z.number().int().positive().optional(),
+});
+
 export const paperCampConfigSchema = z.object({
   version: z
     .number()
@@ -228,6 +241,7 @@ export const paperCampConfigSchema = z.object({
     })
     .optional(),
   desk: deskConfigSchema.optional(),
+  night: nightConfigSchema.optional(),
 });
 
 // notifications.log entries — JSON Lines, so a corrupt or half-written line must

@@ -117,8 +117,9 @@ than one project per machine. Running under `paper-camp dev`. Surviving a
 reboot, which is [[IDEA-233]]'s later concern.
 
 ### Phases
-- [ ] Pick the project and read the settings
+- [x] Pick the project and read the settings
       Add `night: { slug }` to `projects.json` with `paper-camp night <slug> | off | status`, and the `night` block in `papercamp/config.json` with its defaults.
+      run: 8m30s · 100 in · 31.1k out · sonnet-5
 - [ ] Score the chunks into a health map
       Derive churn, size, coverage, open findings, and last-reviewed age per chunk into `papercamp/night.json`, and show it as the Stats *Code health* card.
 - [ ] Gate the shift in the daemon
