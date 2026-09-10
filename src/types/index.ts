@@ -37,6 +37,7 @@ export interface PhaseRun {
   outputTokens: number;
   model?: string;
   attempts: number;
+  sessionId?: string;
 }
 
 export interface PhaseItem {

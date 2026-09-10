@@ -50,7 +50,8 @@ export function shortModel(model: string): string {
 }
 
 export function formatRunSummary(run: PhaseRun): string {
-  return `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
+  const base = `${formatTokens(run.inputTokens + run.outputTokens)} tokens · ${formatDuration(run.durationMs)}${run.attempts > 1 ? ` ×${run.attempts}` : ''}${run.model ? ` · ${run.model}` : ''}`;
+  return run.sessionId ? `${base} · session ${run.sessionId.slice(0, 8)}` : base;
 }
 
 export function formatRunLine(run: PhaseRun): string {
@@ -61,6 +62,7 @@ export function formatRunLine(run: PhaseRun): string {
   ];
   if (run.model) parts.push(run.model);
   if (run.attempts > 1) parts.push(`×${run.attempts}`);
+  if (run.sessionId) parts.push(`sess:${run.sessionId}`);
   return parts.join(' · ');
 }
 
@@ -82,21 +84,28 @@ export function parseRunLine(value: string): PhaseRun | undefined {
     const inMatch = segment.match(/^(.+)\s+in$/);
     const outMatch = segment.match(/^(.+)\s+out$/);
     const attemptMatch = segment.match(/^×(\d+)$/);
+    const sessionMatch = segment.match(/^sess:(.+)$/);
     if (inMatch) run.inputTokens = parseTokens(inMatch[1]);
     else if (outMatch) run.outputTokens = parseTokens(outMatch[1]);
     else if (attemptMatch) run.attempts = Number(attemptMatch[1]);
+    else if (sessionMatch) run.sessionId = sessionMatch[1];
     else run.model = segment;
   }
   return run;
 }
 
-export function mergeRun(prev: PhaseRun | undefined, usage: RunUsage): PhaseRun {
+export function mergeRun(
+  prev: PhaseRun | undefined,
+  usage: RunUsage,
+  sessionId?: string,
+): PhaseRun {
   return {
     durationMs: (prev?.durationMs ?? 0) + usage.durationMs,
     inputTokens: (prev?.inputTokens ?? 0) + usage.inputTokens,
     outputTokens: (prev?.outputTokens ?? 0) + usage.outputTokens,
     model: usage.model ? shortModel(usage.model) : prev?.model,
     attempts: (prev?.attempts ?? 0) + 1,
+    sessionId: sessionId ?? prev?.sessionId,
   };
 }
 

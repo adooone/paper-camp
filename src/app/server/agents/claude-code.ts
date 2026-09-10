@@ -17,6 +17,7 @@ export interface ParsedAgentLine {
   milestone?: PhaseMilestone;
   usage?: RunUsage;
   rateLimit?: RateLimitSnapshot;
+  turnContextTokens?: number;
 }
 
 function readNum(value: unknown): number {
@@ -68,6 +69,16 @@ function extractUsage(json: Record<string, unknown>): RunUsage {
     cacheReadTokens,
     costUsd: readNum(json.total_cost_usd),
   };
+}
+
+// Sum of everything the turn's request carried — the figure that tracks toward
+// the context window limit, not just the freshly-billed `input_tokens` slice.
+function extractContextTokens(usage: Record<string, unknown>): number {
+  return (
+    readNum(usage.input_tokens) +
+    readNum(usage.cache_creation_input_tokens) +
+    readNum(usage.cache_read_input_tokens)
+  );
 }
 
 const WINDOW_KEYS: RateLimitWindowKey[] = ['five_hour', 'seven_day'];
@@ -166,8 +177,13 @@ export function parseLine(line: string): ParsedAgentLine | null {
       return rateLimit ? { text: '', rateLimit } : null;
     }
     case 'assistant': {
-      const message = json.message as { content?: unknown[] } | undefined;
+      const message = json.message as
+        | { content?: unknown[]; usage?: Record<string, unknown> }
+        | undefined;
       const blocks = message?.content ?? [];
+      const turnContextTokens = message?.usage ? extractContextTokens(message.usage) : undefined;
+      const withContext = (line: ParsedAgentLine): ParsedAgentLine =>
+        turnContextTokens === undefined ? line : { ...line, turnContextTokens };
       for (const block of blocks) {
         const b = block as {
           type?: string;
@@ -177,13 +193,16 @@ export function parseLine(line: string): ParsedAgentLine | null {
         };
         if (b.type === 'tool_use') {
           const milestone = classifyAnchor(b.name ?? '', b.input) ?? undefined;
-          return { text: `Running ${b.name ?? 'a tool'}…`, ...(milestone && { milestone }) };
+          return withContext({
+            text: `Running ${b.name ?? 'a tool'}…`,
+            ...(milestone && { milestone }),
+          });
         }
         if (b.type === 'text' && typeof b.text === 'string' && b.text.trim()) {
-          return { text: b.text.trim() };
+          return withContext({ text: b.text.trim() });
         }
       }
-      return null;
+      return turnContextTokens === undefined ? null : { text: '', turnContextTokens };
     }
     case 'user': {
       const message = json.message as { content?: unknown[] } | undefined;

@@ -60,6 +60,9 @@ import {
 const MAX_LINES = 50;
 const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
+// Past this, a resumed session's context is bloated enough that starting fresh
+// beats carrying it forward (IDEA-255).
+const SESSION_CONTEXT_LIMIT = 120_000;
 const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DESTRUCTIVE_GIT_BAN =
@@ -348,14 +351,14 @@ export function createAgentManager(
     phase: PhaseItem,
     phaseIndex: number,
     startSnapshot: GitStatusEntry[],
-    run?: { usage: RunUsage; kind: 'phase' | 'fix' },
+    run?: { usage: RunUsage; kind: 'phase' | 'fix'; sessionId?: string },
   ) => Promise<void>,
   onRunComplete?: (plan: PlanEntry) => Promise<void>,
   onRunStart?: (plan: PlanEntry) => Promise<void>,
   onFixRun?: (
     planId: string,
     fixIndex: number,
-    run: { usage: RunUsage; kind: 'fix' },
+    run: { usage: RunUsage; kind: 'fix'; sessionId?: string },
   ) => Promise<void>,
   onVerifyFixCommit?: (
     plan: PlanEntry,
@@ -744,6 +747,7 @@ export function createAgentManager(
     stderr: string;
     sessionId?: string;
     usage?: RunUsage;
+    lastTurnContextTokens?: number;
   }> {
     // Cleared per attempt: `task` is reused across retries, so a stale reason from
     // an earlier attempt must never be attributed to a later, unrelated failure.
@@ -759,6 +763,7 @@ export function createAgentManager(
 
     let sessionId: string | undefined;
     let usage: RunUsage | undefined;
+    let lastTurnContextTokens: number | undefined;
     if (proc.stdout) {
       const rl = createInterface({ input: proc.stdout });
       rl.on('line', (line) => {
@@ -768,6 +773,9 @@ export function createAgentManager(
         if (parsed?.milestone) noteAnchor(task, parsed.milestone);
         if (parsed?.sessionId) sessionId = parsed.sessionId;
         if (parsed?.usage) usage = parsed.usage;
+        if (parsed?.turnContextTokens !== undefined) {
+          lastTurnContextTokens = parsed.turnContextTokens;
+        }
         if (parsed?.rateLimit) task.rateLimit = parsed.rateLimit;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
@@ -793,6 +801,7 @@ export function createAgentManager(
       stderr,
       sessionId,
       usage,
+      lastTurnContextTokens,
     }));
   }
 
@@ -1314,16 +1323,21 @@ export function createAgentManager(
     attemptCap: number,
     introducedChecks: CheckName[],
     resume: string | undefined,
-  ): Promise<{ ok: boolean; timedOut: boolean; sessionId?: string }> {
+  ): Promise<{
+    ok: boolean;
+    timedOut: boolean;
+    sessionId?: string;
+    lastTurnContextTokens?: number;
+  }> {
     pushLine(task, `[fix] ${label} — fix attempt ${attempt}/${attemptCap} for failing checks`);
     const prompt = buildFixPassPrompt(plan, label, itemText, introducedChecks);
     return runPhaseProcess(task, adapter, prompt, model, effort, {
       guardSuperseded: true,
       trackBlocker: true,
       resume,
-    }).then(({ ok, timedOut, stderr, sessionId }) => {
+    }).then(({ ok, timedOut, stderr, sessionId, lastTurnContextTokens }) => {
       if (!ok && !timedOut && stderr.trim()) pushLine(task, stderr.trim());
-      return { ok, timedOut, sessionId };
+      return { ok, timedOut, sessionId, lastTurnContextTokens };
     });
   }
 
@@ -1377,12 +1391,18 @@ export function createAgentManager(
         stderr,
         sessionId: newSessionId,
         usage: phaseUsage,
+        lastTurnContextTokens,
       } = await runPhaseProcess(task, adapter, prompt, model, effort, {
         guardSuperseded: true,
         trackBlocker: true,
         resume: sessionId,
       });
       if (newSessionId) sessionId = newSessionId;
+      // A resumed session that's carrying too much context is worse than a fresh
+      // one that has to rebuild its map — the next item starts cold instead.
+      if (lastTurnContextTokens !== undefined && lastTurnContextTokens > SESSION_CONTEXT_LIMIT) {
+        sessionId = undefined;
+      }
 
       if (isSuperseded(task))
         return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
@@ -1454,10 +1474,10 @@ export function createAgentManager(
           item,
           i,
           startSnapshot,
-          phaseUsage ? { usage: phaseUsage, kind } : undefined,
+          phaseUsage ? { usage: phaseUsage, kind, sessionId: newSessionId } : undefined,
         );
       } else if (kind === 'fix' && onFixRun && phaseUsage && plan.id) {
-        await onFixRun(plan.id, i, { usage: phaseUsage, kind });
+        await onFixRun(plan.id, i, { usage: phaseUsage, kind, sessionId: newSessionId });
       }
       // Per phase, not just per task: a run-all flips N checkboxes on disk and
       // no watcher observes them, so without this the plan view sits stale mid-run.
@@ -1635,7 +1655,11 @@ export function createAgentManager(
             task.fixAttempt = fixAttempt;
             task.fixAttemptCap = FIX_ATTEMPT_CAP;
 
-            const { timedOut: fixTimedOut, sessionId: fixSessionId } = await runFixPass(
+            const {
+              timedOut: fixTimedOut,
+              sessionId: fixSessionId,
+              lastTurnContextTokens,
+            } = await runFixPass(
               task,
               plan,
               'run',
@@ -1649,6 +1673,12 @@ export function createAgentManager(
               sessionId,
             );
             if (fixSessionId) sessionId = fixSessionId;
+            if (
+              lastTurnContextTokens !== undefined &&
+              lastTurnContextTokens > SESSION_CONTEXT_LIMIT
+            ) {
+              sessionId = undefined;
+            }
             if (isSuperseded(task)) {
               finalizeSuperseded(task);
               return;

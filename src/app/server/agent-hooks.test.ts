@@ -105,4 +105,28 @@ describe('annotateFixRun', () => {
     const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
     expect(log.trim().split('\n')).toHaveLength(1);
   });
+
+  it('records which session the run used, for the run card (IDEA-255)', async () => {
+    const root = await makeGitRoot();
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+
+    await hooks.annotateFixRun('IDEA-1', 0, {
+      kind: 'fix',
+      sessionId: 'sess-abc123',
+      usage: {
+        durationMs: 1500,
+        numTurns: 3,
+        inputTokens: 100,
+        outputTokens: 50,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+        costUsd: 0.01,
+      },
+    });
+
+    const raw = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    const entry = parseEntityFile(raw).entries[0];
+    expect(entry.fixes?.[0].run).toEqual(expect.objectContaining({ sessionId: 'sess-abc123' }));
+  });
 });

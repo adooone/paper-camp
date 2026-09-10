@@ -3,6 +3,7 @@ import type { RunUsage, TaskLogEntry } from '../types/index';
 import {
   formatDuration,
   formatRunLine,
+  formatRunSummary,
   formatTokens,
   mergeRun,
   parseRunLine,
@@ -72,6 +73,36 @@ describe('run line round-trip', () => {
     expect(parseRunLine('see the notes below')).toBeUndefined();
     expect(parseRunLine('not-a-time · 1.2M in')).toBeUndefined();
   });
+
+  it('carries the session a phase ran in', () => {
+    const run = {
+      durationMs: 1000,
+      inputTokens: 0,
+      outputTokens: 0,
+      attempts: 1,
+      sessionId: 'sess-abc123',
+    };
+    expect(formatRunLine(run)).toBe('1s · 0 in · 0 out · sess:sess-abc123');
+    expect(parseRunLine(formatRunLine(run))).toEqual(run);
+  });
+});
+
+describe('formatRunSummary', () => {
+  it('appends an abbreviated session id when the run has one', () => {
+    const run = {
+      durationMs: 1000,
+      inputTokens: 100,
+      outputTokens: 50,
+      attempts: 1,
+      sessionId: '550e8400-e29b-41d4-a716-446655440000',
+    };
+    expect(formatRunSummary(run)).toBe('150 tokens · 1s · session 550e8400');
+  });
+
+  it('omits the session segment when the run has none', () => {
+    const run = { durationMs: 1000, inputTokens: 100, outputTokens: 50, attempts: 1 };
+    expect(formatRunSummary(run)).toBe('150 tokens · 1s');
+  });
 });
 
 describe('mergeRun', () => {
@@ -105,6 +136,17 @@ describe('mergeRun', () => {
       model: 'fable-5',
       attempts: 2,
     });
+  });
+
+  it('records the session id a run carried, replacing it on a later run', () => {
+    const first = mergeRun(undefined, usage, 'sess-1');
+    expect(first.sessionId).toBe('sess-1');
+    expect(mergeRun(first, usage, 'sess-2').sessionId).toBe('sess-2');
+  });
+
+  it('keeps the prior session id when a later run resumed it instead of starting fresh', () => {
+    const first = mergeRun(undefined, usage, 'sess-1');
+    expect(mergeRun(first, usage).sessionId).toBe('sess-1');
   });
 });
 

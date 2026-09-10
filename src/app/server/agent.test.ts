@@ -60,6 +60,9 @@ vi.mock('./agents', () => {
       if (text.startsWith('SESSION:')) {
         return { text: '', sessionId: text.slice('SESSION:'.length).trim() };
       }
+      if (text.startsWith('CONTEXT:')) {
+        return { text: '', turnContextTokens: Number(text.slice('CONTEXT:'.length).trim()) };
+      }
       if (text.startsWith('RATE-LIMIT:')) {
         return { text: '', rateLimit: JSON.parse(text.slice('RATE-LIMIT:'.length)) };
       }
@@ -379,6 +382,27 @@ describe('startRunAllPhases', () => {
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(resumes).toEqual([undefined, 'sess-1']);
+  });
+
+  it('starts the next phase cold when the last turn ran over the context limit', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const resumes: (string | undefined)[] = [];
+    let call = 0;
+    agentScript.buildArgs = (_prompt, opts) => {
+      call++;
+      resumes.push(opts?.resume);
+      return [
+        '-e',
+        `console.log('SESSION:sess-${call}');\nconsole.log('CONTEXT:150000');\n${FLIP_NEXT_CHECKBOX}`,
+      ];
+    };
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    // Phase 1's last turn carried 150k tokens of context, over the 120k limit,
+    // so phase 2 starts fresh instead of resuming phase 1's session.
+    expect(resumes).toEqual([undefined, undefined]);
   });
 
   it("resumes the fix pass from the last phase's running session id", async () => {

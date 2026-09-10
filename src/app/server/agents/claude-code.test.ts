@@ -202,4 +202,57 @@ describe('claude-code parseLine', () => {
   it('drops a rate_limit_event that carries no status', () => {
     expect(parseLine(JSON.stringify({ type: 'rate_limit_event' }))).toBeNull();
   });
+
+  it('sums the turn context from an assistant text message usage', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: {
+        content: [{ type: 'text', text: 'Looking at the file.' }],
+        usage: {
+          input_tokens: 100_000,
+          cache_creation_input_tokens: 5000,
+          cache_read_input_tokens: 20_000,
+        },
+      },
+    });
+    expect(parseLine(line)).toMatchObject({
+      text: 'Looking at the file.',
+      turnContextTokens: 125_000,
+    });
+  });
+
+  it('carries the turn context alongside a tool_use block', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: {
+        content: [{ type: 'tool_use', name: 'Read', input: {} }],
+        usage: { input_tokens: 50_000 },
+      },
+    });
+    expect(parseLine(line)).toMatchObject({
+      text: 'Running Read…',
+      turnContextTokens: 50_000,
+    });
+  });
+
+  it('reports the turn context even when the message has no displayable block', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: { content: [], usage: { input_tokens: 50_000 } },
+    });
+    expect(parseLine(line)).toEqual({ text: '', turnContextTokens: 50_000 });
+  });
+
+  it('omits turnContextTokens when the assistant message carries no usage', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: { content: [{ type: 'text', text: 'Hello' }] },
+    });
+    expect(parseLine(line)?.turnContextTokens).toBeUndefined();
+  });
+
+  it('drops an assistant message with no usage and no displayable block', () => {
+    const line = JSON.stringify({ type: 'assistant', message: { content: [] } });
+    expect(parseLine(line)).toBeNull();
+  });
 });

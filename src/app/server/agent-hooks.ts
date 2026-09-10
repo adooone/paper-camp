@@ -43,7 +43,7 @@ export function createAgentHooks(root: string, git: GitManager) {
   async function annotatePhaseRun(
     planId: string,
     phaseIndex: number,
-    run: { usage: RunUsage; kind: 'phase' | 'fix' },
+    run: { usage: RunUsage; kind: 'phase' | 'fix'; sessionId?: string },
   ): Promise<void> {
     const planFile = join(campFile(root, 'ideas'), `${planId}.md`);
     const raw = await readMaybe(planFile);
@@ -54,7 +54,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     const list = run.kind === 'fix' ? entry.fixes : entry.phases;
     const target = list?.[phaseIndex];
     if (!target) return;
-    target.run = mergeRun(target.run, run.usage);
+    target.run = mergeRun(target.run, run.usage, run.sessionId);
     await writeEntityFile(root, planFile, entityFileInput(entry));
   }
 
@@ -73,7 +73,7 @@ export function createAgentHooks(root: string, git: GitManager) {
     phase: PhaseItem,
     phaseIndex: number,
     startSnapshot: GitStatusEntry[],
-    run?: { usage: RunUsage; kind: 'phase' | 'fix' },
+    run?: { usage: RunUsage; kind: 'phase' | 'fix'; sessionId?: string },
   ): Promise<void> {
     if (run && plan.id) await annotatePhaseRun(plan.id, phaseIndex, run);
     const area = resolveCommitScope(plan);
