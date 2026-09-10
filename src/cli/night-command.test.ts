@@ -308,8 +308,20 @@ describe('runNight("run", chunk)', () => {
     vi.mocked(runNightChunkPass).mockResolvedValue({
       chunkPath: 'src/core',
       reviewedCommit: 'deadbeefdeadbeef',
-      findings: [{ file: 'src/core/a.ts', line: 3, message: 'off by one', severity: 'high' }],
+      findings: [
+        { file: 'src/core/a.ts', line: 3, message: 'off by one', severity: 'high', check: 'bugs' },
+      ],
       usage: { numTurns: 4, costUsd: 0.12, cappedByTurns: false },
+      checks: [
+        {
+          check: 'bugs',
+          startedAt: '2026-01-01T00:00:00.000Z',
+          endedAt: '2026-01-01T00:01:00.000Z',
+          ok: true,
+          usage: { numTurns: 4, costUsd: 0.12, cappedByTurns: false },
+          findingsCount: 1,
+        },
+      ],
     });
 
     const logs = captureLogs();
@@ -328,8 +340,88 @@ describe('runNight("run", chunk)', () => {
       }),
     );
     expect(logs.output).toContain('reviewed "src/core" at deadbee');
-    expect(logs.output).toContain('1 confirmed finding(s)');
+    expect(logs.output).toContain('1 confirmed finding(s), 1 written, 0 dropped as overlap');
     expect(logs.output).toContain('[high] src/core/a.ts:3 — off by one');
+
+    const suggestions = await readFile(join(projectDir, 'papercamp', 'suggestions.md'), 'utf-8');
+    expect(suggestions).toContain('## Night findings');
+    expect(suggestions).toContain('check=bugs');
+    expect(suggestions).toContain('file=src/core/a.ts');
+    expect(suggestions).toContain('severity=high');
+    expect(suggestions).toContain('off by one');
+
+    const tasksLog = await readFile(join(projectDir, 'papercamp', 'tasks.log'), 'utf-8');
+    const taskLines = tasksLog
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    expect(taskLines).toHaveLength(2);
+    expect(taskLines[0]).toMatchObject({ taskKind: 'night-review', planTitle: 'src/core · bugs' });
+    expect(taskLines[1]).toMatchObject({
+      taskKind: 'night-review',
+      outcome: 'done',
+      usage: { costUsd: 0.12, numTurns: 4 },
+    });
+  });
+
+  it('drops a finding that overlaps an open idea and does not write it', async () => {
+    await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    const projectDir = join(scanRoot, 'demo');
+    await mkdir(join(projectDir, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(projectDir, 'papercamp', 'config.json'), '{}', 'utf-8');
+    await writeFile(
+      join(projectDir, 'papercamp', 'ideas', 'IDEA-1.md'),
+      [
+        '---',
+        'id: IDEA-1',
+        'title: Fix the off by one turn bug',
+        'created: 2026-09-01',
+        '---',
+        '',
+        'The off by one turn counting bug needs fixing.',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    vi.mocked(runNightChunkPass).mockResolvedValue({
+      chunkPath: 'src/core',
+      reviewedCommit: 'deadbeefdeadbeef',
+      findings: [
+        {
+          file: 'src/core/a.ts',
+          line: 3,
+          message: 'off by one turn counting bug',
+          severity: 'high',
+          check: 'bugs',
+        },
+      ],
+      usage: { numTurns: 4, costUsd: 0.12, cappedByTurns: false },
+      checks: [
+        {
+          check: 'bugs',
+          startedAt: '2026-01-01T00:00:00.000Z',
+          endedAt: '2026-01-01T00:01:00.000Z',
+          ok: true,
+          usage: { numTurns: 4, costUsd: 0.12, cappedByTurns: false },
+          findingsCount: 1,
+        },
+      ],
+    });
+
+    const logs = captureLogs();
+    const ok = await runNight('run', 'src/core');
+    logs.restore();
+
+    expect(ok).toBe(true);
+    expect(logs.output).toContain('1 confirmed finding(s), 0 written, 1 dropped as overlap');
+
+    const suggestionsPath = join(projectDir, 'papercamp', 'suggestions.md');
+    const suggestions = await readFile(suggestionsPath, 'utf-8').catch(() => '');
+    expect(suggestions).not.toContain('Night findings');
   });
 
   it('reports a thrown error rather than crashing', async () => {

@@ -768,6 +768,7 @@ export interface NightRawFinding {
 
 export interface NightFinding extends NightRawFinding {
   severity: NightFindingSeverity;
+  check: string;
 }
 
 export interface NightPassUsage {
@@ -776,11 +777,32 @@ export interface NightPassUsage {
   cappedByTurns: boolean;
 }
 
+export interface NightCheckPassRecord {
+  check: string;
+  startedAt: string;
+  endedAt: string;
+  ok: boolean;
+  usage: NightPassUsage;
+  findingsCount: number;
+}
+
 export interface NightChunkPassResult {
   chunkPath: string;
   reviewedCommit: string;
   findings: NightFinding[];
   usage: NightPassUsage;
+  checks: NightCheckPassRecord[];
+}
+
+export interface NightSuggestionEntry {
+  date: string;
+  check: string;
+  chunk: string;
+  file: string;
+  line: number | null;
+  commit: string;
+  severity: NightFindingSeverity;
+  message: string;
 }
 
 export type NightGateBlockReason =
@@ -1066,7 +1088,8 @@ export type TaskKind =
   | 'pr-review'
   | 'issue-fix'
   | 'desk-discovery'
-  | 'install-toolbar';
+  | 'install-toolbar'
+  | 'night-review';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart.
 // A start line and its later finish share an id; `readTaskLog` folds them, so no `endedAt` means never finished.

@@ -129,8 +129,9 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Run a pass read-only
       Built-in and custom checks against one chunk in a throwaway worktree, with Edit/Write/NotebookEdit off, turn and cost caps, and a confirming pass that assigns severity.
       run: 28m37s · 340 in · 141.4k out · sonnet-5
-- [ ] Report findings as night suggestions
+- [x] Report findings as night suggestions
       Write confirmed findings to `papercamp/suggestions.md` with `source: night`, drop overlaps, expire stale ones on read, and log each pass as `night-review`.
+      run: 20m56s · 276 in · 89.5k out · sonnet-5
 - [ ] Surface the night report on the Ideas page
       A dated *Night report* group above every other group, night and severity stamps, and a shell banner for critical findings.
 - [ ] Add the Settings controls

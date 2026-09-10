@@ -1,5 +1,7 @@
-import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { logTaskCompletion, logTaskStart } from '../app/server/task-log';
 import {
   daemonStatePath,
   fetchMachineNightGate,
@@ -16,13 +18,22 @@ import {
 } from '../core/machine-registry';
 import { resolveNightChecks } from '../core/night-checks';
 import {
+  appendNightFindings,
+  dropOverlappingFindings,
+  readNightFindings,
+} from '../core/night-suggestions';
+import { readEntitiesWithDerivedStatus } from '../core/readers';
+import { todayDateString } from '../core/serialize';
+import {
   DEFAULT_AGENTS,
   DEFAULT_NIGHT_CONFIG,
   type MachineNightGateResponse,
   type NightChunkPassResult,
   type NightConfig,
+  type NightFinding,
   type NightFindingSeverity,
   type NightGateBlockReason,
+  type NightSuggestionEntry,
   coerceAgentConfig,
 } from '../types/index';
 import { runNightChunkPass } from './night-pass';
@@ -140,17 +151,93 @@ const SEVERITY_LABEL: Record<NightFindingSeverity, string> = {
   normal: 'normal',
 };
 
-function formatPassResult(result: NightChunkPassResult): string {
+function formatPassResult(result: NightChunkPassResult, written: number, dropped: number): string {
   const lines = [
     `paper-camp: reviewed "${result.chunkPath}" at ${result.reviewedCommit.slice(0, 7)} — ` +
-      `${result.findings.length} confirmed finding(s), ${result.usage.numTurns} turn(s), ` +
-      `$${result.usage.costUsd.toFixed(2)}${result.usage.cappedByTurns ? ' (turn-capped)' : ''}`,
+      `${result.findings.length} confirmed finding(s), ${written} written, ${dropped} dropped as overlap, ` +
+      `${result.usage.numTurns} turn(s), $${result.usage.costUsd.toFixed(2)}` +
+      `${result.usage.cappedByTurns ? ' (turn-capped)' : ''}`,
   ];
   for (const finding of result.findings) {
     const location = finding.line ? `${finding.file}:${finding.line}` : finding.file;
     lines.push(`  [${SEVERITY_LABEL[finding.severity]}] ${location} — ${finding.message}`);
   }
   return lines.join('\n');
+}
+
+async function logNightReviewPasses(root: string, result: NightChunkPassResult): Promise<void> {
+  for (const check of result.checks) {
+    const id = randomUUID();
+    const planTitle = `${result.chunkPath} · ${check.check}`;
+    await logTaskStart(root, {
+      id,
+      taskKind: 'night-review',
+      planTitle,
+      agentId: 'claude-code',
+      startedAt: check.startedAt,
+    });
+    await logTaskCompletion(
+      root,
+      {
+        id,
+        taskKind: 'night-review',
+        planTitle,
+        agentId: 'claude-code',
+        startedAt: check.startedAt,
+        lines: [],
+        runUsage: {
+          durationMs: Date.parse(check.endedAt) - Date.parse(check.startedAt),
+          numTurns: check.usage.numTurns,
+          inputTokens: 0,
+          outputTokens: 0,
+          cacheCreationTokens: 0,
+          cacheReadTokens: 0,
+          costUsd: check.usage.costUsd,
+        },
+      },
+      check.ok ? 'done' : 'error',
+    );
+  }
+}
+
+async function readOpenIdeaCandidates(root: string): Promise<{ title: string; body: string }[]> {
+  const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
+  return entries
+    .filter((idea) => idea.status !== 'done' && idea.status !== 'dropped')
+    .map((idea) => ({ title: idea.title, body: idea.body }));
+}
+
+async function reportNightPass(
+  project: MachineProject,
+  result: NightChunkPassResult,
+): Promise<{ written: number; dropped: number }> {
+  await logNightReviewPasses(project.path, result);
+
+  if (result.findings.length === 0) return { written: 0, dropped: 0 };
+
+  const [openIdeas, earlierFindings] = await Promise.all([
+    readOpenIdeaCandidates(project.path),
+    readNightFindings(project.path),
+  ]);
+  const accepted = dropOverlappingFindings(result.findings, openIdeas, earlierFindings);
+  const dropped = result.findings.length - accepted.length;
+  if (accepted.length === 0) return { written: 0, dropped };
+
+  const suggestionsPath = join(project.path, 'papercamp', 'suggestions.md');
+  const raw = await readFile(suggestionsPath, 'utf-8').catch(() => '');
+  const date = todayDateString();
+  const entries: NightSuggestionEntry[] = accepted.map((finding: NightFinding) => ({
+    date,
+    check: finding.check,
+    chunk: result.chunkPath,
+    file: finding.file,
+    line: finding.line,
+    commit: result.reviewedCommit,
+    severity: finding.severity,
+    message: finding.message,
+  }));
+  await writeFile(suggestionsPath, appendNightFindings(raw, entries), 'utf-8');
+  return { written: accepted.length, dropped };
 }
 
 async function runNightRunPass(project: MachineProject, chunkPath: string): Promise<boolean> {
@@ -182,7 +269,8 @@ async function runNightRunPass(project: MachineProject, chunkPath: string): Prom
       maxTurns: resolved.maxTurns,
       maxCostUsd: resolved.maxCostUsd,
     });
-    console.log(formatPassResult(result));
+    const { written, dropped } = await reportNightPass(project, result);
+    console.log(formatPassResult(result, written, dropped));
     return true;
   } catch (error) {
     console.error(`paper-camp: night pass failed — ${(error as Error).message}`);

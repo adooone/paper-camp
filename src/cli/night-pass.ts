@@ -12,6 +12,7 @@ import {
 } from '../core/night-worktree';
 import type {
   AgentConfig,
+  NightCheckPassRecord,
   NightChunkPassResult,
   NightFinding,
   NightPassUsage,
@@ -165,7 +166,7 @@ async function confirmFinding(
 
   const verdict = parseNightConfirmVerdict(run.resultText);
   if (!verdict?.confirmed || !verdict.severity) return { finding: null, usage };
-  return { finding: { ...finding, severity: verdict.severity }, usage };
+  return { finding: { ...finding, severity: verdict.severity, check: checkName }, usage };
 }
 
 export async function runNightChunkPass(opts: {
@@ -189,6 +190,7 @@ export async function runNightChunkPass(opts: {
 
   let usage: NightPassUsage = { numTurns: 0, costUsd: 0, cappedByTurns: false };
   const findings: NightFinding[] = [];
+  const checks: NightCheckPassRecord[] = [];
 
   try {
     const files = await listChunkFiles(opts.root, reviewedCommit, opts.chunkPath);
@@ -200,6 +202,10 @@ export async function runNightChunkPass(opts: {
     );
 
     for (const check of opts.checks) {
+      const startedAt = new Date().toISOString();
+      let checkUsage: NightPassUsage = { numTurns: 0, costUsd: 0, cappedByTurns: false };
+      let findingsCount = 0;
+
       const prompt = buildNightCheckPrompt({
         name: check.name,
         instructions: check.instructions,
@@ -217,29 +223,42 @@ export async function runNightChunkPass(opts: {
         maxCostUsd: opts.maxCostUsd,
         spawnAgent: opts.spawnAgent,
       });
-      usage = addUsage(usage, usageOf(run));
-      if (!run.ok || run.isError) continue;
+      checkUsage = addUsage(checkUsage, usageOf(run));
+      const ok = run.ok && !run.isError;
 
-      const rawFindings = parseNightCheckFindings(run.resultText);
-      if (!rawFindings) continue;
-
-      for (const rawFinding of rawFindings) {
-        const confirmation = await confirmFinding(
-          worktreePath,
-          check.name,
-          rawFinding,
-          opts.agentConfig,
-          opts.maxTurns,
-          opts.maxCostUsd,
-          opts.spawnAgent,
-        );
-        usage = addUsage(usage, confirmation.usage);
-        if (confirmation.finding) findings.push(confirmation.finding);
+      const rawFindings = ok ? parseNightCheckFindings(run.resultText) : undefined;
+      if (rawFindings) {
+        for (const rawFinding of rawFindings) {
+          const confirmation = await confirmFinding(
+            worktreePath,
+            check.name,
+            rawFinding,
+            opts.agentConfig,
+            opts.maxTurns,
+            opts.maxCostUsd,
+            opts.spawnAgent,
+          );
+          checkUsage = addUsage(checkUsage, confirmation.usage);
+          if (confirmation.finding) {
+            findings.push(confirmation.finding);
+            findingsCount += 1;
+          }
+        }
       }
+
+      usage = addUsage(usage, checkUsage);
+      checks.push({
+        check: check.name,
+        startedAt,
+        endedAt: new Date().toISOString(),
+        ok,
+        usage: checkUsage,
+        findingsCount,
+      });
     }
   } finally {
     await removeNightWorktree(opts.root, worktreePath);
   }
 
-  return { chunkPath: opts.chunkPath, reviewedCommit, findings, usage };
+  return { chunkPath: opts.chunkPath, reviewedCommit, findings, usage, checks };
 }

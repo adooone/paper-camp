@@ -287,11 +287,14 @@ describe('runNightChunkPass', () => {
     });
 
     expect(result.findings).toEqual([
-      { file: 'src/core/a.ts', line: 1, message: 'issue', severity: 'high' },
+      { file: 'src/core/a.ts', line: 1, message: 'issue', severity: 'high', check: 'bugs' },
     ]);
     expect(result.usage.numTurns).toBe(2);
     expect(result.usage.costUsd).toBeCloseTo(0.02);
     expect(call).toBe(2);
+    expect(result.checks).toEqual([
+      expect.objectContaining({ check: 'bugs', ok: true, findingsCount: 1 }),
+    ]);
 
     const worktreeListing = spawnSync('git', ['worktree', 'list', '--porcelain'], {
       cwd: root,

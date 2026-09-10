@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
   addNightWorktree,
   diffChunkSinceCommit,
+  hasFileChangedSince,
   listChunkFiles,
   removeNightWorktree,
   resolveHeadCommit,
@@ -123,5 +124,28 @@ describe('diffChunkSinceCommit', () => {
     const diff = await diffChunkSinceCommit(root, 'src/app', first, second);
     expect(diff).toContain('src/app/a.ts');
     expect(diff).not.toContain('src/core/c.ts');
+  });
+});
+
+describe('hasFileChangedSince', () => {
+  it('is false when the file is unchanged since the commit', async () => {
+    const root = await initGitRepo();
+    const sha = await commitFiles(root, { 'src/app/a.ts': 'v1\n' }, 'v1');
+    expect(await hasFileChangedSince(root, 'src/app/a.ts', sha)).toBe(false);
+  });
+
+  it('is true when the file changed after the commit', async () => {
+    const root = await initGitRepo();
+    const sha = await commitFiles(root, { 'src/app/a.ts': 'v1\n' }, 'v1');
+    await commitFiles(root, { 'src/app/a.ts': 'v2\n' }, 'v2');
+    expect(await hasFileChangedSince(root, 'src/app/a.ts', sha)).toBe(true);
+  });
+
+  it('is true when a different file changed but this one is untouched', async () => {
+    const root = await initGitRepo();
+    const sha = await commitFiles(root, { 'src/app/a.ts': 'v1\n', 'src/app/b.ts': 'v1\n' }, 'v1');
+    await commitFiles(root, { 'src/app/b.ts': 'v2\n' }, 'v2');
+    expect(await hasFileChangedSince(root, 'src/app/a.ts', sha)).toBe(false);
+    expect(await hasFileChangedSince(root, 'src/app/b.ts', sha)).toBe(true);
   });
 });

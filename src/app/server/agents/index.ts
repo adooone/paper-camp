@@ -55,6 +55,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   feedback: 'feedback',
   'pr-review': 'codeReview',
   'desk-discovery': 'deskDiscovery',
+  'night-review': 'nightShift',
 };
 
 export function resolveAgent(opts: {

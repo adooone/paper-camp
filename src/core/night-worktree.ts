@@ -70,3 +70,12 @@ export async function diffChunkSinceCommit(
   if (!sinceCommit) return '';
   return runGitOrThrow(root, ['diff', sinceCommit, reviewedCommit, '--', chunkPath]);
 }
+
+export async function hasFileChangedSince(
+  root: string,
+  file: string,
+  commit: string,
+): Promise<boolean> {
+  const output = await runGitOrThrow(root, ['diff', '--name-only', commit, 'HEAD', '--', file]);
+  return output.trim() !== '';
+}
