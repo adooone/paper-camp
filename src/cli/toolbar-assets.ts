@@ -12,25 +12,34 @@ export function toolbarDir(): string {
   return join(dirname(fileURLToPath(import.meta.url)), '..', 'toolbar');
 }
 
-/** Serves the toolbar bundle (`dist/toolbar`) a host app's own Vite dev server proxies
- * requests for through `paperCamp()` — the one static asset this runtime still ships,
- * now that the dashboard itself is the hosted client. Returns false for any other
- * path so the caller can fall through to its own routing. */
+function toolbarAssetName(req: IncomingMessage): string | undefined {
+  const name = decodeURIComponent((req.url ?? '/').split('?')[0]).replace(/^\//, '');
+  return name in ASSET_CONTENT_TYPES ? name : undefined;
+}
+
+/** Lets a caller apply CORS to a toolbar request before `serveToolbarAsset` answers
+ * it, without duplicating the asset-name allowlist above. */
+export function isToolbarAssetRequest(req: IncomingMessage): boolean {
+  return toolbarAssetName(req) !== undefined;
+}
+
+/** Serves the toolbar bundle (`dist/toolbar`) — the one static asset this runtime
+ * still ships, now that the dashboard itself is the hosted client. Returns false for
+ * any other path so the caller can fall through to its own routing. */
 export async function serveToolbarAsset(
   req: IncomingMessage,
   res: ServerResponse,
   dir: string = toolbarDir(),
 ): Promise<boolean> {
-  const name = decodeURIComponent((req.url ?? '/').split('?')[0]).replace(/^\//, '');
-  const contentType = ASSET_CONTENT_TYPES[name];
-  if (!contentType) return false;
+  const name = toolbarAssetName(req);
+  if (!name) return false;
 
   const contents = await readFile(join(dir, name)).catch(() => null);
   if (contents === null) return false;
 
   res.statusCode = 200;
   res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Type', ASSET_CONTENT_TYPES[name]);
   res.end(contents);
   return true;
 }

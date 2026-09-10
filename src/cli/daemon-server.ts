@@ -43,6 +43,7 @@ import {
   runTailnetServe,
   tailnetFailureMessage,
 } from './tailnet-serve';
+import { isToolbarAssetRequest, serveToolbarAsset } from './toolbar-assets';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
   type QuickTunnel,
@@ -180,6 +181,8 @@ export function createDaemonRequestHandler(
   mount: (slug: string) => Promise<MountResult>,
   mounted: ReadonlyMap<string, ApiMiddleware>,
   localLink: string,
+  // A seam for tests to serve a fake toolbar bundle without a real dist/toolbar on disk.
+  serveToolbar: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = serveToolbarAsset,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
@@ -236,6 +239,23 @@ export function createDaemonRequestHandler(
 
     const query = (req.url ?? '').split('?')[1];
     req.url = query ? `${request.rest}?${query}` : request.rest;
+
+    if (isToolbarAssetRequest(req)) {
+      // A host app's Vite dev server has its own loopback origin, so the injected
+      // script's requests back to the daemon need CORS even though both are local.
+      let originHost = '';
+      try {
+        originHost = req.headers.origin ? hostOf(new URL(req.headers.origin).host) : '';
+      } catch {}
+      if (isLoopbackHost(originHost)) {
+        applyCorsHeaders(req, res);
+        if (req.method === 'OPTIONS') {
+          handlePreflight(req, res);
+          return;
+        }
+      }
+      if (await serveToolbar(req, res)) return;
+    }
 
     await apiMiddleware(req, res, () => {
       res.statusCode = 404;

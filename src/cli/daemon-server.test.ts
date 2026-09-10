@@ -1,5 +1,5 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { type Server, createServer } from 'node:http';
+import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -427,7 +427,10 @@ describe('createDaemonRequestHandler', () => {
 
   const localLink = 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t';
 
-  async function startHandler(registryPath: string): Promise<{ port: number; seenUrls: string[] }> {
+  async function startHandler(
+    registryPath: string,
+    serveToolbar?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>,
+  ): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
       vi.fn((req, res) => {
@@ -438,7 +441,13 @@ describe('createDaemonRequestHandler', () => {
       { agent: { hasActiveTask: () => false, getInterruptedOnBoot: () => 0 } },
     ) as unknown as ApiMiddleware;
     const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
-    const handler = createDaemonRequestHandler(registryPath, mount, mounted, localLink);
+    const handler = createDaemonRequestHandler(
+      registryPath,
+      mount,
+      mounted,
+      localLink,
+      serveToolbar,
+    );
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
         res.statusCode = 500;
@@ -450,6 +459,20 @@ describe('createDaemonRequestHandler', () => {
       server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
     });
     return { port, seenUrls };
+  }
+
+  async function startHandlerWithFakeToolbar(
+    registryPath: string,
+  ): Promise<{ port: number; seenUrls: string[] }> {
+    const serveToolbar = async (req: IncomingMessage, res: ServerResponse) => {
+      const name = (req.url ?? '').replace(/^\//, '');
+      if (name !== 'toolbar.js') return false;
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+      res.end('console.log(1)');
+      return true;
+    };
+    return startHandler(registryPath, serveToolbar);
   }
 
   it('lists registered projects at /api/machine/projects for a loopback caller, unmounted', async () => {
@@ -571,5 +594,84 @@ describe('createDaemonRequestHandler', () => {
 
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe(localLink);
+  });
+
+  it('serves the toolbar bundle mounted at /p/<slug>/toolbar.js', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port, seenUrls } = await startHandlerWithFakeToolbar(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/toolbar.js`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('text/javascript; charset=utf-8');
+    expect(await response.text()).toBe('console.log(1)');
+    expect(seenUrls).toEqual([]);
+  });
+
+  it('answers a toolbar asset request with CORS headers for a loopback origin', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port } = await startHandlerWithFakeToolbar(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/toolbar.js`, {
+      headers: { Origin: 'http://localhost:5173' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+  });
+
+  it('answers the CORS preflight for a toolbar asset from a loopback origin', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port } = await startHandlerWithFakeToolbar(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/toolbar.js`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'http://localhost:5173',
+        'Access-Control-Request-Method': 'GET',
+      },
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+    expect(response.headers.get('access-control-allow-methods')).toContain('GET');
+  });
+
+  it('omits CORS headers for a toolbar asset request from a non-loopback origin', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port } = await startHandlerWithFakeToolbar(registryPath);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/toolbar.js`, {
+      headers: { Origin: 'https://evil.example' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBeNull();
+  });
+
+  it('falls through to the mounted API when the toolbar asset is not found', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registryPath = await makeRegistryFile(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+    );
+    const { port, seenUrls } = await startHandler(registryPath, async () => false);
+
+    const response = await fetch(`http://127.0.0.1:${port}/p/demo/toolbar.js`);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe('mounted');
+    expect(seenUrls).toEqual(['/toolbar.js']);
   });
 });
