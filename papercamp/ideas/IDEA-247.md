@@ -67,7 +67,8 @@ still applies to `vite serve` only. Host apps that are not Vite.
       run: 5m13s · 46 in · 19.3k out · sonnet-5
 - [x] Inject the script tag, or print the off notice
       run: 5m59s · 58 in · 23.8k out · sonnet-5
-- [ ] Delete `src/vite/proxy.ts` and its mount rewriting
+- [x] Delete `src/vite/proxy.ts` and its mount rewriting
+      run: 3m11s · 32 in · 8.1k out · sonnet-5
 - [ ] Read the origin from the script `src` in the toolbar bundle
 - [ ] Add the Toolbar settings section
       Enable switch, route field, and host-app state from the frontend service's Vite config.
