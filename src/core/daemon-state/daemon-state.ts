@@ -5,6 +5,13 @@ import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../../types/i
 import { machineConfigDir } from '../machine-registry';
 import { formatDuration } from '../phase-run';
 
+export interface DaemonLinks {
+  host: string;
+  network?: string;
+  tailnet?: string;
+  tunnel?: string;
+}
+
 export interface DaemonState {
   pid: number;
   port: number;
@@ -12,6 +19,7 @@ export interface DaemonState {
   startedAt: string;
   share: boolean;
   tailnet: boolean;
+  links?: DaemonLinks;
 }
 
 export function daemonStatePath(): string {
@@ -20,6 +28,22 @@ export function daemonStatePath(): string {
 
 export function daemonLogPath(): string {
   return join(machineConfigDir(), 'daemon.log');
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
+}
+
+function isDaemonLinks(value: unknown): value is DaemonLinks {
+  const v = value as Partial<DaemonLinks> | null;
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof v.host === 'string' &&
+    isOptionalString(v.network) &&
+    isOptionalString(v.tailnet) &&
+    isOptionalString(v.tunnel)
+  );
 }
 
 function isDaemonState(value: unknown): value is DaemonState {
@@ -32,7 +56,8 @@ function isDaemonState(value: unknown): value is DaemonState {
     typeof v.version === 'string' &&
     typeof v.startedAt === 'string' &&
     typeof v.share === 'boolean' &&
-    typeof v.tailnet === 'boolean'
+    typeof v.tailnet === 'boolean' &&
+    (v.links === undefined || isDaemonLinks(v.links))
   );
 }
 
@@ -104,6 +129,20 @@ export function formatDaemonStatusLine(state: DaemonState): string {
     `paper-camp: daemon running — pid ${state.pid}, port ${state.port}, ` +
     `v${state.version}, up ${uptime}${flags ? `, ${flags}` : ''}`
   );
+}
+
+/** Unlike the daemon banner, which prints only the single best way in, status
+ * lists every link this machine has on offer. */
+export function formatDaemonLinks(links: DaemonLinks): string {
+  const rows: [string, string | undefined][] = [
+    ['This host', links.host],
+    ['Network', links.network],
+    ['Tailnet', links.tailnet],
+    ['Tunnel', links.tunnel],
+  ];
+  const present = rows.filter((row): row is [string, string] => row[1] !== undefined);
+  const width = Math.max(...present.map(([label]) => label.length));
+  return present.map(([label, url]) => `${label.padEnd(width)}  ${url}`).join('\n');
 }
 
 /** Written to a sibling temp path and renamed into place, so a crash mid-write

@@ -7,6 +7,7 @@ import {
   daemonLogPath,
   daemonStatePath,
   fetchMachineProjects,
+  formatDaemonLinks,
   formatDaemonStatusLine,
   isProcessAlive,
   probeMachineEndpoint,
@@ -69,13 +70,11 @@ async function waitForDaemon(
   return exited ? 'exited' : 'timeout';
 }
 
-/** --tailnet/--share each print their own banner line (or an error mentioning
- * the same words) a few seconds after "Local:", once their subprocess reports back. */
-function pendingBannerMarkers(opts: StartOptions): RegExp[] {
-  const markers = [/^This host$/m];
-  if (opts.tailnet) markers.push(/^Tailnet$|Tailnet failed/m);
-  if (opts.share) markers.push(/^Tunnel$|cloudflared/m);
-  return markers;
+/** The daemon prints its banner only after --tailnet/--share have reported
+ * back (or failed), so the greeting line alone is proof the whole thing —
+ * banner or failure messages — is already in the log. */
+function pendingBannerMarkers(): RegExp[] {
+  return [/⛺ Paper Camp/];
 }
 
 async function waitForBannerLines(
@@ -148,7 +147,7 @@ export async function runStart(opts: StartOptions): Promise<boolean> {
     return false;
   }
 
-  await waitForBannerLines(logPath, pendingBannerMarkers(opts), child, BANNER_POLL_TIMEOUT_MS);
+  await waitForBannerLines(logPath, pendingBannerMarkers(), child, BANNER_POLL_TIMEOUT_MS);
   await printLog(logPath);
   return true;
 }
@@ -276,6 +275,11 @@ export async function runLs(): Promise<void> {
 export async function runStatus(): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
+  if (state?.links) {
+    const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
+    const links = formatDaemonLinks(state.links);
+    console.log(clickable ? linkifyUrls(links) : links);
+  }
   const registry = await loadRegistry(defaultRegistryPath());
   console.log(await formatProjectTable(listProjects(registry), liveProjects));
 }

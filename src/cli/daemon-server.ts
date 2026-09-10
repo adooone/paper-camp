@@ -327,16 +327,6 @@ export async function startDaemonServer({
     server.listen(port, resolve);
   });
 
-  const daemonState: DaemonState = {
-    pid: process.pid,
-    port,
-    version: PAPER_CAMP_VERSION,
-    startedAt: new Date().toISOString(),
-    share: share ?? false,
-    tailnet: tailnet ?? false,
-  };
-  await writeDaemonState(statePath, daemonState);
-
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
 
   let tailnetLink: string | undefined;
@@ -366,13 +356,32 @@ export async function startDaemonServer({
     tunnelLink = buildRegistrationLinkForMachine(tunnel.url, pairingState.token);
   }
 
+  const network = await networkRegistrationLink(
+    port,
+    pairingState.token,
+    buildRegistrationLinkForMachine,
+  );
+
+  const daemonState: DaemonState = {
+    pid: process.pid,
+    port,
+    version: PAPER_CAMP_VERSION,
+    startedAt: new Date().toISOString(),
+    share: share ?? false,
+    tailnet: tailnet ?? false,
+    links: {
+      host: localLink,
+      network: network.link,
+      tailnet: tailnetLink,
+      tunnel: tunnelLink,
+    },
+  };
+  await writeDaemonState(statePath, daemonState);
+
   console.log(
     formatDaemonBanner(
       localLink,
-      withRequestedNetwork(
-        await networkRegistrationLink(port, pairingState.token, buildRegistrationLinkForMachine),
-        Boolean(tailnet || share),
-      ),
+      withRequestedNetwork(network, Boolean(tailnet || share)),
       tailnetLink,
       tunnelLink,
       color,

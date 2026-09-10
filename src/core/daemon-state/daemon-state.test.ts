@@ -7,8 +7,10 @@ import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { MACHINE_PROJECTS_PATH } from '../../types/index';
 import {
+  type DaemonLinks,
   type DaemonState,
   fetchMachineProjects,
+  formatDaemonLinks,
   formatDaemonStatusLine,
   readRunningDaemonState,
   removeDaemonState,
@@ -155,7 +157,12 @@ describe('readRunningDaemonState', () => {
       res.statusCode = 404;
       res.end();
     });
-    const state: DaemonState = { ...baseState, pid: process.pid, port };
+    const state: DaemonState = {
+      ...baseState,
+      pid: process.pid,
+      port,
+      links: { host: 'http://localhost:1234' },
+    };
     await writeDaemonState(path, state);
 
     expect(await readRunningDaemonState(path)).toEqual(state);
@@ -244,5 +251,48 @@ describe('formatDaemonStatusLine', () => {
     };
 
     expect(formatDaemonStatusLine(state)).toContain('share, tailnet');
+  });
+});
+
+describe('formatDaemonLinks', () => {
+  const localLink =
+    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
+  const networkLink =
+    'https://paper-camp.vercel.app/?machine=http://192.168.1.5:4333&token=shared-token';
+  const tailnetLink =
+    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
+  const tunnelLink =
+    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
+
+  it('lists only the host link when nothing else was found', () => {
+    const links: DaemonLinks = { host: localLink };
+    expect(formatDaemonLinks(links)).toBe(`This host  ${localLink}`);
+  });
+
+  it('lists every link the daemon has, in This host / Network / Tailnet / Tunnel order', () => {
+    const links: DaemonLinks = {
+      host: localLink,
+      network: networkLink,
+      tailnet: tailnetLink,
+      tunnel: tunnelLink,
+    };
+
+    const formatted = formatDaemonLinks(links);
+    const lines = formatted.split('\n');
+    expect(lines[0]).toContain('This host');
+    expect(lines[0]).toContain(localLink);
+    expect(lines[1]).toContain('Network');
+    expect(lines[1]).toContain(networkLink);
+    expect(lines[2]).toContain('Tailnet');
+    expect(lines[2]).toContain(tailnetLink);
+    expect(lines[3]).toContain('Tunnel');
+    expect(lines[3]).toContain(tunnelLink);
+  });
+
+  it('omits a row for a link the daemon does not have', () => {
+    const links: DaemonLinks = { host: localLink, tailnet: tailnetLink };
+    const formatted = formatDaemonLinks(links);
+    expect(formatted).not.toContain('Network');
+    expect(formatted).not.toContain('Tunnel');
   });
 });

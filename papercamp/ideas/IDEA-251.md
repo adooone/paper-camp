@@ -8,7 +8,7 @@ tags:
   - app
   - server
 subject: Mobile control desk
-order: 3
+order: 4
 ---
 
 Every conversation with the agent today is bound to one entity: the

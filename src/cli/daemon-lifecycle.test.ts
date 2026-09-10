@@ -591,6 +591,36 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     expect(logs.output).toContain(`demo  mounted  ${demoPath}`);
   });
 
+  it('status lists every link the daemon recorded at startup', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: true,
+      links: {
+        host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+        tailnet: 'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=t',
+      },
+    });
+
+    const logs = captureLogs();
+    await runStatus();
+    logs.restore();
+
+    expect(logs.output).toContain(
+      'This host  https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+    );
+    expect(logs.output).toContain(
+      'Tailnet    https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=t',
+    );
+    expect(logs.output).not.toContain('Network');
+    expect(logs.output).not.toContain('Tunnel');
+  });
+
   it('logs says so and exits 0 when there is no daemon.log yet', async () => {
     await makeConfigDir();
 

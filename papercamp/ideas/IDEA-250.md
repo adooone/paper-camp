@@ -7,7 +7,7 @@ created: 2026-09-10
 tags:
   - app
 subject: Mobile control desk
-order: 5
+order: 6
 ---
 
 With the daemon as the only server and its shapes published in
@@ -75,16 +75,12 @@ on the right, which opens the project switcher as a sheet. No drawer.
 Stamps are bordered pills with the web's meaning-to-color mapping: running
 blue, done green, failed red, parked amber, idle gray.
 
-**Notifications through the daemon.** The daemon gains one push
-subscription per paired device: the app registers its Expo push token
-with each paired runtime (`POST /p/<slug>/api/push/subscribe`, removed by
-the matching `DELETE`), and the daemon sends through Expo's push service
-for the events `notification-log.ts` already records — a run finished, a
-run interrupted, an agent parked on a question, a PR review that
-requested changes. A push carries the entry id; tapping it opens that
-entry, or the running task's entry while it is still running. Settings →
-Notifications on the desk lists the subscribed devices with a remove
-action.
+**Notifications through the daemon.** The app registers its Expo push
+token with each paired runtime as an `expo` subscription under
+[[IDEA-252]], and the daemon pushes the kinds switched on in that
+project's settings. Tapping a notification opens the entry it names, or
+the running task's entry while it is still running. The app has no
+notification settings of its own; the switches live on the desk.
 
 **The paper stays, paper-ui does not come along.** paper-ui is React DOM
 and SCSS, so none of its components run in React Native. What crosses
@@ -104,8 +100,8 @@ would share it.
 ### Out of scope
 
 Editing idea bodies or plans from the phone. Offline work. A tablet
-layout. Web Push for the browser; the phone is the native app. Any daemon
-change beyond the push subscription above and the chat from [[IDEA-251]].
+layout. Any daemon change beyond the push subscription from [[IDEA-252]]
+and the chat from [[IDEA-251]].
 
 ### Phases
 - [ ] Scaffold `paper-camp-mobile` on paper-ui's tokens

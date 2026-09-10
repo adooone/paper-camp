@@ -63,7 +63,8 @@ panels within a route.
 - [x] Print the single best link in the banner
       Tailnet when `--tailnet` produced one, else Tunnel, else the host link.
       run: 6m17s · 78 in · 26.5k out · sonnet-5
-- [ ] List every known link in `paper-camp status`
+- [x] List every known link in `paper-camp status`
+      run: 8m50s · 112 in · 33k out · sonnet-5
 - [ ] Stamp running agents on hub project rows
       `use-runtime-statuses.ts` also polls `/api/agent/status` and carries the task's plan title.
 - [ ] Mark a busy mounted project on the machine card
