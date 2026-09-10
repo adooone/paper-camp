@@ -2,8 +2,9 @@
 id: IDEA-246
 title: One link in, and projects that remember
 type: feat
-status: review
+status: done
 created: 2026-09-09
+updated: 2026-09-10
 tags:
   - app
   - cli

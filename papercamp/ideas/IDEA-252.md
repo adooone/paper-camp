@@ -74,3 +74,17 @@ Per-device kind preferences; the switches are per project. Email, Slack,
 or any transport other than Web Push and Expo. The phone app's own
 registration flow, which [[IDEA-250]] describes. Aggregating pushes across
 projects in the hub.
+
+### Phases
+- [ ] Widen the kinds into one union
+      Replace `StoredNotificationKind` in `src/types/index.ts` with the full list, and emit check failed, PR review requested changes, night review findings, and service stopped from where each is already detected.
+- [ ] Store the per-kind switches in `papercamp/config.json`
+      `notifications.kinds` with the stated defaults, read when the log appends so an off kind is still logged and counted but never pushed.
+- [ ] Keep subscriptions and VAPID keys in the daemon
+      `push.json` and `vapid.json` under `PAPERCAMP_CONFIG_DIR`, behind `POST`/`DELETE /p/<slug>/api/push/subscribe` and a public-key read.
+- [ ] Send on append over Web Push and Expo
+      Fan out to every subscription for the project, drop the ones the transport reports gone, and log failures to `daemon.log`.
+- [ ] Add `sw.js` to the hosted client
+      Handle `push` and `notificationclick` with no precaching, register it when *This device* is switched on, and delete the tab-open announcement in `use-notification-push.ts`.
+- [ ] Build Settings → Notifications
+      The switch per kind, *This device* with its permission state, and *Devices* with last delivery and a remove action.
