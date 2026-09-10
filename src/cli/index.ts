@@ -222,17 +222,25 @@ program
     '--tailnet',
     "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
   )
-  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
-    const port = opts.port ? Number(opts.port) : DEFAULT_DAEMON_PORT;
-    try {
-      await startDaemonServer({ port, share: opts.share, tailnet: opts.tailnet });
-    } catch (error) {
-      console.error((error as Error).message);
-      // Hard-exit: a mounted project's fs watchers may already be running by the
-      // time listen fails, and they keep the event loop alive forever otherwise.
-      process.exit(1);
-    }
-  });
+  .option('--no-auto-update', 'do not install newer versions published to npm automatically')
+  .action(
+    async (opts: { port?: string; share?: boolean; tailnet?: boolean; autoUpdate?: boolean }) => {
+      const port = opts.port ? Number(opts.port) : DEFAULT_DAEMON_PORT;
+      try {
+        await startDaemonServer({
+          port,
+          share: opts.share,
+          tailnet: opts.tailnet,
+          autoUpdate: opts.autoUpdate,
+        });
+      } catch (error) {
+        console.error((error as Error).message);
+        // Hard-exit: a mounted project's fs watchers may already be running by the
+        // time listen fails, and they keep the event loop alive forever otherwise.
+        process.exit(1);
+      }
+    },
+  );
 
 program
   .command('start')
@@ -246,14 +254,18 @@ program
     '--tailnet',
     "serve over HTTPS at this machine's stable MagicDNS address via `tailscale serve`",
   )
-  .action(async (opts: { port?: string; share?: boolean; tailnet?: boolean }) => {
-    const ok = await runStart({
-      port: opts.port ? Number(opts.port) : undefined,
-      share: opts.share,
-      tailnet: opts.tailnet,
-    });
-    if (!ok) process.exitCode = 1;
-  });
+  .option('--no-auto-update', 'do not install newer versions published to npm automatically')
+  .action(
+    async (opts: { port?: string; share?: boolean; tailnet?: boolean; autoUpdate?: boolean }) => {
+      const ok = await runStart({
+        port: opts.port ? Number(opts.port) : undefined,
+        share: opts.share,
+        tailnet: opts.tailnet,
+        autoUpdate: opts.autoUpdate,
+      });
+      if (!ok) process.exitCode = 1;
+    },
+  );
 
 program
   .command('stop')

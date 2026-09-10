@@ -29,6 +29,7 @@ export interface StartOptions {
   port?: number;
   share?: boolean;
   tailnet?: boolean;
+  autoUpdate?: boolean;
 }
 
 const START_POLL_TIMEOUT_MS = 10_000;
@@ -37,11 +38,12 @@ const BANNER_POLL_TIMEOUT_MS = 10_000;
 const STOP_GRACE_MS = 5_000;
 const STOP_KILL_TIMEOUT_MS = 2_000;
 
-export function buildDaemonArgs({ port, share, tailnet }: StartOptions): string[] {
+export function buildDaemonArgs({ port, share, tailnet, autoUpdate }: StartOptions): string[] {
   const args = ['daemon'];
   if (port !== undefined) args.push('-p', String(port));
   if (share) args.push('--share');
   if (tailnet) args.push('--tailnet');
+  if (autoUpdate === false) args.push('--no-auto-update');
   return args;
 }
 
@@ -200,7 +202,9 @@ export async function runStop(): Promise<boolean> {
 }
 
 export function restartOptionsFromState(state: DaemonState | null): StartOptions {
-  return state ? { port: state.port, share: state.share, tailnet: state.tailnet } : {};
+  return state
+    ? { port: state.port, share: state.share, tailnet: state.tailnet, autoUpdate: state.autoUpdate }
+    : {};
 }
 
 export async function runRestart(): Promise<boolean> {

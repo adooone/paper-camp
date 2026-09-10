@@ -57,6 +57,7 @@ export interface DaemonServerOptions {
   port: number;
   share?: boolean;
   tailnet?: boolean;
+  autoUpdate?: boolean;
 }
 
 interface MountRequest {
@@ -295,6 +296,7 @@ export async function startDaemonServer({
   port,
   share,
   tailnet,
+  autoUpdate,
 }: DaemonServerOptions): Promise<void> {
   if (share && !(await isCloudflaredAvailable())) {
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
@@ -389,6 +391,7 @@ export async function startDaemonServer({
     startedAt: new Date().toISOString(),
     share: share ?? false,
     tailnet: tailnet ?? false,
+    autoUpdate: autoUpdate ?? true,
     links: {
       host: localLink,
       network: network.link,

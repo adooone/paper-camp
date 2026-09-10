@@ -19,6 +19,7 @@ export interface DaemonState {
   startedAt: string;
   share: boolean;
   tailnet: boolean;
+  autoUpdate?: boolean;
   links?: DaemonLinks;
 }
 
@@ -57,6 +58,7 @@ function isDaemonState(value: unknown): value is DaemonState {
     typeof v.startedAt === 'string' &&
     typeof v.share === 'boolean' &&
     typeof v.tailnet === 'boolean' &&
+    (v.autoUpdate === undefined || typeof v.autoUpdate === 'boolean') &&
     (v.links === undefined || isDaemonLinks(v.links))
   );
 }
