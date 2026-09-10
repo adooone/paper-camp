@@ -12,6 +12,7 @@ import type {
   TasksPerWeek,
   UsagePerWeek,
 } from '../types/index';
+import { computeNightHealthMap } from './night-health';
 import { readTaskLog } from './parse';
 import { latestCapacity } from './rate-limit';
 import { readEntitiesWithDerivedStatus } from './readers';
@@ -212,13 +213,15 @@ export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost
 
 export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const ideasDir = join(root, 'papercamp', 'ideas');
-  const [comments, testLines, testCoveragePct, { entries }, taskLogRaw] = await Promise.all([
-    runCommentStats(root),
-    countTestLines(root),
-    readTestCoveragePct(root),
-    readEntitiesWithDerivedStatus(ideasDir),
-    readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
-  ]);
+  const [comments, testLines, testCoveragePct, { entries }, taskLogRaw, nightHealth] =
+    await Promise.all([
+      runCommentStats(root),
+      countTestLines(root),
+      readTestCoveragePct(root),
+      readEntitiesWithDerivedStatus(ideasDir),
+      readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
+      computeNightHealthMap(root),
+    ]);
   const { openQuestions, decisions } = countThreadNotes(entries);
   const taskLog = readTaskLog(taskLogRaw);
   return {
@@ -234,5 +237,6 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     medianPhaseDurationMs: medianPhaseDurationMs(taskLog),
     mostExpensiveIdeas: mostExpensiveIdeas(taskLog),
     capacity: latestCapacity(taskLog),
+    nightHealth,
   };
 }

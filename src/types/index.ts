@@ -340,6 +340,27 @@ export interface CapacityStat {
   capturedAt: string;
 }
 
+export interface ChunkSignals {
+  churnCommits: number;
+  lines: number;
+  coveragePct: number | null;
+  openFindings: number;
+  daysSinceReviewed: number | null;
+}
+
+export interface ChunkHealth {
+  path: string;
+  score: number;
+  signals: ChunkSignals;
+  lastReviewedAt: string | null;
+  lastReviewedCommit: string | null;
+}
+
+export interface NightHealthMap {
+  generatedAt: string;
+  chunks: ChunkHealth[];
+}
+
 export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
@@ -354,6 +375,7 @@ export interface ProjectStats {
   medianPhaseDurationMs: number | null;
   mostExpensiveIdeas: IdeaCost[];
   capacity: CapacityStat | null;
+  nightHealth: NightHealthMap;
 }
 
 export type IdeaKind = 'idea' | 'note';

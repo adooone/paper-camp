@@ -120,8 +120,9 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Pick the project and read the settings
       Add `night: { slug }` to `projects.json` with `paper-camp night <slug> | off | status`, and the `night` block in `papercamp/config.json` with its defaults.
       run: 8m30s · 100 in · 31.1k out · sonnet-5
-- [ ] Score the chunks into a health map
+- [x] Score the chunks into a health map
       Derive churn, size, coverage, open findings, and last-reviewed age per chunk into `papercamp/night.json`, and show it as the Stats *Code health* card.
+      run: 13m22s · 142 in · 51.8k out · sonnet-5
 - [ ] Gate the shift in the daemon
       Idle desk, no running task, both rate-limit windows, and the optional clock window, rechecked after every pass.
 - [ ] Run a pass read-only
