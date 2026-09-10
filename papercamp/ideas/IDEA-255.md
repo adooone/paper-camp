@@ -70,8 +70,9 @@ demand.
 - [x] Trim the phase prompt to types and touched tests
       `buildAgentPrompt` in `agent.ts` loses the "leave the whole repo green" line; `buildFixPassPrompt` keeps its full list.
       run: 58s · 22 in · 4.2k out · sonnet-5
-- [ ] Drop the per-phase verify from `runQueue`
+- [x] Drop the per-phase verify from `runQueue`
       A phase ends when the agent stops: commit, tick, next phase — no checks, no fix loop between items.
+      run: 1m51s · 28 in · 9.5k out · sonnet-5
 - [ ] Verify once after the last phase
       `startRunAllPhases` runs the biome fixer, lint, tests, consistency and docs once, sends introduced red to the fix pass under the same cap, commits a landed fix as its own `fix` commit, and stamps review only after.
 - [ ] Take the baseline from the checks' last results

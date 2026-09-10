@@ -1334,7 +1334,6 @@ export function createAgentManager(
     adapter: AgentAdapter,
     model: string | undefined,
     effort: string | undefined,
-    runProjectChecks: (() => Promise<CheckName[]>) | undefined,
     initialToleratedRed: Set<CheckName>,
     initialSessionId: string | undefined,
   ): Promise<{
@@ -1346,7 +1345,7 @@ export function createAgentManager(
   }> {
     let completed = 0;
     let failed = 0;
-    let toleratedRed = initialToleratedRed;
+    const toleratedRed = initialToleratedRed;
     let sessionId = initialSessionId;
 
     for (const { item, i } of items) {
@@ -1435,98 +1434,6 @@ export function createAgentManager(
             : `[fail] ${kind} ${i + 1} — ${kind} checkbox did not flip, stopping`,
         );
         break;
-      }
-
-      if (runProjectChecks) {
-        pushLine(task, `[verify] ${kind} ${i + 1} — running lint/format/test`);
-        let failing = await runProjectChecks();
-        if (isSuperseded(task))
-          return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
-        if (isStopping(task)) break;
-        let introduced = failing.filter((c) => !toleratedRed.has(c));
-        let checksOk = introduced.length === 0;
-
-        let fixAttempt = 0;
-        let fixBlocker: string | undefined;
-        while (!checksOk && fixAttempt < FIX_ATTEMPT_CAP) {
-          if (isSuperseded(task) || isStopping(task)) break;
-          fixAttempt++;
-          task.fixAttempt = fixAttempt;
-          task.fixAttemptCap = FIX_ATTEMPT_CAP;
-
-          const { timedOut: fixTimedOut, sessionId: fixSessionId } = await runFixPass(
-            task,
-            plan,
-            `${kind} ${i + 1}`,
-            item.text,
-            adapter,
-            model,
-            effort,
-            fixAttempt,
-            FIX_ATTEMPT_CAP,
-            introduced,
-            sessionId,
-          );
-          if (fixSessionId) sessionId = fixSessionId;
-          if (isSuperseded(task))
-            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
-          if (task.blocker) {
-            fixBlocker = task.blocker;
-            task.blocker = undefined;
-            break;
-          }
-          if (fixTimedOut) {
-            pushLine(
-              task,
-              `[fix] ${kind} ${i + 1} — fix attempt ${fixAttempt}/${FIX_ATTEMPT_CAP} timed out`,
-            );
-          }
-
-          pushLine(
-            task,
-            `[verify] ${kind} ${i + 1} — re-running lint/format/test (attempt ${fixAttempt}/${FIX_ATTEMPT_CAP})`,
-          );
-          failing = await runProjectChecks();
-          if (isSuperseded(task))
-            return { completed, failed, toleratedRed, sessionId, exit: 'superseded' };
-          introduced = failing.filter((c) => !toleratedRed.has(c));
-          checksOk = introduced.length === 0;
-        }
-        task.fixAttempt = undefined;
-        task.fixAttemptCap = undefined;
-
-        if (isStopping(task)) break;
-
-        if (fixBlocker) {
-          failed++;
-          task.errorReason ??= fixBlocker;
-          pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${fixBlocker}`);
-          await escalateToLog(
-            task,
-            plan.id,
-            `Run-all parked on ${kind} ${i + 1} ("${item.text}") — the fix pass needs a decision: ${fixBlocker}`,
-          );
-          break;
-        }
-
-        if (!checksOk) {
-          failed++;
-          task.errorReason = `${kind} ${i + 1} — project checks (${introduced.join(', ')}) still failing after ${fixAttempt} fix attempt(s)`;
-          pushLine(
-            task,
-            `[blocked] ${kind} ${i + 1} — project checks still failing after ${fixAttempt} fix attempt(s)`,
-          );
-          await escalateToLog(
-            task,
-            plan.id,
-            `Run-all parked on ${kind} ${i + 1} ("${item.text}") — project checks (${introduced.join(', ')}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
-          );
-          break;
-        }
-
-        // Carry forward whatever's still red (pre-existing/flaky) so the
-        // next item isn't blamed for breakage this run never introduced.
-        toleratedRed = new Set(failing);
       }
 
       completed++;
@@ -1628,7 +1535,6 @@ export function createAgentManager(
           adapter,
           model,
           effort,
-          runProjectChecks,
           toleratedRed,
           undefined,
         );
@@ -1662,7 +1568,6 @@ export function createAgentManager(
             adapter,
             model,
             effort,
-            runProjectChecks,
             toleratedRed,
             phaseResult.sessionId,
           );
