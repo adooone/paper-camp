@@ -1,6 +1,6 @@
 ---
 id: IDEA-254
-title: Plans nav lands on Setup once per session
+title: First Plans click lands on Setup
 type: fix
 status: idea
 created: 2026-09-10
