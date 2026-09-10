@@ -23,6 +23,7 @@ export const LOG_TYPE_LABELS: Record<LogRowType, string> = {
   'pr-review': 'PR review',
   'issue-fix': 'Issue fix',
   'desk-discovery': 'Desk discovery',
+  'install-toolbar': 'Install toolbar',
   'agent-run': 'Agent run',
   check: 'Check',
   reply: 'Reply',

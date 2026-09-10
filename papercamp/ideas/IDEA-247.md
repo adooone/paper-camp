@@ -2,7 +2,7 @@
 id: IDEA-247
 title: Toolbar served from the daemon
 type: feat
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - app
@@ -74,4 +74,5 @@ still applies to `vite serve` only. Host apps that are not Vite.
 - [x] Add the Toolbar settings section
       Enable switch, route field, and host-app state from the frontend service's Vite config.
       run: 9m23s · 164 in · 37.8k out · sonnet-5
-- [ ] Launch the *Install toolbar* agent task from that section
+- [x] Launch the *Install toolbar* agent task from that section
+      run: 11m16s · 234 in · 54.6k out · sonnet-5

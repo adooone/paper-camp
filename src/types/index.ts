@@ -924,7 +924,8 @@ export type TaskKind =
   | 'feedback'
   | 'pr-review'
   | 'issue-fix'
-  | 'desk-discovery';
+  | 'desk-discovery'
+  | 'install-toolbar';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart.
 // A start line and its later finish share an id; `readTaskLog` folds them, so no `endedAt` means never finished.

@@ -10,6 +10,7 @@ import {
   launchBatchReconcile as launchBatchReconcileApi,
   launchFixReview as launchFixReviewApi,
   launchIdeaExtend as launchIdeaExtendApi,
+  launchInstallToolbar as launchInstallToolbarApi,
   launchIssueFix as launchIssueFixApi,
   launchPlanAudit as launchPlanAuditApi,
   launchPlanDraft as launchPlanDraftApi,
@@ -67,6 +68,7 @@ export type AgentSlice = {
     reason: string,
     output: string | undefined,
   ) => Promise<void>;
+  launchInstallToolbar: () => Promise<void>;
   stopAgent: (taskId?: string) => Promise<void>;
 
   // null when no relay has been started this session, or once it's cancelled/consumed.
@@ -222,6 +224,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     launchFixReview: withAgentPoll(get, launchFixReviewApi),
     launchPrReview: withAgentPoll(get, launchPrReviewApi),
     launchIssueFix: withAgentPoll(get, launchIssueFixApi),
+    launchInstallToolbar: withAgentPoll(get, launchInstallToolbarApi),
     stopAgent: async (taskId) => {
       try {
         await stopAgentApi(taskId);

@@ -806,6 +806,7 @@ export function createAgentManager(
     'resolve-conflict',
     'pr-review',
     'issue-fix',
+    'install-toolbar',
   ]);
   const ENTITY_WRITER_KINDS = new Set<TaskKind>([
     'audit',
@@ -1020,6 +1021,12 @@ export function createAgentManager(
   // page picks up the result from tasks.log (issueId) instead.
   function startIssueFix(issueId: string, title: string, prompt: string): Result {
     return launch({ planTitle: title }, prompt, { taskKind: 'issue-fix', issueId });
+  }
+
+  // Settings > Toolbar's "Install toolbar" action — no plan/idea to scope this to,
+  // same as startIssueFix; the section itself re-reads host-app state once it lands.
+  function startInstallToolbar(prompt: string): Result {
+    return launch({ planTitle: 'Install toolbar' }, prompt, { taskKind: 'install-toolbar' });
   }
 
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
@@ -1967,6 +1974,7 @@ export function createAgentManager(
     startGitSyncRecovery,
     startResolveConflict,
     startIssueFix,
+    startInstallToolbar,
     runCommitSuggest,
     runOverlapCheck,
     runPrioritise,
@@ -2047,6 +2055,7 @@ export interface AgentManager {
   startGitSyncRecovery: (prompt: string) => Result;
   startResolveConflict: (prompt: string) => Result;
   startIssueFix: (issueId: string, title: string, prompt: string) => Result;
+  startInstallToolbar: (prompt: string) => Result;
   runCommitSuggest: (prompt: string) => Promise<string>;
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;

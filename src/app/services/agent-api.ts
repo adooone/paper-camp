@@ -123,6 +123,15 @@ export const launchPrReview = async (planId: string): Promise<void> => {
   await handleAgentResponse(response);
 };
 
+export const launchInstallToolbar = async (): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/agent/install-toolbar'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  await handleAgentResponse(response);
+};
+
 export const launchIssueFix = async (
   issueId: string,
   title: string,

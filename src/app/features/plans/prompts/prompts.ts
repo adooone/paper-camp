@@ -1,3 +1,4 @@
+import type { PackageManager } from '@/core/desk-discovery/evidence';
 import type {
   EntityEntry,
   IdeaEntry,
@@ -28,6 +29,42 @@ export function buildIssueFixPrompt(issue: Pick<Issue, 'title' | 'reason' | 'out
 ${issue.reason}${outputBlock}
 
 Find the root cause in this repo and fix it. Commit the fix yourself once the repo is green — there is no plan or PR review step waiting on this one.
+
+Never run \`git stash\`, \`git reset\`, or \`git checkout\` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only \`git diff\` or \`git show HEAD:<file>\` instead.
+
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+
+You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
+
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`NEEDS-DECISION:\` followed by your question, then stop without committing.`;
+}
+
+const INSTALL_COMMANDS: Record<PackageManager, string> = {
+  npm: 'npm install --save-dev @dendelion/paper-camp',
+  pnpm: 'pnpm add -D @dendelion/paper-camp',
+  yarn: 'yarn add -D @dendelion/paper-camp',
+  bun: 'bun add -d @dendelion/paper-camp',
+};
+
+// Settings > Toolbar's "Install toolbar" action (IDEA-247) — no plan/idea file to
+// scope this to, so like "Fix it here" this task commits its own work.
+export function buildInstallToolbarPrompt(
+  viteConfigPath: string,
+  packageManager: PackageManager | null,
+): string {
+  const installCmd = INSTALL_COMMANDS[packageManager ?? 'npm'];
+
+  return `You are wiring up paper-camp's in-app dev toolbar for this project, from its Settings > Toolbar section.
+
+Add \`@dendelion/paper-camp\` as a dev dependency: \`${installCmd}\`.
+
+Then in \`${viteConfigPath}\`, import the plugin and add its call to the Vite \`plugins\` array (create the array if the config has none):
+
+import paperCamp from '@dendelion/paper-camp/vite';
+...
+plugins: [paperCamp(), ...]
+
+Leave the rest of the config as it is. Commit the change yourself once the repo is green — there is no plan or PR review step waiting on this one.
 
 Never run \`git stash\`, \`git reset\`, or \`git checkout\` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only \`git diff\` or \`git show HEAD:<file>\` instead.
 

@@ -1,10 +1,23 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Card, Divider, Input, Stamp, Switch } from '@dendelion/paper-ui';
+import { Alert, Button, Card, Divider, Input, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
 import { useToolbarSection } from '../hooks';
 
 export const ToolbarSection = () => {
-  const { config, hostState, routeInput, setRouteInput, handleToggleEnabled, handleSaveRoute } =
-    useToolbarSection();
+  const {
+    config,
+    hostState,
+    routeInput,
+    setRouteInput,
+    handleToggleEnabled,
+    handleSaveRoute,
+    handleInstall,
+    installRunning,
+    hasAgent,
+  } = useToolbarSection();
+
+  const needsInstall = Boolean(
+    hostState?.viteConfigPath && (!hostState.importsPlugin || !hostState.isDependency),
+  );
 
   return (
     <div>
@@ -77,6 +90,21 @@ export const ToolbarSection = () => {
                   {hostState.isDependency ? 'Yes' : 'No'}
                 </Stamp>
               </div>
+              {needsInstall && (
+                <div className="pt-2">
+                  <Tooltip
+                    content={hasAgent ? undefined : 'No agent CLI found — set up in Settings'}
+                  >
+                    <Button
+                      size="small"
+                      onClick={handleInstall}
+                      disabled={installRunning || !hasAgent}
+                    >
+                      {installRunning ? 'Installing…' : 'Install toolbar'}
+                    </Button>
+                  </Tooltip>
+                </div>
+              )}
             </div>
           )}
         </Card>

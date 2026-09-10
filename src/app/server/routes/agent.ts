@@ -3,10 +3,13 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import {
   buildFixReviewPrompt,
+  buildInstallToolbarPrompt,
   buildIssueFixPrompt,
   buildPrReviewPrompt,
 } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
+import { detectPackageManager } from '@/core/desk-discovery/evidence';
+import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import {
@@ -468,6 +471,23 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       async ({ issueId, title, reason, output }) => {
         const prompt = buildIssueFixPrompt({ title, reason, output });
         return agent.startIssueFix(issueId, title, prompt);
+      },
+    ),
+
+    planActionRoute(
+      '/api/agent/install-toolbar',
+      () => ({}),
+      'unexpected error',
+      async () => {
+        const hostState = await detectToolbarHostState(root);
+        if (!hostState.viteConfigPath) {
+          return { ok: false, status: 400, error: 'No Vite config found for this project' };
+        }
+        const prompt = buildInstallToolbarPrompt(
+          hostState.viteConfigPath,
+          detectPackageManager(root),
+        );
+        return agent.startInstallToolbar(prompt);
       },
     ),
 

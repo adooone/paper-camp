@@ -62,7 +62,7 @@ const PYPROJECT_SCRIPT_SECTION_RE =
 const SCRIPT_KEY_RE = /^\s*([A-Za-z0-9_-]+)\s*=/gm;
 const GO_MODULE_RE = /^module\s+(\S+)/m;
 
-function detectPackageManager(root: string): PackageManager | null {
+export function detectPackageManager(root: string): PackageManager | null {
   for (const [file, manager] of LOCKFILE_MANAGERS) {
     if (existsSync(join(root, file))) return manager;
   }

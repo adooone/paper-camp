@@ -7,6 +7,7 @@ import {
   buildFeedbackSummaryPrompt,
   buildFixReviewPrompt,
   buildIdeaExtendPrompt,
+  buildInstallToolbarPrompt,
   buildOverlapCheckPrompt,
   buildPlanDraftPrompt,
   buildPrReviewPrompt,
@@ -353,5 +354,19 @@ describe('buildFeedbackSummaryPrompt', () => {
     expect(prompt).toContain('You are Paper Scout');
     expect(prompt).toContain("User: What should we do about X?\nAgent: Let's go with Y.");
     expect(prompt).toContain('{"summary": "one sentence"}');
+  });
+});
+
+describe('buildInstallToolbarPrompt', () => {
+  it('names the detected vite config and the pnpm add command', () => {
+    const prompt = buildInstallToolbarPrompt('vite.config.ts', 'pnpm');
+    expect(prompt).toContain('vite.config.ts');
+    expect(prompt).toContain('pnpm add -D @dendelion/paper-camp');
+    expect(prompt).toContain("import paperCamp from '@dendelion/paper-camp/vite';");
+  });
+
+  it('falls back to npm when no package manager was detected', () => {
+    const prompt = buildInstallToolbarPrompt('vite.config.js', null);
+    expect(prompt).toContain('npm install --save-dev @dendelion/paper-camp');
   });
 });
