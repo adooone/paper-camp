@@ -67,8 +67,9 @@ what the four checks run. Any change to the checks the Stack runs on
 demand.
 
 ### Phases
-- [ ] Trim the phase prompt to types and touched tests
+- [x] Trim the phase prompt to types and touched tests
       `buildAgentPrompt` in `agent.ts` loses the "leave the whole repo green" line; `buildFixPassPrompt` keeps its full list.
+      run: 58s · 22 in · 4.2k out · sonnet-5
 - [ ] Drop the per-phase verify from `runQueue`
       A phase ends when the agent stops: commit, tick, next phase — no checks, no fix loop between items.
 - [ ] Verify once after the last phase

@@ -239,9 +239,9 @@ ${FOREGROUND_COMMANDS_ONLY}
 
 Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
-You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`) — never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
+You are headless with no browser or display. Never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
 
-Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and fix anything red. Keep such fixes minimal and correct.
+Run \`pnpm run check-types\` when you have finished editing, and run a test file only if you edited that file; do not run lint, format, or the test suite — the run verifies them once after the last phase.
 
 If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the phase.
 
