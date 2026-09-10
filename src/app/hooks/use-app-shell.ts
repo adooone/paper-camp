@@ -3,7 +3,6 @@ import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
 import { runtimeConnection } from '@/app/services/runtime-connection';
-import { fetchCapabilities, fetchConfig } from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -128,30 +127,18 @@ export function useAppShell(): AppShellState {
     loadIdeas,
   ]);
 
-  // Land fresh installs (or any install with an incomplete capability) on Setup
-  // instead of letting them discover gaps by hitting a broken PR badge or agent button.
+  // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
+  // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
   useEffect(() => {
     if (firstRunChecked.current || pathname !== '/') return;
     firstRunChecked.current = true;
-    Promise.all([fetchConfig(), fetchCapabilities()]).then(([config, capabilities]) => {
-      if (
-        !config?.setupDismissed &&
-        capabilities !== null &&
-        !capabilities.every((c) => c.status === 'ok')
-      ) {
-        navigate({ to: '/settings/$section', params: { section: 'setup' } });
-        return;
-      }
-      // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
-      // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
-      Promise.all([fetchIdeas(), fetchPlans()])
-        .then(([ideas, plans]) => {
-          if ((ideas.entries?.length ?? 0) > 1 || (plans.entries?.length ?? 0) > 0) return;
-          setActiveDocTitle('USAGE.md');
-          navigate({ to: '/docs' });
-        })
-        .catch(() => {});
-    });
+    Promise.all([fetchIdeas(), fetchPlans()])
+      .then(([ideas, plans]) => {
+        if ((ideas.entries?.length ?? 0) > 1 || (plans.entries?.length ?? 0) > 0) return;
+        setActiveDocTitle('USAGE.md');
+        navigate({ to: '/docs' });
+      })
+      .catch(() => {});
   }, [pathname, navigate, setActiveDocTitle]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.

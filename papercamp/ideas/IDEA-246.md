@@ -2,7 +2,7 @@
 id: IDEA-246
 title: One link in, and projects that remember
 type: feat
-status: idea
+status: review
 created: 2026-09-09
 tags:
   - app
@@ -74,5 +74,6 @@ panels within a route.
       run: 13m41s · 120 in · 54.7k out · sonnet-5
 - [x] Open a machine link into the remembered or only project
       run: 5m22s · 46 in · 19.3k out · sonnet-5
-- [ ] Drop the first-run redirect to Settings
+- [x] Drop the first-run redirect to Settings
       The USAGE.md redirect for an untouched corpus stays.
+      run: 2m45s · 28 in · 5.5k out · sonnet-5
