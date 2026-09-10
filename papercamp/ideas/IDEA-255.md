@@ -2,7 +2,7 @@
 id: IDEA-255
 title: Verify once, after the last phase
 type: feat
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - server
@@ -82,5 +82,6 @@ demand.
 - [x] Keep one session for the whole run
       Resume the previous phase's session, start fresh when its last turn passed 120k input tokens, and record which session each phase ran in for the run card.
       run: 11m56s · 202 in · 53k out · sonnet-5
-- [ ] Target 3–5 phases in the drafting prompts
+- [x] Target 3–5 phases in the drafting prompts
       `BREVITY_CONTRACT` in `prompts.ts`, plus the plan-draft rule that steps editing the same files are one phase.
+      run: 1m59s · 44 in · 5.5k out · sonnet-5

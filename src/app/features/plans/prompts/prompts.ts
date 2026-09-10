@@ -15,7 +15,7 @@ import type { SimilarityCandidate } from '../helpers';
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
 // questions or wait for input; each "done" condition is checked mechanically by agent.ts's didTaskProgress.
 
-export const BREVITY_CONTRACT = `Keep phases short: 3-7 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
+export const BREVITY_CONTRACT = `Keep phases short: 3-5 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
 
 export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
 
@@ -264,6 +264,7 @@ Hard rules:
 - Never change the \`id\`, \`title\`, \`status\`, or \`created\` fields — \`status\` stays exactly \`idea\`; a human promotes it after reviewing your draft. (${TITLE_STYLE} Leave the existing title as-is even if it breaks this; never expand it into a symptom-sentence.)
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
 - Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
+- Steps that edit the same files are one phase, not split across several.
 
 ## Every other open (non-done) plan, for scope context
 

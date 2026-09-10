@@ -46,6 +46,12 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).not.toContain('**Status:**');
   });
 
+  it('plan-draft prompt targets 3-5 phases and merges steps touching the same files', () => {
+    const prompt = buildPlanDraftPrompt(idea, []);
+    expect(prompt).toContain('3-5 phases');
+    expect(prompt).toContain('Steps that edit the same files are one phase');
+  });
+
   it('idea-extend prompt points at the per-file idea, not legacy ideas.md', () => {
     const prompt = buildIdeaExtendPrompt(idea);
     expect(prompt).toContain(`papercamp/ideas/${idea.id}.md`);
@@ -65,6 +71,11 @@ describe('agent prompts target the unified entity corpus', () => {
     expect(prompt).toContain(`papercamp/ideas/${plan.id}.md`);
     expect(prompt).toContain(`papercamp/ideas/archive/${plan.id}.md`);
     expect(prompt).not.toContain('plans.md');
+  });
+
+  it("convergence-audit prompt inherits the plan-draft prompt's 3-5 phase target", () => {
+    const prompt = buildConvergenceAuditPrompt(plan);
+    expect(prompt).toContain('3-5 phases');
   });
 
   it('reconcile prompt targets the entity file and keeps its guardrails', () => {
