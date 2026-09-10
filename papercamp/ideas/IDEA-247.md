@@ -62,8 +62,9 @@ still applies to `vite serve` only. Host apps that are not Vite.
 - [x] Serve the toolbar bundle from the daemon
       `serveToolbarAsset` is wired into `src/cli/dev-server.ts` today; mount it under `/p/<slug>/` and answer CORS for loopback origins.
       run: 5m36s · 62 in · 23k out · sonnet-5
-- [ ] Resolve the daemon origin and slug in `paperCamp()`
+- [x] Resolve the daemon origin and slug in `paperCamp()`
       Match the Vite root against `projects.json`, read the port from `daemon.json`, keep `port` as a manual override.
+      run: 5m13s · 46 in · 19.3k out · sonnet-5
 - [ ] Inject the script tag, or print the off notice
 - [ ] Delete `src/vite/proxy.ts` and its mount rewriting
 - [ ] Read the origin from the script `src` in the toolbar bundle
