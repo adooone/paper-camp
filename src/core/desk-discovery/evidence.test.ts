@@ -40,6 +40,7 @@ describe('gatherProjectEvidence', () => {
       devPort: null,
       gitOriginSlug: null,
       hasCiWorkflows: false,
+      ciSteps: [],
       hasReleasePlease: false,
       nonJsManifests: [],
     });
@@ -223,5 +224,39 @@ describe('gatherProjectEvidence', () => {
     expect(evidence.nonJsManifests).toEqual([
       { kind: 'make', path: 'Makefile', targets: ['build', 'test'] },
     ]);
+  });
+});
+
+describe('ciSteps', () => {
+  it('lists every run step from the workflows with its job and step names', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-evidence-ci-'));
+    await mkdir(join(root, '.github', 'workflows'), { recursive: true });
+    await writeFile(
+      join(root, '.github', 'workflows', 'ci.yml'),
+      [
+        'name: CI',
+        'jobs:',
+        '  consistency:',
+        '    name: Consistency',
+        '    steps:',
+        '      - uses: actions/checkout@v4',
+        '      - name: Lint commit messages',
+        '        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD',
+        '  tests:',
+        '    steps:',
+        '      - run: pnpm test',
+      ].join('\n'),
+    );
+    const evidence = await gatherProjectEvidence(root);
+    expect(evidence.ciSteps).toEqual([
+      {
+        workflow: 'ci.yml',
+        job: 'Consistency',
+        step: 'Lint commit messages',
+        run: 'npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD',
+      },
+      { workflow: 'ci.yml', job: 'tests', step: 'pnpm test', run: 'pnpm test' },
+    ]);
+    await rm(root, { recursive: true, force: true });
   });
 });

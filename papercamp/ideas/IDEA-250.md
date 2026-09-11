@@ -106,14 +106,11 @@ and the chat from [[IDEA-251]].
 ### Phases
 - [ ] Scaffold `paper-camp-mobile` on paper-ui's tokens
       Expo app depending on the published `@dendelion/paper-camp`, fonts and textures through `expo-font`, and the eight `ui/` primitives.
-- [ ] Build the shell: bottom bar, title row, and project switcher
-- [ ] Pair a machine from the printed link
-      QR viewfinder and paste field, stored token, remembered machines, and the *Update the daemon* card when a runtime is older than the built-against version.
-- [ ] Build the Projects tab
-      Machine cards with reach stamps and project rows carrying the running stamp.
-- [ ] Build the Chat tab against [[IDEA-251]]
+- [ ] Build the shell and pair a machine from the printed link
+      Bottom bar, title row, project switcher, QR viewfinder and paste field, stored token and remembered machines, and the *Update the daemon* card when a runtime is older than the built-against version.
+- [ ] Build the Projects and Chat tabs
+      Machine cards with reach stamps and project rows, and the conversation from [[IDEA-251]].
 - [ ] Build the Log tab and the entity screens
       Chip filters and rows, the entry with its chalkboard output and bar, the live running task, and the Idea screen.
-- [ ] Add the push subscription to the daemon and send through Expo
-      `POST`/`DELETE /p/<slug>/api/push/subscribe`, sends for the `notification-log.ts` events, deep link to the entry, and the device list in Settings → Notifications.
-- [ ] Cut the store build and the EAS update channel
+- [ ] Register the Expo push token and cut the store build
+      Subscribe against each paired runtime under [[IDEA-252]], deep link a tapped notification to its entry, then ship the store build and the EAS update channel.

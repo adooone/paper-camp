@@ -11,6 +11,7 @@ const EVIDENCE: ProjectEvidence = {
   devPort: 3333,
   gitOriginSlug: 'acme/widgets',
   hasCiWorkflows: true,
+  ciSteps: [],
   hasReleasePlease: true,
   nonJsManifests: [],
 };

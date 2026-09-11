@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { runGit } from '../git-log';
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -16,12 +17,22 @@ export interface NonJsManifest {
   targets: string[];
 }
 
+export interface CiStep {
+  workflow: string;
+  job: string;
+  step: string;
+  run: string;
+}
+
 export interface ProjectEvidence {
   packageManager: PackageManager | null;
   scripts: ProjectScript[];
   devPort: number | null;
   gitOriginSlug: string | null;
   hasCiWorkflows: boolean;
+  /** Every `run:` step in .github/workflows, so a check that lives only in CI —
+   *  commitlint over a PR range, say — can still be offered as a desk check. */
+  ciSteps: CiStep[];
   hasReleasePlease: boolean;
   nonJsManifests: NonJsManifest[];
 }
@@ -163,6 +174,42 @@ function detectCiWorkflows(root: string): boolean {
   }
 }
 
+interface WorkflowFile {
+  jobs?: Record<string, { name?: string; steps?: { name?: string; run?: string }[] }>;
+}
+
+async function readCiSteps(root: string): Promise<CiStep[]> {
+  const dir = join(root, '.github', 'workflows');
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter((file) => /\.ya?ml$/.test(file));
+  } catch {
+    return [];
+  }
+  const steps: CiStep[] = [];
+  for (const file of files) {
+    const content = await readFile(join(dir, file), 'utf-8').catch(() => '');
+    let workflow: WorkflowFile | null;
+    try {
+      workflow = parseYaml(content) as WorkflowFile | null;
+    } catch {
+      continue;
+    }
+    for (const [jobId, job] of Object.entries(workflow?.jobs ?? {})) {
+      for (const step of job?.steps ?? []) {
+        if (typeof step?.run !== 'string' || !step.run.trim()) continue;
+        steps.push({
+          workflow: file,
+          job: job.name ?? jobId,
+          step: step.name ?? step.run.trim().split('\n')[0],
+          run: step.run.trim(),
+        });
+      }
+    }
+  }
+  return steps;
+}
+
 function detectReleasePlease(root: string): boolean {
   return RELEASE_PLEASE_PATHS.some((path) => existsSync(join(root, path)));
 }
@@ -214,10 +261,11 @@ async function detectNonJsManifests(root: string): Promise<NonJsManifest[]> {
 
 export async function gatherProjectEvidence(root: string): Promise<ProjectEvidence> {
   const scripts = await readScripts(root);
-  const [devPort, gitOriginSlug, nonJsManifests] = await Promise.all([
+  const [devPort, gitOriginSlug, nonJsManifests, ciSteps] = await Promise.all([
     detectDevPort(root, scripts),
     detectGitOriginSlug(root),
     detectNonJsManifests(root),
+    readCiSteps(root),
   ]);
   return {
     packageManager: detectPackageManager(root),
@@ -225,6 +273,7 @@ export async function gatherProjectEvidence(root: string): Promise<ProjectEviden
     devPort,
     gitOriginSlug,
     hasCiWorkflows: detectCiWorkflows(root),
+    ciSteps,
     hasReleasePlease: detectReleasePlease(root),
     nonJsManifests,
   };

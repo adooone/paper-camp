@@ -2,7 +2,7 @@
 id: IDEA-251
 title: Project chat
 type: feat
-status: review
+status: done
 created: 2026-09-10
 updated: 2026-09-11
 tags:

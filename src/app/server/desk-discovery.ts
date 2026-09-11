@@ -12,6 +12,8 @@ The desk config has three optional sections:
 
 Classify each package.json script and each non-JS manifest's declared target as one service (starts a long-running process — e.g. a name like "dev"/"serve"/"start", or a command with a --watch/--port flag), one check (runs to completion — e.g. lint/test/build/typecheck), or omit it entirely if it doesn't belong on the panel (e.g. a postinstall hook or a script that only wraps another script already listed). Use the evidence's detected dev port on the service it belongs to. Give each entry a short, human-readable "name" for the panel — not the raw script name.
 
+The evidence's "ciSteps" are the commands the repository's CI runs. A CI step that runs a check with no matching package.json script — commit-message linting over a range, a dependency audit, a link checker — must still become a check, with a "cmd" that runs the same tool locally from the repository root: replace GitHub expressions like \${{ github.event.pull_request.base.sha }} with local equivalents (a commit range becomes origin/main..HEAD), and drop steps that only install, cache, check out, build for publishing, or publish. A CI step whose command is a package.json script already covered by another check is not a second check.
+
 If a check is a lint or format pass and the evidence has another script that mechanically applies the same tool's fixes (e.g. a "lint:write"/"lint:fix"/"format" script wrapping the same tool with a --write/--fix flag), set that check's "fixCmd" to that script's command. Leave "fixCmd" out for checks with no such mechanical fix (type-check, tests, build).
 
 Evidence:
