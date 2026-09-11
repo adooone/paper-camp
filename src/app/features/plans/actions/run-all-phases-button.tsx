@@ -1,6 +1,8 @@
+import { RunIcon } from '@/app/components/icons';
+import { SidebarCommand } from '@/app/components/sidebar';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { ListItem, Tooltip } from '@dendelion/paper-ui';
+import { Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface RunAllPhasesButtonProps {
@@ -25,7 +27,6 @@ export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) 
     }
   };
 
-  const isDisabled = disabled || launching || !plan.id || !hasAgent;
   const hint = !plan.id
     ? 'Plan needs an ID before an agent can run'
     : !hasAgent
@@ -34,15 +35,14 @@ export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) 
 
   return (
     <Tooltip content={hint}>
-      <ListItem
-        size="small"
-        icon={<span className="text-ink-500">▶</span>}
+      <SidebarCommand
+        icon={<RunIcon size={16} />}
         onClick={handleClick}
-        disabled={isDisabled}
-        className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
+        disabled={disabled || !plan.id || !hasAgent}
+        busy={launching ? 'Starting…' : undefined}
       >
-        {launching ? 'Starting…' : 'Run all phases'}
-      </ListItem>
+        Run all phases
+      </SidebarCommand>
     </Tooltip>
   );
 };

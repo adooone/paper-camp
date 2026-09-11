@@ -1,3 +1,5 @@
+import { WandIcon } from '@/app/components/icons';
+import { SidebarCommand } from '@/app/components/sidebar';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
@@ -12,6 +14,8 @@ interface DraftPlanButtonProps {
   className?: string;
   /** Replaces the existing `### Phases` list in place instead of drafting a fresh one. */
   redraft?: boolean;
+  /** Renders as a SidebarCommand row (the idea sidebar's Redraft slot) instead of a Button. */
+  sidebar?: boolean;
 }
 
 export const DraftPlanButton = ({
@@ -19,6 +23,7 @@ export const DraftPlanButton = ({
   otherPlans,
   className = '',
   redraft = false,
+  sidebar = false,
 }: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
   const hasAgent = useAppStore(selectHasAnyAgent);
@@ -64,6 +69,22 @@ export const DraftPlanButton = ({
         : !hasAgent
           ? 'No agent CLI found — set up in Settings'
           : undefined;
+
+  if (sidebar) {
+    return (
+      <Tooltip content={title}>
+        <SidebarCommand
+          icon={<WandIcon size={16} />}
+          onClick={handleClick}
+          disabled={!idea.id || !hasAgent}
+          busy={state === 'loading' ? label : undefined}
+          tone={state === 'error' ? 'danger' : undefined}
+        >
+          {label}
+        </SidebarCommand>
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip content={title}>

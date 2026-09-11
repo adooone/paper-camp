@@ -1,6 +1,8 @@
+import { CheckAllIcon } from '@/app/components/icons';
+import { SidebarCommand } from '@/app/components/sidebar';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { ListItem, Tooltip } from '@dendelion/paper-ui';
+import { Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface FixReviewButtonProps {
@@ -28,7 +30,6 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
     }
   };
 
-  const isDisabled = disabled || launching || !plan.id || !hasAgent || !ghOk;
   const hint = !plan.id
     ? 'Plan needs an ID before an agent can run'
     : !ghOk
@@ -39,17 +40,14 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
 
   return (
     <Tooltip content={hint}>
-      <ListItem
-        size="small"
-        // paper-ui has no flag icon (only CloseIcon, LightbulbIcon, CheckIcon, CopyIcon,
-        // PlusIcon, FolderIcon) — raw span is a deliberate fallback, not an oversight.
-        icon={<span className="text-watercolor-amber-dark">⚑</span>}
+      <SidebarCommand
+        icon={<CheckAllIcon size={16} />}
         onClick={handleClick}
-        disabled={isDisabled}
-        className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
+        disabled={disabled || !plan.id || !hasAgent || !ghOk}
+        busy={launching ? 'Starting…' : undefined}
       >
-        {launching ? 'Starting…' : 'Fix review comments'}
-      </ListItem>
+        Fix review comments
+      </SidebarCommand>
     </Tooltip>
   );
 };

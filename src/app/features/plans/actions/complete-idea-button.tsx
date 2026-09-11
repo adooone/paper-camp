@@ -1,9 +1,10 @@
+import { SidebarCommand } from '@/app/components/sidebar';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { completeIdea } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { ListItem, useToast } from '@dendelion/paper-ui';
+import { CheckIcon, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { completionGate } from '../helpers';
 
@@ -49,23 +50,17 @@ export const CompleteIdeaButton = ({ plan, disabled }: CompleteIdeaButtonProps) 
     }
   };
 
-  const isDisabled = disabled || completing || !plan.id || !gate.ready;
-
   return (
-    <div className="flex flex-col gap-0.5">
-      <ListItem
-        size="small"
-        // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-        icon={<span className="text-watercolor-green-dark">✓</span>}
-        onClick={handleClick}
-        disabled={isDisabled}
-        className={`pc-row text-xs ${isDisabled ? 'opacity-50' : ''}`}
-      >
-        {completing ? 'Completing…' : 'Complete idea'}
-      </ListItem>
-      {!gate.ready && gate.missing.length > 0 && (
-        <div className="text-2xs text-ink-300 px-2">Waiting on {gate.missing.join(', ')}</div>
-      )}
-    </div>
+    <SidebarCommand
+      icon={<CheckIcon size={16} />}
+      onClick={handleClick}
+      disabled={disabled || !plan.id || !gate.ready}
+      busy={completing ? 'Completing…' : undefined}
+      note={
+        !gate.ready && gate.missing.length > 0 ? `Waiting on ${gate.missing.join(', ')}` : undefined
+      }
+    >
+      Complete idea
+    </SidebarCommand>
   );
 };

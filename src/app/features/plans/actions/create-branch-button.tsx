@@ -1,8 +1,10 @@
+import { GitBranchIcon } from '@/app/components/icons';
+import { SidebarCommand } from '@/app/components/sidebar';
 import { createPlanBranch } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { ListItem, Tooltip, useToast } from '@dendelion/paper-ui';
+import { Tooltip, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface CreateBranchButtonProps {
@@ -35,30 +37,27 @@ export const CreateBranchButton = ({ plan, disabled }: CreateBranchButtonProps) 
     }
   };
 
-  const isDisabled = disabled || branching || !plan.id;
-
   return (
-    <div className="flex flex-col gap-0.5">
-      <Tooltip
-        content={
-          plan.id
-            ? `Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`
-            : undefined
+    <Tooltip
+      content={
+        plan.id
+          ? `Creates ${(plan.kind ?? 'feat').toLowerCase()}/${plan.id.toLowerCase()}-… from main, or switches to it if it already exists`
+          : undefined
+      }
+    >
+      <SidebarCommand
+        icon={<GitBranchIcon size={16} />}
+        onClick={handleClick}
+        disabled={disabled || !plan.id}
+        busy={branching ? 'Switching…' : undefined}
+        note={
+          <>
+            <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch
+          </>
         }
       >
-        <ListItem
-          size="small"
-          icon={<span className="text-ink-500">⎇</span>}
-          onClick={handleClick}
-          disabled={isDisabled}
-          className={`pc-row text-xs ${isDisabled ? 'opacity-50' : ''}`}
-        >
-          {branching ? 'Switching…' : 'Create branch'}
-        </ListItem>
-      </Tooltip>
-      <div className="text-2xs text-ink-300 px-2">
-        <code>{gitBranch ?? 'unknown'}</code> — not this plan's branch
-      </div>
-    </div>
+        Create branch
+      </SidebarCommand>
+    </Tooltip>
   );
 };

@@ -1,10 +1,21 @@
+import { RefreshIcon } from '@/app/components/icons';
+import { SidebarCommand, SidebarDivider, SidebarField } from '@/app/components/sidebar';
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
 import type { IdeaEntry } from '@/types/index';
-import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
+import {
+  CheckIcon,
+  CloseIcon,
+  FolderIcon,
+  Input,
+  ListItem,
+  Select,
+  Stamp,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import {
   CompleteIdeaButton,
@@ -18,9 +29,6 @@ import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { canMarkPlanDone, effectiveStatus, isUntouchedPlan } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
-
-// Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
-const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
 
 export const PlanActionsColumn = () => {
   const plan = useActivePlan();
@@ -156,7 +164,7 @@ export const PlanActionsColumn = () => {
 
       {/* Read-only: the dropped/reopen override lives in Actions below since
           abandonment leaves no branch or PR to derive status from. */}
-      <div className="h-[64px] flex items-center">
+      <div className="h-[32px] flex items-center">
         <Stamp
           size="small"
           fillColor={STATUS_STAMP[displayStatus].fill}
@@ -166,32 +174,27 @@ export const PlanActionsColumn = () => {
         </Stamp>
       </div>
 
-      <div>
-        <div className={sectionLabelClass}>Subject</div>
-        <div className="h-[32px] flex items-center">
-          <Select
-            className="w-full"
-            size="small"
-            value={plan.subject ?? NO_SUBJECT}
-            onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
-            disabled={updating || !subjectsAvailable}
-            options={[
-              { value: NO_SUBJECT, label: 'No subject' },
-              ...(orphanSubject
-                ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
-                : []),
-              ...(!subjectsAvailable && plan.subject && !orphanSubject
-                ? [{ value: plan.subject, label: plan.subject }]
-                : []),
-              ...subjects.map((s) => ({ value: s, label: s })),
-            ]}
-          />
-        </div>
-      </div>
+      <SidebarField label="Subject">
+        <Select
+          size="small"
+          value={plan.subject ?? NO_SUBJECT}
+          onChange={(value) => patch({ subject: value === NO_SUBJECT ? null : value })}
+          disabled={updating || !subjectsAvailable}
+          options={[
+            { value: NO_SUBJECT, label: 'No subject' },
+            ...(orphanSubject
+              ? [{ value: orphanSubject, label: `${orphanSubject} (orphan)` }]
+              : []),
+            ...(!subjectsAvailable && plan.subject && !orphanSubject
+              ? [{ value: plan.subject, label: plan.subject }]
+              : []),
+            ...subjects.map((s) => ({ value: s, label: s })),
+          ]}
+        />
+      </SidebarField>
 
       {hasRunOrder && (
-        <div className="flex items-center justify-between h-[64px]">
-          <div className={sectionLabelClass}>Order</div>
+        <SidebarField label="Order">
           <Input
             type="number"
             size="small"
@@ -201,65 +204,58 @@ export const PlanActionsColumn = () => {
             onChange={(e) => setOrderInput(e.target.value)}
             onBlur={handleOrderBlur}
             disabled={updating}
-            className="w-20"
           />
-        </div>
+        </SidebarField>
       )}
+
+      <SidebarDivider />
 
       <div className="flex flex-col">
         {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
         {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
-        {canRedraft && (
-          <DraftPlanButton idea={ideaView} otherPlans={otherPlans} redraft className="pc-row" />
-        )}
+        {canRedraft && <DraftPlanButton idea={ideaView} otherPlans={otherPlans} redraft sidebar />}
         {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
         {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
         {underReview && plan.pr && (
           <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />
         )}
+      </div>
 
+      <SidebarDivider />
+
+      <div className="flex flex-col">
         {done && (
-          <ListItem
-            size="small"
-            icon={<span className="text-ink-300">▣</span>}
+          <SidebarCommand
+            icon={<FolderIcon size={16} />}
             onClick={handleArchive}
-            disabled={archiving || !plan.id}
-            className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            disabled={!plan.id}
+            busy={archiving ? 'Archiving…' : undefined}
           >
-            {archiving ? 'Archiving…' : 'Archive'}
-          </ListItem>
+            Archive
+          </SidebarCommand>
         )}
 
         {canMarkDone && (
-          <ListItem
-            size="small"
-            // Raw glyph: needs an arbitrary green tint paper-ui's CheckIcon can't take.
-            icon={<span className="text-watercolor-green-dark">✓</span>}
+          <SidebarCommand
+            icon={<CheckIcon size={16} />}
             onClick={handleMarkDone}
-            disabled={archiving || !plan.id}
-            className={`pc-row text-xs ${archiving || !plan.id ? 'opacity-50' : ''}`}
+            disabled={!plan.id}
+            busy={archiving ? 'Completing…' : undefined}
           >
-            {archiving ? 'Completing…' : 'Complete idea'}
-          </ListItem>
+            Complete idea
+          </SidebarCommand>
         )}
 
         {!done && (
-          <ListItem
-            size="small"
-            icon={
-              <span
-                className={dropped ? 'text-watercolor-green-dark' : 'text-watercolor-rose-dark'}
-              >
-                {dropped ? '↺' : '⊘'}
-              </span>
-            }
+          <SidebarCommand
+            icon={dropped ? <RefreshIcon size={16} /> : <CloseIcon size={16} />}
+            tone={dropped ? undefined : 'danger'}
             onClick={() => patch({ status: dropped ? null : 'dropped' })}
             disabled={updating}
-            className={`pc-row text-xs ${updating ? 'opacity-50' : ''}`}
           >
             {dropped ? 'Reopen plan' : 'Mark dropped'}
-          </ListItem>
+          </SidebarCommand>
         )}
       </div>
     </div>

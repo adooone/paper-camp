@@ -77,8 +77,9 @@ this sense. Changing which commands an entity offers or when. New icons;
 - [x] Build the four sidebar pieces
       `SidebarLabel`, `SidebarField`, `SidebarCommand`, and `SidebarDivider` in `src/app/components/sidebar/`, with unit tests for the command's disabled, busy, and danger states.
       run: 2m48s · 54 in · 10.7k out · sonnet-5 · sess:0efd8bb2-617b-4f0d-ae31-3bbd66b75537
-- [ ] Rebuild the entity sidebar on them
+- [x] Rebuild the entity sidebar on them
       `plan-actions-column.tsx` and every action in `plans/actions/` become `SidebarCommand`s with `icons.tsx` icons; the stamp, Subject, and Order rows take the field grammar.
+      run: 7m3s · 72 in · 35.1k out · sonnet-5 · sess:0efd8bb2-617b-4f0d-ae31-3bbd66b75537
 - [ ] Rebuild the filter sidebars on them
       Plans, Roadmap, and Log in the shared order; *Add item* moves to the Roadmap title row.
 - [ ] Rebuild the navigation sidebars and delete the old scaffolding

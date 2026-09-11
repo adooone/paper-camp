@@ -1,7 +1,9 @@
+import { GithubIcon } from '@/app/components/icons';
+import { SidebarCommand } from '@/app/components/sidebar';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { ListItem, Tooltip } from '@dendelion/paper-ui';
+import { Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface PrReviewButtonProps {
@@ -30,7 +32,6 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
     }
   };
 
-  const isDisabled = disabled || launching || !plan.id || !hasAgent || !ghOk;
   const hint = !plan.id
     ? 'Plan needs an ID before an agent can run'
     : !ghOk
@@ -44,33 +45,25 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
   const alreadyReviewed = Boolean(
     status?.lastReviewedSha && status.headSha && status.lastReviewedSha === status.headSha,
   );
-  const label = launching
-    ? 'Starting…'
-    : alreadyReviewed
-      ? `Review again — last reviewed at ${(status?.lastReviewedSha ?? '').slice(0, 7)}`
-      : 'Review PR';
+  const label = alreadyReviewed
+    ? `Review again — last reviewed at ${(status?.lastReviewedSha ?? '').slice(0, 7)}`
+    : 'Review PR';
   const advisories = [
     status && !status.ready && 'draft',
     status?.ciGreen === false && 'CI not green',
   ].filter(Boolean);
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <Tooltip content={hint}>
-        <ListItem
-          size="small"
-          // paper-ui has no eye/magnifier icon — raw span is a deliberate fallback, not an oversight.
-          icon={<span className="text-watercolor-blue-dark">◎</span>}
-          onClick={handleClick}
-          disabled={isDisabled}
-          className={`text-xs leading-4 py-2 ${isDisabled ? 'opacity-50' : ''}`}
-        >
-          {label}
-        </ListItem>
-      </Tooltip>
-      {advisories.length > 0 && (
-        <div className="text-2xs text-ink-300 px-2">{advisories.join(' · ')}</div>
-      )}
-    </div>
+    <Tooltip content={hint}>
+      <SidebarCommand
+        icon={<GithubIcon size={16} />}
+        onClick={handleClick}
+        disabled={disabled || !plan.id || !hasAgent || !ghOk}
+        busy={launching ? 'Starting…' : undefined}
+        note={advisories.length > 0 ? advisories.join(' · ') : undefined}
+      >
+        {label}
+      </SidebarCommand>
+    </Tooltip>
   );
 };
