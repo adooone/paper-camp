@@ -1,9 +1,8 @@
 import { buildChatMovePrompt } from '@/app/features/plans/prompts';
 import type { AgentTaskState, EntityEntry, TaskLogEntry, ThreadMessage } from '@/types/index';
 
-// Claude's `-p --output-format json` wraps the model's text in {result: "..."}; opencode's
-// `--format json` doesn't. Unwrap either shape, then pull the trailing JSON object — same
-// as feedback-reply.ts's extractJsonBlock.
+// Claude's `-p --output-format json` wraps the text in {result: "..."}; opencode's doesn't.
+// Unwrap either shape, then pull the trailing JSON object — same as feedback-reply.ts.
 function extractJsonBlock(output: string): string | null {
   let resultText = output;
   try {

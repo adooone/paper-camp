@@ -213,8 +213,7 @@ export async function applyFeedbackMessage(
       text: replyText,
     });
 
-    // Re-enter a run-all parked on this question (IDEA-125) now, instead of
-    // leaving it failed until someone notices. Also resolves the question's
+    // Re-enter a run-all parked on this question (IDEA-125), and resolve its
     // mirror in the project chat (IDEA-251), wherever the answer came from.
     if (openQuestionIndex !== -1) {
       await resolveChatQuestion(root, entity.id);

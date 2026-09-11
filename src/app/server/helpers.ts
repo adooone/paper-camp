@@ -78,9 +78,8 @@ export async function writeEntityFile(
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 
-// Shared by the /api/ideas route and the MCP `add_idea`/`draft_plan` tools, and now
-// the project chat's "describe new work" move (IDEA-251), so an idea file is only
-// ever assembled in one place.
+// Shared by the /api/ideas route, the MCP `add_idea`/`draft_plan` tools, and the
+// project chat's "describe new work" move (IDEA-251) — one place assembles idea files.
 export async function createIdeaEntity(
   root: string,
   input: { title: string; content?: string; type?: string; subject?: string },

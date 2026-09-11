@@ -436,10 +436,8 @@ export function createAgentManager(
     return task.status === 'stopping';
   }
 
-  // Writes the escalation into the plan's thread (so it's visible where a human
-  // would leave one) and flips status to in-progress so it surfaces as needing input.
-  // Mirrored into the project chat (IDEA-251) so the question surfaces there too;
-  // answering it there resolves this same open question and resumes the run.
+  // Writes the escalation into the plan's thread and flips status to in-progress.
+  // Also mirrored into the project chat (IDEA-251); answering it there resolves this.
   async function escalateToLog(
     task: AgentTask,
     planId: string | undefined,
