@@ -1,3 +1,4 @@
+import { SidebarDivider, SidebarField } from '@/app/components/sidebar';
 import { formatDuration } from '@/core/phase-run';
 import type { LogDateRange, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS } from '@/types/index';
@@ -38,47 +39,62 @@ const StatRow = ({ label, value }: StatRowProps) => (
 );
 
 export const LogSidebar = () => {
-  const { filters, setFilters, stats } = useLogPage();
+  const { filters, setFilters, stats, hasActiveFilters, clearFilters } = useLogPage();
 
   return (
     <div className="flex flex-col">
-      <div className="h-[64px] flex items-center">
+      <SidebarField label="Search">
         <Input
           type="search"
           size="small"
-          className="w-full"
           placeholder="Search title, entity, or reason…"
           aria-label="Search the log"
           value={filters.q}
           onChange={(event) => setFilters({ q: event.target.value })}
         />
-      </div>
+      </SidebarField>
 
-      <div className="flex flex-col gap-2 pb-4">
+      <SidebarField label="Agent">
         <Select
           size="small"
-          className="w-full"
           value={filters.agent ?? ''}
           options={AGENT_OPTIONS}
           onChange={(value) =>
             setFilters({ agent: value ? (value as typeof filters.agent) : undefined })
           }
         />
+      </SidebarField>
+
+      <SidebarField label="Range">
         <Select
           size="small"
-          className="w-full"
           value={filters.range}
           options={RANGE_OPTIONS}
           onChange={(value) => setFilters({ range: value as LogDateRange })}
         />
+      </SidebarField>
+
+      <SidebarField label="Sort">
         <Select
           size="small"
-          className="w-full"
           value={filters.sort}
           options={SORT_OPTIONS}
           onChange={(value) => setFilters({ sort: value as LogSort })}
         />
-      </div>
+      </SidebarField>
+
+      {hasActiveFilters && (
+        <button
+          type="button"
+          data-testid="clear-log-filters"
+          onClick={clearFilters}
+          className="pc-row-label text-2xs opacity-70 underline text-left"
+        >
+          Clear filters
+        </button>
+      )}
+
+      <SidebarDivider />
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <StatRow label="Runs" value={String(stats.runs)} />

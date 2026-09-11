@@ -8,9 +8,10 @@ import type {
 export interface RoadmapFilters {
   horizons: string[];
   statuses: PlanStatus[];
+  search: string;
 }
 
-export const DEFAULT_ROADMAP_FILTERS: RoadmapFilters = { horizons: [], statuses: [] };
+export const DEFAULT_ROADMAP_FILTERS: RoadmapFilters = { horizons: [], statuses: [], search: '' };
 
 export const itemStatuses = (item: ResolvedRoadmapItem): PlanStatus[] => [
   ...new Set(item.links.map((link) => link.status)),
@@ -22,6 +23,19 @@ const matchesStatusFilter = (item: ResolvedRoadmapItem, statuses: PlanStatus[]):
 const inHorizonFilter = (title: string, horizons: string[]): boolean =>
   horizons.length === 0 || horizons.includes(title);
 
+const matchesSearchFilter = (item: ResolvedRoadmapItem, search: string): boolean => {
+  const needle = search.trim().toLowerCase();
+  if (!needle) return true;
+  return (
+    item.name.toLowerCase().includes(needle) ||
+    item.description.toLowerCase().includes(needle) ||
+    item.candidates.some((candidate) => candidate.toLowerCase().includes(needle))
+  );
+};
+
+const matchesItemFilters = (item: ResolvedRoadmapItem, filters: RoadmapFilters): boolean =>
+  matchesStatusFilter(item, filters.statuses) && matchesSearchFilter(item, filters.search);
+
 export const filterHorizons = (
   roadmap: ResolvedRoadmap,
   filters: RoadmapFilters,
@@ -30,7 +44,7 @@ export const filterHorizons = (
     .filter((horizon) => inHorizonFilter(horizon.title, filters.horizons))
     .map((horizon) => ({
       ...horizon,
-      items: horizon.items.filter((item) => matchesStatusFilter(item, filters.statuses)),
+      items: horizon.items.filter((item) => matchesItemFilters(item, filters)),
     }));
 
 export const horizonItemCounts = (
@@ -40,7 +54,7 @@ export const horizonItemCounts = (
   Object.fromEntries(
     roadmap.horizons.map((horizon) => [
       horizon.title,
-      horizon.items.filter((item) => matchesStatusFilter(item, filters.statuses)).length,
+      horizon.items.filter((item) => matchesItemFilters(item, filters)).length,
     ]),
   );
 
@@ -52,6 +66,7 @@ export const statusItemCounts = (
   for (const horizon of roadmap.horizons) {
     if (!inHorizonFilter(horizon.title, filters.horizons)) continue;
     for (const item of horizon.items) {
+      if (!matchesSearchFilter(item, filters.search)) continue;
       for (const status of itemStatuses(item)) {
         counts[status] = (counts[status] ?? 0) + 1;
       }

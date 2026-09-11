@@ -80,7 +80,8 @@ this sense. Changing which commands an entity offers or when. New icons;
 - [x] Rebuild the entity sidebar on them
       `plan-actions-column.tsx` and every action in `plans/actions/` become `SidebarCommand`s with `icons.tsx` icons; the stamp, Subject, and Order rows take the field grammar.
       run: 7m3s · 72 in · 35.1k out · sonnet-5 · sess:0efd8bb2-617b-4f0d-ae31-3bbd66b75537
-- [ ] Rebuild the filter sidebars on them
+- [x] Rebuild the filter sidebars on them
       Plans, Roadmap, and Log in the shared order; *Add item* moves to the Roadmap title row.
+      run: 8m2s · 154 in · 39.4k out · sonnet-5 · sess:ac9d1cea-5840-4f54-b422-72c30d24797c
 - [ ] Rebuild the navigation sidebars and delete the old scaffolding
       Docs and Settings on `SidebarLabel`; remove `SidebarSection`, the label-class copies, and the glyph icons.

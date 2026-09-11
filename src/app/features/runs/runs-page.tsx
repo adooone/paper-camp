@@ -19,8 +19,6 @@ export const LogPage = () => {
     runningRows,
     unreadCount,
     markAllRead,
-    hasActiveFilters,
-    clearFilters,
   } = useLogPage();
 
   return (
@@ -37,8 +35,6 @@ export const LogPage = () => {
             onMarkAllRead={markAllRead}
             matchedCount={matchedCount}
             totalCount={totalCount}
-            hasActiveFilters={hasActiveFilters}
-            onClearFilters={clearFilters}
           />
         )}
       </div>

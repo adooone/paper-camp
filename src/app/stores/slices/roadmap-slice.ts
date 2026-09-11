@@ -17,6 +17,8 @@ export type RoadmapSlice = {
   roadmapFilters: RoadmapFilters;
   toggleRoadmapHorizon: (title: string) => void;
   toggleRoadmapStatus: (status: PlanStatus) => void;
+  setRoadmapSearch: (search: string) => void;
+  clearRoadmapFilters: () => void;
 };
 
 export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice {
@@ -51,5 +53,7 @@ export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice 
             : [...s.roadmapFilters.statuses, status],
         },
       })),
+    setRoadmapSearch: (search) => set((s) => ({ roadmapFilters: { ...s.roadmapFilters, search } })),
+    clearRoadmapFilters: () => set({ roadmapFilters: DEFAULT_ROADMAP_FILTERS }),
   };
 }

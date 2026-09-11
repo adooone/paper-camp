@@ -40,6 +40,7 @@ export type PlansSlice = {
   toggleNoteStatus: (status: IdeaStatus) => void;
   setPlanSearch: (search: string) => void;
   setSubjectFilter: (subject: string | null) => void;
+  clearPlanFilters: () => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
   toggleGroupBySubject: () => void;
@@ -95,6 +96,15 @@ export function createPlansSlice(set: SetState): PlansSlice {
       set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, search }) })),
     setSubjectFilter: (subject) =>
       set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, subject }) })),
+    clearPlanFilters: () =>
+      set((s) => ({
+        planFilters: storePlanFilters({
+          ...s.planFilters,
+          search: '',
+          subject: null,
+          statuses: DEFAULT_PLAN_LIST_FILTERS.statuses,
+        }),
+      })),
     setPlanSortKey: (sortKey) =>
       set((s) => ({
         planFilters: storePlanFilters({ ...s.planFilters, sortKey, groupBySubject: false }),

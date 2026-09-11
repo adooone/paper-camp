@@ -1,7 +1,8 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
+import { Button } from '@dendelion/paper-ui';
 import { useRoadmapPage } from './hooks';
-import { PromoteRoadmapItemModal } from './modals';
+import { AddRoadmapItemModal, PromoteRoadmapItemModal } from './modals';
 import { GoalBanner, HorizonSection } from './views';
 
 export const RoadmapPage = () => {
@@ -12,6 +13,9 @@ export const RoadmapPage = () => {
     horizons,
     totalVisible,
     hasActiveFilters,
+    horizonTitles,
+    addOpen,
+    setAddOpen,
     highlightedItem,
     containerRef,
     promoting,
@@ -60,7 +64,19 @@ export const RoadmapPage = () => {
 
   return (
     <div ref={containerRef}>
-      <PageTitle>Roadmap</PageTitle>
+      <div className="mb-2 flex flex-nowrap items-center gap-3">
+        <PageTitle className="mb-0 shrink-0">Roadmap</PageTitle>
+        <div className="flex-1" />
+        <Button
+          type="button"
+          variant="primary"
+          size="small"
+          onClick={() => setAddOpen(true)}
+          disabled={horizonTitles.length === 0}
+        >
+          + Add item
+        </Button>
+      </div>
       <GoalBanner goal={roadmap.goal} />
       {totalVisible === 0 ? (
         <EmptyState
@@ -98,6 +114,11 @@ export const RoadmapPage = () => {
         candidateName={promoting?.candidateName}
         onClose={() => setPromoting(null)}
         onPromoted={loadRoadmap}
+      />
+      <AddRoadmapItemModal
+        open={addOpen}
+        horizonTitles={horizonTitles}
+        onClose={() => setAddOpen(false)}
       />
     </div>
   );

@@ -1,6 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
-import { useState } from 'react';
 import { horizonItemCounts, statusItemCounts } from '../helpers';
 
 const STATUS_CHIP_ORDER: PlanStatus[] = [
@@ -17,7 +16,8 @@ export const useRoadmapSidebar = () => {
   const filters = useAppStore((s) => s.roadmapFilters);
   const toggleRoadmapHorizon = useAppStore((s) => s.toggleRoadmapHorizon);
   const toggleRoadmapStatus = useAppStore((s) => s.toggleRoadmapStatus);
-  const [addOpen, setAddOpen] = useState(false);
+  const setRoadmapSearch = useAppStore((s) => s.setRoadmapSearch);
+  const clearRoadmapFilters = useAppStore((s) => s.clearRoadmapFilters);
 
   const horizonTitles = roadmap?.horizons.map((horizon) => horizon.title) ?? [];
   const horizonCounts = roadmap ? horizonItemCounts(roadmap, filters) : {};
@@ -27,18 +27,22 @@ export const useRoadmapSidebar = () => {
   const visibleStatuses = STATUS_CHIP_ORDER.filter(
     (status) => (statusCounts[status] ?? 0) > 0 || activeStatuses.has(status),
   );
+  const hasActiveFilters =
+    filters.horizons.length > 0 || filters.statuses.length > 0 || filters.search !== '';
 
   return {
     roadmap,
+    filters,
     horizonTitles,
     horizonCounts,
     statusCounts,
     activeHorizons,
     activeStatuses,
     visibleStatuses,
-    addOpen,
-    setAddOpen,
+    hasActiveFilters,
     toggleRoadmapHorizon,
     toggleRoadmapStatus,
+    setRoadmapSearch,
+    clearRoadmapFilters,
   };
 };

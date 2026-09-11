@@ -1,5 +1,6 @@
 import { SidebarSkeleton } from '@/app/components';
-import { selectPlanRows } from '@/app/features/plans/helpers';
+import { SidebarDivider, SidebarField, SidebarLabel } from '@/app/components/sidebar';
+import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
@@ -16,8 +17,9 @@ const STATUS_CHIP_ORDER: PlanStatus[] = [
   'dropped',
 ];
 
-// Matches SidebarSection (Docs/Settings sidebars) — the caps were this column's own.
-const sectionLabelClass = 'pc-row-label font-handwritten text-xs font-semibold opacity-[0.45]';
+const isDefaultStatuses = (statuses: PlanStatus[]): boolean =>
+  statuses.length === DEFAULT_PLAN_LIST_FILTERS.statuses.length &&
+  DEFAULT_PLAN_LIST_FILTERS.statuses.every((status) => statuses.includes(status));
 
 export const PlanFilterColumn = () => {
   const plans = useAppStore((s) => s.plans);
@@ -25,7 +27,7 @@ export const PlanFilterColumn = () => {
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const setPlanSearch = useAppStore((s) => s.setPlanSearch);
-  const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
+  const clearPlanFilters = useAppStore((s) => s.clearPlanFilters);
   const navigate = useNavigate();
 
   if (activePlan) return null;
@@ -35,13 +37,12 @@ export const PlanFilterColumn = () => {
   const { statusCounts: corpusStatusCounts } = selectPlanRows(plans.entries);
   const activeStatuses = new Set(filters.statuses);
   const visibleStatuses = STATUS_CHIP_ORDER.filter((status) => corpusStatusCounts[status] > 0);
-
-  const linkClass =
-    'bg-none bg-transparent border-none p-0 cursor-pointer opacity-70 underline text-2xs';
+  const hasActiveFilters =
+    filters.search !== '' || filters.subject !== null || !isDefaultStatuses(filters.statuses);
 
   return (
     <div className="flex flex-col">
-      <div className="h-[64px] flex items-center">
+      <SidebarField label="Search">
         <Input
           type="search"
           size="small"
@@ -50,49 +51,49 @@ export const PlanFilterColumn = () => {
           value={filters.search}
           onChange={(event) => setPlanSearch(event.target.value)}
         />
+      </SidebarField>
+
+      <SidebarLabel>Status</SidebarLabel>
+      <div className="flex flex-col">
+        {visibleStatuses.map((status) => {
+          const isActive = activeStatuses.has(status);
+          return (
+            <ListItem
+              key={status}
+              size="small"
+              active={isActive}
+              onClick={() => togglePlanStatus(status)}
+              className="pc-row text-xs"
+              icon={
+                <span
+                  className="w-[9px] h-[9px] rounded-full shrink-0"
+                  style={{ background: STATUS_STAMP[status].text }}
+                />
+              }
+              action={<span className="text-2xs text-ink-500">{statusCounts[status]}</span>}
+            >
+              {STATUS_LABEL[status]}
+            </ListItem>
+          );
+        })}
       </div>
 
-      {filters.subject !== null && (
-        <div className="flex items-center gap-2 h-[32px]" data-testid="subject-filter-chip">
-          <span className="text-2xs opacity-70">Subject: {filters.subject}</span>
+      {hasActiveFilters && (
+        <>
+          <SidebarDivider />
           <button
             type="button"
+            data-testid="clear-plan-filters"
             onClick={() => {
-              setSubjectFilter(null);
+              clearPlanFilters();
               navigate({ to: '/', search: {} });
             }}
-            className={linkClass}
+            className="pc-row-label text-2xs opacity-70 underline text-left"
           >
-            Clear
+            Clear filters
           </button>
-        </div>
+        </>
       )}
-
-      <div>
-        <div className="flex flex-col">
-          {visibleStatuses.map((status) => {
-            const isActive = activeStatuses.has(status);
-            return (
-              <ListItem
-                key={status}
-                size="small"
-                active={isActive}
-                onClick={() => togglePlanStatus(status)}
-                className="pc-row text-xs"
-                icon={
-                  <span
-                    className="w-[9px] h-[9px] rounded-full shrink-0"
-                    style={{ background: STATUS_STAMP[status].text }}
-                  />
-                }
-                action={<span className="text-2xs text-ink-500">{statusCounts[status]}</span>}
-              >
-                {STATUS_LABEL[status]}
-              </ListItem>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 };

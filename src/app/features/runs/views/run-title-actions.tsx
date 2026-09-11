@@ -10,8 +10,6 @@ export interface LogTitleActionsProps {
   onMarkAllRead: () => Promise<void>;
   matchedCount: number;
   totalCount: number;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
 }
 
 const stampTriggerClass = 'shrink-0 cursor-pointer border-none bg-transparent p-0';
@@ -27,11 +25,10 @@ export const LogTitleActions = ({
   onMarkAllRead,
   matchedCount,
   totalCount,
-  hasActiveFilters,
-  onClearFilters,
 }: LogTitleActionsProps) => {
   const navigate = useNavigate();
   const running = runningRows[0];
+  const hasActiveFilters = matchedCount !== totalCount;
 
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
@@ -69,11 +66,6 @@ export const LogTitleActions = ({
       <span className={countClass}>
         {hasActiveFilters ? `${matchedCount} of ${totalCount} entries` : `${totalCount} entries`}
       </span>
-      {hasActiveFilters && (
-        <button type="button" className={linkClass} onClick={onClearFilters}>
-          Clear filters
-        </button>
-      )}
     </div>
   );
 };

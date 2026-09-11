@@ -22,6 +22,7 @@ export const useRoadmapPage = () => {
   const { item: highlightedItem } = useSearch({ from: '/roadmap' });
   const containerRef = useRef<HTMLDivElement>(null);
   const [promoting, setPromoting] = useState<Promoting | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     loadRoadmap();
@@ -51,7 +52,9 @@ export const useRoadmapPage = () => {
 
   const horizons = roadmap ? filterHorizons(roadmap, filters) : [];
   const totalVisible = horizons.reduce((count, horizon) => count + horizon.items.length, 0);
-  const hasActiveFilters = filters.horizons.length > 0 || filters.statuses.length > 0;
+  const hasActiveFilters =
+    filters.horizons.length > 0 || filters.statuses.length > 0 || filters.search !== '';
+  const horizonTitles = roadmap?.horizons.map((horizon) => horizon.title) ?? [];
 
   return {
     roadmap,
@@ -60,6 +63,9 @@ export const useRoadmapPage = () => {
     horizons,
     totalVisible,
     hasActiveFilters,
+    horizonTitles,
+    addOpen,
+    setAddOpen,
     highlightedItem,
     containerRef,
     promoting,
