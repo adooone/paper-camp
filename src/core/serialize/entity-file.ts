@@ -38,6 +38,7 @@ export function todayDateString(): string {
 export function agentThreadMessage(
   text: string,
   kind: ThreadMessage['kind'] = 'log',
+  entityId?: string,
 ): ThreadMessage {
   return {
     kind,
@@ -45,6 +46,7 @@ export function agentThreadMessage(
     text,
     from: 'agent',
     ...(kind === 'question' ? { state: 'open' as const } : {}),
+    ...(entityId ? { entityId } : {}),
   };
 }
 

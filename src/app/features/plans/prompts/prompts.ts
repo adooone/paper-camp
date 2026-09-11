@@ -478,7 +478,16 @@ export function buildChatMovePrompt(
   agentStatus: AgentTaskState[],
 ): string {
   const threadList = messages.length
-    ? messages.map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`).join('\n')
+    ? messages
+        .map((m) => {
+          const speaker = m.from === 'agent' ? 'Agent' : 'User';
+          const parked =
+            m.kind === 'question' && m.entityId
+              ? ` [parked question on ${m.entityId}, ${m.state}]`
+              : '';
+          return `${speaker}${parked}: ${m.text}`;
+        })
+        .join('\n')
     : '(empty thread)';
 
   const ideaIndex = entities.length
@@ -535,6 +544,7 @@ Task: decide exactly one of three moves for the last line and respond with ONLY 
 Rules:
 - Prefer "entity" over "add_idea" whenever the message is clearly about something already tracked above — never create a duplicate idea for existing work.
 - Prefer "entity" over "answer" when the message asks for a change or reports a problem with something tracked above, even if phrased as a question — that belongs on the entity's own thread, not just an answer here.
+- If the last line answers the nearest "[parked question ...]" line above it, that's always "entity" with that question's own entity id, even if the reply doesn't name the entity itself.
 - Use "add_idea" only when the message describes work with nothing above already covering it.
 - Never fabricate an entity id that isn't in the lists above; if unsure which entity a message means, answer instead of guessing.`;
 }

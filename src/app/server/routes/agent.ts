@@ -50,6 +50,7 @@ import {
   checkStaleBaseForRunAll,
   entityFileInput,
   fileExists,
+  resolveChatQuestion,
   writeEntityFile,
 } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
@@ -213,8 +214,10 @@ export async function applyFeedbackMessage(
     });
 
     // Re-enter a run-all parked on this question (IDEA-125) now, instead of
-    // leaving it failed until someone notices.
+    // leaving it failed until someone notices. Also resolves the question's
+    // mirror in the project chat (IDEA-251), wherever the answer came from.
     if (openQuestionIndex !== -1) {
+      await resolveChatQuestion(root, entity.id);
       await agent.resumeQuestionParkedTasks(
         entity.id,
         () => status.runChecksAndWait(),

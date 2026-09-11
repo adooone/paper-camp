@@ -560,6 +560,10 @@ describe('startRunAllPhases', () => {
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
     expect(planFile).toContain('the agent needs a decision: which auth flow should this use?');
+
+    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    expect(chatFile).toContain('[question] [agent] [[IDEA-1]]');
+    expect(chatFile).toContain('the agent needs a decision: which auth flow should this use?');
   });
 
   it('parks on a permission-denial reason instead of auto-failing the run', async () => {

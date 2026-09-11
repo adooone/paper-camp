@@ -46,7 +46,14 @@ import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { discoverDeskConfig } from './desk-discovery';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
-import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
+import {
+  appendToChatFile,
+  campFile,
+  entityFileInput,
+  fileExists,
+  readMaybe,
+  writeEntityFile,
+} from './helpers';
 import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
@@ -431,6 +438,8 @@ export function createAgentManager(
 
   // Writes the escalation into the plan's thread (so it's visible where a human
   // would leave one) and flips status to in-progress so it surfaces as needing input.
+  // Mirrored into the project chat (IDEA-251) so the question surfaces there too;
+  // answering it there resolves this same open question and resumes the run.
   async function escalateToLog(
     task: AgentTask,
     planId: string | undefined,
@@ -456,6 +465,7 @@ export function createAgentManager(
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
+    await appendToChatFile(root, agentThreadMessage(message, 'question', planId));
   }
 
   function registerTask(task: AgentTask): void {

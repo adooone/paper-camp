@@ -158,6 +158,29 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     );
   });
 
+  it('resolves the same question mirrored in the project chat (IDEA-251)', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'chat.md'),
+      '### Thread\n- [ ] 2026-08-04 [question] [agent] [[IDEA-1]] which auth flow should this use?\n',
+    );
+    const runFeedbackReply = vi.fn(async () =>
+      JSON.stringify({ reply: 'Go ahead and read it.', answersQuestion: true }),
+    );
+    const resumeQuestionParkedTasks = vi.fn(async () => ({ resumed: true }));
+
+    const { res } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn(async () => []) } as unknown as RouteContext['status'],
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
+
+    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    expect(chatFile).toContain(
+      '- [x] 2026-08-04 [question] [agent] [[IDEA-1]] which auth flow should this use?',
+    );
+  });
+
   it('does not resume anything when the reply does not answer the open question', async () => {
     const root = await makeRoot();
     const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));

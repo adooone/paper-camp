@@ -76,7 +76,8 @@ search over the chat.
 - [x] Give the chat agent its three moves
       One prompt over the `papercamp` MCP tools: `add_idea`, an append through the feedback path, or an answer from the corpus, the run log, and `/api/agent/status` — each named in the reply with links.
       run: 13m15s · 200 in · 60.3k out · sonnet-5 · sess:e977d379-176e-4560-8e91-71429df9707d
-- [ ] Route parked questions through the chat
+- [x] Route parked questions through the chat
       A parked question is also appended as a `question` message carrying its entity id; answering it there resolves the entity's question and resumes the run.
+      run: 5m54s · 140 in · 23.1k out · sonnet-5 · sess:02f2be77-15c2-4e7a-b41e-08195d505296
 - [ ] Add the Chat tab to the web client
       Next to Plans and Log, the thread in the feedback composer's components at page width, *Clear chat* in the title row, and unanswered questions counted in the status bar.

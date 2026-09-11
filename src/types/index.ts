@@ -87,6 +87,9 @@ export interface ThreadMessage {
   state?: MarginNoteState;
   /** Absent means 'user' — no thread message predates this field being agent-authored. */
   from?: 'user' | 'agent';
+  /** The entity a `question` parked in the project chat (IDEA-251) belongs to — chat.md
+   * is the only file that carries this, since every other thread is already on its entity. */
+  entityId?: string;
 }
 
 /** Ambient context a chat mount (desk, toolbar) feeds alongside a message — each

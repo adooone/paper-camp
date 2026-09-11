@@ -15,6 +15,21 @@ describe('parseChatFile', () => {
   it('returns an empty list for empty content', () => {
     expect(parseChatFile('')).toEqual([]);
   });
+
+  it('parses a parked question carrying its entity id', () => {
+    const content =
+      '### Thread\n- [ ] 2026-09-11 [question] [agent] [[IDEA-42]] Which auth flow?\n';
+    expect(parseChatFile(content)).toEqual([
+      {
+        kind: 'question',
+        date: '2026-09-11',
+        text: 'Which auth flow?',
+        from: 'agent',
+        state: 'open',
+        entityId: 'IDEA-42',
+      },
+    ]);
+  });
 });
 
 describe('formatChatFile', () => {
@@ -28,6 +43,20 @@ describe('formatChatFile', () => {
 
   it('returns an empty string for an empty list', () => {
     expect(formatChatFile([])).toBe('');
+  });
+
+  it('round-trips a parked question carrying its entity id', () => {
+    const messages: ThreadMessage[] = [
+      {
+        kind: 'question',
+        date: '2026-09-11',
+        text: 'Which auth flow?',
+        from: 'agent',
+        state: 'open',
+        entityId: 'IDEA-42',
+      },
+    ];
+    expect(parseChatFile(formatChatFile(messages))).toEqual(messages);
   });
 });
 

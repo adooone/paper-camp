@@ -133,6 +133,18 @@ export async function clearChatFile(root: string): Promise<void> {
   await writeFile(chatFilePath(root), formatChatFile(kept), 'utf-8');
 }
 
+// Mirrors a question's resolution (IDEA-251) into chat.md once it's answered on the
+// entity's own thread, so the chat copy stops pinning an already-resolved question.
+export async function resolveChatQuestion(root: string, entityId: string): Promise<void> {
+  const messages = await readChatFile(root);
+  const index = messages.findLastIndex(
+    (m) => m.kind === 'question' && m.state === 'open' && m.entityId === entityId,
+  );
+  if (index === -1) return;
+  const resolved = messages.map((m, i) => (i === index ? { ...m, state: 'resolved' as const } : m));
+  await writeFile(chatFilePath(root), formatChatFile(resolved), 'utf-8');
+}
+
 // Every read-normalize-write of run-order.md must run as one critical section, or an
 // interleaved pass can normalize against a stale read and clobber a concurrent write.
 let runOrderLock: Promise<unknown> = Promise.resolve();

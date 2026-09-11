@@ -16,7 +16,7 @@ const RUN_LINE_RE = /^run:\s*(.+)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 const THREAD_LINE_RE =
-  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(.*)$/;
+  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(?:\[\[([A-Za-z]+-\d+)\]\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 
 /** Entry grammars match a single line, so a hand-wrapped entry would otherwise keep only
@@ -222,9 +222,10 @@ function parseThreadEntries(lines: string[], start: number, end: number): Thread
     }
     const kind = match[3] as ThreadMessageKind;
     const folded = foldContinuation(lines, i + 1, end, THREAD_LINE_RE);
-    const message: ThreadMessage = { kind, text: joinFolded(match[5], folded.text) };
+    const message: ThreadMessage = { kind, text: joinFolded(match[6], folded.text) };
     if (match[2]) message.date = match[2];
     if (match[4]) message.from = 'agent';
+    if (match[5]) message.entityId = match[5];
     if (NOTE_STATE_KINDS.includes(kind)) {
       message.state = match[1].toLowerCase() === 'x' ? 'resolved' : 'open';
     }
@@ -240,7 +241,8 @@ function formatThreadLines(messages: ThreadMessage[]): string[] {
     const checked = m.state ? m.state === 'resolved' : true;
     const date = m.date ? `${m.date} ` : '';
     const author = m.from === 'agent' ? '[agent] ' : '';
-    lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${author}${m.text}`);
+    const entityLink = m.entityId ? `[[${m.entityId}]] ` : '';
+    lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${author}${entityLink}${m.text}`);
   }
   return lines;
 }
