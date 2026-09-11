@@ -1,4 +1,4 @@
-import { stagePath, unstagePath } from '@/app/services/git-api';
+import { stageAll, stagePath, unstageAll, unstagePath } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { splitPathForDisplay } from '@/app/utils/path-display';
@@ -29,23 +29,16 @@ export const useGitFileList = () => {
   const groups = useMemo(() => groupByFolder(files ?? []), [files]);
   const allStaged = (files ?? []).length > 0 && (files ?? []).every((f) => f.staged);
 
-  // No bulk endpoint: fans out over per-path calls and reloads once at the end, so a
-  // partial failure still reports and whatever landed shows up in that single reload.
   const toggleAll = async () => {
-    const targets = (files ?? []).filter((f) => f.staged === allStaged);
     setBulkPending(true);
     try {
-      const results = await Promise.allSettled(
-        targets.map((f) => (allStaged ? unstagePath(f.path) : stagePath(f.path))),
-      );
-      const failed = results.filter((r) => r.status === 'rejected').length;
-      if (failed > 0) {
-        toast({
-          title: allStaged ? 'Unstage failed' : 'Stage failed',
-          description: `${failed} of ${targets.length} file(s) could not be updated.`,
-          variant: 'error',
-        });
-      }
+      await (allStaged ? unstageAll() : stageAll());
+    } catch (err) {
+      toast({
+        title: allStaged ? 'Unstage failed' : 'Stage failed',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
     } finally {
       await loadDiffFiles();
       setBulkPending(false);

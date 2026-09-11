@@ -21,4 +21,19 @@ describe('oneLineErrorSummary', () => {
   it('returns the message unchanged for a single-line error', () => {
     expect(oneLineErrorSummary('agent CLI not found')).toBe('agent CLI not found');
   });
+
+  it('turns commitlint output into the list of rejected rules', () => {
+    const output = [
+      '⧗   --- input ---',
+      'stage all fix',
+      '✖   subject may not be empty [subject-empty]',
+      '✖   type may not be empty [type-empty]',
+      '',
+      '✖   found 2 problems, 0 warnings',
+      'ⓘ   Get help: https://github.com/conventional-changelog/commitlint/#what-is-commitlint',
+    ].join('\n');
+    expect(oneLineErrorSummary(output)).toBe(
+      'Commit message rejected by commitlint: subject may not be empty; type may not be empty',
+    );
+  });
 });

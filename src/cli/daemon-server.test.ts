@@ -6,8 +6,14 @@ import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import type { PairingManagerState } from '../app/server/pairing';
-import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
 import {
+  type MachineRegistry,
+  addProject,
+  saveRegistry,
+  setNightProject,
+} from '../core/machine-registry';
+import {
+  buildNightGateResponse,
   createDaemonRequestHandler,
   createProjectApi,
   createProjectMounter,
@@ -266,6 +272,158 @@ describe('readMachineProjectSummaries', () => {
     expect(summaries).toEqual([
       { slug: 'deleted-repo', name: 'Deleted', mounted: false, busy: false, missing: true },
     ]);
+  });
+});
+
+describe('buildNightGateResponse', () => {
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  async function makeRegistryFile(registry: MachineRegistry): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-night-gate-test-'));
+    dirs.push(dir);
+    const path = join(dir, 'projects.json');
+    await saveRegistry(path, registry);
+    return path;
+  }
+
+  async function makeProjectDir(
+    name: string,
+    nightConfig?: Record<string, unknown>,
+    taskLogLines: string[] = [],
+  ): Promise<string> {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-night-gate-project-'));
+    dirs.push(dir);
+    const projectPath = join(dir, name);
+    await mkdir(join(projectPath, 'papercamp'), { recursive: true });
+    await writeFile(
+      join(projectPath, 'papercamp', 'config.json'),
+      JSON.stringify({ ...(nightConfig !== undefined && { night: nightConfig }) }),
+      'utf-8',
+    );
+    if (taskLogLines.length > 0) {
+      await writeFile(
+        join(projectPath, 'papercamp', 'tasks.log'),
+        `${taskLogLines.join('\n')}\n`,
+        'utf-8',
+      );
+    }
+    return projectPath;
+  }
+
+  const capacityLine = (fiveHourPct: number, sevenDayPct: number) =>
+    JSON.stringify({
+      id: '1',
+      taskKind: 'phase',
+      planTitle: 'x',
+      agentId: 'claude-code',
+      startedAt: '2026-01-01T00:00:00.000Z',
+      endedAt: '2026-01-01T00:05:00.000Z',
+      outcome: 'done',
+      rateLimit: {
+        status: 'allowed',
+        unifiedWindows: {
+          five_hour: { utilization: fiveHourPct / 100 },
+          seven_day: { utilization: sevenDayPct / 100 },
+        },
+      },
+    });
+
+  const fakeApi = (active: boolean, lastRequestAt: number | null) =>
+    ({
+      agent: { hasActiveTask: () => active },
+      getLastRequestAt: () => lastRequestAt,
+    }) as unknown as ApiMiddleware;
+
+  it('is off with no gate when no project is selected', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+
+    expect(await buildNightGateResponse(registryPath, new Map())).toEqual({
+      slug: null,
+      projectMissing: false,
+      pausedUntil: null,
+      gate: null,
+    });
+  });
+
+  it('reports the selected project missing when its config.json is gone', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'paper-camp-night-gate-project-'));
+    dirs.push(dir);
+    const deletedPath = join(dir, 'deleted-repo');
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, deletedPath, 'Deleted').registry,
+      'deleted-repo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+
+    expect(await buildNightGateResponse(registryPath, new Map())).toEqual({
+      slug: 'deleted-repo',
+      projectMissing: true,
+      pausedUntil: null,
+      gate: null,
+    });
+  });
+
+  it('opens the gate for an unmounted project with a healthy capacity snapshot', async () => {
+    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+      'demo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+
+    const response = await buildNightGateResponse(registryPath, new Map());
+    expect(response.slug).toBe('demo');
+    expect(response.projectMissing).toBe(false);
+    expect(response.gate).toEqual({
+      open: true,
+      reasons: [],
+      fiveHourUtilizationPct: 10,
+      sevenDayUtilizationPct: 10,
+    });
+  });
+
+  it('blocks on a mounted project with an active task and a busy dashboard', async () => {
+    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+      'demo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+    const mounted = new Map([['demo', fakeApi(true, Date.now())]]);
+
+    const response = await buildNightGateResponse(registryPath, mounted);
+    expect(response.gate?.open).toBe(false);
+    expect(response.gate?.reasons).toEqual(['dashboard-active', 'task-running']);
+  });
+
+  it('blocks with no-capacity-snapshot when the project has never reported one', async () => {
+    const projectPath = await makeProjectDir('demo');
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+      'demo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+
+    const response = await buildNightGateResponse(registryPath, new Map());
+    expect(response.gate?.reasons).toEqual(['no-capacity-snapshot']);
+  });
+
+  it('honours the project-level ceiling/floor overrides from its own config.json', async () => {
+    const projectPath = await makeProjectDir('demo', { ceiling: 5, floor: 5 }, [
+      capacityLine(10, 10),
+    ]);
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+      'demo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+
+    const response = await buildNightGateResponse(registryPath, new Map());
+    expect(response.gate?.reasons).toEqual(['five-hour-ceiling', 'seven-day-floor']);
   });
 });
 

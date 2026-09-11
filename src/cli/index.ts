@@ -64,6 +64,7 @@ import {
 import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
+import { runNight } from './night-command';
 import { buildSessionFocus } from './session-focus';
 
 function fail(message: string): void {
@@ -394,6 +395,15 @@ program
   });
 
 program
+  .command('night <target> [chunk]')
+  .description(
+    'Choose the one registered project `paper-camp daemon` runs the night shift for: a slug, "off", "status", or "run <chunk>" to run a pass now',
+  )
+  .action(async (target: string, chunk: string | undefined) => {
+    if (!(await runNight(target, chunk))) process.exitCode = 1;
+  });
+
+program
   .command('add <type> [name]')
   .description('Add a new entry (currently supports: plan)')
   .option('-k, --kind <kind>', `plan kind (${PLAN_KINDS.join('|')})`, 'feat')
@@ -625,6 +635,9 @@ export async function runAudit(root: string): Promise<boolean> {
         deskDiscovery: rawAgents.deskDiscovery
           ? coerceAgentConfig(rawAgents.deskDiscovery)
           : DEFAULT_AGENTS.deskDiscovery,
+        nightShift: rawAgents.nightShift
+          ? coerceAgentConfig(rawAgents.nightShift)
+          : DEFAULT_AGENTS.nightShift,
       }
     : DEFAULT_AGENTS;
   const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });

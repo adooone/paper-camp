@@ -30,6 +30,7 @@ export interface ApiMiddleware {
   getServiceState: () => DeskServiceManagerState;
   getCheckState: () => DeskCheckManagerState;
   getPairingState: () => PairingManagerState;
+  getLastRequestAt: () => number | null;
 }
 
 // Trusted because a DNS-rebinding attacker controls their own public domain,
@@ -200,6 +201,8 @@ export function createApiMiddleware(
 
   const routes = buildRoutes({ root, activity, agent, git, status, services, checks, pairing });
 
+  let lastRequestAt: number | null = null;
+
   const handler = async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const pathname = (req.url ?? '').split('?')[0];
 
@@ -223,6 +226,7 @@ export function createApiMiddleware(
         sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
         return;
       }
+      lastRequestAt = Date.now();
     }
 
     const route = routes.find((r) => r.method === req.method && r.path === pathname);
@@ -255,5 +259,6 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).getServiceState = services.getState;
   (handler as ApiMiddleware).getCheckState = checks.getState;
   (handler as ApiMiddleware).getPairingState = pairing.getState;
+  (handler as ApiMiddleware).getLastRequestAt = () => lastRequestAt;
   return handler as ApiMiddleware;
 }

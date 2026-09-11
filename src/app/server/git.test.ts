@@ -100,6 +100,33 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   ...overrides,
 });
 
+describe('staging', () => {
+  it('stages and unstages every change in one call', async () => {
+    const root = await initRepo();
+    await writeFile(join(root, 'a.txt'), 'a');
+    await writeFile(join(root, 'b.txt'), 'b');
+    const manager = gitManager(root);
+
+    await manager.stageAll();
+    expect(git(root, 'status', '--porcelain')).toBe('A  a.txt\nA  b.txt');
+
+    await manager.unstageAll();
+    expect(git(root, 'status', '--porcelain')).toBe('?? a.txt\n?? b.txt');
+  });
+
+  it('queues concurrent per-path stages instead of racing over the index lock', async () => {
+    const root = await initRepo();
+    const names = Array.from({ length: 30 }, (_, i) => `file-${i}.txt`);
+    await Promise.all(names.map((name) => writeFile(join(root, name), name)));
+    const manager = gitManager(root);
+
+    await Promise.all(names.map((name) => manager.stagePath(name)));
+
+    const staged = git(root, 'diff', '--cached', '--name-only').trim().split('\n');
+    expect(staged).toHaveLength(names.length);
+  });
+});
+
 describe('getBranchHygieneStatus', () => {
   let root: string;
   let initialSha: string;

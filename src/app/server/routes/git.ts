@@ -221,6 +221,32 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
 
     {
       method: 'POST',
+      path: '/api/git/stage-all',
+      handle: async (_req, res) => {
+        try {
+          await git.stageAll();
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/git/unstage-all',
+      handle: async (_req, res) => {
+        try {
+          await git.unstageAll();
+          sendJson(res, 200, { ok: true });
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/git/unstage',
       handle: async (req, res) => {
         try {

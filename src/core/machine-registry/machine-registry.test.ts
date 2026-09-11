@@ -4,12 +4,15 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   addProject,
+  clearNightProject,
   isProjectMissing,
   listProjects,
   loadRegistry,
   removeProject,
   saveRegistry,
   scanForProjects,
+  setNightPause,
+  setNightProject,
 } from './machine-registry';
 
 const dirs: string[] = [];
@@ -43,6 +46,14 @@ describe('loadRegistry', () => {
     const dir = await makeTempDir();
     const path = join(dir, 'projects.json');
     await writeFile(path, JSON.stringify({ version: 1, projects: [{ slug: 'x' }] }), 'utf-8');
+    const registry = await loadRegistry(path);
+    expect(registry).toEqual({ version: 1, projects: [] });
+  });
+
+  it('resolves the empty registry when night is malformed', async () => {
+    const dir = await makeTempDir();
+    const path = join(dir, 'projects.json');
+    await writeFile(path, JSON.stringify({ version: 1, projects: [], night: {} }), 'utf-8');
     const registry = await loadRegistry(path);
     expect(registry).toEqual({ version: 1, projects: [] });
   });
@@ -104,6 +115,54 @@ describe('removeProject', () => {
     const result = removeProject(registry, 'missing');
     expect(result.removed).toBe(false);
     expect(result.registry).toBe(registry);
+  });
+});
+
+describe('setNightProject / clearNightProject', () => {
+  it('sets night to a registered slug', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const result = setNightProject(registry, 'repo');
+    expect(result.ok).toBe(true);
+    expect(result.registry.night).toEqual({ slug: 'repo' });
+  });
+
+  it('fails for a slug that is not registered', () => {
+    const registry: { version: 1; projects: never[] } = { version: 1, projects: [] };
+    const result = setNightProject(registry, 'missing');
+    expect(result.ok).toBe(false);
+    expect(result.registry).toBe(registry);
+  });
+
+  it('clears an existing selection', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const withNight = setNightProject(registry, 'repo').registry;
+    expect(clearNightProject(withNight)).toEqual({ ...registry });
+  });
+
+  it('is a no-op when nothing is selected', () => {
+    const registry = { version: 1 as const, projects: [] };
+    expect(clearNightProject(registry)).toBe(registry);
+  });
+});
+
+describe('setNightPause', () => {
+  it('sets pausedUntil on the current night selection', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const withNight = setNightProject(registry, 'repo').registry;
+    const result = setNightPause(withNight, 123);
+    expect(result.night).toEqual({ slug: 'repo', pausedUntil: 123 });
+  });
+
+  it('clears pausedUntil when set to null', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const withNight = setNightProject(registry, 'repo').registry;
+    const paused = setNightPause(withNight, 123);
+    expect(setNightPause(paused, null).night).toEqual({ slug: 'repo' });
+  });
+
+  it('is a no-op when no project is selected for the night shift', () => {
+    const registry = { version: 1 as const, projects: [] };
+    expect(setNightPause(registry, 123)).toBe(registry);
   });
 });
 

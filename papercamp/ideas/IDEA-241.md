@@ -2,8 +2,9 @@
 id: IDEA-241
 title: Night shift health reviews
 type: feat
-status: idea
+status: review
 created: 2026-09-07
+updated: 2026-09-11
 tags:
   - cli
   - server
@@ -117,17 +118,30 @@ than one project per machine. Running under `paper-camp dev`. Surviving a
 reboot, which is [[IDEA-233]]'s later concern.
 
 ### Phases
-- [ ] Pick the project and read the settings
+- [x] Pick the project and read the settings
       Add `night: { slug }` to `projects.json` with `paper-camp night <slug> | off | status`, and the `night` block in `papercamp/config.json` with its defaults.
-- [ ] Score the chunks into a health map
+      run: 8m30s · 100 in · 31.1k out · sonnet-5
+- [x] Score the chunks into a health map
       Derive churn, size, coverage, open findings, and last-reviewed age per chunk into `papercamp/night.json`, and show it as the Stats *Code health* card.
-- [ ] Gate the shift in the daemon
+      run: 13m22s · 142 in · 51.8k out · sonnet-5
+- [x] Gate the shift in the daemon
       Idle desk, no running task, both rate-limit windows, and the optional clock window, rechecked after every pass.
-- [ ] Run a pass read-only
+      run: 14m27s · 176 in · 53.6k out · sonnet-5
+- [x] Run a pass read-only
       Built-in and custom checks against one chunk in a throwaway worktree, with Edit/Write/NotebookEdit off, turn and cost caps, and a confirming pass that assigns severity.
-- [ ] Report findings as night suggestions
+      run: 28m37s · 340 in · 141.4k out · sonnet-5
+- [x] Report findings as night suggestions
       Write confirmed findings to `papercamp/suggestions.md` with `source: night`, drop overlaps, expire stale ones on read, and log each pass as `night-review`.
-- [ ] Surface the night report on the Ideas page
+      run: 20m56s · 276 in · 89.5k out · sonnet-5
+- [x] Surface the night report on the Ideas page
       A dated *Night report* group above every other group, night and severity stamps, and a shell banner for critical findings.
-- [ ] Add the Settings controls
+      run: 27m34s · 366 in · 98.3k out · sonnet-5
+- [x] Add the Settings controls
       The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.
+      run: 6m19s · 54 in · 6.1k out · sonnet-5
+- [x] [manual] Add night shift pause controls and settings UI
+- [x] [manual] Address night shift review findings
+- [x] [manual] Simplify turnTokens comment
+
+### Thread
+- [x] 2026-09-11 [review] [agent] Requests changes · 8 findings — This is a well-structured, well-tested delivery: the gate, health map, worktree isolation, suggestions pipeline, and UI surfaces all exist and mostly match the spec. But the per-night chunk budget is implemented as a per-tick cap (a test even enshrines reviewing more chunks than maxChunks in one night), the pass granularity and gate-recheck cadence are coarser than the spec's one-check-per-pass model, and `night status` omits half of what the spec says it prints. There are also a couple of genuine bugs (custom-check deletion never persists; capped runs report zero cost) and unrelated changes bundled into the last two commits.

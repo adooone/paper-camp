@@ -1,4 +1,5 @@
 export * from './claude-capacity-card';
+export * from './code-health-card';
 export * from './codebase-size-card';
 export * from './comment-ratio-card';
 export * from './entities-by-status-card';

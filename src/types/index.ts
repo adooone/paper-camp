@@ -340,6 +340,27 @@ export interface CapacityStat {
   capturedAt: string;
 }
 
+export interface ChunkSignals {
+  churnCommits: number;
+  lines: number;
+  coveragePct: number | null;
+  openFindings: number;
+  daysSinceReviewed: number | null;
+}
+
+export interface ChunkHealth {
+  path: string;
+  score: number;
+  signals: ChunkSignals;
+  lastReviewedAt: string | null;
+  lastReviewedCommit: string | null;
+}
+
+export interface NightHealthMap {
+  generatedAt: string;
+  chunks: ChunkHealth[];
+}
+
 export interface ProjectStats {
   generatedAt: string;
   comments: CommentStats;
@@ -354,6 +375,7 @@ export interface ProjectStats {
   medianPhaseDurationMs: number | null;
   mostExpensiveIdeas: IdeaCost[];
   capacity: CapacityStat | null;
+  nightHealth: NightHealthMap;
 }
 
 export type IdeaKind = 'idea' | 'note';
@@ -555,6 +577,7 @@ export interface DefaultAgentsMap {
   feedback: AgentConfig;
   codeReview: AgentConfig;
   deskDiscovery: AgentConfig;
+  nightShift: AgentConfig;
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
@@ -565,6 +588,7 @@ export const DEFAULT_AGENTS: DefaultAgentsMap = {
   feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
   codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
   deskDiscovery: { agent: 'claude-code' },
+  nightShift: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
 };
 
 /** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
@@ -682,6 +706,146 @@ export interface CiReleaseState {
   releasedVersion: string | null;
 }
 
+export interface NightWindow {
+  /** Local time, "HH:MM", the shift may start after. */
+  from: string;
+  /** Local time, "HH:MM", the shift stops passing after. */
+  to: string;
+}
+
+export const NIGHT_CHECK_IDS = [
+  'bugs',
+  'dead-code',
+  'performance',
+  'tests',
+  'docs',
+  'security',
+  'a11y',
+] as const;
+
+export type NightCheckId = (typeof NIGHT_CHECK_IDS)[number];
+
+export interface NightCustomCheck {
+  name: string;
+  prompt: string;
+}
+
+/** Night shift settings (IDEA-241) for the one project `paper-camp daemon` reviews unattended. */
+export interface NightConfig {
+  /** Five-hour rate-limit window ceiling, percent utilisation; a pass never starts above it. */
+  ceiling?: number;
+  /** Seven-day rate-limit window floor, percent utilisation — the setting to tune first. */
+  floor?: number;
+  /** Optional local-time clock window on top of the two rate-limit gates. */
+  window?: NightWindow;
+  /** Top-level folders to score as chunks; unset scores every folder one level under `src/`. */
+  roots?: string[];
+  /** Chunks reviewed per night, highest health score first. */
+  maxChunks?: number;
+  /** Health score (0–100) a chunk must exceed to be reviewed; healthy code is left alone. */
+  threshold?: number;
+  checks?: Partial<Record<NightCheckId, boolean>>;
+  customChecks?: NightCustomCheck[];
+  maxTurns?: number;
+  maxCostUsd?: number;
+}
+
+export const DEFAULT_NIGHT_CONFIG: Required<
+  Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks' | 'threshold' | 'maxTurns' | 'maxCostUsd'>
+> = {
+  ceiling: 50,
+  floor: 70,
+  maxChunks: 3,
+  threshold: 40,
+  maxTurns: 20,
+  maxCostUsd: 1,
+};
+
+export type NightFindingSeverity = 'critical' | 'high' | 'normal';
+
+export interface NightRawFinding {
+  file: string;
+  line: number | null;
+  message: string;
+}
+
+export interface NightFinding extends NightRawFinding {
+  severity: NightFindingSeverity;
+  check: string;
+}
+
+export interface NightPassUsage {
+  numTurns: number;
+  costUsd: number;
+  cappedByTurns: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+}
+
+export interface NightCheckPassRecord {
+  check: string;
+  startedAt: string;
+  endedAt: string;
+  ok: boolean;
+  usage: NightPassUsage;
+  findingsCount: number;
+}
+
+export interface NightChunkPassResult {
+  chunkPath: string;
+  reviewedCommit: string;
+  findings: NightFinding[];
+  usage: NightPassUsage;
+  checks: NightCheckPassRecord[];
+  /** The last capacity snapshot any pass in this chunk reported, for the gate's next look. */
+  rateLimit?: RateLimitSnapshot;
+}
+
+export interface NightSuggestionEntry {
+  date: string;
+  check: string;
+  chunk: string;
+  file: string;
+  line: number | null;
+  commit: string;
+  severity: NightFindingSeverity;
+  message: string;
+}
+
+export interface NightReportGroup {
+  date: string;
+  passCount: number;
+  costUsd: number;
+  findings: NightSuggestionEntry[];
+}
+
+export type NightGateBlockReason =
+  | 'dashboard-active'
+  | 'task-running'
+  | 'no-capacity-snapshot'
+  | 'five-hour-ceiling'
+  | 'seven-day-floor'
+  | 'outside-window'
+  | 'paused';
+
+export interface NightGateStatus {
+  open: boolean;
+  reasons: NightGateBlockReason[];
+  fiveHourUtilizationPct: number | null;
+  sevenDayUtilizationPct: number | null;
+}
+
+export const MACHINE_NIGHT_PATH = '/api/machine/night' as const;
+
+export interface MachineNightGateResponse {
+  slug: string | null;
+  projectMissing: boolean;
+  pausedUntil: number | null;
+  gate: NightGateStatus | null;
+}
+
 export interface PaperCampConfig {
   /** Corpus format version (see CORPUS_FORMAT_VERSION) — the shape this file and the
    * entity frontmatter it sits alongside conform to, not the npm package version. */
@@ -707,6 +871,8 @@ export interface PaperCampConfig {
     /** Manual build for the Stack's Build action; no universal default. */
     build?: string;
   };
+  /** Night shift gate and scoring settings (IDEA-241); merge with DEFAULT_NIGHT_CONFIG for unset fields. */
+  night?: NightConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
@@ -940,7 +1106,8 @@ export type TaskKind =
   | 'pr-review'
   | 'issue-fix'
   | 'desk-discovery'
-  | 'install-toolbar';
+  | 'install-toolbar'
+  | 'night-review';
 
 // Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart.
 // A start line and its later finish share an id; `readTaskLog` folds them, so no `endedAt` means never finished.

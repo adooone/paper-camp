@@ -635,16 +635,31 @@ export function createGitManager(root: string) {
     return results;
   }
 
-  async function stageAll(): Promise<void> {
-    await runGit(['add', '-A']);
+  // Index writes queue behind each other: two `git add`s at once fight over
+  // .git/index.lock and the loser fails with "File exists".
+  let indexQueue: Promise<unknown> = Promise.resolve();
+  function withIndex<T>(run: () => Promise<T>): Promise<T> {
+    const next = indexQueue.then(run, run);
+    indexQueue = next.catch(() => undefined);
+    return next;
   }
 
-  async function stagePath(path: string): Promise<void> {
-    await runGit(['add', '--', toLiteralPathspec(path)]);
+  function stageAll(): Promise<void> {
+    return withIndex(() => runGit(['add', '-A']).then(() => undefined));
   }
 
-  async function unstagePath(path: string): Promise<void> {
-    await runGit(['restore', '--staged', '--', toLiteralPathspec(path)]);
+  function unstageAll(): Promise<void> {
+    return withIndex(() => runGit(['reset', '-q']).then(() => undefined));
+  }
+
+  function stagePath(path: string): Promise<void> {
+    return withIndex(() => runGit(['add', '--', toLiteralPathspec(path)]).then(() => undefined));
+  }
+
+  function unstagePath(path: string): Promise<void> {
+    return withIndex(() =>
+      runGit(['restore', '--staged', '--', toLiteralPathspec(path)]).then(() => undefined),
+    );
   }
 
   async function getHeadSha(): Promise<string> {
@@ -905,6 +920,7 @@ export function createGitManager(root: string) {
     commit,
     commitCorpus,
     stageAll,
+    unstageAll,
     stagePath,
     unstagePath,
     getHeadSha,

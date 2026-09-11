@@ -91,6 +91,7 @@ export function useStackPanel(
           const {
             loadPlans,
             loadSuggestions,
+            loadNightReport,
             loadStatus,
             loadConsistency,
             loadDoctor,
@@ -101,6 +102,7 @@ export function useStackPanel(
           } = useAppStore.getState();
           loadPlans();
           loadSuggestions();
+          loadNightReport();
           loadStatus();
           loadConsistency();
           loadDoctor();

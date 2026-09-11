@@ -5,6 +5,7 @@ export * from './entity-detail';
 export * from './feedback-section';
 export * from './fixes-section';
 export * from './list-view';
+export * from './night-report-section';
 export * from './note-detail';
 export * from './parent-link-row';
 export * from './phases-section';

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AGENT_IDS } from '../../types/index';
+import { AGENT_IDS, NIGHT_CHECK_IDS } from '../../types/index';
 
 export const agentConfigSchema = z.preprocess(
   (v) => (typeof v === 'string' ? { agent: v } : v),
@@ -195,6 +195,29 @@ export const deskConfigSchema = z.object({
   ci: deskCiSchema.optional(),
 });
 
+export const nightWindowSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+});
+
+export const nightCustomCheckSchema = z.object({
+  name: z.string(),
+  prompt: z.string(),
+});
+
+export const nightConfigSchema = z.object({
+  ceiling: z.number().optional(),
+  floor: z.number().optional(),
+  window: nightWindowSchema.optional(),
+  roots: z.array(z.string()).optional(),
+  maxChunks: z.number().int().positive().optional(),
+  threshold: z.number().min(0).max(100).optional(),
+  checks: z.record(z.enum(NIGHT_CHECK_IDS), z.boolean()).optional(),
+  customChecks: z.array(nightCustomCheckSchema).optional(),
+  maxTurns: z.number().int().positive().optional(),
+  maxCostUsd: z.number().positive().optional(),
+});
+
 export const paperCampConfigSchema = z.object({
   version: z
     .number()
@@ -225,9 +248,11 @@ export const paperCampConfigSchema = z.object({
       feedback: agentConfigSchema,
       codeReview: agentConfigSchema,
       deskDiscovery: agentConfigSchema,
+      nightShift: agentConfigSchema,
     })
     .optional(),
   desk: deskConfigSchema.optional(),
+  night: nightConfigSchema.optional(),
 });
 
 // notifications.log entries — JSON Lines, so a corrupt or half-written line must

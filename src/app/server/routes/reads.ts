@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { describeFindings, runDoctor } from '@/core/doctor';
+import { buildNightReportGroups, readNightFindings } from '@/core/night-suggestions';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
 import {
@@ -60,6 +61,16 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => ({
       entries: readTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
     }),
+  },
+  {
+    path: '/api/night-findings',
+    handler: async (root) => {
+      const [findings, taskLog] = await Promise.all([
+        readNightFindings(root),
+        readTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
+      ]);
+      return { groups: buildNightReportGroups(findings, taskLog) };
+    },
   },
   {
     path: '/api/ideas',
@@ -135,6 +146,9 @@ export const readRoutes: ReadRoute[] = [
           deskDiscovery: config.defaultAgents.deskDiscovery
             ? coerceAgentConfig(config.defaultAgents.deskDiscovery)
             : DEFAULT_AGENTS.deskDiscovery,
+          nightShift: config.defaultAgents.nightShift
+            ? coerceAgentConfig(config.defaultAgents.nightShift)
+            : DEFAULT_AGENTS.nightShift,
         };
       }
       // A malformed desk manifest (IDEA-119) is dropped rather than crashing the page,

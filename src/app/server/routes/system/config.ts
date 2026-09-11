@@ -1,11 +1,12 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { deskConfigSchema } from '@/core/parse';
+import { deskConfigSchema, nightConfigSchema } from '@/core/parse';
 import {
   AGENT_IDS,
   type AgentId,
   type DefaultAgentsMap,
   type IntegrationConfig,
+  type NightConfig,
   type PaperCampConfig,
   TOOLBAR_SEGMENT_IDS,
   type ToolbarSegmentId,
@@ -63,9 +64,18 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
             toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
           };
           desk?: unknown;
+          night?: unknown;
         };
-        const { port, projectName, defaultAgent, subjects, setupDismissed, integration, desk } =
-          bodyParsed;
+        const {
+          port,
+          projectName,
+          defaultAgent,
+          subjects,
+          setupDismissed,
+          integration,
+          desk,
+          night,
+        } = bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
           sendJson(res, 400, { error: 'port must be a positive integer' });
@@ -162,6 +172,12 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           parsedDesk && (parsedDesk.services || parsedDesk.checks || parsedDesk.ci)
             ? parsedDesk
             : undefined;
+        const nightProvided = night !== undefined;
+        const nightResult = nightProvided ? nightConfigSchema.safeParse(night) : undefined;
+        if (nightResult && !nightResult.success) {
+          sendJson(res, 400, { error: `night: ${nightResult.error.message}` });
+          return;
+        }
         const config = JSON.parse(raw) as PaperCampConfig;
         const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
           ? {
@@ -172,6 +188,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
               feedback: coerceAgentConfig(rawDefaultAgents.feedback),
               codeReview: coerceAgentConfig(rawDefaultAgents.codeReview),
               deskDiscovery: coerceAgentConfig(rawDefaultAgents.deskDiscovery),
+              nightShift: coerceAgentConfig(rawDefaultAgents.nightShift),
             }
           : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
@@ -185,6 +202,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
                 feedback: { agent: defaultAgent },
                 codeReview: { agent: defaultAgent },
                 deskDiscovery: { agent: defaultAgent },
+                nightShift: { agent: defaultAgent },
               }
             : undefined);
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };
@@ -208,6 +226,9 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
               }),
             }
           : undefined;
+        const resolvedNight: NightConfig | undefined = nightResult?.success
+          ? { ...config.night, ...nightResult.data }
+          : undefined;
         const updated: PaperCampConfig = {
           ...configRest,
           ...(port !== undefined && { port }),
@@ -216,6 +237,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           ...(setupDismissed !== undefined && { setupDismissed }),
           ...(resolvedIntegration && { integration: resolvedIntegration }),
           ...(deskProvided && { desk: resolvedDesk }),
+          ...(resolvedNight && { night: resolvedNight }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         activity.notifyChanged();

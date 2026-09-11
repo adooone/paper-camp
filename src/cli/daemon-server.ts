@@ -1,4 +1,6 @@
+import { readFile } from 'node:fs/promises';
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
+import { join } from 'node:path';
 import {
   type ApiMiddleware,
   applyCorsHeaders,
@@ -29,12 +31,23 @@ import {
   listProjects,
   loadRegistry,
 } from '../core/machine-registry';
+import { evaluateNightGate } from '../core/night-gate';
+import { computeNightHealthMap } from '../core/night-health';
+import { startNightShift } from '../core/night-shift';
+import { readTaskLog } from '../core/parse';
+import { latestCapacity } from '../core/rate-limit';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
-import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
+import {
+  MACHINE_NIGHT_PATH,
+  MACHINE_PROJECTS_PATH,
+  type MachineNightGateResponse,
+  type MachineProjectSummary,
+} from '../types/index';
 import { type AutoUpdateCheckRecord, startAutoUpdatePolling } from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
+import { readNightConfig, resolveNightConfig, runNightPass } from './night-command';
 import {
   type NetworkRegistration,
   buildRegistrationLinkForMachine,
@@ -94,6 +107,43 @@ export async function readMachineProjectSummaries(
       };
     }),
   );
+}
+
+export async function buildNightGateResponse(
+  registryPath: string,
+  mounted: ReadonlyMap<string, ApiMiddleware>,
+  now: number = Date.now(),
+): Promise<MachineNightGateResponse> {
+  const registry = await loadRegistry(registryPath);
+  if (!registry.night) return { slug: null, projectMissing: false, pausedUntil: null, gate: null };
+
+  const slug = registry.night.slug;
+  const pausedUntil = registry.night.pausedUntil ?? null;
+  const project = registry.projects.find((p) => p.slug === slug);
+  if (!project || (await isProjectMissing(project.path))) {
+    return { slug, projectMissing: true, pausedUntil, gate: null };
+  }
+
+  const nightConfig = await readNightConfig(project.path);
+  const resolved = resolveNightConfig(nightConfig);
+  const apiMiddleware = mounted.get(slug);
+  const taskLogRaw = await readFile(join(project.path, 'papercamp', 'tasks.log'), 'utf-8').catch(
+    () => '',
+  );
+  const snapshot = latestCapacity(readTaskLog(taskLogRaw))?.snapshot ?? null;
+
+  const gate = evaluateNightGate({
+    now,
+    lastDashboardRequestAt: apiMiddleware?.getLastRequestAt() ?? null,
+    taskRunning: apiMiddleware?.agent.hasActiveTask() ?? false,
+    snapshot,
+    ceiling: resolved.ceiling,
+    floor: resolved.floor,
+    window: resolved.window,
+    pausedUntil,
+  });
+
+  return { slug, projectMissing: false, pausedUntil, gate };
 }
 
 /** Loaded once and passed by reference into every project's middleware, so pairing
@@ -217,6 +267,20 @@ export function createDaemonRequestHandler(
       return;
     }
 
+    if (pathname === MACHINE_NIGHT_PATH) {
+      applyCorsHeaders(req, res);
+      if (req.method === 'OPTIONS') {
+        handlePreflight(req, res);
+        return;
+      }
+      if (!isTrustedHost(hostOf(req.headers.host))) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
+        return;
+      }
+      sendJson(res, 200, await buildNightGateResponse(registryPath, mounted));
+      return;
+    }
+
     const request = parseMountRequest(pathname);
     if (!request) {
       if (pathname.startsWith('/api/')) {
@@ -334,8 +398,24 @@ export async function startDaemonServer({
   const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
   let stopAutoUpdatePolling: (() => void) | undefined;
+  const stopNightShift = startNightShift({
+    evaluateGate: () => buildNightGateResponse(defaultRegistryPath(), mounted),
+    findProject: async (slug) => {
+      const registry = await loadRegistry(defaultRegistryPath());
+      return registry.projects.find((project) => project.slug === slug) ?? null;
+    },
+    readSettings: async (root) => resolveNightConfig(await readNightConfig(root)),
+    computeMap: computeNightHealthMap,
+    runPass: (project, chunkPath) =>
+      runNightPass(project, chunkPath, async () => {
+        const gate = await buildNightGateResponse(defaultRegistryPath(), mounted);
+        return Boolean(gate.gate?.open) && !checkMachineBusy();
+      }),
+    isMachineBusy: checkMachineBusy,
+  });
   const shutdown = async () => {
     stopAutoUpdatePolling?.();
+    stopNightShift();
     tunnel?.process.kill();
     await Promise.all(
       [...mounted.values()].map(async (apiMiddleware) => {

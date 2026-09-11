@@ -58,6 +58,7 @@ export function useAppShell(): AppShellState {
   const loadPlans = useAppStore((s) => s.loadPlans);
   const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
+  const loadNightReport = useAppStore((s) => s.loadNightReport);
   const loadCapabilities = useAppStore((s) => s.loadCapabilities);
   const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
@@ -109,6 +110,7 @@ export function useAppShell(): AppShellState {
 
   useEffect(() => {
     loadSuggestions();
+    loadNightReport();
     loadCapabilities();
     loadAgentAuthStatus();
     loadParkedQuestions();
@@ -118,6 +120,7 @@ export function useAppShell(): AppShellState {
     loadIdeas();
   }, [
     loadSuggestions,
+    loadNightReport,
     loadCapabilities,
     loadAgentAuthStatus,
     loadParkedQuestions,

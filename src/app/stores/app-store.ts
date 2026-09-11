@@ -4,6 +4,7 @@ import { type CapacitySlice, createCapacitySlice } from './slices/capacity-slice
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
+import { type NightReportSlice, createNightReportSlice } from './slices/night-report-slice';
 import { type NotificationsSlice, createNotificationsSlice } from './slices/notifications-slice';
 import {
   type ParkedQuestionsSlice,
@@ -23,6 +24,7 @@ export type AppStore = CapacitySlice &
   RoadmapSlice &
   IdeasSlice &
   SuggestionsSlice &
+  NightReportSlice &
   TaskLogSlice &
   DocsSlice &
   StatusSlice &
@@ -38,6 +40,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
   ...createSuggestionsSlice(set, get),
+  ...createNightReportSlice(set, get),
   ...createTaskLogSlice(set),
   ...createDocsSlice(set, get),
   ...createStatusSlice(set, get),

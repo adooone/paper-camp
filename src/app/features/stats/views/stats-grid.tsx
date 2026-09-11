@@ -1,5 +1,6 @@
 import type { ProjectStats } from '@/types/index';
 import { ClaudeCapacityCard } from './claude-capacity-card';
+import { CodeHealthCard } from './code-health-card';
 import { CodebaseSizeCard } from './codebase-size-card';
 import { CommentRatioCard } from './comment-ratio-card';
 import { EntitiesByStatusCard } from './entities-by-status-card';
@@ -27,6 +28,7 @@ export const StatsGrid = ({ stats }: StatsGridProps) => (
       <MedianPhaseDurationCard medianPhaseDurationMs={stats.medianPhaseDurationMs} />
       <MostExpensiveIdeasCard mostExpensiveIdeas={stats.mostExpensiveIdeas} />
       <ClaudeCapacityCard capacity={stats.capacity} />
+      <CodeHealthCard nightHealth={stats.nightHealth} />
     </div>
     <p className="opacity-[0.4] text-2xs mt-6">
       Generated {new Date(stats.generatedAt).toLocaleString()}

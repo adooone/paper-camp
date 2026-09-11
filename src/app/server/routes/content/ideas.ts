@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
+import { removeNightFindingLine } from '@/core/night-suggestions';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import {
   addRoadmapCandidate,
@@ -16,12 +17,25 @@ import {
   removeSuggestionLine,
   todayDateString,
 } from '@/core/serialize';
-import type { RoadmapItem, SuggestionEntry } from '@/types/index';
+import type { NightSuggestionEntry, RoadmapItem, SuggestionEntry } from '@/types/index';
 import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
 import type { Route, RouteContext } from '../types';
+
+const NIGHT_FINDING_TITLE_MAX = 40;
+
+function nightFindingTitle(finding: NightSuggestionEntry): string {
+  const base = finding.file.split('/').pop() ?? finding.file;
+  const title = `${finding.check}: ${base}`;
+  return title.length > NIGHT_FINDING_TITLE_MAX ? title.slice(0, NIGHT_FINDING_TITLE_MAX) : title;
+}
+
+function nightFindingBody(finding: NightSuggestionEntry): string {
+  const location = finding.line ? `${finding.file}:${finding.line}` : finding.file;
+  return `${finding.message}\n\nFound by the night shift's \`${finding.check}\` check in \`${finding.chunk}\`, at ${location} (commit ${finding.commit.slice(0, 7)}, severity: ${finding.severity}).`;
+}
 
 export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
   return [
@@ -278,6 +292,72 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         const updated = removeSuggestionLine(raw, suggestion);
         if (updated === raw) {
           sendJson(res, 404, { error: 'suggestion not found' });
+          return;
+        }
+        await writeFile(suggestionsPath, updated, 'utf-8');
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Mints the id and writes the idea file the same way suggestions/promote does; the
+    // finding's own fields (chunk/check/commit/severity) become the idea's body context.
+    {
+      method: 'POST',
+      path: '/api/night-findings/promote',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { finding } = JSON.parse(reqBody) as { finding?: NightSuggestionEntry };
+        if (!finding?.file || !finding.date || !finding.commit) {
+          sendJson(res, 400, { error: 'finding is required' });
+          return;
+        }
+        const suggestionsPath = campFile(root, 'suggestions.md');
+        const raw = await readMaybe(suggestionsPath);
+        const updated = removeNightFindingLine(raw, finding);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'finding not found' });
+          return;
+        }
+        const configPath = join(root, 'papercamp', 'config.json');
+        const newId = await assignEntityId(configPath);
+        if (!newId) {
+          sendJson(res, 500, { error: 'could not assign entity ID' });
+          return;
+        }
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
+        const entityContent = formatEntityFile({
+          id: newId,
+          title: nightFindingTitle(finding),
+          status: 'idea',
+          created: todayDateString(),
+          body: nightFindingBody(finding),
+        });
+        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
+        await writeFile(suggestionsPath, updated, 'utf-8');
+        activity.notifyChanged();
+        sendJson(res, 201, { ok: true, id: newId });
+      },
+    },
+
+    // Dismissing just deletes the line — same shape as suggestions/dismiss, but a night
+    // finding is matched by its own fields since it has no title/description pair.
+    {
+      method: 'POST',
+      path: '/api/night-findings/dismiss',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { finding } = JSON.parse(reqBody) as { finding?: NightSuggestionEntry };
+        if (!finding?.file || !finding.date || !finding.commit) {
+          sendJson(res, 400, { error: 'finding is required' });
+          return;
+        }
+        const suggestionsPath = campFile(root, 'suggestions.md');
+        const raw = await readMaybe(suggestionsPath);
+        const updated = removeNightFindingLine(raw, finding);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'finding not found' });
           return;
         }
         await writeFile(suggestionsPath, updated, 'utf-8');

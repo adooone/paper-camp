@@ -9,9 +9,16 @@ export interface MachineProject {
   name: string;
 }
 
+export interface NightSelection {
+  slug: string;
+  pausedUntil?: number;
+}
+
 export interface MachineRegistry {
   version: 1;
   projects: MachineProject[];
+  /** The one project `paper-camp daemon` runs the night shift for (IDEA-241); absent means off. */
+  night?: NightSelection;
 }
 
 const EMPTY_REGISTRY: MachineRegistry = { version: 1, projects: [] };
@@ -35,6 +42,16 @@ function isMachineProject(value: unknown): value is MachineProject {
   );
 }
 
+function isNightSelection(value: unknown): value is NightSelection {
+  const v = value as Partial<NightSelection> | null;
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof v.slug === 'string' &&
+    (v.pausedUntil === undefined || typeof v.pausedUntil === 'number')
+  );
+}
+
 function isMachineRegistry(value: unknown): value is MachineRegistry {
   const v = value as Partial<MachineRegistry> | null;
   return (
@@ -42,7 +59,8 @@ function isMachineRegistry(value: unknown): value is MachineRegistry {
     v !== null &&
     v.version === 1 &&
     Array.isArray(v.projects) &&
-    v.projects.every(isMachineProject)
+    v.projects.every(isMachineProject) &&
+    (v.night === undefined || isNightSelection(v.night))
   );
 }
 
@@ -134,6 +152,37 @@ export function removeProject(registry: MachineRegistry, slug: string): RemovePr
 
 export function listProjects(registry: MachineRegistry): MachineProject[] {
   return [...registry.projects].sort((a, b) => a.slug.localeCompare(b.slug));
+}
+
+export interface SetNightProjectResult {
+  registry: MachineRegistry;
+  ok: boolean;
+}
+
+/** Fails for a slug not in `projects` — the night shift only ever runs a registered project. */
+export function setNightProject(registry: MachineRegistry, slug: string): SetNightProjectResult {
+  if (!registry.projects.some((project) => project.slug === slug)) {
+    return { registry, ok: false };
+  }
+  return { registry: { ...registry, night: { slug } }, ok: true };
+}
+
+export function clearNightProject(registry: MachineRegistry): MachineRegistry {
+  if (!registry.night) return registry;
+  const { night: _night, ...rest } = registry;
+  return rest;
+}
+
+export function setNightPause(
+  registry: MachineRegistry,
+  pausedUntil: number | null,
+): MachineRegistry {
+  if (!registry.night) return registry;
+  if (pausedUntil === null) {
+    const { pausedUntil: _pausedUntil, ...rest } = registry.night;
+    return { ...registry, night: rest };
+  }
+  return { ...registry, night: { ...registry.night, pausedUntil } };
 }
 
 /** A registered path is missing once its `papercamp/config.json` is gone — the
