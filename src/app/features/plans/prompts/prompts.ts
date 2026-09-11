@@ -243,8 +243,8 @@ export function buildPlanDraftPrompt(
     ? openPlans.map((p) => `${p.id ?? 'no id'}: ${p.title} (${p.phases.length} phases)`).join('\n')
     : '(no other open plans exist yet)';
   const phasesStep = redraft
-    ? `3. Replace the existing \`### Phases\` list in place — same position in the file, same list, new contents — rather than appending a second one:`
-    : `3. Append a \`### Phases\` checklist at the end of the file (after any \`### Log\` section move it below the phases — Phases, then Log):`;
+    ? '3. Replace the existing `### Phases` list in place — same position in the file, same list, new contents — rather than appending a second one:'
+    : '3. Append a `### Phases` checklist at the end of the file (after any `### Log` section move it below the phases — Phases, then Log):';
 
   return `You are drafting a plan for the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. The idea and its plan are ONE file: you draft the plan by editing that existing file in place — never create a new file.
 
