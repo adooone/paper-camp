@@ -19,9 +19,8 @@ async function loadUpdateToken(path: string): Promise<string | undefined> {
   }
 }
 
-/** Mode 0600: this token is a bearer credential for POST /api/machine/update.
- * Written to a sibling temp path and renamed into place, so a crash mid-write
- * never leaves `loadUpdateToken` a truncated file to trip over. */
+/** Mode 0600: a bearer credential for POST /api/machine/update. Written to a
+ * sibling temp path and renamed into place, so a crash mid-write never leaves a truncated file. */
 async function saveUpdateToken(path: string, token: string): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   const tmpPath = `${path}.${randomBytes(6).toString('hex')}.tmp`;
