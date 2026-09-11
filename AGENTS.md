@@ -190,6 +190,40 @@ directly on `main`. A draft PR is auto-created on first push.
   (no branch-name lint). It is a convention agents are expected to follow,
   enforced by code review.
 
+## Publish hooks the daemon
+
+`publish.yml` tells the maintainer's own machine (`deimos`) to update itself
+the moment `npm publish` returns, instead of it polling the registry — see
+[[IDEA-258]]. This needs three repo secrets and one Tailscale ACL grant;
+neither is created by any workflow, so a fresh clone's `publish.yml` run
+fails the hook step (harmlessly — `continue-on-error: true` — until these
+exist):
+
+- **`TS_OAUTH_CLIENT_ID` / `TS_OAUTH_CLIENT_SECRET`** — an OAuth client from
+  the [Tailscale admin console](https://login.tailscale.com/admin/settings/oauth),
+  scoped to only tag devices `tag:ci`. `tailscale/github-action` uses this
+  pair to join the `publish` job's runner to the tailnet for the job's
+  duration, tagged `tag:ci`, then leaves when the job ends.
+- **`PAPER_CAMP_UPDATE_TOKEN`** — the same bearer token `deimos`'s daemon
+  minted for itself into `~/.config/paper-camp/update-token` on first boot.
+  Read it on that machine with `paper-camp update-token` (never printed by
+  `status`) and paste it into the repo secret; rotate both sides together by
+  deleting the file and restarting the daemon to mint a new one.
+- **The tailnet ACL** must let `tag:ci` reach `deimos` on 443 and nothing
+  else — the runner is on the tailnet only for the length of the job, and
+  only needs `POST /api/machine/update`. In the tailnet's ACL policy (same
+  admin console, "Access controls"):
+  ```json
+  {
+    "tagOwners": { "tag:ci": ["autogroup:admin"] },
+    "acls": [
+      { "action": "accept", "src": ["tag:ci"], "dst": ["deimos:443"] }
+    ]
+  }
+  ```
+  Without this grant the `curl` step's connection is refused by Tailscale
+  before it ever reaches the daemon's own host check.
+
 ## Multiple worktrees / parallel checkouts
 
 `nextId.idea` in `papercamp/config.json` is **local to whatever checkout you

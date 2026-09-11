@@ -2,7 +2,7 @@
 id: IDEA-258
 title: Publish triggers the update
 type: feat
-status: idea
+status: review
 created: 2026-09-11
 tags:
   - cli
@@ -79,4 +79,5 @@ second machine registers its own hook step. Rolling back.
       Join the tailnet with `tailscale/github-action` after *Publish to npm* and curl
       the machine with the version and token.
       run: 1m42s · 44 in · 8.3k out · sonnet-5 · sess:1ad300df-b422-44f8-8c10-ca076e493d56
-- [ ] Document the secrets and the ACL
+- [x] Document the secrets and the ACL
+      run: 1m14s · 32 in · 5.9k out · sonnet-5 · sess:1ad300df-b422-44f8-8c10-ca076e493d56
