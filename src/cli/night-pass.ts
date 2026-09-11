@@ -40,9 +40,7 @@ const NO_TOKENS = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cac
 const readNum = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
-/** Per-turn tokens from an `assistant` stream line, in the same shape as the
- *  final `result` line's usage — summed across turns as a run's tally-so-far,
- *  so a killed run still reports what it actually spent. */
+// Summed across turns so a killed run still reports what it actually spent.
 function turnTokens(json: Record<string, unknown>): typeof NO_TOKENS {
   const usage = (json.message as { usage?: Record<string, unknown> } | undefined)?.usage ?? {};
   return {
