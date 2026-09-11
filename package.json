@@ -1,6 +1,6 @@
 {
   "name": "@dendelion/paper-camp",
-  "version": "0.30.1",
+  "version": "0.31.0",
   "description": "Local-first, AI-native project management with retro aesthetics",
   "type": "module",
   "packageManager": "pnpm@10.12.1",

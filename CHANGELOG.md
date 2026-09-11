@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.0](https://github.com/adooone/paper-camp/compare/v0.30.1...v0.31.0) (2026-09-11)
+
+
+### Features
+
+* **cli:** Document the secrets and the ACL ([e49c752](https://github.com/adooone/paper-camp/commit/e49c752a2c56210c748ffd4f04fbbaf53f317987))
+* **cli:** Hook the publish workflow to the daemon ([be475a9](https://github.com/adooone/paper-camp/commit/be475a985503daff5aa08a36abb4291ecbb73583))
+* **cli:** Mint the update token and print it ([2e2c035](https://github.com/adooone/paper-camp/commit/2e2c035192220469993b7cf8a869b4ee04122231))
+* **cli:** Night shift health reviews (IDEA-241) ([#218](https://github.com/adooone/paper-camp/issues/218)) ([3342bfc](https://github.com/adooone/paper-camp/commit/3342bfc8998606cc887af4696694b78c36204b71))
+* **cli:** Replace the timer with a boot check ([73cce15](https://github.com/adooone/paper-camp/commit/73cce156ccbf8ef054d550cf0ae12901ead73f0d))
+* **cli:** Serve `POST /api/machine/update` ([0daa844](https://github.com/adooone/paper-camp/commit/0daa844d4ec12b8fba889dd7730072c9a75ef056))
+
+
+### Bug Fixes
+
+* **app:** Add an untouched-plan predicate ([6abed96](https://github.com/adooone/paper-camp/commit/6abed969806f1882b11b94ea1914f0ce0052125b))
+* **app:** Give `buildPlanDraftPrompt` a redraft mode ([8f95d2e](https://github.com/adooone/paper-camp/commit/8f95d2edd19d4d57639d5f854465b6536982e944))
+* **app:** lint ([f1d18b9](https://github.com/adooone/paper-camp/commit/f1d18b9a9d3a5fb814065af58c3488b906113a8d))
+* **app:** Reject a second `### Phases` section in doctor ([79a08d9](https://github.com/adooone/paper-camp/commit/79a08d96f106fcb00017012cd2e0fa2cd5f876d3))
+* **app:** Render Redraft next to Run all ([48d3d50](https://github.com/adooone/paper-camp/commit/48d3d507b5070165f6a75db4f93cdbeeb63c9769))
+* **app:** Teach `DraftPlanButton` the redraft mode ([409ea15](https://github.com/adooone/paper-camp/commit/409ea15fa79ba59f8a27f086e46b9450d84185fe))
+* **cli:** lint ([b1ea7a1](https://github.com/adooone/paper-camp/commit/b1ea7a120396f517ff1a108759837e8262b213f6))
+
 ## [0.30.1](https://github.com/adooone/paper-camp/compare/v0.30.0...v0.30.1) (2026-09-10)
 
 
