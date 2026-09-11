@@ -43,9 +43,10 @@ target, which [[IDEA-255]] set.
       Same prompt plus the rule to replace the existing `### Phases` list in
       place instead of appending.
       run: 51s · 24 in · 6.6k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
-- [ ] Teach `DraftPlanButton` the redraft mode
+- [x] Teach `DraftPlanButton` the redraft mode
       Label it *Redraft* and send the redraft prompt; the undrafted call sites
       in `phases-section.tsx` and `create-idea-modal.tsx` keep today's wording.
+      run: 34s · 12 in · 2.2k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
 - [ ] Render Redraft next to Run all
       In `plan-actions-column.tsx`, gated on the predicate.
 - [ ] Reject a second `### Phases` section in doctor

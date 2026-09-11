@@ -10,9 +10,16 @@ interface DraftPlanButtonProps {
   otherPlans: PlanEntry[];
   /** Extra classes for call sites that need it as a link rather than a button. */
   className?: string;
+  /** Replaces the existing `### Phases` list in place instead of drafting a fresh one. */
+  redraft?: boolean;
 }
 
-export const DraftPlanButton = ({ idea, otherPlans, className = '' }: DraftPlanButtonProps) => {
+export const DraftPlanButton = ({
+  idea,
+  otherPlans,
+  className = '',
+  redraft = false,
+}: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
   const hasAgent = useAppStore(selectHasAnyAgent);
   const { state, errorMessage, run } = useActionFeedback();
@@ -23,7 +30,7 @@ export const DraftPlanButton = ({ idea, otherPlans, className = '' }: DraftPlanB
     if (!id) return;
     run(async () => {
       try {
-        await launchPlanDraft(id, buildPlanDraftPrompt(idea, otherPlans));
+        await launchPlanDraft(id, buildPlanDraftPrompt(idea, otherPlans, redraft));
       } catch (err) {
         toast({
           title: 'Draft failed',
@@ -37,12 +44,16 @@ export const DraftPlanButton = ({ idea, otherPlans, className = '' }: DraftPlanB
 
   const label =
     state === 'loading'
-      ? 'Drafting…'
+      ? redraft
+        ? 'Redrafting…'
+        : 'Drafting…'
       : state === 'success'
         ? 'Draft sent!'
         : state === 'error'
           ? 'Draft failed'
-          : 'Draft plan';
+          : redraft
+            ? 'Redraft'
+            : 'Draft plan';
   // Surface the failure reason (e.g. the branch-conflict guard's 409) instead of
   // silently swallowing it — hovering shows the full message.
   const title =
