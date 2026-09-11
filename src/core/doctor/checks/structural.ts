@@ -80,6 +80,22 @@ const checkNoteHasPhases: DoctorCheck = ({ files }) =>
     return [mk(file, idx + 1, 'note-has-phases', 'a kind: note entity carries a Phases section')];
   });
 
+const checkDuplicatePhasesSection: DoctorCheck = ({ files }) =>
+  files.flatMap((file) => {
+    const lines = file.content.split('\n');
+    const indexes = lines.flatMap((line, i) => (PHASES_HEADING_LINE_RE.test(line) ? [i] : []));
+    return indexes
+      .slice(1)
+      .map((i) =>
+        mk(
+          file,
+          i + 1,
+          'duplicate-phases-section',
+          'a second Phases heading exists — a redraft must replace the existing list in place, not append a new one',
+        ),
+      );
+  });
+
 const checkArchivePlacement: DoctorCheck = ({ files }) =>
   files.flatMap((file) => {
     const status = frontmatterData(file.content)?.status;
@@ -140,6 +156,7 @@ const checkDanglingLink: DoctorCheck = ({ files }) => {
 export const structuralChecks: DoctorCheck[] = [
   checkPhasesListSplit,
   checkNoteHasPhases,
+  checkDuplicatePhasesSection,
   checkArchivePlacement,
   checkDanglingLink,
 ];

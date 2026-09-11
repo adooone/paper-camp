@@ -3,7 +3,7 @@ id: IDEA-256
 title: Redraft the phases of an untouched plan
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-255
 created: 2026-09-10
 tags:
@@ -50,6 +50,7 @@ target, which [[IDEA-255]] set.
 - [x] Render Redraft next to Run all
       In `plan-actions-column.tsx`, gated on the predicate.
       run: 51s · 40 in · 7.2k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
-- [ ] Reject a second `### Phases` section in doctor
+- [x] Reject a second `### Phases` section in doctor
       Today only orphaned checkboxes are flagged, so nothing catches the
       duplicate list the replacement rule exists to prevent.
+      run: 54s · 42 in · 6.3k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a

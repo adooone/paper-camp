@@ -57,6 +57,13 @@ export const DOCTOR_RULES = [
     summary: 'A kind: note entity carries a Phases section; notes never grow phases.',
   },
   {
+    id: 'duplicate-phases-section',
+    category: 'structural',
+    severity: 'error',
+    summary:
+      'A file carries more than one Phases heading — a redraft appended instead of replacing the existing list in place.',
+  },
+  {
     id: 'archive-placement',
     category: 'structural',
     severity: 'warning',

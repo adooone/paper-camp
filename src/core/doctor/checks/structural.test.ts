@@ -49,6 +49,23 @@ describe('note-has-phases', () => {
   });
 });
 
+describe('duplicate-phases-section', () => {
+  it('accepts a single Phases section', () => {
+    const findings = run([file('IDEA-1', '### Phases\n- [ ] Phase 1\n')]).filter(
+      (f) => f.rule === 'duplicate-phases-section',
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it('flags a second Phases heading', () => {
+    const body = '### Phases\n- [ ] Phase 1\n\n### Phases\n- [ ] Redrafted phase\n';
+    const findings = run([file('IDEA-1', body)]).filter(
+      (f) => f.rule === 'duplicate-phases-section',
+    );
+    expect(findings).toHaveLength(1);
+  });
+});
+
 describe('archive-placement', () => {
   it('flags a closed entity still under ideas/', () => {
     const content =
