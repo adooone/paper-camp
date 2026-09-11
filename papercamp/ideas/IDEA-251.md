@@ -4,6 +4,7 @@ title: Project chat
 type: feat
 status: review
 created: 2026-09-10
+updated: 2026-09-11
 tags:
   - app
   - server
@@ -82,3 +83,4 @@ search over the chat.
 - [x] Add the Chat tab to the web client
       Next to Plans and Log, the thread in the feedback composer's components at page width, *Clear chat* in the title row, and unanswered questions counted in the status bar.
       run: 10m23s · 222 in · 44.5k out · sonnet-5 · sess:02f2be77-15c2-4e7a-b41e-08195d505296
+- [x] [manual] Replace Tailscale action with direct Funnel port 8443
