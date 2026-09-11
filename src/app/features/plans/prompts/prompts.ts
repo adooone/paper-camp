@@ -233,11 +233,18 @@ ${idea.body}`;
   return buildIdeaFleshOutPrompt(idea, 'fleshing out', context, PROMOTE_KEEP_UNCHANGED);
 }
 
-export function buildPlanDraftPrompt(idea: IdeaEntry, otherPlans: PlanEntry[]): string {
+export function buildPlanDraftPrompt(
+  idea: IdeaEntry,
+  otherPlans: PlanEntry[],
+  redraft = false,
+): string {
   const openPlans = otherPlans.filter((p) => p.status !== 'done');
   const plansContext = openPlans.length
     ? openPlans.map((p) => `${p.id ?? 'no id'}: ${p.title} (${p.phases.length} phases)`).join('\n')
     : '(no other open plans exist yet)';
+  const phasesStep = redraft
+    ? `3. Replace the existing \`### Phases\` list in place — same position in the file, same list, new contents — rather than appending a second one:`
+    : `3. Append a \`### Phases\` checklist at the end of the file (after any \`### Log\` section move it below the phases — Phases, then Log):`;
 
   return `You are drafting a plan for the idea ${idea.id ?? 'no id'} ("${idea.title}"), stored as a single file at papercamp/ideas/${idea.id ?? '<ID>'}.md. The idea and its plan are ONE file: you draft the plan by editing that existing file in place — never create a new file.
 
@@ -250,7 +257,7 @@ The file already has YAML frontmatter (id, title, status, created, …) and the 
 
 1. Add a \`type\` field to the frontmatter: the Conventional Commits type that best fits (\`feat | fix | chore | docs | refactor\` — most are \`feat\`).
 2. Add 1-4 short subsystem \`tags\` to the frontmatter if it has none.
-3. Append a \`### Phases\` checklist at the end of the file (after any \`### Log\` section move it below the phases — Phases, then Log):
+${phasesStep}
 
 \`\`\`
 ### Phases
@@ -265,7 +272,7 @@ Hard rules:
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
 - Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
 - Steps that edit the same files are one phase, not split across several.
-
+${redraft ? '- Only one `### Phases` section may exist when you finish — replace it in place, never leave the old list and append a new one below it.\n' : ''}
 ## Every other open (non-done) plan, for scope context
 
 ${plansContext}

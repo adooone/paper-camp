@@ -39,9 +39,10 @@ target, which [[IDEA-255]] set.
       True when the entity has phases, none are checked, and no phase or fix
       carries a `run` stamp.
       run: 34s · 40 in · 5.6k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
-- [ ] Give `buildPlanDraftPrompt` a redraft mode
+- [x] Give `buildPlanDraftPrompt` a redraft mode
       Same prompt plus the rule to replace the existing `### Phases` list in
       place instead of appending.
+      run: 51s · 24 in · 6.6k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
 - [ ] Teach `DraftPlanButton` the redraft mode
       Label it *Redraft* and send the redraft prompt; the undrafted call sites
       in `phases-section.tsx` and `create-idea-modal.tsx` keep today's wording.
