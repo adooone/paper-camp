@@ -130,6 +130,12 @@ export type BootUpdateCheck =
  *  down, installs on the next boot instead of waiting on a retry tick that no
  *  longer exists. `apply` is the same install-and-restart path a webhook call
  *  runs, so a busy machine holds one restart no matter which caller asked. */
+/** Set by the smoke tests and anyone running a throwaway daemon from a checkout that
+ *  is behind npm, where the boot check would otherwise replace the global install. */
+export function skipsUpdateCheck(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.PAPERCAMP_SKIP_UPDATE_CHECK === '1';
+}
+
 export async function checkForUpdateAtBoot(
   currentVersion: string,
   checkLatestVersion: (currentVersion: string) => Promise<LatestVersionCheck | null>,

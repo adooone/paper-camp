@@ -63,7 +63,8 @@ async function main() {
   const configDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-config-'));
   const projectDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-project-'));
   const strangerDir = await mkdtemp(join(tmpdir(), 'paper-camp-pack-stranger-'));
-  const env = { PAPERCAMP_CONFIG_DIR: configDir };
+  // A throwaway daemon must never replace the runner's global install at boot.
+  const env = { PAPERCAMP_CONFIG_DIR: configDir, PAPERCAMP_SKIP_UPDATE_CHECK: '1' };
   process.env.PAPERCAMP_CONFIG_DIR = configDir;
   let daemon;
   let cliEntry;
@@ -99,7 +100,7 @@ async function main() {
     if (!slug) throw new Error(`Could not find a slug in \`ls\` output:\n${ls.stdout}`);
 
     const daemonPort = await getFreePort();
-    daemon = spawn('node', [cliEntry, 'daemon', '-p', String(daemonPort), '--no-auto-update'], {
+    daemon = spawn('node', [cliEntry, 'daemon', '-p', String(daemonPort)], {
       cwd: projectDir,
       env: { ...process.env, ...env },
       stdio: 'ignore',

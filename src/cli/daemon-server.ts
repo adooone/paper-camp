@@ -56,6 +56,7 @@ import {
   checkForUpdateAtBoot,
   installedVersionAt,
   runNpmInstall,
+  skipsUpdateCheck,
   spawnRestart,
 } from './auto-update';
 import { formatDevBanner } from './dev-banner';
@@ -635,13 +636,16 @@ export async function startDaemonServer({
   };
   await writeDaemonState(statePath, daemonState);
 
-  void checkForUpdateAtBoot(PAPER_CAMP_VERSION, checkLatestVersion, applyUpdate).then((check) =>
-    recordUpdateOutcome(
-      'boot check',
-      check.newerFound ? check.version : PAPER_CAMP_VERSION,
-      check.newerFound ? check.result : { outcome: 'already current' },
-    ),
-  );
+  if (skipsUpdateCheck())
+    console.log('paper-camp: update check skipped (PAPERCAMP_SKIP_UPDATE_CHECK)');
+  else
+    void checkForUpdateAtBoot(PAPER_CAMP_VERSION, checkLatestVersion, applyUpdate).then((check) =>
+      recordUpdateOutcome(
+        'boot check',
+        check.newerFound ? check.version : PAPER_CAMP_VERSION,
+        check.newerFound ? check.result : { outcome: 'already current' },
+      ),
+    );
 
   console.log(
     formatDaemonBanner(

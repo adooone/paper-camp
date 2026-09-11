@@ -51,7 +51,7 @@ async function main() {
 
   const configDir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-smoke-config-'));
   const projectDir = await mkdtemp(join(tmpdir(), 'paper-camp-daemon-smoke-project-'));
-  const env = { PAPERCAMP_CONFIG_DIR: configDir };
+  const env = { PAPERCAMP_CONFIG_DIR: configDir, PAPERCAMP_SKIP_UPDATE_CHECK: '1' };
 
   try {
     const statusBeforeInit = runCli(['status'], env);

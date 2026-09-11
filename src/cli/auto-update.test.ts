@@ -10,6 +10,7 @@ import {
   npmInstallArgs,
   resolveNpmCommand,
   runNpmInstall,
+  skipsUpdateCheck,
   spawnRestart,
 } from './auto-update';
 
@@ -226,5 +227,13 @@ describe('installedVersionAt', () => {
   it('resolves null for a missing entry', async () => {
     expect(await installedVersionAt('/nowhere/paper-camp')).toBeNull();
     expect(await installedVersionAt(undefined)).toBeNull();
+  });
+});
+
+describe('skipsUpdateCheck', () => {
+  it('is on only when PAPERCAMP_SKIP_UPDATE_CHECK is exactly "1"', () => {
+    expect(skipsUpdateCheck({ PAPERCAMP_SKIP_UPDATE_CHECK: '1' })).toBe(true);
+    expect(skipsUpdateCheck({ PAPERCAMP_SKIP_UPDATE_CHECK: 'true' })).toBe(false);
+    expect(skipsUpdateCheck({})).toBe(false);
   });
 });
