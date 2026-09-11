@@ -106,6 +106,13 @@ export const canMarkPlanDone = (plan: PlanEntry): boolean =>
 
 export const hasCompletedPhase = (plan: PlanEntry): boolean => plan.phases.some((p) => p.done);
 
+/** Gates the Redraft action (IDEA-256): once any phase is checked or any phase/fix
+ * has run, the phase list is part of the plan's history and redrafting would erase it. */
+export const isUntouchedPlan = (plan: PlanEntry): boolean =>
+  plan.phases.length > 0 &&
+  plan.phases.every((p) => !p.done && !p.run) &&
+  (plan.fixes ?? []).every((f) => !f.run);
+
 export interface CompletionGateResult {
   ready: boolean;
   missing: string[];

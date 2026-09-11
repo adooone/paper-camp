@@ -35,9 +35,10 @@ Redrafting a plan that has started. Changing the draft prompt's phase
 target, which [[IDEA-255]] set.
 
 ### Phases
-- [ ] Add an untouched-plan predicate
+- [x] Add an untouched-plan predicate
       True when the entity has phases, none are checked, and no phase or fix
       carries a `run` stamp.
+      run: 34s · 40 in · 5.6k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
 - [ ] Give `buildPlanDraftPrompt` a redraft mode
       Same prompt plus the rule to replace the existing `### Phases` list in
       place instead of appending.
