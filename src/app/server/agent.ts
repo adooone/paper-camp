@@ -256,7 +256,7 @@ Comments: do NOT add any comments to the code — none, the code is the document
 
 You are headless with no browser or display. Never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
 
-Run \`pnpm run check-types\` when you have finished editing, and run a test file only if you edited that file; do not run lint, format, or the test suite — the run verifies them once after the last phase.
+When you have finished editing, run \`pnpm run check-types\` and \`npx biome check . --write\` once each, and run a test file only if you edited that file; do not run the lint or test suites — the run verifies them once after the last phase.
 
 If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the phase.
 

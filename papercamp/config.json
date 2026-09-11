@@ -15,7 +15,7 @@
     "phase": {
       "agent": "claude-code",
       "model": "sonnet",
-      "effort": "high"
+      "effort": "medium"
     },
     "planDraft": {
       "agent": "claude-code",
