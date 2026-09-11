@@ -42,6 +42,7 @@ import { computePlanContentHash } from '../core/serialize';
 import { assignEntityId, formatEntityFile, todayDateString } from '../core/serialize';
 import { threadFromLegacy } from '../core/thread';
 import { resolveIdeasForRelease, resolveReleaseRanges } from '../core/trail';
+import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
@@ -288,6 +289,15 @@ program
   .description('Check the npm registry for a newer version and install it now')
   .action(async () => {
     if (!(await runUpdate())) process.exitCode = 1;
+  });
+
+program
+  .command('update-token')
+  .description(
+    'Print the token that authorises POST /api/machine/update, minting one if none exists yet',
+  )
+  .action(async () => {
+    console.log(await loadOrMintUpdateToken(updateTokenPath()));
   });
 
 program

@@ -38,6 +38,7 @@ import { readTaskLog } from '../core/parse';
 import { latestCapacity } from '../core/rate-limit';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
+import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import {
   MACHINE_NIGHT_PATH,
   MACHINE_PROJECTS_PATH,
@@ -370,6 +371,7 @@ export async function startDaemonServer({
   }
 
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
+  await loadOrMintUpdateToken(updateTokenPath());
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
   let pendingUpdateVersion: string | null = null;
