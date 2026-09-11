@@ -75,7 +75,8 @@ second machine registers its own hook step. Rolling back.
       Drop the interval and `--no-auto-update`, check npm once at start, and
       record the last update event for `status`.
       run: 12m22s · 176 in · 91k out · sonnet-5 · sess:13608d04-88c3-420d-a302-f2c3998d686e
-- [ ] Hook the publish workflow to the daemon
+- [x] Hook the publish workflow to the daemon
       Join the tailnet with `tailscale/github-action` after *Publish to npm* and curl
       the machine with the version and token.
+      run: 1m42s · 44 in · 8.3k out · sonnet-5 · sess:1ad300df-b422-44f8-8c10-ca076e493d56
 - [ ] Document the secrets and the ACL

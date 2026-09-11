@@ -38,3 +38,24 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Read published version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Join tailnet
+        uses: tailscale/github-action@v3
+        continue-on-error: true
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Hook the daemon
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "https://deimos.pitta-ray.ts.net/api/machine/update" \
+            -H "Authorization: Bearer ${{ secrets.PAPER_CAMP_UPDATE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"version\":\"${{ steps.version.outputs.version }}\"}"
