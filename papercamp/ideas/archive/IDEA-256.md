@@ -3,9 +3,10 @@ id: IDEA-256
 title: Redraft the phases of an untouched plan
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-255
 created: 2026-09-10
+updated: 2026-09-11
 tags:
   - app
 subject: Run & monitor
