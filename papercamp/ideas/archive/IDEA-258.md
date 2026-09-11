@@ -2,8 +2,9 @@
 id: IDEA-258
 title: Publish triggers the update
 type: feat
-status: review
+status: done
 created: 2026-09-11
+updated: 2026-09-11
 tags:
   - cli
   - server
