@@ -111,6 +111,31 @@ describe('evaluateNightGate', () => {
     });
     expect(gate.open).toBe(true);
   });
+
+  it('blocks while paused', () => {
+    const gate = evaluateNightGate({
+      ...BASE,
+      snapshot: snapshot(10, 10),
+      pausedUntil: BASE.now + 1000,
+    });
+    expect(gate.reasons).toEqual(['paused']);
+  });
+
+  it('opens once the pause has elapsed', () => {
+    const gate = evaluateNightGate({
+      ...BASE,
+      snapshot: snapshot(10, 10),
+      pausedUntil: BASE.now,
+    });
+    expect(gate.open).toBe(true);
+  });
+
+  it('is unaffected by a null or undefined pausedUntil', () => {
+    expect(evaluateNightGate({ ...BASE, snapshot: snapshot(10, 10), pausedUntil: null }).open).toBe(
+      true,
+    );
+    expect(evaluateNightGate({ ...BASE, snapshot: snapshot(10, 10) }).open).toBe(true);
+  });
 });
 
 describe('isWithinNightWindow', () => {

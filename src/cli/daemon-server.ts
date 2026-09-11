@@ -113,12 +113,13 @@ export async function buildNightGateResponse(
   now: number = Date.now(),
 ): Promise<MachineNightGateResponse> {
   const registry = await loadRegistry(registryPath);
-  if (!registry.night) return { slug: null, projectMissing: false, gate: null };
+  if (!registry.night) return { slug: null, projectMissing: false, pausedUntil: null, gate: null };
 
   const slug = registry.night.slug;
+  const pausedUntil = registry.night.pausedUntil ?? null;
   const project = registry.projects.find((p) => p.slug === slug);
   if (!project || (await isProjectMissing(project.path))) {
-    return { slug, projectMissing: true, gate: null };
+    return { slug, projectMissing: true, pausedUntil, gate: null };
   }
 
   const nightConfig = await readNightConfig(project.path);
@@ -137,9 +138,10 @@ export async function buildNightGateResponse(
     ceiling: resolved.ceiling,
     floor: resolved.floor,
     window: resolved.window,
+    pausedUntil,
   });
 
-  return { slug, projectMissing: false, gate };
+  return { slug, projectMissing: false, pausedUntil, gate };
 }
 
 /** Loaded once and passed by reference into every project's middleware, so pairing

@@ -3,6 +3,7 @@ import type {
   DefaultAgentsMap,
   DeskConfig,
   IntegrationConfig,
+  NightConfig,
   PaperCampConfig,
 } from '@/types/index';
 import { apiUrl } from '../api-base';
@@ -31,6 +32,7 @@ export const saveConfig = async (updates: {
   setupDismissed?: boolean;
   integration?: IntegrationConfig;
   desk?: DeskConfig;
+  night?: NightConfig;
 }): Promise<SaveConfigResult> => {
   try {
     const response = await fetch(apiUrl('/api/config'), {

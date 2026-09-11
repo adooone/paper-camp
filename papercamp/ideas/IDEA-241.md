@@ -4,6 +4,7 @@ title: Night shift health reviews
 type: feat
 status: review
 created: 2026-09-07
+updated: 2026-09-11
 tags:
   - cli
   - server

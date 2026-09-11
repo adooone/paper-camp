@@ -8,6 +8,7 @@ export const TASK_TYPE_KEYS = [
   'feedback',
   'codeReview',
   'deskDiscovery',
+  'nightShift',
 ] as const;
 export type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
 
@@ -19,6 +20,7 @@ export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
   feedback: 'Scout chat',
   codeReview: 'Code review',
   deskDiscovery: 'Desk discovery',
+  nightShift: 'Night shift',
 };
 
 export const CAPABILITY_STATUS_STAMP: Record<

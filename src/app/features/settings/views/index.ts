@@ -4,3 +4,5 @@ export * from './desk-check-row';
 export * from './desk-section';
 export * from './desk-service-row';
 export * from './general-section';
+export * from './night-custom-check-row';
+export * from './night-section';

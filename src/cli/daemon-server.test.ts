@@ -344,6 +344,7 @@ describe('buildNightGateResponse', () => {
     expect(await buildNightGateResponse(registryPath, new Map())).toEqual({
       slug: null,
       projectMissing: false,
+      pausedUntil: null,
       gate: null,
     });
   });
@@ -361,6 +362,7 @@ describe('buildNightGateResponse', () => {
     expect(await buildNightGateResponse(registryPath, new Map())).toEqual({
       slug: 'deleted-repo',
       projectMissing: true,
+      pausedUntil: null,
       gate: null,
     });
   });

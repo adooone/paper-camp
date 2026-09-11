@@ -65,6 +65,16 @@ export const SettingsSidebar = () => {
           Desk
         </ListItem>
       </SidebarSection>
+      <SidebarSection label="Automation">
+        <ListItem
+          size="small"
+          className="pc-row text-xs"
+          active={section === 'night'}
+          onClick={() => navigate({ to: '/settings/$section', params: { section: 'night' } })}
+        >
+          Night shift
+        </ListItem>
+      </SidebarSection>
     </>
   );
 };

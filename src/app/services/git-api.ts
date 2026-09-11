@@ -71,6 +71,22 @@ export const unstagePath = async (path: string): Promise<void> => {
   await throwIfNotOk(response, 'Unstage failed');
 };
 
+export const stageAll = async (): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/git/stage-all'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Stage failed');
+};
+
+export const unstageAll = async (): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/git/unstage-all'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Unstage failed');
+};
+
 export const pushChanges = async (): Promise<void> => {
   const response = await apiFetch(apiUrl('/api/git/push'), {
     method: 'POST',

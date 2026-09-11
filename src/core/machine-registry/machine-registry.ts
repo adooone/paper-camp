@@ -11,6 +11,7 @@ export interface MachineProject {
 
 export interface NightSelection {
   slug: string;
+  pausedUntil?: number;
 }
 
 export interface MachineRegistry {
@@ -43,7 +44,12 @@ function isMachineProject(value: unknown): value is MachineProject {
 
 function isNightSelection(value: unknown): value is NightSelection {
   const v = value as Partial<NightSelection> | null;
-  return typeof v === 'object' && v !== null && typeof v.slug === 'string';
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof v.slug === 'string' &&
+    (v.pausedUntil === undefined || typeof v.pausedUntil === 'number')
+  );
 }
 
 function isMachineRegistry(value: unknown): value is MachineRegistry {
@@ -165,6 +171,18 @@ export function clearNightProject(registry: MachineRegistry): MachineRegistry {
   if (!registry.night) return registry;
   const { night: _night, ...rest } = registry;
   return rest;
+}
+
+export function setNightPause(
+  registry: MachineRegistry,
+  pausedUntil: number | null,
+): MachineRegistry {
+  if (!registry.night) return registry;
+  if (pausedUntil === null) {
+    const { pausedUntil: _pausedUntil, ...rest } = registry.night;
+    return { ...registry, night: rest };
+  }
+  return { ...registry, night: { ...registry.night, pausedUntil } };
 }
 
 /** A registered path is missing once its `papercamp/config.json` is gone — the

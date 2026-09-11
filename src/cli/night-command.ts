@@ -91,6 +91,7 @@ const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
   'five-hour-ceiling': '5h ceiling exceeded',
   'seven-day-floor': '7d floor exceeded',
   'outside-window': 'outside the configured window',
+  paused: 'paused for tonight',
 };
 
 function formatGateLine(response: MachineNightGateResponse | null): string {

@@ -818,7 +818,8 @@ export type NightGateBlockReason =
   | 'no-capacity-snapshot'
   | 'five-hour-ceiling'
   | 'seven-day-floor'
-  | 'outside-window';
+  | 'outside-window'
+  | 'paused';
 
 export interface NightGateStatus {
   open: boolean;
@@ -832,6 +833,7 @@ export const MACHINE_NIGHT_PATH = '/api/machine/night' as const;
 export interface MachineNightGateResponse {
   slug: string | null;
   projectMissing: boolean;
+  pausedUntil: number | null;
   gate: NightGateStatus | null;
 }
 

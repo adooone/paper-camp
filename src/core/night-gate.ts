@@ -24,10 +24,19 @@ export interface NightGateInput {
   ceiling: number;
   floor: number;
   window?: NightWindow;
+  pausedUntil?: number | null;
 }
 
 export function evaluateNightGate(input: NightGateInput): NightGateStatus {
   const reasons: NightGateStatus['reasons'] = [];
+
+  if (
+    input.pausedUntil !== undefined &&
+    input.pausedUntil !== null &&
+    input.now < input.pausedUntil
+  ) {
+    reasons.push('paused');
+  }
 
   const idleMs =
     input.lastDashboardRequestAt === null

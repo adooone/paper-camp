@@ -11,6 +11,7 @@ import {
   removeProject,
   saveRegistry,
   scanForProjects,
+  setNightPause,
   setNightProject,
 } from './machine-registry';
 
@@ -141,6 +142,27 @@ describe('setNightProject / clearNightProject', () => {
   it('is a no-op when nothing is selected', () => {
     const registry = { version: 1 as const, projects: [] };
     expect(clearNightProject(registry)).toBe(registry);
+  });
+});
+
+describe('setNightPause', () => {
+  it('sets pausedUntil on the current night selection', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const withNight = setNightProject(registry, 'repo').registry;
+    const result = setNightPause(withNight, 123);
+    expect(result.night).toEqual({ slug: 'repo', pausedUntil: 123 });
+  });
+
+  it('clears pausedUntil when set to null', () => {
+    const { registry } = addProject({ version: 1, projects: [] }, '/a/repo');
+    const withNight = setNightProject(registry, 'repo').registry;
+    const paused = setNightPause(withNight, 123);
+    expect(setNightPause(paused, null).night).toEqual({ slug: 'repo' });
+  });
+
+  it('is a no-op when no project is selected for the night shift', () => {
+    const registry = { version: 1 as const, projects: [] };
+    expect(setNightPause(registry, 123)).toBe(registry);
   });
 });
 
