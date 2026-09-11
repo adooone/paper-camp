@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
 import { type CapacitySlice, createCapacitySlice } from './slices/capacity-slice';
+import { type ChatSlice, createChatSlice } from './slices/chat-slice';
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
@@ -20,6 +21,7 @@ import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
 export type { DetailView } from './slices/plans-slice';
 
 export type AppStore = CapacitySlice &
+  ChatSlice &
   PlansSlice &
   RoadmapSlice &
   IdeasSlice &
@@ -36,6 +38,7 @@ export type AppStore = CapacitySlice &
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createCapacitySlice(set),
+  ...createChatSlice(set),
   ...createPlansSlice(set),
   ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
@@ -66,6 +69,10 @@ export const selectGhOk = (s: AppStore) => {
 
 export const selectCapabilityGapCount = (s: AppStore) =>
   s.capabilities.filter((c) => c.status !== 'ok').length;
+
+export const selectUnansweredChatQuestionCount = (s: AppStore) =>
+  (s.chatThread ?? []).filter((m) => m.kind === 'question' && (m.state ?? 'open') === 'open')
+    .length;
 
 // loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
 // an explicit false should surface as "not signed in".

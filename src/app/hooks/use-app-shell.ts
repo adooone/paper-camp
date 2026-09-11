@@ -63,6 +63,7 @@ export function useAppShell(): AppShellState {
   const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
   const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
+  const loadChat = useAppStore((s) => s.loadChat);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
   const runtimeReachable = useAppStore((s) => s.runtimeReachable);
@@ -115,6 +116,7 @@ export function useAppShell(): AppShellState {
     loadAgentAuthStatus();
     loadParkedQuestions();
     loadNotifications();
+    loadChat();
     checkRuntimeReachable();
     loadPlans();
     loadIdeas();
@@ -125,6 +127,7 @@ export function useAppShell(): AppShellState {
     loadAgentAuthStatus,
     loadParkedQuestions,
     loadNotifications,
+    loadChat,
     checkRuntimeReachable,
     loadPlans,
     loadIdeas,

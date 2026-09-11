@@ -57,7 +57,7 @@ const LogSidebar = lazy(() =>
 
 // Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log'];
+const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log', '/chat'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
   '/stats': 'Stats',

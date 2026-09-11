@@ -1,3 +1,4 @@
+export * from './chat-api';
 export * from './docs-api';
 export * from './ideas-api';
 export * from './notifications-api';

@@ -2,6 +2,7 @@ import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
   selectLatestRateLimit,
+  selectUnansweredChatQuestionCount,
   useAppStore,
 } from '@/app/stores/app-store';
 import type { AgentTaskStatus } from '@/types/index';
@@ -17,9 +18,11 @@ export interface StatusBarState {
   capabilityGapCount: number;
   rateLimit: ReturnType<typeof selectLatestRateLimit>;
   unreadNotificationCount: number;
+  unansweredChatQuestionCount: number;
   onOpenSetup: () => void;
   onOpenGit: () => void;
   onOpenNotifications: () => void;
+  onOpenChat: () => void;
 }
 
 export function useStatusBar(): StatusBarState {
@@ -33,6 +36,7 @@ export function useStatusBar(): StatusBarState {
   const unreadNotificationCount = useAppStore(
     (s) => s.notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0,
   );
+  const unansweredChatQuestionCount = useAppStore(selectUnansweredChatQuestionCount);
   const navigate = useNavigate();
 
   const activeTask = agentStatus.find(
@@ -49,8 +53,10 @@ export function useStatusBar(): StatusBarState {
     capabilityGapCount,
     rateLimit,
     unreadNotificationCount,
+    unansweredChatQuestionCount,
     onOpenSetup: () => navigate({ to: '/settings/$section', params: { section: 'setup' } }),
     onOpenGit: () => navigate({ to: '/git' }),
     onOpenNotifications: () => navigate({ to: '/log', search: { unread: '1' } }),
+    onOpenChat: () => navigate({ to: '/chat' }),
   };
 }

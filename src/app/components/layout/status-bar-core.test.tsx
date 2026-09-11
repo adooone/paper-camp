@@ -12,9 +12,11 @@ const baseProps: StatusBarCoreProps = {
   agentNotSignedIn: false,
   capabilityGapCount: 0,
   unreadNotificationCount: 0,
+  unansweredChatQuestionCount: 0,
   onOpenSetup: () => {},
   onOpenGit: () => {},
   onOpenNotifications: () => {},
+  onOpenChat: () => {},
 };
 
 type Elementish = { type: unknown; props: Record<string, unknown> };
@@ -132,5 +134,30 @@ describe('StatusBarCore', () => {
     const gitButton = collect(tree, (el) => el.type === IconButton && el.props.label === 'Git')[0];
     (gitButton?.props.onClick as () => void)?.();
     expect(onOpenGit).toHaveBeenCalledTimes(1);
+  });
+
+  const isChatBadge = (el: Elementish) =>
+    el.type === 'span' && String(el.props['aria-label'] ?? '').endsWith('unanswered in chat');
+
+  it('omits the chat badge when nothing is unanswered', () => {
+    expect(collect(StatusBarCore(baseProps), isChatBadge)).toHaveLength(0);
+  });
+
+  it('shows the unanswered count on the chat badge', () => {
+    const tree = StatusBarCore({ ...baseProps, unansweredChatQuestionCount: 2 });
+    const badges = collect(tree, isChatBadge);
+    expect(textOf(badges[0]?.props.children as ReactNode)).toBe('2');
+    expect(badges[0]?.props['aria-label']).toBe('2 unanswered in chat');
+  });
+
+  it('opens `/chat` when the chat button is clicked', () => {
+    const onOpenChat = vi.fn();
+    const tree = StatusBarCore({ ...baseProps, onOpenChat });
+    const chatButton = collect(
+      tree,
+      (el) => el.type === IconButton && el.props.label === 'Chat',
+    )[0];
+    (chatButton?.props.onClick as () => void)?.();
+    expect(onOpenChat).toHaveBeenCalledTimes(1);
   });
 });

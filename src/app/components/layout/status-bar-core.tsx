@@ -2,7 +2,7 @@ import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import { IconButton, Spinner, Stamp, Tooltip, getTextureStyles } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
-import { BellIcon, GitBranchIcon } from '../icons';
+import { BellIcon, ChatIcon, GitBranchIcon } from '../icons';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];
@@ -38,9 +38,11 @@ export interface StatusBarCoreProps {
   capabilityGapCount: number;
   rateLimit?: RateLimitSnapshot | null;
   unreadNotificationCount: number;
+  unansweredChatQuestionCount: number;
   onOpenSetup: () => void;
   onOpenGit: () => void;
   onOpenNotifications: () => void;
+  onOpenChat: () => void;
   trailing?: ReactNode;
 }
 
@@ -55,9 +57,11 @@ export const StatusBarCore = ({
   capabilityGapCount,
   rateLimit,
   unreadNotificationCount,
+  unansweredChatQuestionCount,
   onOpenSetup,
   onOpenGit,
   onOpenNotifications,
+  onOpenChat,
   trailing,
 }: StatusBarCoreProps) => {
   return (
@@ -121,6 +125,25 @@ export const StatusBarCore = ({
             label="Git"
             onClick={onOpenGit}
           />
+        </Tooltip>
+        <Tooltip content="Chat">
+          <span className={notificationButtonClass}>
+            <IconButton
+              variant="ghost"
+              size="small"
+              icon={<ChatIcon />}
+              label="Chat"
+              onClick={onOpenChat}
+            />
+            {unansweredChatQuestionCount > 0 && (
+              <span
+                className={notificationBadgeClass}
+                aria-label={`${unansweredChatQuestionCount} unanswered in chat`}
+              >
+                {unansweredChatQuestionCount}
+              </span>
+            )}
+          </span>
         </Tooltip>
         <Tooltip content="Notifications">
           <span className={notificationButtonClass}>

@@ -2,7 +2,7 @@
 id: IDEA-251
 title: Project chat
 type: feat
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - app
@@ -79,5 +79,6 @@ search over the chat.
 - [x] Route parked questions through the chat
       A parked question is also appended as a `question` message carrying its entity id; answering it there resolves the entity's question and resumes the run.
       run: 5m54s · 140 in · 23.1k out · sonnet-5 · sess:02f2be77-15c2-4e7a-b41e-08195d505296
-- [ ] Add the Chat tab to the web client
+- [x] Add the Chat tab to the web client
       Next to Plans and Log, the thread in the feedback composer's components at page width, *Clear chat* in the title row, and unanswered questions counted in the status bar.
+      run: 10m23s · 222 in · 44.5k out · sonnet-5 · sess:02f2be77-15c2-4e7a-b41e-08195d505296

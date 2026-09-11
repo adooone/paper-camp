@@ -41,6 +41,11 @@ const LogPage = lazy(() =>
     default: m.LogPage,
   })),
 );
+const ChatPage = lazy(() =>
+  importWithRecovery('ChatPage', () => import('@/app/features/chat/index')).then((m) => ({
+    default: m.ChatPage,
+  })),
+);
 const LogEntryPage = lazy(() =>
   importWithRecovery('LogEntryPage', () => import('@/app/features/runs/index')).then((m) => ({
     default: m.LogEntryPage,
@@ -195,6 +200,13 @@ const logRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+const chatRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/chat',
+  component: ChatPage,
+  staticData: { layer: 'runtime' },
+});
+
 const logEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log/$entryId',
@@ -216,6 +228,7 @@ const routeTree = rootRoute.addChildren([
   issuesRoute,
   logRoute,
   logEntryRoute,
+  chatRoute,
   roadmapRoute,
   statsRoute,
   inboxRoute,

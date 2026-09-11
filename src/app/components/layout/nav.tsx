@@ -5,6 +5,7 @@ export const navItems = [
   { id: 'plans', label: 'Plans', path: '/' },
   { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
   { id: 'docs', label: 'Docs', path: '/docs' },
+  { id: 'chat', label: 'Chat', path: '/chat' },
   { id: 'log', label: 'Log', path: '/log' },
   { id: 'stats', label: 'Stats', path: '/stats' },
   { id: 'settings', label: 'Settings', path: '/settings' },
