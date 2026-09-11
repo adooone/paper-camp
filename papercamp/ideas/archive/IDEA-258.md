@@ -82,3 +82,4 @@ second machine registers its own hook step. Rolling back.
       run: 1m42s · 44 in · 8.3k out · sonnet-5 · sess:1ad300df-b422-44f8-8c10-ca076e493d56
 - [x] Document the secrets and the ACL
       run: 1m14s · 32 in · 5.9k out · sonnet-5 · sess:1ad300df-b422-44f8-8c10-ca076e493d56
+- [2026-09-11] decision: The workflow reaches the daemon through Tailscale Funnel on port 8443, which publishes only `/api/machine/update`, instead of joining the tailnet with an OAuth client; the update token is the only secret, and the serve config on 443 stays tailnet-only.

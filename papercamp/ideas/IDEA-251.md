@@ -68,15 +68,12 @@ search over the chat.
 
 ### Phases
 - [ ] Read, append, and trim `papercamp/chat.md`
-      A core module over the `### Thread` grammar, git-ignored like `run-order.md`, trimming to 50 messages / 14 days on every append and never dropping an open question.
-- [ ] Serve `GET` and `POST /p/<slug>/api/chat`
+      A core module over the `### Thread` grammar, git-ignored like `run-order.md`, trimming to 50 messages / 14 days on every append and never dropping an unanswered question.
+- [ ] Serve `GET`, `POST`, and clear on `/p/<slug>/api/chat`
       Mirror the `/api/agent/feedback-message` round trip: persist the user message before the run, append the reply after.
 - [ ] Give the chat agent its three moves
       One prompt over the `papercamp` MCP tools: `add_idea`, an append through the feedback path, or an answer from the corpus, the run log, and `/api/agent/status` — each named in the reply with links.
-- [ ] Post parked questions to the chat and resolve them from it
+- [ ] Route parked questions through the chat
       A parked question is also appended as a `question` message carrying its entity id; answering it there resolves the entity's question and resumes the run.
 - [ ] Add the Chat tab to the web client
-      Next to Plans and Log, the thread rendered by the feedback composer's components at page width with the composer at the bottom.
-- [ ] Add *Clear chat* to the tab's title row
-      One-line confirm, empties everything but unanswered questions.
-- [ ] Count unanswered chat questions in the status bar
+      Next to Plans and Log, the thread in the feedback composer's components at page width, *Clear chat* in the title row, and unanswered questions counted in the status bar.
