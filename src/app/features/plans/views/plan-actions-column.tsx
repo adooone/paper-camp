@@ -3,17 +3,19 @@ import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
+import type { IdeaEntry } from '@/types/index';
 import { Input, ListItem, Select, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import {
   CompleteIdeaButton,
   CreateBranchButton,
+  DraftPlanButton,
   FixReviewButton,
   PrReviewButton,
   RunAllPhasesButton,
 } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { canMarkPlanDone, effectiveStatus } from '../helpers';
+import { canMarkPlanDone, effectiveStatus, isUntouchedPlan } from '../helpers';
 
 const NO_SUBJECT = '__no-subject__';
 
@@ -25,6 +27,7 @@ export const PlanActionsColumn = () => {
   const agentBusy = useAppStore(selectAgentBusy);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
+  const allPlans = useAppStore((s) => s.plans);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
@@ -46,6 +49,7 @@ export const PlanActionsColumn = () => {
   const hasUnchecked =
     plan.phases.some((p) => !p.done) || (plan.fixes ?? []).some((fix) => !fix.done);
   const canRunAll = (plan.status === 'planned' || inProgress || underReview) && hasUnchecked;
+  const canRedraft = isUntouchedPlan(plan);
   const canMarkDone = canMarkPlanDone(plan);
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
   // A board holds no code of its own — its tickets carry the work, and each branches
@@ -64,6 +68,14 @@ export const PlanActionsColumn = () => {
     subjectsAvailable && plan.subject && !subjects.includes(plan.subject)
       ? plan.subject
       : undefined;
+
+  const ideaView: IdeaEntry = {
+    id: plan.id ?? null,
+    title: plan.title,
+    body: plan.body,
+    log: plan.log,
+  };
+  const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
 
   const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
 
@@ -197,6 +209,9 @@ export const PlanActionsColumn = () => {
       <div className="flex flex-col">
         {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
         {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
+        {canRedraft && (
+          <DraftPlanButton idea={ideaView} otherPlans={otherPlans} redraft className="pc-row" />
+        )}
         {canFixReview && <FixReviewButton plan={plan} disabled={agentBusy || updating} />}
         {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 

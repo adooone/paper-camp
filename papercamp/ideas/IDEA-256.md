@@ -47,8 +47,9 @@ target, which [[IDEA-255]] set.
       Label it *Redraft* and send the redraft prompt; the undrafted call sites
       in `phases-section.tsx` and `create-idea-modal.tsx` keep today's wording.
       run: 34s · 12 in · 2.2k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
-- [ ] Render Redraft next to Run all
+- [x] Render Redraft next to Run all
       In `plan-actions-column.tsx`, gated on the predicate.
+      run: 51s · 40 in · 7.2k out · sonnet-5 · sess:30ab7bca-e26b-4a9e-98ee-f94c9224085a
 - [ ] Reject a second `### Phases` section in doctor
       Today only orphaned checkboxes are flagged, so nothing catches the
       duplicate list the replacement rule exists to prevent.
