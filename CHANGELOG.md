@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.1](https://github.com/adooone/paper-camp/compare/v0.31.0...v0.31.1) (2026-09-11)
+
+
+### Bug Fixes
+
+* **ci:** Start the smoke daemon without the removed flag ([bbcc8cd](https://github.com/adooone/paper-camp/commit/bbcc8cdf29a80c89c38067a711ef42920c981659))
+* **ideas:** Archive IDEA-256 as done ([6edbf94](https://github.com/adooone/paper-camp/commit/6edbf9406e8129dd9c852ac76afa84341cc48f75))
+
 ## [0.31.0](https://github.com/adooone/paper-camp/compare/v0.30.1...v0.31.0) (2026-09-11)
 
 
