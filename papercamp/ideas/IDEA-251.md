@@ -73,8 +73,9 @@ search over the chat.
 - [x] Serve `GET`, `POST`, and clear on `/p/<slug>/api/chat`
       Mirror the `/api/agent/feedback-message` round trip: persist the user message before the run, append the reply after.
       run: 7m50s · 158 in · 28.4k out · sonnet-5 · sess:179c1698-b057-4a6a-8917-442efa6911ef
-- [ ] Give the chat agent its three moves
+- [x] Give the chat agent its three moves
       One prompt over the `papercamp` MCP tools: `add_idea`, an append through the feedback path, or an answer from the corpus, the run log, and `/api/agent/status` — each named in the reply with links.
+      run: 13m15s · 200 in · 60.3k out · sonnet-5 · sess:e977d379-176e-4560-8e91-71429df9707d
 - [ ] Route parked questions through the chat
       A parked question is also appended as a `question` message carrying its entity id; answering it there resolves the entity's question and resumes the run.
 - [ ] Add the Chat tab to the web client

@@ -1,11 +1,21 @@
+import { readTaskLog } from '@/core/parse';
+import { readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
-import { appendToChatFile, clearChatFile, readChatFile } from '../helpers';
+import {
+  appendToChatFile,
+  campFile,
+  clearChatFile,
+  createIdeaEntity,
+  readChatFile,
+  readMaybe,
+} from '../helpers';
 import { readBody, sendJson } from '../http';
+import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
 
-export function chatRoutes({ root, agent, activity }: RouteContext): Route[] {
+export function chatRoutes({ root, agent, git, status, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -37,7 +47,27 @@ export function chatRoutes({ root, agent, activity }: RouteContext): Route[] {
         let error: string | undefined;
         try {
           const thread = await readChatFile(root);
-          const replyText = await replyToChat(thread, agent.runChatReply);
+          const [{ entries }, taskLogRaw] = await Promise.all([
+            readEntities(campFile(root, 'ideas')),
+            readMaybe(campFile(root, 'tasks.log')),
+          ]);
+          const taskLog = readTaskLog(taskLogRaw);
+          const replyText = await replyToChat(
+            thread,
+            { entities: entries, taskLog, agentStatus: agent.getStatus() },
+            {
+              runPrompt: agent.runChatReply,
+              createIdea: (title, content) => createIdeaEntity(root, { title, content }),
+              applyToEntity: async (entityId, feedbackText) => {
+                const result = await applyFeedbackMessage(
+                  { root, git, status, agent },
+                  entityId,
+                  feedbackText,
+                );
+                return result ? { replyText: result.replyText, error: result.error } : null;
+              },
+            },
+          );
           await appendToChatFile(root, agentThreadMessage(replyText, 'chat'));
         } catch (err) {
           error = (err as Error).message;

@@ -82,6 +82,182 @@ async function resolveFeedbackEntity(
   return { entries, entity, targetFile };
 }
 
+export interface FeedbackApplyResult {
+  entity: EntityEntry;
+  replyText?: string;
+  error?: string;
+  undo?: { commitSha: string };
+}
+
+/** The feedback path: posts `text` to `planId`'s thread, runs the reply agent, and
+ * applies whatever edit it proposes. Shared by /api/agent/feedback-message and the
+ * project chat's "about an existing idea" move (IDEA-251) — both routes to the same
+ * entity thread and undo trail. Returns null when planId doesn't resolve to an entity. */
+export async function applyFeedbackMessage(
+  { root, git, status, agent }: Pick<RouteContext, 'root' | 'git' | 'status' | 'agent'>,
+  planId: string,
+  text: string,
+  context?: MountContext,
+): Promise<FeedbackApplyResult | null> {
+  const resolved = await resolveFeedbackEntity(root, planId);
+  if (!resolved) return null;
+  const { entries, entity, targetFile } = resolved;
+
+  const userMessage: ThreadMessage = {
+    kind: 'chat',
+    date: todayDateString(),
+    text: text.trim(),
+  };
+  const threadWithUser = [...(entity.thread ?? []), userMessage];
+
+  // Written before the agent runs so the user's message survives a slow or
+  // failed run — the reply below is a second, best-effort append on top.
+  await writeEntityFile(
+    root,
+    targetFile,
+    entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
+  );
+
+  let error: string | undefined;
+  let undo: { commitSha: string } | undefined;
+  let replyText: string | undefined;
+  try {
+    const plan = entityToPlan({ ...entity, thread: threadWithUser });
+    const otherEntities = entries.filter((e) => e.id !== entity.id);
+    const result = await replyToFeedback(plan, otherEntities, agent.runFeedbackReply, context);
+    const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
+    const { spawnFix, ...overrides } = editResult;
+
+    // Reclassify a message answering an earlier question as a clarification,
+    // and resolve that question so a run parked on it (IDEA-125) can resume below.
+    const withClarification = result.answersQuestion
+      ? threadWithUser.map((m, i) =>
+          i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
+        )
+      : threadWithUser;
+    const openQuestionIndex = result.answersQuestion
+      ? withClarification.findLastIndex(
+          (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
+        )
+      : -1;
+    const answeredThread =
+      openQuestionIndex === -1
+        ? withClarification
+        : withClarification.map((m, i) =>
+            i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
+          );
+
+    replyText = result.reply;
+
+    // A closed idea's file stays read-only, so a phase-add edit there raises
+    // its own linked IDEA-N fix entity instead of reopening the idea (IDEA-187).
+    let spawnedId: string | undefined;
+    if (spawnFix?.length) {
+      const configPath = join(root, 'papercamp', 'config.json');
+      spawnedId = await assignEntityId(configPath);
+      if (spawnedId) {
+        const ideasDir = campFile(root, 'ideas');
+        await mkdir(ideasDir, { recursive: true });
+        const fixPath = join(ideasDir, `${spawnedId}.md`);
+        const spawnedEntity: EntityEntry = {
+          id: spawnedId,
+          title: spawnFix[0].text,
+          type: 'fix',
+          kind: 'fix',
+          idea: entity.id,
+          created: todayDateString(),
+          tags: [],
+          body: '',
+          phases: spawnFix,
+        };
+        await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
+        await git.commit(
+          [relative(root, fixPath)],
+          `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
+          `Refs: ${spawnedId}`,
+          { noVerify: true },
+        );
+        undo = { commitSha: await git.getHeadSha() };
+        replyText = `${replyText} (spawned ${spawnedId} to track this)`;
+
+        agent.startRunAllPhases(
+          entityToPlan(spawnedEntity),
+          () => status.runChecksAndWait(),
+          () => status.getCachedOrRunChecks(),
+        );
+      }
+    }
+
+    // An undone Fix added to a plan under review is new work: reopen it so
+    // run-all implements it instead of it landing on a plan that looks finished.
+    const reopen = addsOpenFix(entity.fixes, overrides.fixes);
+    if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
+
+    const thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
+    await writeEntityFile(
+      root,
+      targetFile,
+      entityFileInput(entity, {
+        thread,
+        updated: todayDateString(),
+        ...overrides,
+        ...(reopen ? { status: 'in-progress' } : {}),
+      }),
+    );
+    void appendNotification(root, {
+      id: randomUUID(),
+      kind: 'reply',
+      entityId: entity.id,
+      entityTitle: entity.title,
+      text: replyText,
+    });
+
+    // Re-enter a run-all parked on this question (IDEA-125) now, instead of
+    // leaving it failed until someone notices.
+    if (openQuestionIndex !== -1) {
+      await agent.resumeQuestionParkedTasks(
+        entity.id,
+        () => status.runChecksAndWait(),
+        () => status.getCachedOrRunChecks(),
+      );
+    }
+
+    // Commit a plan edit on its own so an Undo revert can't sweep in unrelated
+    // dirty files, and before the auto-launch below writes phase-run changes.
+    if (overrides.phases || overrides.fixes || overrides.body) {
+      const relFile = relative(root, targetFile);
+      await git.commit(
+        [relFile],
+        `${entity.type ?? 'feat'}(ideas): apply feedback edit to ${entity.id}`,
+        `Refs: ${entity.id}`,
+        { noVerify: true },
+      );
+      undo = { commitSha: await git.getHeadSha() };
+    }
+
+    // Same path the "Run fixes" button uses; startRunAllPhases's own admit()
+    // guard turns away busy agents.
+    if (reopen) {
+      const reopenedPlan = entityToPlan({
+        ...entity,
+        thread,
+        updated: todayDateString(),
+        ...overrides,
+        status: 'in-progress',
+      });
+      agent.startRunAllPhases(
+        reopenedPlan,
+        () => status.runChecksAndWait(),
+        () => status.getCachedOrRunChecks(),
+      );
+    }
+  } catch (err) {
+    error = (err as Error).message;
+  }
+
+  return { entity, replyText, error, undo };
+}
+
 // Known renames from this project's own history, cheap enough to
 // fix with plain substitution before spending a model call on the rest of the drift.
 const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [
@@ -630,174 +806,23 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           return;
         }
 
-        const resolved = await resolveFeedbackEntity(root, planId);
-        if (!resolved) {
+        const result = await applyFeedbackMessage(
+          { root, git, status, agent },
+          planId,
+          text,
+          context,
+        );
+        if (!result) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const { entries, entity, targetFile } = resolved;
-
-        const userMessage: ThreadMessage = {
-          kind: 'chat',
-          date: todayDateString(),
-          text: text.trim(),
-        };
-        const threadWithUser = [...(entity.thread ?? []), userMessage];
-
-        // Written before the agent runs so the user's message survives a slow or
-        // failed run — the reply below is a second, best-effort append on top.
-        await writeEntityFile(
-          root,
-          targetFile,
-          entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
-        );
-
-        let error: string | undefined;
-        let thread = threadWithUser;
-        let undo: { commitSha: string } | undefined;
-        try {
-          const plan = entityToPlan({ ...entity, thread: threadWithUser });
-          const otherEntities = entries.filter((e) => e.id !== entity.id);
-          const result = await replyToFeedback(
-            plan,
-            otherEntities,
-            agent.runFeedbackReply,
-            context,
-          );
-          const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
-          const { spawnFix, ...overrides } = editResult;
-
-          // Reclassify a message answering an earlier question as a clarification,
-          // and resolve that question so a run parked on it (IDEA-125) can resume below.
-          const withClarification = result.answersQuestion
-            ? threadWithUser.map((m, i) =>
-                i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
-              )
-            : threadWithUser;
-          const openQuestionIndex = result.answersQuestion
-            ? withClarification.findLastIndex(
-                (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
-              )
-            : -1;
-          const answeredThread =
-            openQuestionIndex === -1
-              ? withClarification
-              : withClarification.map((m, i) =>
-                  i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
-                );
-
-          let replyText = result.reply;
-
-          // A closed idea's file stays read-only, so a phase-add edit there raises
-          // its own linked IDEA-N fix entity instead of reopening the idea (IDEA-187).
-          let spawnedId: string | undefined;
-          if (spawnFix?.length) {
-            const configPath = join(root, 'papercamp', 'config.json');
-            spawnedId = await assignEntityId(configPath);
-            if (spawnedId) {
-              const ideasDir = campFile(root, 'ideas');
-              await mkdir(ideasDir, { recursive: true });
-              const fixPath = join(ideasDir, `${spawnedId}.md`);
-              const spawnedEntity: EntityEntry = {
-                id: spawnedId,
-                title: spawnFix[0].text,
-                type: 'fix',
-                kind: 'fix',
-                idea: entity.id,
-                created: todayDateString(),
-                tags: [],
-                body: '',
-                phases: spawnFix,
-              };
-              await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
-              await git.commit(
-                [relative(root, fixPath)],
-                `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
-                `Refs: ${spawnedId}`,
-                { noVerify: true },
-              );
-              undo = { commitSha: await git.getHeadSha() };
-              replyText = `${replyText} (spawned ${spawnedId} to track this)`;
-
-              agent.startRunAllPhases(
-                entityToPlan(spawnedEntity),
-                () => status.runChecksAndWait(),
-                () => status.getCachedOrRunChecks(),
-              );
-            }
-          }
-
-          // An undone Fix added to a plan under review is new work: reopen it so
-          // run-all implements it instead of it landing on a plan that looks finished.
-          const reopen = addsOpenFix(entity.fixes, overrides.fixes);
-          if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
-
-          thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
-          await writeEntityFile(
-            root,
-            targetFile,
-            entityFileInput(entity, {
-              thread,
-              updated: todayDateString(),
-              ...overrides,
-              ...(reopen ? { status: 'in-progress' } : {}),
-            }),
-          );
-          void appendNotification(root, {
-            id: randomUUID(),
-            kind: 'reply',
-            entityId: entity.id,
-            entityTitle: entity.title,
-            text: replyText,
-          });
-
-          // Re-enter a run-all parked on this question (IDEA-125) now, instead of
-          // leaving it failed until someone notices.
-          if (openQuestionIndex !== -1) {
-            await agent.resumeQuestionParkedTasks(
-              entity.id,
-              () => status.runChecksAndWait(),
-              () => status.getCachedOrRunChecks(),
-            );
-          }
-
-          // Commit a plan edit on its own so an Undo revert can't sweep in unrelated
-          // dirty files, and before the auto-launch below writes phase-run changes.
-          if (overrides.phases || overrides.fixes || overrides.body) {
-            const relFile = relative(root, targetFile);
-            await git.commit(
-              [relFile],
-              `${entity.type ?? 'feat'}(ideas): apply feedback edit to ${entity.id}`,
-              `Refs: ${entity.id}`,
-              { noVerify: true },
-            );
-            undo = { commitSha: await git.getHeadSha() };
-          }
-
-          // Same path the "Run fixes" button uses; startRunAllPhases's own admit()
-          // guard turns away busy agents.
-          if (reopen) {
-            {
-              const reopenedPlan = entityToPlan({
-                ...entity,
-                thread,
-                updated: todayDateString(),
-                ...overrides,
-                status: 'in-progress',
-              });
-              agent.startRunAllPhases(
-                reopenedPlan,
-                () => status.runChecksAndWait(),
-                () => status.getCachedOrRunChecks(),
-              );
-            }
-          }
-        } catch (err) {
-          error = (err as Error).message;
-        }
 
         activity.notifyChanged();
-        sendJson(res, 200, { ok: true, ...(error ? { error } : {}), ...(undo ? { undo } : {}) });
+        sendJson(res, 200, {
+          ok: true,
+          ...(result.error ? { error: result.error } : {}),
+          ...(result.undo ? { undo: result.undo } : {}),
+        });
       },
     },
 

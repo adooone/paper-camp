@@ -16,6 +16,16 @@ async function makeRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-chat-route-test-'));
   roots.push(root);
   await mkdir(join(root, 'papercamp'), { recursive: true });
+  await writeFile(
+    join(root, 'papercamp', 'config.json'),
+    JSON.stringify({
+      version: 1,
+      projectName: 'test',
+      initializedAt: '2026-01-01',
+      nextId: { idea: 1, ticket: 1 },
+    }),
+    'utf-8',
+  );
   return root;
 }
 
@@ -23,6 +33,9 @@ function route(root: string, method: string, ctx: Partial<RouteContext> = {}) {
   const found = chatRoutes({
     root,
     activity: { notifyChanged: () => {} },
+    agent: { getStatus: () => [] } as unknown as RouteContext['agent'],
+    git: {} as unknown as RouteContext['git'],
+    status: {} as unknown as RouteContext['status'],
     ...ctx,
   } as RouteContext).find((r) => r.path === '/api/chat' && r.method === method);
   if (!found) throw new Error(`no ${method} route registered for /api/chat`);
@@ -64,6 +77,12 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
   return { res, status: () => statusCode, json: () => JSON.parse(body) };
 }
 
+function agentCtx(runChatReply: (prompt: string) => Promise<string>): Partial<RouteContext> {
+  return {
+    agent: { runChatReply, getStatus: () => [] } as unknown as RouteContext['agent'],
+  };
+}
+
 describe('GET /api/chat', () => {
   it('returns an empty thread when chat.md does not exist yet', async () => {
     const root = await makeRoot();
@@ -88,22 +107,98 @@ describe('GET /api/chat', () => {
 });
 
 describe('POST /api/chat', () => {
-  it('persists the user message before running, then appends the agent reply', async () => {
+  it('drafts and creates a new idea for the add_idea move', async () => {
     const root = await makeRoot();
-    const runChatReply = vi.fn(async () => 'Sure thing.');
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({
+        result: JSON.stringify({ move: 'add_idea', title: 'Dark mode toggle', content: 'Body.' }),
+      }),
+    );
 
     const { res, status, json } = fakeRes();
-    await route(root, 'POST', {
-      agent: { runChatReply } as unknown as RouteContext['agent'],
-    }).handle(fakeReq(JSON.stringify({ text: 'What is running?' })), res);
+    await route(root, 'POST', agentCtx(runChatReply)).handle(
+      fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })),
+      res,
+    );
 
     expect(status()).toBe(200);
     expect(json()).toEqual({ ok: true });
     expect(runChatReply).toHaveBeenCalledOnce();
 
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    expect(chatFile).toContain('[chat] We should add a dark mode toggle');
+    expect(chatFile).toMatch(/\[chat\] \[agent\] Added \[\[IDEA-\d+]] — Dark mode toggle\./);
+
+    const ideaFiles = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8').catch(
+      () => null,
+    );
+    expect(ideaFiles).toContain('Dark mode toggle');
+  });
+
+  it('routes a message about an existing idea through the feedback path', async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
+      [
+        '---',
+        'id: IDEA-9',
+        'title: Existing idea',
+        'type: feat',
+        'status: in-progress',
+        'created: 2026-09-10',
+        'tags: []',
+        '---',
+        '',
+        'Body.',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
+    );
+    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', {
+      agent: {
+        runChatReply,
+        runFeedbackReply,
+        getStatus: () => [],
+      } as unknown as RouteContext['agent'],
+    }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ ok: true });
+
+    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    expect(chatFile).toContain('[chat] [agent] Noted, thanks. — see [[IDEA-9]].');
+
+    const ideaFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'utf-8');
+    expect(ideaFile).toContain('the log view is clipped again');
+    expect(ideaFile).toContain('Noted, thanks.');
+  });
+
+  it('replies directly for the answer move', async () => {
+    const root = await makeRoot();
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
+    );
+
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', agentCtx(runChatReply)).handle(
+      fakeReq(JSON.stringify({ text: 'What is running?' })),
+      res,
+    );
+
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ ok: true });
+
+    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
     expect(chatFile).toContain('[chat] What is running?');
-    expect(chatFile).toContain('[chat] [agent] Sure thing.');
+    expect(chatFile).toContain('[chat] [agent] Nothing is running.');
   });
 
   it('keeps the user message on disk even when the agent run fails', async () => {
@@ -113,9 +208,10 @@ describe('POST /api/chat', () => {
     });
 
     const { res, status, json } = fakeRes();
-    await route(root, 'POST', {
-      agent: { runChatReply } as unknown as RouteContext['agent'],
-    }).handle(fakeReq(JSON.stringify({ text: 'Hello?' })), res);
+    await route(root, 'POST', agentCtx(runChatReply)).handle(
+      fakeReq(JSON.stringify({ text: 'Hello?' })),
+      res,
+    );
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true, error: 'agent unavailable' });

@@ -8,7 +8,7 @@ import {
   formatRunOrderFile,
   parseRunOrderFile,
 } from '@/core/run-order-file';
-import { formatEntityFile } from '@/core/serialize';
+import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
 import type { BranchHygieneStatus, EntityEntry, StaleBaseRef, ThreadMessage } from '@/types/index';
 
 export async function readMaybe(path: string): Promise<string> {
@@ -76,6 +76,31 @@ export async function writeEntityFile(
 ): Promise<void> {
   await assertCorpusWritable(campFile(root, 'config.json'));
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
+}
+
+// Shared by the /api/ideas route and the MCP `add_idea`/`draft_plan` tools, and now
+// the project chat's "describe new work" move (IDEA-251), so an idea file is only
+// ever assembled in one place.
+export async function createIdeaEntity(
+  root: string,
+  input: { title: string; content?: string; type?: string; subject?: string },
+): Promise<string> {
+  const configPath = campFile(root, 'config.json');
+  const id = await assignEntityId(configPath);
+  if (!id) throw new Error('could not assign entity ID');
+  const ideasDir = campFile(root, 'ideas');
+  await mkdir(ideasDir, { recursive: true });
+  const content = formatEntityFile({
+    id,
+    title: input.title.trim(),
+    type: input.type,
+    status: 'idea',
+    created: todayDateString(),
+    subject: input.subject,
+    body: input.content?.trim(),
+  });
+  await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
+  return id;
 }
 
 export const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');

@@ -1,17 +1,21 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { GitManager } from '../app/server/git';
-import { campFile, entityFileInput, readMaybe, writeEntityFile } from '../app/server/helpers';
+import {
+  campFile,
+  createIdeaEntity as createIdeaEntityFile,
+  entityFileInput,
+  readMaybe,
+  writeEntityFile,
+} from '../app/server/helpers';
 import { parseEntityFile, parseSuggestions } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
 import {
   agentThreadMessage,
   archiveEntityFile,
-  assignEntityId,
-  formatEntityFile,
   removeSuggestionLine,
   todayDateString,
 } from '../core/serialize';
@@ -91,29 +95,12 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
   const guardedWrite = <T>(_targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
     runExclusive(fn);
 
-  async function createIdeaEntity(input: {
+  const createIdeaEntity = (input: {
     title: string;
     content?: string;
     type?: string;
     subject?: string;
-  }): Promise<string> {
-    const configPath = join(root, 'papercamp', 'config.json');
-    const id = await assignEntityId(configPath);
-    if (!id) throw new Error('could not assign entity ID');
-    const ideasDir = campFile(root, 'ideas');
-    await mkdir(ideasDir, { recursive: true });
-    const content = formatEntityFile({
-      id,
-      title: input.title.trim(),
-      type: input.type,
-      status: 'idea',
-      created: todayDateString(),
-      subject: input.subject,
-      body: input.content?.trim(),
-    });
-    await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
-    return id;
-  }
+  }): Promise<string> => createIdeaEntityFile(root, input);
 
   server.registerTool(
     'add_idea',
