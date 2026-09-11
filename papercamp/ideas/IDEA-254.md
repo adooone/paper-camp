@@ -8,7 +8,7 @@ tags:
   - app
   - ui
 subject: App UI
-order: 7
+order: 4
 ---
 
 Seen on the hosted client with the Radio project: from Settings → Setup,

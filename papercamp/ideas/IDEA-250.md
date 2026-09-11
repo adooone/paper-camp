@@ -7,7 +7,7 @@ created: 2026-09-10
 tags:
   - app
 subject: Mobile control desk
-order: 5
+order: 2
 ---
 
 With the daemon as the only server and its shapes published in
