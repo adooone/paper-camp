@@ -17,6 +17,11 @@ export interface DaemonLinks {
   tunnel?: string;
 }
 
+export type UpdateEvent =
+  | { kind: 'hooked'; version: string; at: string }
+  | { kind: 'boot check current' }
+  | { kind: 'failed'; version: string; output: string };
+
 export interface DaemonState {
   pid: number;
   port: number;
@@ -24,10 +29,8 @@ export interface DaemonState {
   startedAt: string;
   share: boolean;
   tailnet: boolean;
-  autoUpdate?: boolean;
-  autoUpdateLastCheckedAt?: string;
-  autoUpdatePendingVersion?: string | null;
-  autoUpdateFailedVersion?: string | null;
+  updateEvent?: UpdateEvent;
+  updatePendingVersion?: string | null;
   links?: DaemonLinks;
 }
 
@@ -55,6 +58,21 @@ function isDaemonLinks(value: unknown): value is DaemonLinks {
   );
 }
 
+function isUpdateEvent(value: unknown): value is UpdateEvent {
+  const v = value as { kind?: unknown; version?: unknown; at?: unknown; output?: unknown } | null;
+  if (typeof v !== 'object' || v === null) return false;
+  switch (v.kind) {
+    case 'hooked':
+      return typeof v.version === 'string' && typeof v.at === 'string';
+    case 'boot check current':
+      return true;
+    case 'failed':
+      return typeof v.version === 'string' && typeof v.output === 'string';
+    default:
+      return false;
+  }
+}
+
 function isDaemonState(value: unknown): value is DaemonState {
   const v = value as Partial<DaemonState> | null;
   return (
@@ -66,14 +84,10 @@ function isDaemonState(value: unknown): value is DaemonState {
     typeof v.startedAt === 'string' &&
     typeof v.share === 'boolean' &&
     typeof v.tailnet === 'boolean' &&
-    (v.autoUpdate === undefined || typeof v.autoUpdate === 'boolean') &&
-    (v.autoUpdateLastCheckedAt === undefined || typeof v.autoUpdateLastCheckedAt === 'string') &&
-    (v.autoUpdatePendingVersion === undefined ||
-      v.autoUpdatePendingVersion === null ||
-      typeof v.autoUpdatePendingVersion === 'string') &&
-    (v.autoUpdateFailedVersion === undefined ||
-      v.autoUpdateFailedVersion === null ||
-      typeof v.autoUpdateFailedVersion === 'string') &&
+    (v.updateEvent === undefined || isUpdateEvent(v.updateEvent)) &&
+    (v.updatePendingVersion === undefined ||
+      v.updatePendingVersion === null ||
+      typeof v.updatePendingVersion === 'string') &&
     (v.links === undefined || isDaemonLinks(v.links))
   );
 }
@@ -162,18 +176,26 @@ export function formatDaemonStatusLine(state: DaemonState): string {
   );
 }
 
-export function formatAutoUpdateStatusLine(state: DaemonState): string {
-  if (!(state.autoUpdate ?? true)) return 'paper-camp: auto-update off';
-  const checked = state.autoUpdateLastCheckedAt
-    ? `last checked ${formatDuration(Date.now() - Date.parse(state.autoUpdateLastCheckedAt))} ago`
-    : 'no check yet';
-  const pending = state.autoUpdatePendingVersion
-    ? `, ${state.autoUpdatePendingVersion} pending`
-    : '';
-  const failed = state.autoUpdateFailedVersion
-    ? `, ${state.autoUpdateFailedVersion} installed but did not take effect — run \`paper-camp update\``
-    : '';
-  return `paper-camp: auto-update on, ${checked}${pending}${failed}`;
+function formatClockTime(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function formatUpdateStatusLine(state: DaemonState): string {
+  if (state.updatePendingVersion) {
+    return `paper-camp: update to ${state.updatePendingVersion} pending, waiting for idle`;
+  }
+  const event = state.updateEvent;
+  if (!event) return 'paper-camp: no update check yet';
+  switch (event.kind) {
+    case 'hooked':
+      return `paper-camp: hooked ${event.version} at ${formatClockTime(event.at)}`;
+    case 'boot check current':
+      return 'paper-camp: boot check current';
+    case 'failed':
+      return `paper-camp: ${event.version} installed but did not take effect — run \`paper-camp update\``;
+  }
 }
 
 /** Unlike the daemon banner, which prints only the single best way in, status

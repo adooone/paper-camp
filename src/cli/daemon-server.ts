@@ -19,6 +19,7 @@ import {
 } from '../app/server/pairing';
 import {
   type DaemonState,
+  type UpdateEvent,
   daemonLogPath,
   daemonStatePath,
   removeDaemonState,
@@ -36,6 +37,7 @@ import { computeNightHealthMap } from '../core/night-health';
 import { startNightShift } from '../core/night-shift';
 import { readTaskLog } from '../core/parse';
 import { latestCapacity } from '../core/rate-limit';
+import { checkLatestVersion } from '../core/registry-version';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
@@ -49,13 +51,12 @@ import {
   type MachineUpdateResponse,
 } from '../types/index';
 import {
-  type AutoUpdateCheckRecord,
   type InstallResult,
   applyMachineUpdate,
+  checkForUpdateAtBoot,
   installedVersionAt,
   runNpmInstall,
   spawnRestart,
-  startAutoUpdatePolling,
 } from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
@@ -84,7 +85,6 @@ export interface DaemonServerOptions {
   port: number;
   share?: boolean;
   tailnet?: boolean;
-  autoUpdate?: boolean;
 }
 
 interface MountRequest {
@@ -252,22 +252,56 @@ export function watchForIdleRestart(isBusy: () => boolean, restart: () => void):
   return () => clearInterval(timer);
 }
 
-export interface MachineUpdateHandlerDeps {
+export interface UpdateApplierDeps {
   runInstall: (version: string) => Promise<InstallResult>;
   installedVersion: () => Promise<string | null>;
   restart: () => void;
 }
 
-/** One handler instance lives for the daemon's whole run, so a restart held for
- *  a busy machine on one call is superseded rather than duplicated if another
- *  hook arrives before the machine goes idle. */
-export function createMachineUpdateHandler(
-  updateToken: string,
+/** One instance lives for the daemon's whole run, so a restart held for a busy
+ *  machine on one call is superseded rather than duplicated if another caller —
+ *  the boot check or a later hook — asks again before the machine goes idle. */
+export function createUpdateApplier(
   isBusy: () => boolean,
-  deps: MachineUpdateHandlerDeps,
-): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  deps: UpdateApplierDeps,
+): (version: string) => Promise<MachineUpdateResponse> {
   let stopIdleWatch: (() => void) | undefined;
 
+  return async (version) => {
+    stopIdleWatch?.();
+    stopIdleWatch = undefined;
+    const result = await applyMachineUpdate(version, { ...deps, isBusy });
+    if (result.outcome === 'waiting for idle') {
+      stopIdleWatch = watchForIdleRestart(isBusy, deps.restart);
+    }
+    return result;
+  };
+}
+
+export type UpdateSource = 'hooked' | 'boot check';
+
+/** What `status` shows next, given the previous event and one apply outcome.
+ *  A hold for idle keeps the previous event, since the pending version takes
+ *  over the status line until it resolves; a boot check that found and
+ *  installed something newer leaves the event alone too, since the restart
+ *  moments away will boot fresh and check again. */
+export function deriveUpdateEvent(
+  previous: UpdateEvent | undefined,
+  source: UpdateSource,
+  version: string,
+  result: MachineUpdateResponse,
+): UpdateEvent | undefined {
+  if (result.outcome === 'waiting for idle') return previous;
+  if (result.outcome === 'failed') return { kind: 'failed', version, output: result.output ?? '' };
+  if (source === 'hooked') return { kind: 'hooked', version, at: new Date().toISOString() };
+  if (result.outcome === 'already current') return { kind: 'boot check current' };
+  return previous;
+}
+
+export function createMachineUpdateHandler(
+  updateToken: string,
+  applyUpdate: (version: string) => Promise<MachineUpdateResponse>,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const bearer = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
     if (!bearer || bearer !== updateToken) {
@@ -287,16 +321,7 @@ export function createMachineUpdateHandler(
       return;
     }
 
-    stopIdleWatch?.();
-    stopIdleWatch = undefined;
-    const result: MachineUpdateResponse = await applyMachineUpdate(body.version, {
-      ...deps,
-      isBusy,
-    });
-    if (result.outcome === 'waiting for idle') {
-      stopIdleWatch = watchForIdleRestart(isBusy, deps.restart);
-    }
-    sendJson(res, 200, result);
+    sendJson(res, 200, await applyUpdate(body.version));
   };
 }
 
@@ -456,7 +481,6 @@ export async function startDaemonServer({
   port,
   share,
   tailnet,
-  autoUpdate,
 }: DaemonServerOptions): Promise<void> {
   if (share && !(await isCloudflaredAvailable())) {
     throw new Error(CLOUDFLARED_MISSING_MESSAGE);
@@ -473,10 +497,40 @@ export async function startDaemonServer({
     mounted,
   );
 
-  const handleMachineUpdate = createMachineUpdateHandler(updateToken, checkMachineBusy, {
+  const statePath = daemonStatePath();
+  let daemonState: DaemonState = {
+    pid: process.pid,
+    port,
+    version: PAPER_CAMP_VERSION,
+    startedAt: new Date().toISOString(),
+    share: share ?? false,
+    tailnet: tailnet ?? false,
+  };
+
+  const recordUpdateOutcome = async (
+    source: UpdateSource,
+    version: string,
+    result: MachineUpdateResponse,
+  ): Promise<void> => {
+    const pending = result.outcome === 'waiting for idle' ? version : null;
+    pendingUpdateVersion = pending;
+    daemonState = {
+      ...daemonState,
+      updateEvent: deriveUpdateEvent(daemonState.updateEvent, source, version, result),
+      updatePendingVersion: pending,
+    };
+    await writeDaemonState(statePath, daemonState);
+  };
+
+  const applyUpdate = createUpdateApplier(checkMachineBusy, {
     runInstall: runNpmInstall,
     installedVersion: () => installedVersionAt(process.argv[1]),
     restart: () => spawnRestart(process.argv[1], daemonLogPath()),
+  });
+  const handleMachineUpdate = createMachineUpdateHandler(updateToken, async (version) => {
+    const result = await applyUpdate(version);
+    await recordUpdateOutcome('hooked', version, result);
+    return result;
   });
 
   const localLink = buildRegistrationLinkForMachine(`http://localhost:${port}`, pairingState.token);
@@ -497,9 +551,7 @@ export async function startDaemonServer({
     });
   });
 
-  const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
-  let stopAutoUpdatePolling: (() => void) | undefined;
   const stopNightShift = startNightShift({
     evaluateGate: () => buildNightGateResponse(defaultRegistryPath(), mounted),
     findProject: async (slug) => {
@@ -516,7 +568,6 @@ export async function startDaemonServer({
     isMachineBusy: checkMachineBusy,
   });
   const shutdown = async () => {
-    stopAutoUpdatePolling?.();
     stopNightShift();
     tunnel?.process.kill();
     await Promise.all(
@@ -573,14 +624,8 @@ export async function startDaemonServer({
     buildRegistrationLinkForMachine,
   );
 
-  let daemonState: DaemonState = {
-    pid: process.pid,
-    port,
-    version: PAPER_CAMP_VERSION,
-    startedAt: new Date().toISOString(),
-    share: share ?? false,
-    tailnet: tailnet ?? false,
-    autoUpdate: autoUpdate ?? true,
+  daemonState = {
+    ...daemonState,
     links: {
       host: localLink,
       network: network.link,
@@ -590,27 +635,13 @@ export async function startDaemonServer({
   };
   await writeDaemonState(statePath, daemonState);
 
-  if (autoUpdate ?? true) {
-    const recordAutoUpdateCheck = async ({
-      pendingVersion,
-      failedVersion,
-    }: AutoUpdateCheckRecord) => {
-      pendingUpdateVersion = pendingVersion;
-      daemonState = {
-        ...daemonState,
-        autoUpdateLastCheckedAt: new Date().toISOString(),
-        autoUpdatePendingVersion: pendingVersion,
-        autoUpdateFailedVersion: failedVersion,
-      };
-      await writeDaemonState(statePath, daemonState);
-    };
-    stopAutoUpdatePolling = startAutoUpdatePolling(
-      PAPER_CAMP_VERSION,
-      checkMachineBusy,
-      recordAutoUpdateCheck,
-      daemonLogPath(),
-    );
-  }
+  void checkForUpdateAtBoot(PAPER_CAMP_VERSION, checkLatestVersion, applyUpdate).then((check) =>
+    recordUpdateOutcome(
+      'boot check',
+      check.newerFound ? check.version : PAPER_CAMP_VERSION,
+      check.newerFound ? check.result : { outcome: 'already current' },
+    ),
+  );
 
   console.log(
     formatDaemonBanner(

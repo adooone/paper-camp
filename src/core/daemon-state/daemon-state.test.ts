@@ -11,9 +11,9 @@ import {
   type DaemonState,
   fetchMachineNightGate,
   fetchMachineProjects,
-  formatAutoUpdateStatusLine,
   formatDaemonLinks,
   formatDaemonStatusLine,
+  formatUpdateStatusLine,
   readRunningDaemonState,
   removeDaemonState,
   writeDaemonState,
@@ -180,7 +180,7 @@ describe('readRunningDaemonState', () => {
     await expect(access(path)).resolves.toBeUndefined();
   });
 
-  it('round-trips the auto-update check time and pending version', async () => {
+  it('round-trips the last update event and pending version', async () => {
     const path = await makeStatePath();
     const port = await listenOnFreePort((req, res) => {
       if (req.url === MACHINE_PROJECTS_PATH) {
@@ -195,9 +195,8 @@ describe('readRunningDaemonState', () => {
       ...baseState,
       pid: process.pid,
       port,
-      autoUpdate: true,
-      autoUpdateLastCheckedAt: '2026-09-10T00:00:00.000Z',
-      autoUpdatePendingVersion: '0.29.1',
+      updateEvent: { kind: 'hooked', version: '0.29.1', at: '2026-09-10T20:41:00.000Z' },
+      updatePendingVersion: '0.29.1',
     };
     await writeDaemonState(path, state);
 
@@ -347,52 +346,51 @@ describe('formatDaemonStatusLine', () => {
   });
 });
 
-describe('formatAutoUpdateStatusLine', () => {
-  it('reports off when the daemon was started with --no-auto-update', () => {
-    expect(formatAutoUpdateStatusLine({ ...baseDaemonState, autoUpdate: false })).toBe(
-      'paper-camp: auto-update off',
-    );
+describe('formatUpdateStatusLine', () => {
+  it('reports no check yet when the daemon has not recorded one', () => {
+    expect(formatUpdateStatusLine(baseDaemonState)).toBe('paper-camp: no update check yet');
   });
 
-  it('defaults to on when the field predates this daemon.json version', () => {
-    expect(formatAutoUpdateStatusLine(baseDaemonState)).toBe(
-      'paper-camp: auto-update on, no check yet',
-    );
-  });
-
-  it('reports how long ago the last check ran', () => {
+  it('reports a boot check that found nothing newer', () => {
     const state: DaemonState = {
       ...baseDaemonState,
-      autoUpdate: true,
-      autoUpdateLastCheckedAt: new Date(Date.now() - 65_000).toISOString(),
+      updateEvent: { kind: 'boot check current' },
     };
 
-    expect(formatAutoUpdateStatusLine(state)).toBe(
-      'paper-camp: auto-update on, last checked 1m5s ago',
-    );
+    expect(formatUpdateStatusLine(state)).toBe('paper-camp: boot check current');
   });
 
-  it('names the pending version while an update waits for the machine to go idle', () => {
+  it('reports the version and clock time a hook installed', () => {
+    const at = new Date();
+    at.setHours(20, 41, 0, 0);
     const state: DaemonState = {
       ...baseDaemonState,
-      autoUpdate: true,
-      autoUpdateLastCheckedAt: new Date().toISOString(),
-      autoUpdatePendingVersion: '0.29.1',
+      updateEvent: { kind: 'hooked', version: '0.30.2', at: at.toISOString() },
     };
 
-    expect(formatAutoUpdateStatusLine(state)).toBe(
-      'paper-camp: auto-update on, last checked 0s ago, 0.29.1 pending',
+    expect(formatUpdateStatusLine(state)).toBe('paper-camp: hooked 0.30.2 at 20:41');
+  });
+
+  it('names the pending version over the last event while it waits for the machine to go idle', () => {
+    const state: DaemonState = {
+      ...baseDaemonState,
+      updateEvent: { kind: 'boot check current' },
+      updatePendingVersion: '0.29.1',
+    };
+
+    expect(formatUpdateStatusLine(state)).toBe(
+      'paper-camp: update to 0.29.1 pending, waiting for idle',
     );
   });
+
   it('names a version that installed but did not take effect', () => {
-    const state = {
+    const state: DaemonState = {
       ...baseDaemonState,
-      autoUpdate: true,
-      autoUpdateLastCheckedAt: new Date().toISOString(),
-      autoUpdateFailedVersion: '0.29.1',
+      updateEvent: { kind: 'failed', version: '0.29.1', output: '404 Not Found' },
     };
-    expect(formatAutoUpdateStatusLine(state)).toBe(
-      'paper-camp: auto-update on, last checked 0s ago, 0.29.1 installed but did not take effect — run `paper-camp update`',
+
+    expect(formatUpdateStatusLine(state)).toBe(
+      'paper-camp: 0.29.1 installed but did not take effect — run `paper-camp update`',
     );
   });
 });

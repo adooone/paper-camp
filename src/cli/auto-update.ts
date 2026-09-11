@@ -3,10 +3,8 @@ import { existsSync, openSync, realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { type LatestVersionCheck, checkLatestVersion } from '../core/registry-version';
+import type { LatestVersionCheck } from '../core/registry-version';
 import type { MachineUpdateResponse } from '../types/index';
-
-export const AUTO_UPDATE_POLL_INTERVAL_MS = 30 * 60 * 1000;
 
 export interface InstallResult {
   ok: boolean;
@@ -95,10 +93,10 @@ export interface ApplyMachineUpdateDeps {
   restart: () => void;
 }
 
-/** The Publish workflow already knows the version, so this skips the registry
- *  check `pollForUpdate` opens with and installs it directly — through the same
- *  shim, verified the same way, holding only the restart while the machine is
- *  busy rather than holding off the install itself, since a webhook gets one shot. */
+/** The Publish workflow already knows the version, so this skips straight to
+ *  installing it — through the same shim, verified the same way, holding only
+ *  the restart while the machine is busy rather than holding off the install
+ *  itself, since a webhook gets one shot. */
 export async function applyMachineUpdate(
   version: string,
   deps: ApplyMachineUpdateDeps,
@@ -123,120 +121,22 @@ export async function applyMachineUpdate(
   return { outcome: 'installed' };
 }
 
-export interface AutoUpdateCheckRecord {
-  pendingVersion: string | null;
-  failedVersion: string | null;
-}
+export type BootUpdateCheck =
+  | { newerFound: false }
+  | { newerFound: true; version: string; result: MachineUpdateResponse };
 
-export interface AutoUpdateDeps {
-  checkLatestVersion: (currentVersion: string) => Promise<LatestVersionCheck | null>;
-  isBusy: () => boolean;
-  runInstall: (version: string) => Promise<InstallResult>;
-  installedVersion: () => Promise<string | null>;
-  restart: () => void;
-  recordCheck: (record: AutoUpdateCheckRecord) => void | Promise<void>;
-}
-
-export interface AutoUpdateState {
-  waitingForIdleVersion: string | null;
-  installedAwaitingRestart: string | null;
-  failedVersion: string | null;
-}
-
-export function createAutoUpdateState(): AutoUpdateState {
-  return { waitingForIdleVersion: null, installedAwaitingRestart: null, failedVersion: null };
-}
-
-/** One poll tick: check, then either log the once-per-pending-version wait, install
- *  and restart, or log a failed install for the next tick to retry — never installs
- *  twice for the same pending version and never loops retrying within a single tick.
- *  An install whose result the entry point cannot see is recorded as failed and that
- *  version is skipped, so a wrong prefix cannot turn into a restart every tick. */
-export async function pollForUpdate(
+/** The one npm check a boot makes (IDEA-258, replacing the thirty-minute poll):
+ *  a release published while this machine was off, or while its daemon was
+ *  down, installs on the next boot instead of waiting on a retry tick that no
+ *  longer exists. `apply` is the same install-and-restart path a webhook call
+ *  runs, so a busy machine holds one restart no matter which caller asked. */
+export async function checkForUpdateAtBoot(
   currentVersion: string,
-  state: AutoUpdateState,
-  deps: AutoUpdateDeps,
-): Promise<void> {
-  const check = await deps.checkLatestVersion(currentVersion);
-  if (!check || !check.isNewer) {
-    state.waitingForIdleVersion = null;
-    await deps.recordCheck({ pendingVersion: null, failedVersion: state.failedVersion });
-    return;
-  }
-  const latest = check.latestVersion;
-
-  if (state.failedVersion === latest) {
-    await deps.recordCheck({ pendingVersion: null, failedVersion: latest });
-    return;
-  }
-
-  if (state.installedAwaitingRestart !== latest) {
-    if (deps.isBusy()) {
-      if (state.waitingForIdleVersion !== latest) {
-        console.log(`paper-camp: update to ${latest} waiting for the machine to go idle`);
-        state.waitingForIdleVersion = latest;
-      }
-      await deps.recordCheck({ pendingVersion: latest, failedVersion: null });
-      return;
-    }
-    state.waitingForIdleVersion = null;
-
-    const result = await deps.runInstall(latest);
-    const output = result.output.trim();
-    if (!result.ok) {
-      console.error(
-        `paper-camp: update to ${latest} failed to install, will retry on the next poll${output ? `\n${output}` : ''}`,
-      );
-      await deps.recordCheck({ pendingVersion: latest, failedVersion: null });
-      return;
-    }
-    if (output) console.log(output);
-
-    const installed = await deps.installedVersion();
-    if (installed !== latest) {
-      console.error(
-        `paper-camp: update to ${latest} installed, but this daemon's entry point is still on ${installed ?? 'an unknown version'} — the install landed in a prefix the paper-camp command does not run from; skipping ${latest} until the next release`,
-      );
-      state.failedVersion = latest;
-      await deps.recordCheck({ pendingVersion: null, failedVersion: latest });
-      return;
-    }
-    state.installedAwaitingRestart = latest;
-  }
-
-  // Re-checked after the install, which takes long enough for a run to have started.
-  if (deps.isBusy()) {
-    if (state.waitingForIdleVersion !== latest) {
-      console.log(
-        `paper-camp: update to ${latest} installed, restart waiting for the machine to go idle`,
-      );
-      state.waitingForIdleVersion = latest;
-    }
-    await deps.recordCheck({ pendingVersion: latest, failedVersion: null });
-    return;
-  }
-  await deps.recordCheck({ pendingVersion: null, failedVersion: null });
-  console.log(`paper-camp: update to ${latest} installed, restarting`);
-  deps.restart();
-}
-
-export function startAutoUpdatePolling(
-  currentVersion: string,
-  isBusy: () => boolean,
-  recordCheck: (record: AutoUpdateCheckRecord) => void | Promise<void>,
-  logPath?: string,
-): () => void {
-  const state = createAutoUpdateState();
-  const deps: AutoUpdateDeps = {
-    checkLatestVersion,
-    isBusy,
-    runInstall: runNpmInstall,
-    installedVersion: () => installedVersionAt(process.argv[1]),
-    restart: () => spawnRestart(process.argv[1], logPath),
-    recordCheck,
-  };
-  const tick = () => void pollForUpdate(currentVersion, state, deps);
-  const timer = setInterval(tick, AUTO_UPDATE_POLL_INTERVAL_MS);
-  tick();
-  return () => clearInterval(timer);
+  checkLatestVersion: (currentVersion: string) => Promise<LatestVersionCheck | null>,
+  apply: (version: string) => Promise<MachineUpdateResponse>,
+): Promise<BootUpdateCheck> {
+  const check = await checkLatestVersion(currentVersion);
+  if (!check || !check.isNewer) return { newerFound: false };
+  const result = await apply(check.latestVersion);
+  return { newerFound: true, version: check.latestVersion, result };
 }

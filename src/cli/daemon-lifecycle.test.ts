@@ -48,15 +48,6 @@ describe('buildDaemonArgs', () => {
   it('omits a flag left unset', () => {
     expect(buildDaemonArgs({ port: 5000 })).toEqual(['daemon', '-p', '5000']);
   });
-
-  it('carries --no-auto-update through when disabled', () => {
-    expect(buildDaemonArgs({ autoUpdate: false })).toEqual(['daemon', '--no-auto-update']);
-  });
-
-  it('omits --no-auto-update when auto-update is on or unset', () => {
-    expect(buildDaemonArgs({ autoUpdate: true })).toEqual(['daemon']);
-    expect(buildDaemonArgs({})).toEqual(['daemon']);
-  });
 });
 
 describe('restartOptionsFromState', () => {
@@ -67,7 +58,6 @@ describe('restartOptionsFromState', () => {
     startedAt: new Date().toISOString(),
     share: true,
     tailnet: false,
-    autoUpdate: false,
   };
 
   it('carries the port and flags recorded in the state', () => {
@@ -75,7 +65,6 @@ describe('restartOptionsFromState', () => {
       port: 4333,
       share: true,
       tailnet: false,
-      autoUpdate: false,
     });
   });
 

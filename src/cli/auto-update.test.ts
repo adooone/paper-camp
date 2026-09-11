@@ -4,12 +4,10 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   type ApplyMachineUpdateDeps,
-  type AutoUpdateDeps,
   applyMachineUpdate,
-  createAutoUpdateState,
+  checkForUpdateAtBoot,
   installedVersionAt,
   npmInstallArgs,
-  pollForUpdate,
   resolveNpmCommand,
   runNpmInstall,
   spawnRestart,
@@ -94,193 +92,45 @@ describe('spawnRestart', () => {
   });
 });
 
-function fakeDeps(overrides: Partial<AutoUpdateDeps> = {}): AutoUpdateDeps {
-  return {
-    checkLatestVersion: vi.fn(),
-    isBusy: vi.fn(() => false),
-    runInstall: vi.fn(),
-    installedVersion: vi.fn().mockResolvedValue('0.29.1'),
-    restart: vi.fn(),
-    recordCheck: vi.fn(),
-    ...overrides,
-  };
-}
+describe('checkForUpdateAtBoot', () => {
+  it('does not apply anything when already on the latest version', async () => {
+    const checkLatestVersion = vi.fn().mockResolvedValue({
+      currentVersion: '0.29.1',
+      latestVersion: '0.29.1',
+      isNewer: false,
+    });
+    const apply = vi.fn();
 
-describe('pollForUpdate', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+    expect(await checkForUpdateAtBoot('0.29.1', checkLatestVersion, apply)).toEqual({
+      newerFound: false,
+    });
+    expect(apply).not.toHaveBeenCalled();
   });
 
-  it('does nothing when already on the latest version', async () => {
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.29.1',
-        latestVersion: '0.29.1',
-        isNewer: false,
-      }),
+  it('does not apply anything when the registry check fails', async () => {
+    const checkLatestVersion = vi.fn().mockResolvedValue(null);
+    const apply = vi.fn();
+
+    expect(await checkForUpdateAtBoot('0.28.4', checkLatestVersion, apply)).toEqual({
+      newerFound: false,
     });
-    await pollForUpdate('0.29.1', createAutoUpdateState(), deps);
-    expect(deps.isBusy).not.toHaveBeenCalled();
-    expect(deps.runInstall).not.toHaveBeenCalled();
-    expect(deps.restart).not.toHaveBeenCalled();
-    expect(deps.recordCheck).toHaveBeenCalledWith({ pendingVersion: null, failedVersion: null });
+    expect(apply).not.toHaveBeenCalled();
   });
 
-  it('does nothing when the registry check fails', async () => {
-    const deps = fakeDeps({ checkLatestVersion: vi.fn().mockResolvedValue(null) });
-    await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
-    expect(deps.isBusy).not.toHaveBeenCalled();
-    expect(deps.recordCheck).toHaveBeenCalledWith({ pendingVersion: null, failedVersion: null });
-  });
-
-  it('logs the wait once while busy, and again only once a newer version shows up', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      isBusy: vi.fn(() => true),
+  it('applies the latest version through the shared install path when newer', async () => {
+    const checkLatestVersion = vi.fn().mockResolvedValue({
+      currentVersion: '0.28.4',
+      latestVersion: '0.29.1',
+      isNewer: true,
     });
-    const state = createAutoUpdateState();
+    const apply = vi.fn().mockResolvedValue({ outcome: 'installed' });
 
-    await pollForUpdate('0.28.4', state, deps);
-    await pollForUpdate('0.28.4', state, deps);
-
-    expect(deps.runInstall).not.toHaveBeenCalled();
-    const waitLines = logSpy.mock.calls.filter(([line]) =>
-      String(line).includes('waiting for the machine to go idle'),
-    );
-    expect(waitLines).toHaveLength(1);
-    expect(waitLines[0][0]).toBe('paper-camp: update to 0.29.1 waiting for the machine to go idle');
-    expect(deps.recordCheck).toHaveBeenCalledTimes(2);
-    expect(deps.recordCheck).toHaveBeenCalledWith({
-      pendingVersion: '0.29.1',
-      failedVersion: null,
+    expect(await checkForUpdateAtBoot('0.28.4', checkLatestVersion, apply)).toEqual({
+      newerFound: true,
+      version: '0.29.1',
+      result: { outcome: 'installed' },
     });
-  });
-
-  it('installs and restarts once idle, logging the install output', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      isBusy: vi.fn(() => false),
-      runInstall: vi.fn().mockResolvedValue({ ok: true, output: '+ @dendelion/paper-camp@0.29.1' }),
-    });
-
-    await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
-
-    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
-    expect(deps.restart).toHaveBeenCalledOnce();
-    expect(logSpy.mock.calls.map(([line]) => line)).toContain('+ @dendelion/paper-camp@0.29.1');
-    expect(logSpy.mock.calls.map(([line]) => line)).toContain(
-      'paper-camp: update to 0.29.1 installed, restarting',
-    );
-    expect(deps.recordCheck).toHaveBeenLastCalledWith({
-      pendingVersion: null,
-      failedVersion: null,
-    });
-  });
-
-  it('records a version the entry point still cannot see as failed, skips it, and never restarts', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      runInstall: vi.fn().mockResolvedValue({ ok: true, output: '' }),
-      installedVersion: vi.fn().mockResolvedValue('0.28.4'),
-    });
-    const state = createAutoUpdateState();
-
-    await pollForUpdate('0.28.4', state, deps);
-    await pollForUpdate('0.28.4', state, deps);
-
-    expect(deps.runInstall).toHaveBeenCalledOnce();
-    expect(deps.restart).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('still on 0.28.4'));
-    expect(deps.recordCheck).toHaveBeenLastCalledWith({
-      pendingVersion: null,
-      failedVersion: '0.29.1',
-    });
-  });
-
-  it('holds the restart when a run started during the install, and restarts without reinstalling once idle', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    let busy = false;
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      isBusy: vi.fn(() => busy),
-      runInstall: vi.fn(async () => {
-        busy = true;
-        return { ok: true, output: '' };
-      }),
-    });
-    const state = createAutoUpdateState();
-
-    await pollForUpdate('0.28.4', state, deps);
-    expect(deps.restart).not.toHaveBeenCalled();
-    expect(logSpy.mock.calls.map(([line]) => line)).toContain(
-      'paper-camp: update to 0.29.1 installed, restart waiting for the machine to go idle',
-    );
-    expect(deps.recordCheck).toHaveBeenLastCalledWith({
-      pendingVersion: '0.29.1',
-      failedVersion: null,
-    });
-
-    busy = false;
-    await pollForUpdate('0.28.4', state, deps);
-    expect(deps.runInstall).toHaveBeenCalledOnce();
-    expect(deps.restart).toHaveBeenCalledOnce();
-  });
-
-  it('logs a failed install with its output and does not restart', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      isBusy: vi.fn(() => false),
-      runInstall: vi.fn().mockResolvedValue({ ok: false, output: '404 Not Found' }),
-    });
-
-    await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
-
-    expect(deps.restart).not.toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('paper-camp: update to 0.29.1 failed to install'),
-    );
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('404 Not Found'));
-  });
-
-  it('retries a failed install on the next tick rather than looping within one', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    const deps = fakeDeps({
-      checkLatestVersion: vi.fn().mockResolvedValue({
-        currentVersion: '0.28.4',
-        latestVersion: '0.29.1',
-        isNewer: true,
-      }),
-      isBusy: vi.fn(() => false),
-      runInstall: vi.fn().mockResolvedValue({ ok: false, output: '' }),
-    });
-
-    await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
-
-    expect(deps.runInstall).toHaveBeenCalledOnce();
+    expect(apply).toHaveBeenCalledWith('0.29.1');
   });
 });
 

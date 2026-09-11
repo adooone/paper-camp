@@ -18,6 +18,8 @@ import {
   createMachineUpdateHandler,
   createProjectApi,
   createProjectMounter,
+  createUpdateApplier,
+  deriveUpdateEvent,
   formatDaemonBanner,
   isMachineBusy,
   parseMountRequest,
@@ -488,6 +490,101 @@ describe('isMachineBusy', () => {
   });
 });
 
+describe('createUpdateApplier', () => {
+  function fakeDeps(
+    overrides: {
+      runInstall?: ReturnType<typeof vi.fn>;
+      installedVersion?: ReturnType<typeof vi.fn>;
+      restart?: ReturnType<typeof vi.fn>;
+    } = {},
+  ) {
+    return {
+      runInstall: overrides.runInstall ?? vi.fn().mockResolvedValue({ ok: true, output: '' }),
+      installedVersion: overrides.installedVersion ?? vi.fn().mockResolvedValue('0.28.4'),
+      restart: overrides.restart ?? vi.fn(),
+    };
+  }
+
+  it('installs and restarts when idle', async () => {
+    const deps = fakeDeps({
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+    });
+    const apply = createUpdateApplier(() => false, deps);
+
+    expect(await apply('0.29.1')).toEqual({ outcome: 'installed' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).toHaveBeenCalledOnce();
+  });
+
+  it('installs but holds the restart while the machine is busy', async () => {
+    const deps = fakeDeps({
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+    });
+    const apply = createUpdateApplier(() => true, deps);
+
+    expect(await apply('0.29.1')).toEqual({ outcome: 'waiting for idle' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).not.toHaveBeenCalled();
+  });
+
+  it('supersedes an earlier held restart rather than duplicating it', async () => {
+    vi.useFakeTimers();
+    let busy = true;
+    let calls = 0;
+    const deps = fakeDeps({
+      // Pre-install check misses (forcing an install attempt), post-install check hits.
+      installedVersion: vi.fn(async () => (calls++ % 2 === 0 ? '0.28.4' : '0.29.1')),
+    });
+    const apply = createUpdateApplier(() => busy, deps);
+
+    expect(await apply('0.29.1')).toEqual({ outcome: 'waiting for idle' });
+    expect(await apply('0.29.1')).toEqual({ outcome: 'waiting for idle' });
+    busy = false;
+    await vi.advanceTimersByTimeAsync(6_000);
+
+    expect(deps.restart).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+});
+
+describe('deriveUpdateEvent', () => {
+  it('records a hooked event with the version and time for any non-pending hook outcome', () => {
+    const event = deriveUpdateEvent(undefined, 'hooked', '0.30.2', { outcome: 'already current' });
+    expect(event).toMatchObject({ kind: 'hooked', version: '0.30.2' });
+  });
+
+  it('records boot check current when the boot check found nothing newer', () => {
+    expect(
+      deriveUpdateEvent(undefined, 'boot check', '0.29.1', { outcome: 'already current' }),
+    ).toEqual({ kind: 'boot check current' });
+  });
+
+  it('keeps the previous event when the boot check installed something newer, since a restart is imminent', () => {
+    const previous = deriveUpdateEvent(undefined, 'boot check', '0.29.1', {
+      outcome: 'already current',
+    });
+    expect(deriveUpdateEvent(previous, 'boot check', '0.30.0', { outcome: 'installed' })).toBe(
+      previous,
+    );
+  });
+
+  it('keeps the previous event while waiting for idle, regardless of source', () => {
+    const previous = deriveUpdateEvent(undefined, 'hooked', '0.29.1', { outcome: 'installed' });
+    expect(deriveUpdateEvent(previous, 'hooked', '0.30.0', { outcome: 'waiting for idle' })).toBe(
+      previous,
+    );
+  });
+
+  it('records a failed event with the install output regardless of source', () => {
+    expect(
+      deriveUpdateEvent(undefined, 'boot check', '0.29.1', {
+        outcome: 'failed',
+        output: '404 Not Found',
+      }),
+    ).toEqual({ kind: 'failed', version: '0.29.1', output: '404 Not Found' });
+  });
+});
+
 describe('createMachineUpdateHandler', () => {
   const servers: Server[] = [];
 
@@ -495,21 +592,8 @@ describe('createMachineUpdateHandler', () => {
     await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
   });
 
-  async function startHandler(
-    updateToken: string,
-    isBusy: () => boolean,
-    overrides: {
-      runInstall?: ReturnType<typeof vi.fn>;
-      installedVersion?: ReturnType<typeof vi.fn>;
-      restart?: ReturnType<typeof vi.fn>;
-    } = {},
-  ) {
-    const deps = {
-      runInstall: overrides.runInstall ?? vi.fn().mockResolvedValue({ ok: true, output: '' }),
-      installedVersion: overrides.installedVersion ?? vi.fn().mockResolvedValue('0.28.4'),
-      restart: overrides.restart ?? vi.fn(),
-    };
-    const handler = createMachineUpdateHandler(updateToken, isBusy, deps);
+  async function startHandler(updateToken: string, applyUpdate: ReturnType<typeof vi.fn>) {
+    const handler = createMachineUpdateHandler(updateToken, applyUpdate);
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
         res.statusCode = 500;
@@ -520,11 +604,12 @@ describe('createMachineUpdateHandler', () => {
     const port = await new Promise<number>((resolve) => {
       server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
     });
-    return { port, deps };
+    return { port };
   }
 
-  it('403s a missing or wrong bearer token without installing anything', async () => {
-    const { port, deps } = await startHandler('secret', () => false);
+  it('403s a missing or wrong bearer token without applying anything', async () => {
+    const applyUpdate = vi.fn();
+    const { port } = await startHandler('secret', applyUpdate);
 
     const missing = await fetch(`http://127.0.0.1:${port}/`, {
       method: 'POST',
@@ -538,11 +623,12 @@ describe('createMachineUpdateHandler', () => {
 
     expect(missing.status).toBe(403);
     expect(wrong.status).toBe(403);
-    expect(deps.runInstall).not.toHaveBeenCalled();
+    expect(applyUpdate).not.toHaveBeenCalled();
   });
 
   it('400s a request missing the version', async () => {
-    const { port } = await startHandler('secret', () => false);
+    const applyUpdate = vi.fn();
+    const { port } = await startHandler('secret', applyUpdate);
 
     const response = await fetch(`http://127.0.0.1:${port}/`, {
       method: 'POST',
@@ -551,12 +637,12 @@ describe('createMachineUpdateHandler', () => {
     });
 
     expect(response.status).toBe(400);
+    expect(applyUpdate).not.toHaveBeenCalled();
   });
 
-  it('installs and restarts for a correct token when idle', async () => {
-    const { port, deps } = await startHandler('secret', () => false, {
-      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
-    });
+  it('answers with whatever the applier decides for a correct token', async () => {
+    const applyUpdate = vi.fn().mockResolvedValue({ outcome: 'installed' });
+    const { port } = await startHandler('secret', applyUpdate);
 
     const response = await fetch(`http://127.0.0.1:${port}/`, {
       method: 'POST',
@@ -566,24 +652,7 @@ describe('createMachineUpdateHandler', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ outcome: 'installed' });
-    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
-    expect(deps.restart).toHaveBeenCalledOnce();
-  });
-
-  it('installs but answers waiting for idle without restarting while busy', async () => {
-    const { port, deps } = await startHandler('secret', () => true, {
-      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
-    });
-
-    const response = await fetch(`http://127.0.0.1:${port}/`, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer secret' },
-      body: JSON.stringify({ version: '0.29.1' }),
-    });
-
-    expect(await response.json()).toEqual({ outcome: 'waiting for idle' });
-    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
-    expect(deps.restart).not.toHaveBeenCalled();
+    expect(applyUpdate).toHaveBeenCalledWith('0.29.1');
   });
 });
 

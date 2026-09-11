@@ -71,9 +71,10 @@ second machine registers its own hook step. Rolling back.
       Authorise the bearer token at the daemon root and answer with the outcome of
       the shared install-and-restart path.
       run: 10m22s · 142 in · 51k out · sonnet-5 · sess:3f356c52-334c-4743-bff8-7c2431116031
-- [ ] Replace the timer with a boot check
+- [x] Replace the timer with a boot check
       Drop the interval and `--no-auto-update`, check npm once at start, and
       record the last update event for `status`.
+      run: 12m22s · 176 in · 91k out · sonnet-5 · sess:13608d04-88c3-420d-a302-f2c3998d686e
 - [ ] Hook the publish workflow to the daemon
       Join the tailnet with `tailscale/github-action` after *Publish to npm* and curl
       the machine with the version and token.

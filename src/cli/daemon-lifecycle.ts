@@ -7,9 +7,9 @@ import {
   daemonLogPath,
   daemonStatePath,
   fetchMachineProjects,
-  formatAutoUpdateStatusLine,
   formatDaemonLinks,
   formatDaemonStatusLine,
+  formatUpdateStatusLine,
   isProcessAlive,
   probeMachineEndpoint,
   readRunningDaemonState,
@@ -33,7 +33,6 @@ export interface StartOptions {
   port?: number;
   share?: boolean;
   tailnet?: boolean;
-  autoUpdate?: boolean;
 }
 
 const START_POLL_TIMEOUT_MS = 10_000;
@@ -42,12 +41,11 @@ const BANNER_POLL_TIMEOUT_MS = 10_000;
 const STOP_GRACE_MS = 5_000;
 const STOP_KILL_TIMEOUT_MS = 2_000;
 
-export function buildDaemonArgs({ port, share, tailnet, autoUpdate }: StartOptions): string[] {
+export function buildDaemonArgs({ port, share, tailnet }: StartOptions): string[] {
   const args = ['daemon'];
   if (port !== undefined) args.push('-p', String(port));
   if (share) args.push('--share');
   if (tailnet) args.push('--tailnet');
-  if (autoUpdate === false) args.push('--no-auto-update');
   return args;
 }
 
@@ -206,9 +204,7 @@ export async function runStop(): Promise<boolean> {
 }
 
 export function restartOptionsFromState(state: DaemonState | null): StartOptions {
-  return state
-    ? { port: state.port, share: state.share, tailnet: state.tailnet, autoUpdate: state.autoUpdate }
-    : {};
+  return state ? { port: state.port, share: state.share, tailnet: state.tailnet } : {};
 }
 
 export async function runRestart(): Promise<boolean> {
@@ -323,7 +319,7 @@ export async function runLs(): Promise<void> {
 export async function runStatus(): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
-  if (state) console.log(formatAutoUpdateStatusLine(state));
+  if (state) console.log(formatUpdateStatusLine(state));
   if (state?.links) {
     const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
     const links = formatDaemonLinks(state.links);
