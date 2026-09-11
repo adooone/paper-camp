@@ -15,3 +15,5 @@ papercamp/night.json
 # Local queue order. Untracked by choice: a clone rebuilds membership but not the
 # ordering, which nothing can re-derive.
 papercamp/run-order.md
+# Scratchpad: everything durable it produces lives on the entity the reply links.
+papercamp/chat.md
