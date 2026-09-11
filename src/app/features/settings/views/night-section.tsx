@@ -1,5 +1,5 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { Alert, Button, Card, Divider, PlusIcon, Switch } from '@dendelion/paper-ui';
+import { Alert, Button, Card, Divider, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
 import { useNightSection } from '../hooks/use-night-section';
 import { NightCustomCheckRow } from './night-custom-check-row';
 
@@ -9,6 +9,9 @@ export const NightSection = () => {
     status,
     customChecks,
     running,
+    thresholdInput,
+    setThresholdInput,
+    handleSaveThreshold,
     builtinChecks,
     handleToggleEnabled,
     handleTogglePause,
@@ -61,7 +64,7 @@ export const NightSection = () => {
             </div>
             <Divider />
 
-            <div className="flex items-center justify-between gap-3 pt-3">
+            <div className="flex items-center justify-between gap-3 pb-3 pt-3">
               <div>
                 <p className="m-0">Run a pass now</p>
                 <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
@@ -71,6 +74,23 @@ export const NightSection = () => {
               <Button size="small" onClick={handleRunNow} disabled={!enabled || running}>
                 {running ? 'Starting…' : 'Run a pass now'}
               </Button>
+            </div>
+            <Divider />
+
+            <div className="flex items-center justify-between gap-3 pt-3">
+              <div>
+                <p className="m-0">Health threshold</p>
+                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                  Chunks scoring above this, out of 100, get reviewed; lower it to review more.
+                </p>
+              </div>
+              <Input
+                value={thresholdInput}
+                onChange={(e) => setThresholdInput(e.target.value)}
+                onBlur={handleSaveThreshold}
+                label="Threshold"
+                className="w-24"
+              />
             </div>
           </Card>
 

@@ -2,6 +2,7 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { ChunkHealth, ChunkSignals, NightConfig, NightHealthMap } from '../types/index';
 import { runGit } from './git-log';
+import { readNightFindings } from './night-suggestions';
 
 const CHURN_WINDOW_DAYS = 30;
 const CHURN_SATURATION = 20;
@@ -178,11 +179,16 @@ async function persistNightHealthMap(root: string, map: NightHealthMap): Promise
 export async function computeNightHealthMap(root: string): Promise<NightHealthMap> {
   const roots = (await readConfigNightRoots(root)) ?? DEFAULT_ROOTS;
   const chunkPaths = await listChunkPaths(root, roots);
-  const [persisted, churnByChunk, coverageSummary] = await Promise.all([
+  const [persisted, churnByChunk, coverageSummary, openFindings] = await Promise.all([
     readPersistedState(root),
     computeChurnByChunk(root, chunkPaths),
     readCoverageSummary(root),
+    readNightFindings(root),
   ]);
+  const findingsByChunk = new Map<string, number>();
+  for (const finding of openFindings) {
+    findingsByChunk.set(finding.chunk, (findingsByChunk.get(finding.chunk) ?? 0) + 1);
+  }
 
   const chunks = await Promise.all(
     chunkPaths.map(async (chunkPath): Promise<ChunkHealth> => {
@@ -191,7 +197,7 @@ export async function computeNightHealthMap(root: string): Promise<NightHealthMa
         churnCommits: churnByChunk.get(chunkPath) ?? 0,
         lines: await countChunkLines(root, chunkPath),
         coveragePct: chunkCoveragePct(coverageSummary, join(root, chunkPath)),
-        openFindings: 0,
+        openFindings: findingsByChunk.get(chunkPath) ?? 0,
         daysSinceReviewed: daysSince(prior.lastReviewedAt),
       };
       return {
@@ -208,4 +214,51 @@ export async function computeNightHealthMap(root: string): Promise<NightHealthMa
   const map: NightHealthMap = { generatedAt: new Date().toISOString(), chunks };
   await persistNightHealthMap(root, map);
   return map;
+}
+
+export async function markChunkReviewed(
+  root: string,
+  chunkPath: string,
+  commit: string,
+  at: string = new Date().toISOString(),
+): Promise<void> {
+  const raw = await readFile(nightJsonPath(root), 'utf-8').catch(() => null);
+  let map: NightHealthMap = { generatedAt: at, chunks: [] };
+  if (raw) {
+    try {
+      map = JSON.parse(raw) as NightHealthMap;
+    } catch {}
+  }
+  const existing = map.chunks.find((chunk) => chunk.path === chunkPath);
+  if (existing) {
+    existing.lastReviewedAt = at;
+    existing.lastReviewedCommit = commit;
+  } else {
+    map.chunks.push({
+      path: chunkPath,
+      score: 0,
+      signals: {
+        churnCommits: 0,
+        lines: 0,
+        coveragePct: null,
+        openFindings: 0,
+        daysSinceReviewed: 0,
+      },
+      lastReviewedAt: at,
+      lastReviewedCommit: commit,
+    });
+  }
+  await persistNightHealthMap(root, map);
+}
+
+/** The chunks one night reviews: above the threshold, highest score first, at most
+ *  `maxChunks`, skipping any already reviewed tonight. */
+export function selectNightChunks(
+  map: NightHealthMap,
+  options: { threshold: number; maxChunks: number; exclude?: ReadonlySet<string> },
+): ChunkHealth[] {
+  return [...map.chunks]
+    .filter((chunk) => chunk.score > options.threshold && !options.exclude?.has(chunk.path))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, options.maxChunks);
 }

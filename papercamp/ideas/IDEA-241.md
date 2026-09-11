@@ -139,3 +139,4 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Add the Settings controls
       The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.
       run: 6m19s · 54 in · 6.1k out · sonnet-5
+- [x] [manual] Add night shift pause controls and settings UI

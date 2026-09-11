@@ -10,8 +10,11 @@ import {
   setNightPause,
   setNightProject,
 } from '@/core/machine-registry';
+import { computeNightHealthMap, selectNightChunks } from '@/core/night-health';
+import { isNightPassRunning, markNightPass } from '@/core/night-shift';
 import { readTaskLog } from '@/core/parse';
 import { latestCapacity, resetsAtMs } from '@/core/rate-limit';
+import { DEFAULT_NIGHT_CONFIG, type NightConfig } from '@/types/index';
 import { readMaybe } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -22,27 +25,16 @@ async function findOwnSlug(root: string): Promise<string | null> {
   return registry.projects.find((p) => resolve(p.path) === resolvedRoot)?.slug ?? null;
 }
 
-interface TopChunk {
-  path?: string;
-  score?: number;
-}
-
-async function readTopScoringChunk(root: string): Promise<string | null> {
-  const raw = await readMaybe(join(root, 'papercamp', 'night.json'));
-  if (!raw) return null;
+async function readNightThreshold(root: string): Promise<number> {
+  const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
+  if (!raw) return DEFAULT_NIGHT_CONFIG.threshold;
   try {
-    const parsed = JSON.parse(raw) as { chunks?: TopChunk[] };
-    const chunks = (parsed.chunks ?? []).filter(
-      (c): c is Required<TopChunk> => typeof c.path === 'string' && typeof c.score === 'number',
-    );
-    if (chunks.length === 0) return null;
-    return [...chunks].sort((a, b) => b.score - a.score)[0].path;
+    const night = (JSON.parse(raw) as { night?: NightConfig }).night;
+    return night?.threshold ?? DEFAULT_NIGHT_CONFIG.threshold;
   } catch {
-    return null;
+    return DEFAULT_NIGHT_CONFIG.threshold;
   }
 }
-
-const nightRunInFlight = new Set<string>();
 
 export function nightRoutes({ root }: RouteContext): Route[] {
   return [
@@ -121,14 +113,18 @@ export function nightRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'the night shift is not enabled for this project' });
           return;
         }
-        if (nightRunInFlight.has(root)) {
+        if (isNightPassRunning(root)) {
           sendJson(res, 409, { error: 'a night pass is already running for this project' });
           return;
         }
-        const chunkPath = await readTopScoringChunk(root);
+        const [map, threshold] = await Promise.all([
+          computeNightHealthMap(root),
+          readNightThreshold(root),
+        ]);
+        const chunkPath = selectNightChunks(map, { threshold, maxChunks: 1 })[0]?.path;
         if (!chunkPath) {
           sendJson(res, 400, {
-            error: 'no chunks scored yet — open the Stats page once to build the health map',
+            error: `no chunk scores above the health threshold (${threshold}) — nothing to review`,
           });
           return;
         }
@@ -146,8 +142,8 @@ export function nightRoutes({ root }: RouteContext): Route[] {
         });
         closeSync(fd);
         child.unref();
-        nightRunInFlight.add(root);
-        child.on('exit', () => nightRunInFlight.delete(root));
+        markNightPass(root, true);
+        child.on('exit', () => markNightPass(root, false));
         sendJson(res, 202, { ok: true, chunkPath });
       },
     },

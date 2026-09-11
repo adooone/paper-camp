@@ -32,6 +32,8 @@ import {
   loadRegistry,
 } from '../core/machine-registry';
 import { evaluateNightGate } from '../core/night-gate';
+import { computeNightHealthMap } from '../core/night-health';
+import { startNightShift } from '../core/night-shift';
 import { readTaskLog } from '../core/parse';
 import { latestCapacity } from '../core/rate-limit';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
@@ -45,7 +47,7 @@ import {
 import { type AutoUpdateCheckRecord, startAutoUpdatePolling } from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
-import { readNightConfig, resolveNightConfig } from './night-command';
+import { readNightConfig, resolveNightConfig, runNightPass } from './night-command';
 import {
   type NetworkRegistration,
   buildRegistrationLinkForMachine,
@@ -396,8 +398,20 @@ export async function startDaemonServer({
   const statePath = daemonStatePath();
   let tunnel: QuickTunnel | undefined;
   let stopAutoUpdatePolling: (() => void) | undefined;
+  const stopNightShift = startNightShift({
+    evaluateGate: () => buildNightGateResponse(defaultRegistryPath(), mounted),
+    findProject: async (slug) => {
+      const registry = await loadRegistry(defaultRegistryPath());
+      return registry.projects.find((project) => project.slug === slug) ?? null;
+    },
+    readSettings: async (root) => resolveNightConfig(await readNightConfig(root)),
+    computeMap: computeNightHealthMap,
+    runPass: (project, chunkPath) => runNightPass(project, chunkPath),
+    isMachineBusy: checkMachineBusy,
+  });
   const shutdown = async () => {
     stopAutoUpdatePolling?.();
+    stopNightShift();
     tunnel?.process.kill();
     await Promise.all(
       [...mounted.values()].map(async (apiMiddleware) => {

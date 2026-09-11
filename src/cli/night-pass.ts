@@ -1,5 +1,6 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { killWithEscalation } from '../app/server/agent-process';
+import { extractUsage, parseLine } from '../app/server/agents/claude-code';
 import type { ResolvedNightCheck } from '../core/night-checks';
 import { parseNightCheckFindings, parseNightConfirmVerdict } from '../core/night-findings';
 import { buildNightCheckPrompt, buildNightConfirmPrompt } from '../core/night-prompts';
@@ -17,6 +18,7 @@ import type {
   NightFinding,
   NightPassUsage,
   NightRawFinding,
+  RateLimitSnapshot,
 } from '../types/index';
 
 export interface NightAgentRunResult {
@@ -26,6 +28,17 @@ export interface NightAgentRunResult {
   cappedByTurns: boolean;
   numTurns: number;
   costUsd: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  rateLimit?: RateLimitSnapshot;
+}
+
+const NO_TOKENS = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0 };
+
+function emptyUsage(): NightPassUsage {
+  return { numTurns: 0, costUsd: 0, cappedByTurns: false, ...NO_TOKENS };
 }
 
 export type SpawnAgentFn = (args: string[], cwd: string) => ChildProcess;
@@ -69,6 +82,7 @@ export function runNightAgentPrompt(opts: {
     let cappedByTurns = false;
     let buffered = '';
     let settled = false;
+    let rateLimit: RateLimitSnapshot | undefined;
 
     const settle = (result: NightAgentRunResult) => {
       if (settled) return;
@@ -94,6 +108,8 @@ export function runNightAgentPrompt(opts: {
         } catch {
           continue;
         }
+        const parsedRateLimit = parseLine(line)?.rateLimit;
+        if (parsedRateLimit) rateLimit = parsedRateLimit;
         if (json.type === 'assistant') {
           turns += 1;
           if (turns > opts.maxTurns && !cappedByTurns) {
@@ -101,6 +117,8 @@ export function runNightAgentPrompt(opts: {
             killWithEscalation(proc);
           }
         } else if (json.type === 'result') {
+          const { inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens } =
+            extractUsage(json);
           settle({
             ok: true,
             resultText: typeof json.result === 'string' ? json.result : '',
@@ -108,6 +126,11 @@ export function runNightAgentPrompt(opts: {
             cappedByTurns,
             numTurns: typeof json.num_turns === 'number' ? json.num_turns : turns,
             costUsd: typeof json.total_cost_usd === 'number' ? json.total_cost_usd : 0,
+            inputTokens,
+            outputTokens,
+            cacheCreationTokens,
+            cacheReadTokens,
+            rateLimit,
           });
         }
       }
@@ -120,6 +143,8 @@ export function runNightAgentPrompt(opts: {
         cappedByTurns,
         numTurns: turns,
         costUsd: 0,
+        ...NO_TOKENS,
+        rateLimit,
       });
     });
     proc.on('error', (err) => {
@@ -131,7 +156,15 @@ export function runNightAgentPrompt(opts: {
 }
 
 function usageOf(run: NightAgentRunResult): NightPassUsage {
-  return { numTurns: run.numTurns, costUsd: run.costUsd, cappedByTurns: run.cappedByTurns };
+  return {
+    numTurns: run.numTurns,
+    costUsd: run.costUsd,
+    cappedByTurns: run.cappedByTurns,
+    inputTokens: run.inputTokens,
+    outputTokens: run.outputTokens,
+    cacheCreationTokens: run.cacheCreationTokens,
+    cacheReadTokens: run.cacheReadTokens,
+  };
 }
 
 function addUsage(a: NightPassUsage, b: NightPassUsage): NightPassUsage {
@@ -139,6 +172,10 @@ function addUsage(a: NightPassUsage, b: NightPassUsage): NightPassUsage {
     numTurns: a.numTurns + b.numTurns,
     costUsd: a.costUsd + b.costUsd,
     cappedByTurns: a.cappedByTurns || b.cappedByTurns,
+    inputTokens: a.inputTokens + b.inputTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+    cacheCreationTokens: a.cacheCreationTokens + b.cacheCreationTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
   };
 }
 
@@ -150,7 +187,7 @@ async function confirmFinding(
   maxTurns: number,
   maxCostUsd: number,
   spawnAgent: SpawnAgentFn | undefined,
-): Promise<{ finding: NightFinding | null; usage: NightPassUsage }> {
+): Promise<{ finding: NightFinding | null; usage: NightPassUsage; rateLimit?: RateLimitSnapshot }> {
   const prompt = buildNightConfirmPrompt({ checkName, finding });
   const run = await runNightAgentPrompt({
     cwd: worktreePath,
@@ -162,11 +199,16 @@ async function confirmFinding(
     spawnAgent,
   });
   const usage = usageOf(run);
-  if (!run.ok || run.isError) return { finding: null, usage };
+  const rateLimit = run.rateLimit;
+  if (!run.ok || run.isError) return { finding: null, usage, rateLimit };
 
   const verdict = parseNightConfirmVerdict(run.resultText);
-  if (!verdict?.confirmed || !verdict.severity) return { finding: null, usage };
-  return { finding: { ...finding, severity: verdict.severity, check: checkName }, usage };
+  if (!verdict?.confirmed || !verdict.severity) return { finding: null, usage, rateLimit };
+  return {
+    finding: { ...finding, severity: verdict.severity, check: checkName },
+    usage,
+    rateLimit,
+  };
 }
 
 export async function runNightChunkPass(opts: {
@@ -188,9 +230,10 @@ export async function runNightChunkPass(opts: {
   const reviewedCommit = await resolveHeadCommit(opts.root);
   const worktreePath = await addNightWorktree(opts.root, reviewedCommit);
 
-  let usage: NightPassUsage = { numTurns: 0, costUsd: 0, cappedByTurns: false };
+  let usage = emptyUsage();
   const findings: NightFinding[] = [];
   const checks: NightCheckPassRecord[] = [];
+  let rateLimit: RateLimitSnapshot | undefined;
 
   try {
     const files = await listChunkFiles(opts.root, reviewedCommit, opts.chunkPath);
@@ -203,7 +246,7 @@ export async function runNightChunkPass(opts: {
 
     for (const check of opts.checks) {
       const startedAt = new Date().toISOString();
-      let checkUsage: NightPassUsage = { numTurns: 0, costUsd: 0, cappedByTurns: false };
+      let checkUsage = emptyUsage();
       let findingsCount = 0;
 
       const prompt = buildNightCheckPrompt({
@@ -224,6 +267,7 @@ export async function runNightChunkPass(opts: {
         spawnAgent: opts.spawnAgent,
       });
       checkUsage = addUsage(checkUsage, usageOf(run));
+      if (run.rateLimit) rateLimit = run.rateLimit;
       const ok = run.ok && !run.isError;
 
       const rawFindings = ok ? parseNightCheckFindings(run.resultText) : undefined;
@@ -239,6 +283,7 @@ export async function runNightChunkPass(opts: {
             opts.spawnAgent,
           );
           checkUsage = addUsage(checkUsage, confirmation.usage);
+          if (confirmation.rateLimit) rateLimit = confirmation.rateLimit;
           if (confirmation.finding) {
             findings.push(confirmation.finding);
             findingsCount += 1;
@@ -260,5 +305,5 @@ export async function runNightChunkPass(opts: {
     await removeNightWorktree(opts.root, worktreePath);
   }
 
-  return { chunkPath: opts.chunkPath, reviewedCommit, findings, usage, checks };
+  return { chunkPath: opts.chunkPath, reviewedCommit, findings, usage, checks, rateLimit };
 }

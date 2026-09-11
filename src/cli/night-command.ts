@@ -17,6 +17,7 @@ import {
   setNightProject,
 } from '../core/machine-registry';
 import { resolveNightChecks } from '../core/night-checks';
+import { markChunkReviewed } from '../core/night-health';
 import {
   appendNightFindings,
   dropOverlappingFindings,
@@ -53,6 +54,7 @@ export interface ResolvedNightConfig {
   ceiling: number;
   floor: number;
   maxChunks: number;
+  threshold: number;
   maxTurns: number;
   maxCostUsd: number;
   window?: NightConfig['window'];
@@ -64,6 +66,7 @@ export function resolveNightConfig(config: NightConfig | undefined): ResolvedNig
     ceiling: config?.ceiling ?? DEFAULT_NIGHT_CONFIG.ceiling,
     floor: config?.floor ?? DEFAULT_NIGHT_CONFIG.floor,
     maxChunks: config?.maxChunks ?? DEFAULT_NIGHT_CONFIG.maxChunks,
+    threshold: config?.threshold ?? DEFAULT_NIGHT_CONFIG.threshold,
     maxTurns: config?.maxTurns ?? DEFAULT_NIGHT_CONFIG.maxTurns,
     maxCostUsd: config?.maxCostUsd ?? DEFAULT_NIGHT_CONFIG.maxCostUsd,
     window: config?.window,
@@ -78,6 +81,7 @@ function formatNightSettings(resolved: ResolvedNightConfig): string {
     `  window:         ${resolved.window ? `${resolved.window.from}–${resolved.window.to}` : '(none)'}`,
     `  roots:          ${resolved.roots?.join(', ') ?? '(every folder one level under src/)'}`,
     `  maxChunks:      ${resolved.maxChunks}`,
+    `  threshold:      ${resolved.threshold}`,
     `  maxTurns:       ${resolved.maxTurns}`,
     `  maxCostUsd:     $${resolved.maxCostUsd}`,
   ];
@@ -167,6 +171,7 @@ function formatPassResult(result: NightChunkPassResult, written: number, dropped
 }
 
 async function logNightReviewPasses(root: string, result: NightChunkPassResult): Promise<void> {
+  const last = result.checks.at(-1);
   for (const check of result.checks) {
     const id = randomUUID();
     const planTitle = `${result.chunkPath} · ${check.check}`;
@@ -189,12 +194,13 @@ async function logNightReviewPasses(root: string, result: NightChunkPassResult):
         runUsage: {
           durationMs: Date.parse(check.endedAt) - Date.parse(check.startedAt),
           numTurns: check.usage.numTurns,
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheCreationTokens: 0,
-          cacheReadTokens: 0,
+          inputTokens: check.usage.inputTokens,
+          outputTokens: check.usage.outputTokens,
+          cacheCreationTokens: check.usage.cacheCreationTokens,
+          cacheReadTokens: check.usage.cacheReadTokens,
           costUsd: check.usage.costUsd,
         },
+        ...(check === last && result.rateLimit ? { rateLimit: result.rateLimit } : {}),
       },
       check.ok ? 'done' : 'error',
     );
@@ -209,10 +215,11 @@ async function readOpenIdeaCandidates(root: string): Promise<{ title: string; bo
 }
 
 async function reportNightPass(
-  project: MachineProject,
+  project: Pick<MachineProject, 'slug' | 'path'>,
   result: NightChunkPassResult,
 ): Promise<{ written: number; dropped: number }> {
   await logNightReviewPasses(project.path, result);
+  await markChunkReviewed(project.path, result.chunkPath, result.reviewedCommit);
 
   if (result.findings.length === 0) return { written: 0, dropped: 0 };
 
@@ -241,7 +248,10 @@ async function reportNightPass(
   return { written: accepted.length, dropped };
 }
 
-async function runNightRunPass(project: MachineProject, chunkPath: string): Promise<boolean> {
+export async function runNightPass(
+  project: Pick<MachineProject, 'slug' | 'path'>,
+  chunkPath: string,
+): Promise<boolean> {
   const nightConfig = await readNightConfig(project.path);
   const resolved = resolveNightConfig(nightConfig);
   const checks = resolveNightChecks(nightConfig);
@@ -309,7 +319,7 @@ export async function runNight(target: string | undefined, chunk?: string): Prom
       );
       return false;
     }
-    return runNightRunPass(project, chunk);
+    return runNightPass(project, chunk);
   }
 
   if (target === 'off') {

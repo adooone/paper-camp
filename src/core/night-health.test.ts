@@ -4,11 +4,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import type { NightHealthMap } from '../types/index';
 import {
   chunkCoveragePct,
   computeChurnByChunk,
   computeNightHealthMap,
+  markChunkReviewed,
   scoreChunk,
+  selectNightChunks,
 } from './night-health';
 
 function git(cwd: string, ...args: string[]): string {
@@ -230,5 +233,45 @@ describe('computeNightHealthMap', () => {
 
     const map = await computeNightHealthMap(root);
     expect(map.chunks).toEqual([]);
+  });
+});
+
+describe('markChunkReviewed and selectNightChunks', () => {
+  it('persists the reviewed commit and time for a chunk in night.json', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-night-mark-'));
+    await markChunkReviewed(root, 'src/app', 'abc1234', '2026-09-11T02:00:00.000Z');
+    const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8');
+    const chunk = (JSON.parse(raw) as NightHealthMap).chunks.find((c) => c.path === 'src/app');
+    expect(chunk?.lastReviewedCommit).toBe('abc1234');
+    expect(chunk?.lastReviewedAt).toBe('2026-09-11T02:00:00.000Z');
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('picks chunks above the threshold, highest first, capped, skipping the excluded', () => {
+    const map: NightHealthMap = {
+      generatedAt: '2026-09-11T00:00:00.000Z',
+      chunks: ['src/a:30', 'src/b:90', 'src/c:70', 'src/d:50'].map((entry) => {
+        const [path, score] = entry.split(':');
+        return {
+          path,
+          score: Number(score),
+          signals: {
+            churnCommits: 0,
+            lines: 0,
+            coveragePct: null,
+            openFindings: 0,
+            daysSinceReviewed: null,
+          },
+          lastReviewedAt: null,
+          lastReviewedCommit: null,
+        };
+      }),
+    };
+    const picked = selectNightChunks(map, {
+      threshold: 40,
+      maxChunks: 2,
+      exclude: new Set(['src/b']),
+    });
+    expect(picked.map((c) => c.path)).toEqual(['src/c', 'src/d']);
   });
 });

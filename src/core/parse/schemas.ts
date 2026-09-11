@@ -211,6 +211,7 @@ export const nightConfigSchema = z.object({
   window: nightWindowSchema.optional(),
   roots: z.array(z.string()).optional(),
   maxChunks: z.number().int().positive().optional(),
+  threshold: z.number().min(0).max(100).optional(),
   checks: z.record(z.enum(NIGHT_CHECK_IDS), z.boolean()).optional(),
   customChecks: z.array(nightCustomCheckSchema).optional(),
   maxTurns: z.number().int().positive().optional(),

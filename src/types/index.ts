@@ -742,6 +742,8 @@ export interface NightConfig {
   roots?: string[];
   /** Chunks reviewed per night, highest health score first. */
   maxChunks?: number;
+  /** Health score (0–100) a chunk must exceed to be reviewed; healthy code is left alone. */
+  threshold?: number;
   checks?: Partial<Record<NightCheckId, boolean>>;
   customChecks?: NightCustomCheck[];
   maxTurns?: number;
@@ -749,11 +751,12 @@ export interface NightConfig {
 }
 
 export const DEFAULT_NIGHT_CONFIG: Required<
-  Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks' | 'maxTurns' | 'maxCostUsd'>
+  Pick<NightConfig, 'ceiling' | 'floor' | 'maxChunks' | 'threshold' | 'maxTurns' | 'maxCostUsd'>
 > = {
   ceiling: 50,
   floor: 70,
   maxChunks: 3,
+  threshold: 40,
   maxTurns: 20,
   maxCostUsd: 1,
 };
@@ -775,6 +778,10 @@ export interface NightPassUsage {
   numTurns: number;
   costUsd: number;
   cappedByTurns: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
 }
 
 export interface NightCheckPassRecord {
@@ -792,6 +799,8 @@ export interface NightChunkPassResult {
   findings: NightFinding[];
   usage: NightPassUsage;
   checks: NightCheckPassRecord[];
+  /** The last capacity snapshot any pass in this chunk reported, for the gate's next look. */
+  rateLimit?: RateLimitSnapshot;
 }
 
 export interface NightSuggestionEntry {

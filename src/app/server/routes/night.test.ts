@@ -14,6 +14,21 @@ import type { RouteContext } from './types';
 
 const { mockSpawn } = vi.hoisted(() => ({ mockSpawn: vi.fn() }));
 vi.mock('node:child_process', () => ({ spawn: mockSpawn }));
+// The route now builds the health map itself; with git's spawn mocked above, the map
+// is read back from the night.json each test seeds instead.
+vi.mock('@/core/night-health', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/core/night-health')>();
+  const { readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  return {
+    ...actual,
+    computeNightHealthMap: async (root: string) => {
+      const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8').catch(() => null);
+      const chunks = raw ? (JSON.parse(raw).chunks ?? []) : [];
+      return { generatedAt: new Date().toISOString(), chunks };
+    },
+  };
+});
 
 import { nightRoutes } from './night';
 
@@ -340,7 +355,7 @@ describe('POST /api/night/run', () => {
     await enableNight(root);
     await writeFile(
       join(root, 'papercamp', 'night.json'),
-      JSON.stringify({ chunks: [{ path: 'src/core', score: 10 }] }),
+      JSON.stringify({ chunks: [{ path: 'src/core', score: 90 }] }),
       'utf-8',
     );
     const fakeChild = { unref: vi.fn(), on: vi.fn() };

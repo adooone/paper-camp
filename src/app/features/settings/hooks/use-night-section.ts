@@ -8,7 +8,12 @@ import {
   toggleNightShift,
 } from '@/app/services/system';
 import { NIGHT_BUILTIN_CHECKS } from '@/core/night-checks';
-import type { NightCheckId, NightCustomCheck, PaperCampConfig } from '@/types/index';
+import {
+  DEFAULT_NIGHT_CONFIG,
+  type NightCheckId,
+  type NightCustomCheck,
+  type PaperCampConfig,
+} from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -48,11 +53,13 @@ export const useNightSection = () => {
   const [status, setStatus] = useState<NightStatus | null | undefined>(undefined);
   const [customChecks, setCustomChecks] = useState<KeyedNightCustomCheck[]>([]);
   const [running, setRunning] = useState(false);
+  const [thresholdInput, setThresholdInput] = useState('');
   const { toast } = useToast();
 
   const reloadFromConfig = useCallback((c: PaperCampConfig | null) => {
     setConfig(c);
     setCustomChecks((prev) => reconcileRows(prev, c?.night?.customChecks ?? []));
+    setThresholdInput(String(c?.night?.threshold ?? DEFAULT_NIGHT_CONFIG.threshold));
   }, []);
 
   const reload = useCallback(async () => {
@@ -94,6 +101,28 @@ export const useNightSection = () => {
       toast({ title: 'Night pass started', variant: 'success' });
     } else {
       toast({ title: 'Failed to start', description: error, variant: 'error' });
+    }
+  };
+
+  const handleSaveThreshold = async () => {
+    const threshold = Number(thresholdInput.trim());
+    const current = config?.night?.threshold ?? DEFAULT_NIGHT_CONFIG.threshold;
+    if (!Number.isInteger(threshold) || threshold < 0 || threshold > 100) {
+      toast({
+        title: 'Failed to save',
+        description: 'Threshold must be a whole number from 0 to 100',
+        variant: 'error',
+      });
+      setThresholdInput(String(current));
+      return;
+    }
+    if (threshold === current) return;
+    const { ok, error } = await saveConfig({ night: { ...config?.night, threshold } });
+    if (ok) {
+      reloadFromConfig(await fetchConfig());
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
     }
   };
 
@@ -146,6 +175,9 @@ export const useNightSection = () => {
     status,
     customChecks,
     running,
+    thresholdInput,
+    setThresholdInput,
+    handleSaveThreshold,
     builtinChecks: NIGHT_BUILTIN_CHECKS,
     handleToggleEnabled,
     handleTogglePause,

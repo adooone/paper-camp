@@ -32,6 +32,41 @@ function line(json: Record<string, unknown>): Buffer {
 }
 
 describe('runNightAgentPrompt', () => {
+  it('carries the token counts from the result line', async () => {
+    const proc = fakeProc();
+    const spawnAgent = vi.fn().mockReturnValue(proc) as unknown as SpawnAgentFn;
+
+    const promise = runNightAgentPrompt({
+      cwd: '/tmp',
+      prompt: 'hello',
+      maxTurns: 10,
+      maxCostUsd: 1,
+      spawnAgent,
+    });
+    proc.stdout.emit(
+      'data',
+      line({
+        type: 'result',
+        result: '[]',
+        num_turns: 2,
+        total_cost_usd: 0.05,
+        usage: {
+          input_tokens: 120,
+          output_tokens: 340,
+          cache_creation_input_tokens: 10,
+          cache_read_input_tokens: 2000,
+        },
+      }),
+    );
+
+    expect(await promise).toMatchObject({
+      inputTokens: 120,
+      outputTokens: 340,
+      cacheCreationTokens: 10,
+      cacheReadTokens: 2000,
+    });
+  });
+
   it('resolves with the final result text, cost, and turn count', async () => {
     const proc = fakeProc();
     const spawnAgent = vi.fn().mockReturnValue(proc) as unknown as SpawnAgentFn;
@@ -56,6 +91,10 @@ describe('runNightAgentPrompt', () => {
       cappedByTurns: false,
       numTurns: 1,
       costUsd: 0.02,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheCreationTokens: 0,
+      cacheReadTokens: 0,
     });
     expect(proc.stdin.write).toHaveBeenCalledWith('hello');
   });
@@ -141,6 +180,10 @@ describe('runNightAgentPrompt', () => {
       cappedByTurns: false,
       numTurns: 0,
       costUsd: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheCreationTokens: 0,
+      cacheReadTokens: 0,
     });
   });
 

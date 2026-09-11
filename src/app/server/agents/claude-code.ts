@@ -42,7 +42,7 @@ function dominantModel(
   return best;
 }
 
-function extractUsage(json: Record<string, unknown>): RunUsage {
+export function extractUsage(json: Record<string, unknown>): RunUsage {
   const modelUsage = json.modelUsage as Record<string, Record<string, unknown>> | undefined;
   const usage = (json.usage ?? {}) as Record<string, unknown>;
   let inputTokens = readNum(usage.input_tokens);
