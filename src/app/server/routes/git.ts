@@ -1,4 +1,5 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
+import { readCommitConvention } from '@/core/commit-convention';
 import { squashMergePr } from '@/core/git-pr';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
@@ -381,6 +382,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             diffText,
             activePlan?.id,
             agent.runCommitSuggest,
+            await readCommitConvention(root),
           );
           sendJson(res, 200, suggestion);
         } catch (error) {
