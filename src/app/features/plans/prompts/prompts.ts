@@ -465,6 +465,23 @@ Rules:
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
 }
 
+/** Read-only (server/agent.ts's runReadOnlyPrompt/runChatReply) — the project-wide
+ * chat's reply, not bound to any one idea. A placeholder until the chat agent gets
+ * its three moves (add_idea / feedback-path append / corpus answer): plain text,
+ * no tools, no edits. */
+export function buildChatReplyPrompt(messages: ThreadMessage[]): string {
+  const threadList = messages.length
+    ? messages.map((m) => `${m.from === 'agent' ? 'Agent' : 'User'}: ${m.text}`).join('\n')
+    : '(empty thread)';
+
+  return `You are Paper Scout, this project's own agent identity — the same Scout that opens draft PRs and cuts releases in CI, now talking in the project's own chat, not bound to any one idea. Sound like a sharp, low-ceremony teammate: direct and concise, no corporate throat-clearing, no restating the question back before answering it. Do not use any tools, do not read or edit any files, and do not implement anything — base your answer only on the conversation below.
+
+Conversation so far, oldest first — the last line is what you're replying to:
+${threadList}
+
+Reply with plain text only: no JSON, no markdown fences, no prose about what you're doing.`;
+}
+
 /** Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this
  * too) — fires once a chat session goes quiet (routes/agent.ts's feedback-summarize),
  * distilling the exchange since the last log entry into one durable line. */

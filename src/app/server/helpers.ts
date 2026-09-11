@@ -1,5 +1,6 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { appendChatMessage, formatChatFile, parseChatFile } from '@/core/chat-file';
 import { assertCorpusWritable } from '@/core/corpus-format';
 import { readEntitiesWithDerivedStatus } from '@/core/readers';
 import {
@@ -8,7 +9,7 @@ import {
   parseRunOrderFile,
 } from '@/core/run-order-file';
 import { formatEntityFile } from '@/core/serialize';
-import type { BranchHygieneStatus, EntityEntry, StaleBaseRef } from '@/types/index';
+import type { BranchHygieneStatus, EntityEntry, StaleBaseRef, ThreadMessage } from '@/types/index';
 
 export async function readMaybe(path: string): Promise<string> {
   try {
@@ -85,6 +86,26 @@ export async function readRunOrderFile(root: string): Promise<RunOrderFileEntry[
 
 export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[]): Promise<void> {
   await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
+}
+
+export const chatFilePath = (root: string) => campFile(root, 'chat.md');
+
+export async function readChatFile(root: string): Promise<ThreadMessage[]> {
+  return parseChatFile(await readMaybe(chatFilePath(root)));
+}
+
+// Persisted before the reply is generated so the user's message survives a slow or
+// failed agent run, then again once the reply lands — mirrors the feedback-message route.
+export async function appendToChatFile(root: string, message: ThreadMessage): Promise<void> {
+  const content = await readMaybe(chatFilePath(root));
+  await writeFile(chatFilePath(root), appendChatMessage(content, message), 'utf-8');
+}
+
+export async function clearChatFile(root: string): Promise<void> {
+  const kept = (await readChatFile(root)).filter(
+    (m) => m.kind === 'question' && m.state === 'open',
+  );
+  await writeFile(chatFilePath(root), formatChatFile(kept), 'utf-8');
 }
 
 // Every read-normalize-write of run-order.md must run as one critical section, or an

@@ -1120,6 +1120,7 @@ export type TaskKind =
   | 'fix-review'
   | 'resolve-conflict'
   | 'feedback'
+  | 'chat'
   | 'pr-review'
   | 'issue-fix'
   | 'desk-discovery'

@@ -70,8 +70,9 @@ search over the chat.
 - [x] Read, append, and trim `papercamp/chat.md`
       A core module over the `### Thread` grammar, git-ignored like `run-order.md`, trimming to 50 messages / 14 days on every append and never dropping an unanswered question.
       run: 2m37s · 50 in · 9.8k out · sonnet-5 · sess:179c1698-b057-4a6a-8917-442efa6911ef
-- [ ] Serve `GET`, `POST`, and clear on `/p/<slug>/api/chat`
+- [x] Serve `GET`, `POST`, and clear on `/p/<slug>/api/chat`
       Mirror the `/api/agent/feedback-message` round trip: persist the user message before the run, append the reply after.
+      run: 7m50s · 158 in · 28.4k out · sonnet-5 · sess:179c1698-b057-4a6a-8917-442efa6911ef
 - [ ] Give the chat agent its three moves
       One prompt over the `papercamp` MCP tools: `add_idea`, an append through the feedback path, or an answer from the corpus, the run log, and `/api/agent/status` — each named in the reply with links.
 - [ ] Route parked questions through the chat

@@ -856,6 +856,7 @@ export function createAgentManager(
     'overlap-check',
     'prioritise',
     'feedback',
+    'chat',
     'desk-discovery',
   ]);
 
@@ -1925,7 +1926,13 @@ export function createAgentManager(
 
   function runReadOnlyPrompt(
     prompt: string,
-    taskKind: 'commit-suggest' | 'overlap-check' | 'prioritise' | 'feedback' | 'desk-discovery',
+    taskKind:
+      | 'commit-suggest'
+      | 'overlap-check'
+      | 'prioritise'
+      | 'feedback'
+      | 'chat'
+      | 'desk-discovery',
     planTitle: string,
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -2042,6 +2049,10 @@ export function createAgentManager(
 
   function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {
     return runReadOnlyPrompt(prompt, 'feedback', planTitle);
+  }
+
+  function runChatReply(prompt: string): Promise<string> {
+    return runReadOnlyPrompt(prompt, 'chat', 'Project chat');
   }
 
   function runDeskDiscovery(evidence: ProjectEvidence): Promise<DeskConfig> {
@@ -2182,6 +2193,7 @@ export function createAgentManager(
     runOverlapCheck,
     runPrioritise,
     runFeedbackReply,
+    runChatReply,
     runDeskDiscovery,
     stop,
     getStatus,
@@ -2274,6 +2286,7 @@ export interface AgentManager {
   runOverlapCheck: (prompt: string) => Promise<string>;
   runPrioritise: (prompt: string) => Promise<string>;
   runFeedbackReply: (prompt: string, planTitle: string) => Promise<string>;
+  runChatReply: (prompt: string) => Promise<string>;
   runDeskDiscovery: (evidence: ProjectEvidence) => Promise<DeskConfig>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];

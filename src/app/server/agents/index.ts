@@ -53,6 +53,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'overlap-check': 'commitSuggest',
   prioritise: 'commitSuggest',
   feedback: 'feedback',
+  chat: 'feedback',
   'pr-review': 'codeReview',
   'desk-discovery': 'deskDiscovery',
   'night-review': 'nightShift',
