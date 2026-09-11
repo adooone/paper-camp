@@ -61,3 +61,18 @@ the same field it does today; nothing changes in the client.
 Exposing the daemon publicly; the runner joins the tailnet, the daemon
 stays private. Updating more than one machine from one workflow; a
 second machine registers its own hook step. Rolling back.
+
+### Phases
+- [ ] Mint the update token and print it
+      Write the token on first daemon start under the config dir and add
+      `paper-camp update-token`, leaving `status` unchanged.
+- [ ] Serve `POST /api/machine/update`
+      Authorise the bearer token at the daemon root and answer with the outcome of
+      the shared install-and-restart path.
+- [ ] Replace the timer with a boot check
+      Drop the interval and `--no-auto-update`, check npm once at start, and
+      record the last update event for `status`.
+- [ ] Hook the publish workflow to the daemon
+      Join the tailnet with `tailscale/github-action` after *Publish to npm* and curl
+      the machine with the version and token.
+- [ ] Document the secrets and the ACL
