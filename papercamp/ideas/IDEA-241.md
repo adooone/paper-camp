@@ -2,7 +2,7 @@
 id: IDEA-241
 title: Night shift health reviews
 type: feat
-status: idea
+status: review
 created: 2026-09-07
 tags:
   - cli
@@ -135,5 +135,6 @@ reboot, which is [[IDEA-233]]'s later concern.
 - [x] Surface the night report on the Ideas page
       A dated *Night report* group above every other group, night and severity stamps, and a shell banner for critical findings.
       run: 27m34s · 366 in · 98.3k out · sonnet-5
-- [ ] Add the Settings controls
+- [x] Add the Settings controls
       The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.
+      run: 6m19s · 54 in · 6.1k out · sonnet-5
