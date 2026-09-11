@@ -57,6 +57,10 @@ export function parseNightFindings(markdown: string): NightSuggestionEntry[] {
   return entries;
 }
 
+function collapseNewlines(message: string): string {
+  return message.replace(/\s*\n+\s*/g, ' ').trim();
+}
+
 function formatNightFindingLine(entry: NightSuggestionEntry): string {
   const fields = [
     `check=${entry.check}`,
@@ -66,7 +70,7 @@ function formatNightFindingLine(entry: NightSuggestionEntry): string {
     `commit=${entry.commit}`,
     `severity=${entry.severity}`,
   ];
-  return `- night: ${entry.date} | ${fields.join(' | ')} | ${entry.message}`;
+  return `- night: ${entry.date} | ${fields.join(' | ')} | ${collapseNewlines(entry.message)}`;
 }
 
 export function appendNightFindings(markdown: string, entries: NightSuggestionEntry[]): string {

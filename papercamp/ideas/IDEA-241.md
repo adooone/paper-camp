@@ -140,3 +140,7 @@ reboot, which is [[IDEA-233]]'s later concern.
       The per-project toggle, the check list with custom checks, `defaultAgents.nightShift`, *Pause tonight*, and *Run a pass now*.
       run: 6m19s · 54 in · 6.1k out · sonnet-5
 - [x] [manual] Add night shift pause controls and settings UI
+- [x] [manual] Address night shift review findings
+
+### Thread
+- [x] 2026-09-11 [review] [agent] Requests changes · 8 findings — This is a well-structured, well-tested delivery: the gate, health map, worktree isolation, suggestions pipeline, and UI surfaces all exist and mostly match the spec. But the per-night chunk budget is implemented as a per-tick cap (a test even enshrines reviewing more chunks than maxChunks in one night), the pass granularity and gate-recheck cadence are coarser than the spec's one-check-per-pass model, and `night status` omits half of what the spec says it prints. There are also a couple of genuine bugs (custom-check deletion never persists; capped runs report zero cost) and unrelated changes bundled into the last two commits.

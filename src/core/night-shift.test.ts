@@ -88,15 +88,22 @@ describe('nightShiftTick', () => {
 
     await nightShiftTick(state, d);
     await nightShiftTick(state, d);
-    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual(['src/a', 'src/b']);
+    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual(['src/a']);
 
     clock.now = Date.parse('2026-09-12T01:00:00.000Z');
     await nightShiftTick(state, d);
-    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual([
-      'src/a',
-      'src/b',
-      'src/a',
-    ]);
+    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual(['src/a', 'src/a']);
+  });
+
+  it('holds the nightly maxChunks budget across ticks, not per tick', async () => {
+    const d = deps({ readSettings: vi.fn(async () => ({ threshold: 40, maxChunks: 2 })) });
+    const state = createNightShiftState();
+
+    await nightShiftTick(state, d);
+    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual(['src/a', 'src/b']);
+
+    await nightShiftTick(state, d);
+    expect(vi.mocked(d.runPass).mock.calls.map(([, chunk]) => chunk)).toEqual(['src/a', 'src/b']);
   });
 
   it('holds the pass lock for the repo while running and releases it after', async () => {

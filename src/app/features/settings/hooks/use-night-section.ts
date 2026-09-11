@@ -145,7 +145,7 @@ export const useNightSection = () => {
   const commitCustomChecks = async (next: KeyedNightCustomCheck[]) => {
     const complete = next.filter(isCompleteCustomCheck).map(stripId);
     const { ok, error } = await saveConfig({
-      night: { ...config?.night, customChecks: complete.length ? complete : undefined },
+      night: { ...config?.night, customChecks: complete },
     });
     if (ok) {
       const fresh = await fetchConfig();

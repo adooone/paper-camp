@@ -37,6 +37,31 @@ export interface NightAgentRunResult {
 
 const NO_TOKENS = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0 };
 
+const readNum = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+/** Per-turn tokens from an `assistant` stream line, in the same shape as the
+ *  final `result` line's usage — summed across turns as a run's tally-so-far,
+ *  so a killed run still reports what it actually spent. */
+function turnTokens(json: Record<string, unknown>): typeof NO_TOKENS {
+  const usage = (json.message as { usage?: Record<string, unknown> } | undefined)?.usage ?? {};
+  return {
+    inputTokens: readNum(usage.input_tokens),
+    outputTokens: readNum(usage.output_tokens),
+    cacheCreationTokens: readNum(usage.cache_creation_input_tokens),
+    cacheReadTokens: readNum(usage.cache_read_input_tokens),
+  };
+}
+
+function addTokens(a: typeof NO_TOKENS, b: typeof NO_TOKENS): typeof NO_TOKENS {
+  return {
+    inputTokens: a.inputTokens + b.inputTokens,
+    outputTokens: a.outputTokens + b.outputTokens,
+    cacheCreationTokens: a.cacheCreationTokens + b.cacheCreationTokens,
+    cacheReadTokens: a.cacheReadTokens + b.cacheReadTokens,
+  };
+}
+
 function emptyUsage(): NightPassUsage {
   return { numTurns: 0, costUsd: 0, cappedByTurns: false, ...NO_TOKENS };
 }
@@ -83,6 +108,7 @@ export function runNightAgentPrompt(opts: {
     let buffered = '';
     let settled = false;
     let rateLimit: RateLimitSnapshot | undefined;
+    let tokensSoFar = { ...NO_TOKENS };
 
     const settle = (result: NightAgentRunResult) => {
       if (settled) return;
@@ -112,6 +138,7 @@ export function runNightAgentPrompt(opts: {
         if (parsedRateLimit) rateLimit = parsedRateLimit;
         if (json.type === 'assistant') {
           turns += 1;
+          tokensSoFar = addTokens(tokensSoFar, turnTokens(json));
           if (turns > opts.maxTurns && !cappedByTurns) {
             cappedByTurns = true;
             killWithEscalation(proc);
@@ -143,7 +170,7 @@ export function runNightAgentPrompt(opts: {
         cappedByTurns,
         numTurns: turns,
         costUsd: 0,
-        ...NO_TOKENS,
+        ...tokensSoFar,
         rateLimit,
       });
     });
@@ -220,6 +247,9 @@ export async function runNightChunkPass(opts: {
   maxTurns: number;
   maxCostUsd: number;
   spawnAgent?: SpawnAgentFn;
+  /** Re-checked before every check but the first; a spec-mandated "gate or not"
+   *  manual run leaves this unset so it always runs every enabled check. */
+  checkGate?: () => Promise<boolean>;
 }): Promise<NightChunkPassResult> {
   if (opts.agentConfig.agent !== 'claude-code') {
     throw new Error(
@@ -244,7 +274,9 @@ export async function runNightChunkPass(opts: {
       reviewedCommit,
     );
 
-    for (const check of opts.checks) {
+    for (const [index, check] of opts.checks.entries()) {
+      if (index > 0 && opts.checkGate && !(await opts.checkGate())) break;
+
       const startedAt = new Date().toISOString();
       let checkUsage = emptyUsage();
       let findingsCount = 0;

@@ -14,7 +14,6 @@ import { computeNightHealthMap, selectNightChunks } from '@/core/night-health';
 import { isNightPassRunning, markNightPass } from '@/core/night-shift';
 import { readTaskLog } from '@/core/parse';
 import { latestCapacity, resetsAtMs } from '@/core/rate-limit';
-import { DEFAULT_NIGHT_CONFIG, type NightConfig } from '@/types/index';
 import { readMaybe } from '../helpers';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -23,17 +22,6 @@ async function findOwnSlug(root: string): Promise<string | null> {
   const registry = await loadRegistry(defaultRegistryPath());
   const resolvedRoot = resolve(root);
   return registry.projects.find((p) => resolve(p.path) === resolvedRoot)?.slug ?? null;
-}
-
-async function readNightThreshold(root: string): Promise<number> {
-  const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
-  if (!raw) return DEFAULT_NIGHT_CONFIG.threshold;
-  try {
-    const night = (JSON.parse(raw) as { night?: NightConfig }).night;
-    return night?.threshold ?? DEFAULT_NIGHT_CONFIG.threshold;
-  } catch {
-    return DEFAULT_NIGHT_CONFIG.threshold;
-  }
 }
 
 export function nightRoutes({ root }: RouteContext): Route[] {
@@ -117,15 +105,10 @@ export function nightRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 409, { error: 'a night pass is already running for this project' });
           return;
         }
-        const [map, threshold] = await Promise.all([
-          computeNightHealthMap(root),
-          readNightThreshold(root),
-        ]);
-        const chunkPath = selectNightChunks(map, { threshold, maxChunks: 1 })[0]?.path;
+        const map = await computeNightHealthMap(root);
+        const chunkPath = selectNightChunks(map, { threshold: 0, maxChunks: 1 })[0]?.path;
         if (!chunkPath) {
-          sendJson(res, 400, {
-            error: `no chunk scores above the health threshold (${threshold}) — nothing to review`,
-          });
+          sendJson(res, 400, { error: 'no chunks to review yet' });
           return;
         }
         const entry = process.argv[1];

@@ -17,15 +17,18 @@ import {
   setNightProject,
 } from '../core/machine-registry';
 import { resolveNightChecks } from '../core/night-checks';
-import { markChunkReviewed } from '../core/night-health';
+import { markChunkReviewed, selectNightChunks } from '../core/night-health';
 import {
   appendNightFindings,
+  buildNightReportGroups,
   dropOverlappingFindings,
   readNightFindings,
 } from '../core/night-suggestions';
+import { readTaskLog } from '../core/parse';
 import { readEntitiesWithDerivedStatus } from '../core/readers';
 import { todayDateString } from '../core/serialize';
 import {
+  type ChunkHealth,
   DEFAULT_AGENTS,
   DEFAULT_NIGHT_CONFIG,
   type MachineNightGateResponse,
@@ -34,6 +37,8 @@ import {
   type NightFinding,
   type NightFindingSeverity,
   type NightGateBlockReason,
+  type NightHealthMap,
+  type NightReportGroup,
   type NightSuggestionEntry,
   coerceAgentConfig,
 } from '../types/index';
@@ -115,6 +120,30 @@ function formatGateLine(response: MachineNightGateResponse | null): string {
   return `  gate:           blocked — ${reasons}`;
 }
 
+async function readPersistedChunks(root: string): Promise<ChunkHealth[]> {
+  const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8').catch(() => null);
+  if (!raw) return [];
+  try {
+    return (JSON.parse(raw) as { chunks?: ChunkHealth[] }).chunks ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function formatNextChunks(chunks: ChunkHealth[]): string {
+  if (chunks.length === 0) return '  next chunks:   (none above the threshold)';
+  const summary = chunks.map((chunk) => `${chunk.path} (score ${chunk.score})`).join(', ');
+  return `  next chunks:   ${summary}`;
+}
+
+function formatLastNightTotals(group: NightReportGroup | undefined): string {
+  if (!group) return '  last night:    no reviews yet';
+  return (
+    `  last night:    ${group.date} — ${group.passCount} pass(es), ` +
+    `$${group.costUsd.toFixed(2)}, ${group.findings.length} finding(s)`
+  );
+}
+
 async function printNightStatus(registry: MachineRegistry): Promise<void> {
   if (!registry.night) {
     console.log('paper-camp: night shift is off');
@@ -129,11 +158,27 @@ async function printNightStatus(registry: MachineRegistry): Promise<void> {
   }
   console.log(`paper-camp: night shift runs for "${project.slug}" (${project.path})`);
   const config = await readNightConfig(project.path);
-  console.log(formatNightSettings(resolveNightConfig(config)));
+  const resolved = resolveNightConfig(config);
+  console.log(formatNightSettings(resolved));
 
   const daemonState = await readRunningDaemonState(daemonStatePath());
   const gateResponse = daemonState ? await fetchMachineNightGate(daemonState.port) : null;
   console.log(formatGateLine(gateResponse));
+
+  const chunks = await readPersistedChunks(project.path);
+  const map: NightHealthMap = { generatedAt: new Date().toISOString(), chunks };
+  const nextChunks = selectNightChunks(map, {
+    threshold: resolved.threshold,
+    maxChunks: resolved.maxChunks,
+  });
+  console.log(formatNextChunks(nextChunks));
+
+  const [findings, taskLogRaw] = await Promise.all([
+    readNightFindings(project.path),
+    readFile(join(project.path, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
+  ]);
+  const groups = buildNightReportGroups(findings, readTaskLog(taskLogRaw));
+  console.log(formatLastNightTotals(groups[0]));
 }
 
 async function readLastReviewedCommit(root: string, chunkPath: string): Promise<string | null> {
@@ -251,6 +296,7 @@ async function reportNightPass(
 export async function runNightPass(
   project: Pick<MachineProject, 'slug' | 'path'>,
   chunkPath: string,
+  checkGate?: () => Promise<boolean>,
 ): Promise<boolean> {
   const nightConfig = await readNightConfig(project.path);
   const resolved = resolveNightConfig(nightConfig);
@@ -279,6 +325,7 @@ export async function runNightPass(
       agentConfig,
       maxTurns: resolved.maxTurns,
       maxCostUsd: resolved.maxCostUsd,
+      checkGate,
     });
     const { written, dropped } = await reportNightPass(project, result);
     console.log(formatPassResult(result, written, dropped));

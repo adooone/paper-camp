@@ -406,7 +406,11 @@ export async function startDaemonServer({
     },
     readSettings: async (root) => resolveNightConfig(await readNightConfig(root)),
     computeMap: computeNightHealthMap,
-    runPass: (project, chunkPath) => runNightPass(project, chunkPath),
+    runPass: (project, chunkPath) =>
+      runNightPass(project, chunkPath, async () => {
+        const gate = await buildNightGateResponse(defaultRegistryPath(), mounted);
+        return Boolean(gate.gate?.open) && !checkMachineBusy();
+      }),
     isMachineBusy: checkMachineBusy,
   });
   const shutdown = async () => {

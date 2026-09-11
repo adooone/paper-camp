@@ -376,6 +376,42 @@ describe('runNightChunkPass', () => {
     expect(call).toBe(1);
   });
 
+  it('stops running further checks once checkGate closes', async () => {
+    const root = await initGitRepo();
+    let call = 0;
+    const spawnAgent: SpawnAgentFn = () => {
+      call += 1;
+      const proc = fakeProc();
+      setImmediate(() => {
+        proc.stdout.emit(
+          'data',
+          line({ type: 'result', result: '[]', num_turns: 1, total_cost_usd: 0.01 }),
+        );
+      });
+      return proc as unknown as ReturnType<SpawnAgentFn>;
+    };
+    const checkGate = vi.fn(async () => false);
+
+    const result = await runNightChunkPass({
+      root,
+      chunkPath: 'src/core',
+      sinceCommit: null,
+      checks: [
+        { id: 'bugs', name: 'bugs', instructions: 'x' },
+        { id: 'dead-code', name: 'dead-code', instructions: 'y' },
+      ],
+      agentConfig: CLAUDE_CONFIG,
+      maxTurns: 10,
+      maxCostUsd: 1,
+      spawnAgent,
+      checkGate,
+    });
+
+    expect(call).toBe(1);
+    expect(result.checks).toEqual([expect.objectContaining({ check: 'bugs' })]);
+    expect(checkGate).toHaveBeenCalledTimes(1);
+  });
+
   it('drops a finding the confirming pass rejects', async () => {
     const root = await initGitRepo();
     let call = 0;
