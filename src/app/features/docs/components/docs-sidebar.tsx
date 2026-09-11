@@ -1,6 +1,6 @@
 import { EmptyState } from '@/app/components';
+import { SidebarLabel } from '@/app/components/sidebar';
 import { Input, ListItem, Skeleton } from '@dendelion/paper-ui';
-import { SidebarSection } from '../../plans/components/sidebar-section';
 import { useDocsSidebar } from '../hooks';
 
 const simplecaseLabel = (name: string) =>
@@ -33,7 +33,8 @@ export const DocsSidebar = () => {
         />
       </div>
 
-      <SidebarSection label="Repo Docs">
+      <SidebarLabel>Repo Docs</SidebarLabel>
+      <div className="flex flex-col">
         {repoDocsLoading && repoDocs.length === 0 ? (
           <span className="block px-3 py-1">
             <Skeleton variant="text" width="60%" />
@@ -53,9 +54,10 @@ export const DocsSidebar = () => {
         ) : (
           <EmptyState message="No repo docs found" />
         )}
-      </SidebarSection>
+      </div>
 
-      <SidebarSection label="Releases">
+      <SidebarLabel>Releases</SidebarLabel>
+      <div className="flex flex-col">
         {releaseVersionsLoading && releaseVersions.length === 0 ? (
           <span className="block px-3 py-1">
             <Skeleton variant="text" width="60%" />
@@ -75,7 +77,7 @@ export const DocsSidebar = () => {
         ) : (
           <EmptyState message="No releases yet" />
         )}
-      </SidebarSection>
+      </div>
     </>
   );
 };

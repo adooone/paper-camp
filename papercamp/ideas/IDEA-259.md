@@ -2,7 +2,7 @@
 id: IDEA-259
 title: One grammar for every sidebar
 type: refactor
-status: idea
+status: review
 created: 2026-09-11
 tags:
   - app
@@ -83,5 +83,6 @@ this sense. Changing which commands an entity offers or when. New icons;
 - [x] Rebuild the filter sidebars on them
       Plans, Roadmap, and Log in the shared order; *Add item* moves to the Roadmap title row.
       run: 8m2s · 154 in · 39.4k out · sonnet-5 · sess:ac9d1cea-5840-4f54-b422-72c30d24797c
-- [ ] Rebuild the navigation sidebars and delete the old scaffolding
+- [x] Rebuild the navigation sidebars and delete the old scaffolding
       Docs and Settings on `SidebarLabel`; remove `SidebarSection`, the label-class copies, and the glyph icons.
+      run: 2m44s · 86 in · 18.6k out · sonnet-5 · sess:a88619f3-25f4-45fb-8ea5-c296d4bf8ecf

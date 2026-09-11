@@ -1,7 +1,7 @@
+import { SidebarLabel } from '@/app/components/sidebar';
 import { useActiveSettingsSection } from '@/app/hooks';
 import { ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { SidebarSection } from '../../plans/components/sidebar-section';
 
 export const SettingsSidebar = () => {
   const section = useActiveSettingsSection();
@@ -9,7 +9,8 @@ export const SettingsSidebar = () => {
 
   return (
     <>
-      <SidebarSection label="General">
+      <SidebarLabel>General</SidebarLabel>
+      <div className="flex flex-col">
         <ListItem
           size="small"
           className="pc-row text-xs"
@@ -44,8 +45,9 @@ export const SettingsSidebar = () => {
         >
           Toolbar
         </ListItem>
-      </SidebarSection>
-      <SidebarSection label="Ideas">
+      </div>
+      <SidebarLabel>Ideas</SidebarLabel>
+      <div className="flex flex-col">
         <ListItem
           size="small"
           className="pc-row text-xs"
@@ -54,8 +56,9 @@ export const SettingsSidebar = () => {
         >
           Subjects
         </ListItem>
-      </SidebarSection>
-      <SidebarSection label="Stack">
+      </div>
+      <SidebarLabel>Stack</SidebarLabel>
+      <div className="flex flex-col">
         <ListItem
           size="small"
           className="pc-row text-xs"
@@ -64,8 +67,9 @@ export const SettingsSidebar = () => {
         >
           Desk
         </ListItem>
-      </SidebarSection>
-      <SidebarSection label="Automation">
+      </div>
+      <SidebarLabel>Automation</SidebarLabel>
+      <div className="flex flex-col">
         <ListItem
           size="small"
           className="pc-row text-xs"
@@ -74,7 +78,7 @@ export const SettingsSidebar = () => {
         >
           Night shift
         </ListItem>
-      </SidebarSection>
+      </div>
     </>
   );
 };

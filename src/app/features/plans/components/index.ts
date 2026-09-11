@@ -10,4 +10,3 @@ export * from './pr-badge';
 export * from './progress-bar';
 export * from './provenance-trail';
 export * from './review-signal-badge';
-export * from './sidebar-section';
