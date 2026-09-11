@@ -67,9 +67,10 @@ second machine registers its own hook step. Rolling back.
       Write the token on first daemon start under the config dir and add
       `paper-camp update-token`, leaving `status` unchanged.
       run: 2m23s · 54 in · 10k out · sonnet-5 · sess:3f356c52-334c-4743-bff8-7c2431116031
-- [ ] Serve `POST /api/machine/update`
+- [x] Serve `POST /api/machine/update`
       Authorise the bearer token at the daemon root and answer with the outcome of
       the shared install-and-restart path.
+      run: 10m22s · 142 in · 51k out · sonnet-5 · sess:3f356c52-334c-4743-bff8-7c2431116031
 - [ ] Replace the timer with a boot check
       Drop the interval and `--no-auto-update`, check npm once at start, and
       record the last update event for `status`.

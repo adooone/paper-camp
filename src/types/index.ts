@@ -986,6 +986,23 @@ export interface MachineProjectsResponse {
   pendingUpdateVersion: string | null;
 }
 
+/** The Publish workflow's hook, once the tailnet can reach the daemon (IDEA-258) — the
+ *  one party that knows a release landed tells the machine directly instead of the
+ *  machine polling npm for it. Bearer-token authorised; see `MachineUpdateOutcome`. */
+export const MACHINE_UPDATE_PATH = '/api/machine/update' as const;
+
+export interface MachineUpdateRequest {
+  version: string;
+}
+
+export type MachineUpdateOutcome = 'installed' | 'waiting for idle' | 'already current' | 'failed';
+
+export interface MachineUpdateResponse {
+  outcome: MachineUpdateOutcome;
+  /** Only set for `failed` — the install command's captured output. */
+  output?: string;
+}
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;

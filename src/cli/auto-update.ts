@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { type LatestVersionCheck, checkLatestVersion } from '../core/registry-version';
+import type { MachineUpdateResponse } from '../types/index';
 
 export const AUTO_UPDATE_POLL_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -85,6 +86,41 @@ export async function installedVersionAt(entry: string | undefined): Promise<str
     if (parent === dir) return null;
     dir = parent;
   }
+}
+
+export interface ApplyMachineUpdateDeps {
+  installedVersion: () => Promise<string | null>;
+  runInstall: (version: string) => Promise<InstallResult>;
+  isBusy: () => boolean;
+  restart: () => void;
+}
+
+/** The Publish workflow already knows the version, so this skips the registry
+ *  check `pollForUpdate` opens with and installs it directly — through the same
+ *  shim, verified the same way, holding only the restart while the machine is
+ *  busy rather than holding off the install itself, since a webhook gets one shot. */
+export async function applyMachineUpdate(
+  version: string,
+  deps: ApplyMachineUpdateDeps,
+): Promise<MachineUpdateResponse> {
+  const current = await deps.installedVersion();
+  if (current === version) return { outcome: 'already current' };
+
+  const result = await deps.runInstall(version);
+  const output = result.output.trim();
+  if (!result.ok) return { outcome: 'failed', output };
+
+  const installed = await deps.installedVersion();
+  if (installed !== version) {
+    return {
+      outcome: 'failed',
+      output: `installed, but this daemon's entry point is still on ${installed ?? 'an unknown version'}`,
+    };
+  }
+
+  if (deps.isBusy()) return { outcome: 'waiting for idle' };
+  deps.restart();
+  return { outcome: 'installed' };
 }
 
 export interface AutoUpdateCheckRecord {

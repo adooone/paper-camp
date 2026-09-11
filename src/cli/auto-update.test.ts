@@ -3,7 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  type ApplyMachineUpdateDeps,
   type AutoUpdateDeps,
+  applyMachineUpdate,
   createAutoUpdateState,
   installedVersionAt,
   npmInstallArgs,
@@ -279,6 +281,64 @@ describe('pollForUpdate', () => {
     await pollForUpdate('0.28.4', createAutoUpdateState(), deps);
 
     expect(deps.runInstall).toHaveBeenCalledOnce();
+  });
+});
+
+function fakeApplyDeps(overrides: Partial<ApplyMachineUpdateDeps> = {}): ApplyMachineUpdateDeps {
+  return {
+    installedVersion: vi.fn().mockResolvedValue('0.28.4'),
+    runInstall: vi.fn().mockResolvedValue({ ok: true, output: '' }),
+    isBusy: vi.fn(() => false),
+    restart: vi.fn(),
+    ...overrides,
+  };
+}
+
+describe('applyMachineUpdate', () => {
+  it('reports already current without installing when the version is already live', async () => {
+    const deps = fakeApplyDeps({ installedVersion: vi.fn().mockResolvedValue('0.29.1') });
+    expect(await applyMachineUpdate('0.29.1', deps)).toEqual({ outcome: 'already current' });
+    expect(deps.runInstall).not.toHaveBeenCalled();
+  });
+
+  it('installs and restarts when idle', async () => {
+    const deps = fakeApplyDeps({
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+    });
+    expect(await applyMachineUpdate('0.29.1', deps)).toEqual({ outcome: 'installed' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).toHaveBeenCalledOnce();
+  });
+
+  it('installs but holds the restart while the machine is busy', async () => {
+    const deps = fakeApplyDeps({
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+      isBusy: vi.fn(() => true),
+    });
+    expect(await applyMachineUpdate('0.29.1', deps)).toEqual({ outcome: 'waiting for idle' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).not.toHaveBeenCalled();
+  });
+
+  it('reports failed with the install output when the install fails', async () => {
+    const deps = fakeApplyDeps({
+      runInstall: vi.fn().mockResolvedValue({ ok: false, output: '404 Not Found' }),
+    });
+    expect(await applyMachineUpdate('0.29.1', deps)).toEqual({
+      outcome: 'failed',
+      output: '404 Not Found',
+    });
+    expect(deps.restart).not.toHaveBeenCalled();
+  });
+
+  it('reports failed when the install lands in a prefix the entry point does not run from', async () => {
+    const deps = fakeApplyDeps({
+      installedVersion: vi.fn().mockResolvedValue('0.28.4'),
+    });
+    const result = await applyMachineUpdate('0.29.1', deps);
+    expect(result.outcome).toBe('failed');
+    expect(result.output).toContain('still on 0.28.4');
+    expect(deps.restart).not.toHaveBeenCalled();
   });
 });
 

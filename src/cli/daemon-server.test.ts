@@ -15,12 +15,14 @@ import {
 import {
   buildNightGateResponse,
   createDaemonRequestHandler,
+  createMachineUpdateHandler,
   createProjectApi,
   createProjectMounter,
   formatDaemonBanner,
   isMachineBusy,
   parseMountRequest,
   readMachineProjectSummaries,
+  watchForIdleRestart,
   withRequestedNetwork,
 } from './daemon-server';
 
@@ -486,6 +488,137 @@ describe('isMachineBusy', () => {
   });
 });
 
+describe('createMachineUpdateHandler', () => {
+  const servers: Server[] = [];
+
+  afterEach(async () => {
+    await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
+  });
+
+  async function startHandler(
+    updateToken: string,
+    isBusy: () => boolean,
+    overrides: {
+      runInstall?: ReturnType<typeof vi.fn>;
+      installedVersion?: ReturnType<typeof vi.fn>;
+      restart?: ReturnType<typeof vi.fn>;
+    } = {},
+  ) {
+    const deps = {
+      runInstall: overrides.runInstall ?? vi.fn().mockResolvedValue({ ok: true, output: '' }),
+      installedVersion: overrides.installedVersion ?? vi.fn().mockResolvedValue('0.28.4'),
+      restart: overrides.restart ?? vi.fn(),
+    };
+    const handler = createMachineUpdateHandler(updateToken, isBusy, deps);
+    const server = createServer((req, res) => {
+      handler(req, res).catch((error) => {
+        res.statusCode = 500;
+        res.end(String(error));
+      });
+    });
+    servers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    return { port, deps };
+  }
+
+  it('403s a missing or wrong bearer token without installing anything', async () => {
+    const { port, deps } = await startHandler('secret', () => false);
+
+    const missing = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
+    const wrong = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer nope' },
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
+
+    expect(missing.status).toBe(403);
+    expect(wrong.status).toBe(403);
+    expect(deps.runInstall).not.toHaveBeenCalled();
+  });
+
+  it('400s a request missing the version', async () => {
+    const { port } = await startHandler('secret', () => false);
+
+    const response = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer secret' },
+      body: JSON.stringify({}),
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('installs and restarts for a correct token when idle', async () => {
+    const { port, deps } = await startHandler('secret', () => false, {
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+    });
+
+    const response = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer secret' },
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ outcome: 'installed' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).toHaveBeenCalledOnce();
+  });
+
+  it('installs but answers waiting for idle without restarting while busy', async () => {
+    const { port, deps } = await startHandler('secret', () => true, {
+      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+    });
+
+    const response = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer secret' },
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
+
+    expect(await response.json()).toEqual({ outcome: 'waiting for idle' });
+    expect(deps.runInstall).toHaveBeenCalledWith('0.29.1');
+    expect(deps.restart).not.toHaveBeenCalled();
+  });
+});
+
+describe('watchForIdleRestart', () => {
+  it('does not restart while busy, then restarts on the first idle tick', () => {
+    vi.useFakeTimers();
+    let busy = true;
+    const restart = vi.fn();
+    watchForIdleRestart(() => busy, restart);
+
+    vi.advanceTimersByTime(20_000);
+    expect(restart).not.toHaveBeenCalled();
+
+    busy = false;
+    vi.advanceTimersByTime(6_000);
+    expect(restart).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(20_000);
+    expect(restart).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it('stops watching once the returned cleanup runs', () => {
+    vi.useFakeTimers();
+    const restart = vi.fn();
+    const stop = watchForIdleRestart(() => false, restart);
+
+    stop();
+    vi.advanceTimersByTime(20_000);
+
+    expect(restart).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
 describe('formatDaemonBanner', () => {
   const localLink =
     'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
@@ -589,6 +722,7 @@ describe('createDaemonRequestHandler', () => {
     registryPath: string,
     serveToolbar?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>,
     getPendingUpdateVersion?: () => string | null,
+    handleMachineUpdate?: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
   ): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
@@ -607,6 +741,7 @@ describe('createDaemonRequestHandler', () => {
       localLink,
       getPendingUpdateVersion,
       serveToolbar,
+      handleMachineUpdate,
     );
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
@@ -661,6 +796,36 @@ describe('createDaemonRequestHandler', () => {
     const response = await fetch(`http://127.0.0.1:${port}/api/machine/projects`);
 
     expect(await response.json()).toMatchObject({ pendingUpdateVersion: '0.29.1' });
+  });
+
+  it('405s a non-POST request to /api/machine/update without calling the handler', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const handleMachineUpdate = vi.fn();
+    const { port } = await startHandler(registryPath, undefined, undefined, handleMachineUpdate);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/update`);
+
+    expect(response.status).toBe(405);
+    expect(handleMachineUpdate).not.toHaveBeenCalled();
+  });
+
+  it('delegates a POST to /api/machine/update to the injected handler', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const handleMachineUpdate = vi.fn(async (_req: IncomingMessage, res: ServerResponse) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ outcome: 'installed' }));
+    });
+    const { port } = await startHandler(registryPath, undefined, undefined, handleMachineUpdate);
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/update`, {
+      method: 'POST',
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ outcome: 'installed' });
+    expect(handleMachineUpdate).toHaveBeenCalledOnce();
   });
 
   it('reports a project as mounted after a request has built its middleware', async () => {

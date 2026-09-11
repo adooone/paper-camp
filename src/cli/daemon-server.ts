@@ -10,7 +10,7 @@ import {
   isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
-import { sendJson } from '../app/server/http';
+import { readBody, sendJson } from '../app/server/http';
 import {
   type PairingManagerState,
   loadOrMintPairingState,
@@ -42,10 +42,21 @@ import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import {
   MACHINE_NIGHT_PATH,
   MACHINE_PROJECTS_PATH,
+  MACHINE_UPDATE_PATH,
   type MachineNightGateResponse,
   type MachineProjectSummary,
+  type MachineUpdateRequest,
+  type MachineUpdateResponse,
 } from '../types/index';
-import { type AutoUpdateCheckRecord, startAutoUpdatePolling } from './auto-update';
+import {
+  type AutoUpdateCheckRecord,
+  type InstallResult,
+  applyMachineUpdate,
+  installedVersionAt,
+  runNpmInstall,
+  spawnRestart,
+  startAutoUpdatePolling,
+} from './auto-update';
 import { formatDevBanner } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { readNightConfig, resolveNightConfig, runNightPass } from './night-command';
@@ -227,6 +238,68 @@ export function createProjectMounter(
   return { mount, mounted };
 }
 
+const IDLE_RESTART_POLL_MS = 5_000;
+
+/** Watches only this daemon's own busy flag — no network calls — so a restart
+ *  held for a busy machine still fires once idle, now that no registry-poll
+ *  timer is left to retry it (IDEA-258). */
+export function watchForIdleRestart(isBusy: () => boolean, restart: () => void): () => void {
+  const timer = setInterval(() => {
+    if (isBusy()) return;
+    clearInterval(timer);
+    restart();
+  }, IDLE_RESTART_POLL_MS);
+  return () => clearInterval(timer);
+}
+
+export interface MachineUpdateHandlerDeps {
+  runInstall: (version: string) => Promise<InstallResult>;
+  installedVersion: () => Promise<string | null>;
+  restart: () => void;
+}
+
+/** One handler instance lives for the daemon's whole run, so a restart held for
+ *  a busy machine on one call is superseded rather than duplicated if another
+ *  hook arrives before the machine goes idle. */
+export function createMachineUpdateHandler(
+  updateToken: string,
+  isBusy: () => boolean,
+  deps: MachineUpdateHandlerDeps,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  let stopIdleWatch: (() => void) | undefined;
+
+  return async (req, res) => {
+    const bearer = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
+    if (!bearer || bearer !== updateToken) {
+      sendJson(res, 403, { error: 'Forbidden: invalid update token' });
+      return;
+    }
+
+    let body: MachineUpdateRequest;
+    try {
+      body = JSON.parse(await readBody(req)) as MachineUpdateRequest;
+    } catch {
+      sendJson(res, 400, { error: 'Malformed JSON body' });
+      return;
+    }
+    if (!body.version) {
+      sendJson(res, 400, { error: '"version" is required' });
+      return;
+    }
+
+    stopIdleWatch?.();
+    stopIdleWatch = undefined;
+    const result: MachineUpdateResponse = await applyMachineUpdate(body.version, {
+      ...deps,
+      isBusy,
+    });
+    if (result.outcome === 'waiting for idle') {
+      stopIdleWatch = watchForIdleRestart(isBusy, deps.restart);
+    }
+    sendJson(res, 200, result);
+  };
+}
+
 /** The daemon's routing decision, isolated from `startDaemonServer`'s process
  * lifecycle (signal handlers, tunnel, tailnet) so it can be driven by a real
  * `http.Server` in tests without spinning any of that up. */
@@ -238,6 +311,10 @@ export function createDaemonRequestHandler(
   getPendingUpdateVersion: () => string | null = () => null,
   // A seam for tests to serve a fake toolbar bundle without a real dist/toolbar on disk.
   serveToolbar: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = serveToolbarAsset,
+  handleMachineUpdate: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (
+    _req,
+    res,
+  ) => sendJson(res, 403, { error: 'Forbidden: invalid update token' }),
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
@@ -279,6 +356,21 @@ export function createDaemonRequestHandler(
         return;
       }
       sendJson(res, 200, await buildNightGateResponse(registryPath, mounted));
+      return;
+    }
+
+    if (pathname === MACHINE_UPDATE_PATH) {
+      // No CORS/pairing carve-out here, unlike the two routes above: this call comes
+      // from the Publish workflow's curl on the tailnet, never a browser.
+      if (!isTrustedHost(hostOf(req.headers.host))) {
+        sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
+        return;
+      }
+      if (req.method !== 'POST') {
+        sendJson(res, 405, { error: 'POST required' });
+        return;
+      }
+      await handleMachineUpdate(req, res);
       return;
     }
 
@@ -371,7 +463,7 @@ export async function startDaemonServer({
   }
 
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
-  await loadOrMintUpdateToken(updateTokenPath());
+  const updateToken = await loadOrMintUpdateToken(updateTokenPath());
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
   let pendingUpdateVersion: string | null = null;
@@ -381,6 +473,12 @@ export async function startDaemonServer({
     mounted,
   );
 
+  const handleMachineUpdate = createMachineUpdateHandler(updateToken, checkMachineBusy, {
+    runInstall: runNpmInstall,
+    installedVersion: () => installedVersionAt(process.argv[1]),
+    restart: () => spawnRestart(process.argv[1], daemonLogPath()),
+  });
+
   const localLink = buildRegistrationLinkForMachine(`http://localhost:${port}`, pairingState.token);
   const handleRequest = createDaemonRequestHandler(
     defaultRegistryPath(),
@@ -388,6 +486,8 @@ export async function startDaemonServer({
     mounted,
     localLink,
     () => pendingUpdateVersion,
+    undefined,
+    handleMachineUpdate,
   );
 
   const server = createServer((req, res) => {
