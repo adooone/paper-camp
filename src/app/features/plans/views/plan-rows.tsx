@@ -94,7 +94,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
               <Card size="small" texture="canvas" className="plan-row-card">
                 <div className={gridClass}>
                   <PlanIdStamp id={plan.id} />
-                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     {plan.title}
                   </span>
                   <span className="max-lg:hidden font-handwritten text-sm opacity-[0.45] whitespace-nowrap">

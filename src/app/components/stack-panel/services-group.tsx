@@ -111,7 +111,7 @@ const ServiceRow = ({
             <ChevronRightIcon />
           </span>
           <StatusDot service={service} />
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm font-semibold text-desk-chalk">
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm text-desk-chalk">
             {service.name}
           </span>
           {service.port && (

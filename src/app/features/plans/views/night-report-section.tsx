@@ -81,7 +81,7 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
                         <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
                           {finding.severity}
                         </Stamp>
-                        <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                        <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                           {finding.file}
                           {finding.line ? `:${finding.line}` : ''} — {finding.message}
                         </span>

@@ -318,3 +318,12 @@ header[class*="layout-module__header___"] {
   flex-direction: column;
   min-height: 0;
 }
+
+button,
+a,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+.pc-row[data-clickable] {
+  font-weight: 600;
+}

@@ -72,7 +72,7 @@ export const RoadmapItemRow = ({
         >
           <ChevronRightIcon />
         </span>
-        <span className="font-semibold flex-1 min-w-0 truncate">{item.name}</span>
+        <span className="flex-1 min-w-0 truncate">{item.name}</span>
         <ProgressBar done={item.rollup.done} total={item.rollup.total} />
         {queued > 0 && (
           <Stamp

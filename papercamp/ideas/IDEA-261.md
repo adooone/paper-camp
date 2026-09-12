@@ -55,8 +55,9 @@ The grammar's pieces themselves, which [[IDEA-259]] settled. Any change
 to which commands a sidebar offers.
 
 ### Phases
-- [ ] Weight every clickable label at 600
+- [x] Weight every clickable label at 600
       The `utilities.css` rule with form controls excluded, `data-clickable` on interactive `.pc-row`s, and the redundant `font-semibold` classes removed.
+      run: 6m9s · 98 in · 21.7k out · sonnet-5 · sess:756988cf-97bf-41f6-a56e-9d0ea6cff1df
 - [ ] Turn sidebars into card stacks and delete the divider
       `SidebarShell` renders one card per child; the idea sidebar splits into a main and an actions card, the filter sidebars into filters and stats.
 - [ ] Apply the divider rule across Settings, the hub, and the Stack panel

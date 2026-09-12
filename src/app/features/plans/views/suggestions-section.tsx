@@ -26,7 +26,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
                   className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
                 >
                   <LightbulbIcon />
-                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     {suggestion.title}
                   </span>
                 </button>

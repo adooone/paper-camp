@@ -94,7 +94,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
               <Card size="small" texture="canvas" shade className="plan-row-card">
                 <div className={PLAN_ROWS_GRID_CLASS}>
                   <PlanIdStamp id={idea.id} />
-                  <span className="font-semibold overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     {idea.title}
                   </span>
                   <span className="max-lg:hidden text-sm opacity-30">—</span>

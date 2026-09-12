@@ -69,7 +69,7 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
             className="justify-start px-3 py-2"
           >
             <span className="text-left">
-              <span className="mb-[0.2rem] block font-display-luminari text-[0.95rem] font-semibold">
+              <span className="mb-[0.2rem] block font-display-luminari text-[0.95rem]">
                 {m.title}
               </span>
               <span className="text-sm opacity-60">{m.snippet}</span>

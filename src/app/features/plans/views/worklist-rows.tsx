@@ -15,7 +15,7 @@ interface WorklistRowsProps {
   onOpenIdea?: (title: string) => void;
 }
 
-const headerLabelClass = 'font-handwritten text-sm font-semibold opacity-60 whitespace-nowrap';
+const headerLabelClass = 'font-handwritten text-sm opacity-60 whitespace-nowrap';
 
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
@@ -33,7 +33,7 @@ const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
 ];
 
 const titleButtonClass =
-  'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit font-semibold';
+  'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
 
 const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
 

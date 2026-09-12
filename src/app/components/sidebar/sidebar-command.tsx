@@ -32,7 +32,7 @@ export const SidebarCommand = ({
         icon={<span className={toneClass}>{icon}</span>}
         onClick={onClick}
         disabled={isDisabled}
-        className={`pc-row text-xs font-semibold ${toneClass} ${isDisabled ? 'opacity-50' : ''} ${className ?? ''}`}
+        className={`pc-row text-xs ${toneClass} ${isDisabled ? 'opacity-50' : ''} ${className ?? ''}`}
       >
         {busy ?? children}
       </ListItem>
