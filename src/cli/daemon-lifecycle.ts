@@ -12,6 +12,7 @@ import {
   formatUpdateStatusLine,
   isProcessAlive,
   probeMachineEndpoint,
+  qrEligibleLink,
   readRunningDaemonState,
   removeDaemonState,
 } from '../core/daemon-state';
@@ -116,7 +117,7 @@ async function printLog(logPath: string): Promise<void> {
 async function printQrCode(statePath: string): Promise<void> {
   if (!(process.stdout.isTTY && !process.env.NO_COLOR)) return;
   const state = await readRunningDaemonState(statePath);
-  const link = state?.links?.tailnet ?? state?.links?.tunnel;
+  const link = state?.links && qrEligibleLink(state.links);
   if (link) console.log(formatLinkQrCode(link));
 }
 
@@ -328,7 +329,11 @@ export async function runLs(): Promise<void> {
   console.log(await formatProjectTable(listProjects(registry), liveProjects));
 }
 
-export async function runStatus(): Promise<void> {
+export interface StatusOptions {
+  qr?: boolean;
+}
+
+export async function runStatus(opts: StatusOptions = {}): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
   if (state) console.log(formatUpdateStatusLine(state));
@@ -336,6 +341,12 @@ export async function runStatus(): Promise<void> {
     const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
     const links = formatDaemonLinks(state.links);
     console.log(clickable ? linkifyUrls(links) : links);
+  }
+  if (opts.qr) {
+    const link = state?.links && qrEligibleLink(state.links);
+    console.log(
+      link ? formatLinkQrCode(link) : 'paper-camp: no Tailnet or Tunnel link to print as a QR code',
+    );
   }
   const registry = await loadRegistry(defaultRegistryPath());
   console.log(await formatProjectTable(listProjects(registry), liveProjects));

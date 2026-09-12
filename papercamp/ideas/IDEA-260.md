@@ -39,6 +39,7 @@ carries.
 - [x] Draw the code under the link in the banner
       Gate it on a Tailnet or Tunnel link and on a TTY, so the daemon's log keeps the link alone.
       run: 6m29s · 108 in · 20.6k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35
-- [ ] Add `--qr` to `paper-camp status`
+- [x] Add `--qr` to `paper-camp status`
       Print the code for the link `status` lists first.
+      run: 3m2s · 48 in · 8.6k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35
 - [ ] Cover the renderer and the gating with tests

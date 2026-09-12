@@ -17,6 +17,10 @@ export interface DaemonLinks {
   tunnel?: string;
 }
 
+export function qrEligibleLink(links: DaemonLinks): string | undefined {
+  return links.tailnet ?? links.tunnel;
+}
+
 export type UpdateEvent =
   | { kind: 'hooked'; version: string; at: string }
   | { kind: 'boot check current' }
