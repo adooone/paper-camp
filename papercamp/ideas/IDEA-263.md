@@ -64,7 +64,8 @@ rules.
       `findConsistencyIssues` skips the subject rule when no vocabulary exists, at
       every call site.
       run: 1m24s · 32 in · 3.3k out · sonnet-5 · sess:f5e8207c-ed8b-49b8-821f-e768006e4047
-- [ ] Propose Consistency only where it fits
+- [x] Propose Consistency only where it fits
       Desk discovery suggests such a check for knip/depcruise-like scripts only.
+      run: 1m17s · 28 in · 3.5k out · sonnet-5 · sess:f5e8207c-ed8b-49b8-821f-e768006e4047
 - [ ] Draw the checks group from the manifest
       Manifest checks first in manifest order, then Docs last with its own reason.
