@@ -1,6 +1,6 @@
 import { GitStashSurface } from '@/app/components';
 import { entityLink, entityRouteParam } from '@/app/hooks';
-import type { CheckStatus } from '@/types/index';
+import type { CheckStatus, DeskCheckState } from '@/types/index';
 import { Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useDeliverChecksRow } from '../hooks';
 
@@ -18,6 +18,8 @@ interface CheckStampProps {
   anyRunning: boolean;
   onClick: () => void;
 }
+
+const checkTooltip = (check: DeskCheckState) => `${check.cmd}. Click to run.`;
 
 const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
   <Tooltip content={title}>
@@ -40,9 +42,7 @@ const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampPro
 
 export const DeliverChecksRow = () => {
   const {
-    qualityStatus,
-    testStatus,
-    consistencyStatus,
+    deskChecks,
     anyRunning,
     hasDocIssues,
     consistency,
@@ -56,30 +56,20 @@ export const DeliverChecksRow = () => {
   return (
     <div className="flex flex-col items-center gap-2">
       {
-        // Every check stamp is shown. A single "Health" summary hid the one thing
-        // worth reading at a glance — which check is red.
+        // Every check stamp is shown, manifest checks first in manifest order, Docs
+        // last — a single "Health" summary hid the one thing worth reading at a
+        // glance, which check is red.
         <div className="flex flex-wrap items-start justify-center gap-2">
-          <CheckStamp
-            label="Quality"
-            status={qualityStatus}
-            title="Code style & formatting (Biome lint + format). Click to run."
-            anyRunning={anyRunning}
-            onClick={() => runDeskCheck('lint')}
-          />
-          <CheckStamp
-            label="Tests"
-            status={testStatus}
-            title="Unit tests (Vitest). Click to run."
-            anyRunning={anyRunning}
-            onClick={() => runDeskCheck('test')}
-          />
-          <CheckStamp
-            label="Consistency"
-            status={consistencyStatus}
-            title="Dead code & architecture (Knip + dependency-cruiser). Click to run."
-            anyRunning={anyRunning}
-            onClick={() => runDeskCheck('Consistency')}
-          />
+          {deskChecks.map((check) => (
+            <CheckStamp
+              key={check.name}
+              label={check.name}
+              status={check.status}
+              title={checkTooltip(check)}
+              anyRunning={anyRunning}
+              onClick={() => runDeskCheck(check.name)}
+            />
+          ))}
           <div>
             <Tooltip
               content={

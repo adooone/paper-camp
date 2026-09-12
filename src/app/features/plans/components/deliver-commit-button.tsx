@@ -1,5 +1,5 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { deriveCheckStatuses } from '@/app/utils/check-status';
+import { failingCheckNames } from '@/app/utils/check-status';
 import { Button } from '@dendelion/paper-ui';
 import { useMemo } from 'react';
 import type { DeliverCommitFormState } from '../hooks';
@@ -24,12 +24,7 @@ interface DeliverCommitButtonProps {
 
 export const DeliverCommitButton = ({ state, filesEmpty }: DeliverCommitButtonProps) => {
   const { checks: deskChecks } = useDeskChecks();
-  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(deskChecks),
-    [deskChecks],
-  );
-  const checksFailing =
-    qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';
+  const checksFailing = useMemo(() => failingCheckNames(deskChecks).length > 0, [deskChecks]);
 
   if (checksFailing) {
     const label = state.fixing ? 'Fixing…' : 'Fix';

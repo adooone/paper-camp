@@ -2,7 +2,7 @@
 id: IDEA-263
 title: Consistency is a manifest check
 type: fix
-status: idea
+status: review
 created: 2026-09-12
 tags:
   - server
@@ -67,5 +67,6 @@ rules.
 - [x] Propose Consistency only where it fits
       Desk discovery suggests such a check for knip/depcruise-like scripts only.
       run: 1m17s · 28 in · 3.5k out · sonnet-5 · sess:f5e8207c-ed8b-49b8-821f-e768006e4047
-- [ ] Draw the checks group from the manifest
+- [x] Draw the checks group from the manifest
       Manifest checks first in manifest order, then Docs last with its own reason.
+      run: 9m12s · 126 in · 40.7k out · sonnet-5 · sess:f5e8207c-ed8b-49b8-821f-e768006e4047

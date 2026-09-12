@@ -1,9 +1,8 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
-import { deriveCheckStatuses } from '@/app/utils/check-status';
 import type { ConsistencyIssue } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export const useDeliverChecksRow = () => {
   const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
@@ -12,12 +11,7 @@ export const useDeliverChecksRow = () => {
   const navigate = useNavigate();
   const [docsExpanded, setDocsExpanded] = useState(false);
 
-  const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(deskChecks),
-    [deskChecks],
-  );
-  const anyRunning =
-    qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
+  const anyRunning = deskChecks.some((check) => check.status === 'running');
   const hasDocIssues = consistency.length > 0;
 
   const linkedPlanFor = useCallback(
@@ -27,9 +21,7 @@ export const useDeliverChecksRow = () => {
   );
 
   return {
-    qualityStatus,
-    testStatus,
-    consistencyStatus,
+    deskChecks,
     anyRunning,
     hasDocIssues,
     consistency,
