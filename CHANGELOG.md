@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.32.0](https://github.com/adooone/paper-camp/compare/v0.31.1...v0.32.0) (2026-09-12)
+
+
+### Features
+
+* **app:** Add the Chat tab to the web client ([d991e2e](https://github.com/adooone/paper-camp/commit/d991e2ed8ac7a2b8554f5c1630f3ac89ae01aeb7))
+* **app:** Give the chat agent its three moves ([9b62862](https://github.com/adooone/paper-camp/commit/9b62862057bccbfdb8969c495506e842ffa01549))
+* **app:** Read, append, and trim `papercamp/chat.md` ([df8bfe9](https://github.com/adooone/paper-camp/commit/df8bfe9bc6dd7c78eef052324342ff83b8606557))
+* **app:** Route parked questions through the chat ([b734d1b](https://github.com/adooone/paper-camp/commit/b734d1bd867c81e397dd9134432319863725a028))
+* **app:** Serve `GET`, `POST`, and clear on `/p/<slug>/api/chat` ([9acd5ad](https://github.com/adooone/paper-camp/commit/9acd5adb984742afd953ca4cace5b72216b6ddfc))
+* **server:** Derive desk checks from CI steps without a matching script ([68a9779](https://github.com/adooone/paper-camp/commit/68a9779651a37d0c3ea734695fa1c5fd3912f651))
+* **server:** Enforce commit convention on suggested titles ([638bcf0](https://github.com/adooone/paper-camp/commit/638bcf02df24e66aad650d9017ab24eab1784ce7))
+
+
+### Bug Fixes
+
+* **app:** lint ([dde4378](https://github.com/adooone/paper-camp/commit/dde4378557c3df4a8b944d951745fd5fcc0a9092))
+* **ci:** Replace Tailscale action with direct Funnel port 8443 ([12af91e](https://github.com/adooone/paper-camp/commit/12af91e6efce3b9adca262536b45d1269fcbb641))
+
 ## [0.31.1](https://github.com/adooone/paper-camp/compare/v0.31.0...v0.31.1) (2026-09-11)
 
 
