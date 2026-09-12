@@ -10,6 +10,7 @@ import { gitRoutes } from './git';
 import { nightRoutes } from './night';
 import { notificationRoutes } from './notifications';
 import { pairingRoutes } from './pairing';
+import { pushRoutes } from './push';
 import { releaseNotesRoutes } from './release-notes';
 import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
@@ -47,5 +48,6 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...releaseNotesRoutes(ctx),
     ...pairingRoutes(ctx),
     ...nightRoutes(ctx),
+    ...pushRoutes(ctx),
   ];
 }

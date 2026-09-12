@@ -82,8 +82,9 @@ projects in the hub.
 - [x] Store the per-kind switches in `papercamp/config.json`
       `notifications.kinds` with the stated defaults, read when the log appends so an off kind is still logged and counted but never pushed.
       run: 6m41s · 132 in · 26.1k out · sonnet-5 · sess:824f9143-263b-413c-b928-13e253787727
-- [ ] Keep subscriptions and VAPID keys in the daemon
+- [x] Keep subscriptions and VAPID keys in the daemon
       `push.json` and `vapid.json` under `PAPERCAMP_CONFIG_DIR`, behind `POST`/`DELETE /p/<slug>/api/push/subscribe` and a public-key read.
+      run: 5m17s · 78 in · 23.9k out · sonnet-5 · sess:824f9143-263b-413c-b928-13e253787727
 - [ ] Send on append over Web Push and Expo
       Fan out to every subscription for the project, drop the ones the transport reports gone, and log failures to `daemon.log`.
 - [ ] Add `sw.js` to the hosted client

@@ -222,6 +222,25 @@ export const notificationsConfigSchema = z.object({
   kinds: z.record(z.enum(NOTIFICATION_SETTING_KINDS), z.boolean()).optional(),
 });
 
+export const webPushSubscriptionSchema = z.object({
+  endpoint: z.string(),
+  keys: z.object({ p256dh: z.string(), auth: z.string() }),
+});
+
+export const pushSubscribeBodySchema = z.discriminatedUnion('transport', [
+  z.object({
+    transport: z.literal('webpush'),
+    name: z.string(),
+    subscription: webPushSubscriptionSchema,
+  }),
+  z.object({ transport: z.literal('expo'), name: z.string(), token: z.string() }),
+]);
+
+export const pushUnsubscribeBodySchema = z.discriminatedUnion('transport', [
+  z.object({ transport: z.literal('webpush'), endpoint: z.string() }),
+  z.object({ transport: z.literal('expo'), token: z.string() }),
+]);
+
 export const paperCampConfigSchema = z.object({
   version: z
     .number()
