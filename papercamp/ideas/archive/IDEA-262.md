@@ -2,8 +2,9 @@
 id: IDEA-262
 title: Init scaffolds the agent allowlist
 type: fix
-status: review
+status: done
 created: 2026-09-12
+updated: 2026-09-12
 tags:
   - cli
   - core
