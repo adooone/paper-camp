@@ -98,8 +98,9 @@ it lands. Stamp colours in `settings/constants.ts`, which follow the
 app-wide `STATUS_STAMP` pattern and move together in [[IDEA-111]].
 
 ### Phases
-- [ ] Add `SettingsHeader`, `SettingGroup`, and `SettingRow`
+- [x] Add `SettingsHeader`, `SettingGroup`, and `SettingRow`
       In `features/settings/components`; kraft `plan-row-card` rows with a 260px control column, handwritten group labels, and a `PlansHeader`-shaped section header. Drop the "Settings" `PageTitle` from `settings-page.tsx`.
+      run: 2m · 40 in · 8.3k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
 - [ ] Rebuild Project Info on the row grammar
       Version stamp and initialized date in the header row; name, icon, port, toolbar switch rows; the agent table as header-then-rows.
 - [ ] Rebuild Setup with collapsing connection rows
