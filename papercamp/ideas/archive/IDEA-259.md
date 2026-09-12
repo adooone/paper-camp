@@ -2,8 +2,9 @@
 id: IDEA-259
 title: One grammar for every sidebar
 type: refactor
-status: review
+status: done
 created: 2026-09-11
+updated: 2026-09-12
 tags:
   - app
   - ui

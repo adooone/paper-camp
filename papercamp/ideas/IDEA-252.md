@@ -9,7 +9,7 @@ tags:
   - server
   - notifications
 subject: Run & monitor
-order: 5
+order: 4
 ---
 
 The app already knows when something goes wrong and tells nobody who is

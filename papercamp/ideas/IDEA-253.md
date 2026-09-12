@@ -9,7 +9,7 @@ tags:
   - ui
   - settings
 subject: App UI
-order: 3
+order: 5
 ---
 
 The settings page is the one surface that still looks like a form from

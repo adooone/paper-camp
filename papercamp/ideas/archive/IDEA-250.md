@@ -2,12 +2,12 @@
 id: IDEA-250
 title: Native app on React Native
 type: feat
-status: idea
+status: dropped
 created: 2026-09-10
+updated: 2026-09-12
 tags:
   - app
 subject: Mobile control desk
-order: 2
 ---
 
 With the daemon as the only server and its shapes published in
@@ -114,3 +114,6 @@ and the chat from [[IDEA-251]].
       Chip filters and rows, the entry with its chalkboard output and bar, the live running task, and the Idea screen.
 - [ ] Register the Expo push token and cut the store build
       Subscribe against each paired runtime under [[IDEA-252]], deep link a tapped notification to its entry, then ship the store build and the EAS update channel.
+
+### Thread
+- [2026-09-12] decision: Moved to the `paper-camp-mobile` repository as its IDEA-1, since a run-all executes in the project the idea belongs to and this app is its own repo. The daemon-side piece, the QR code in the banner, is [[IDEA-260]].
