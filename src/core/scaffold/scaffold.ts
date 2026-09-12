@@ -7,7 +7,7 @@ import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { addProject, defaultRegistryPath, loadRegistry, saveRegistry } from '../machine-registry';
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
-import { CLAUDE_SETTINGS_JSON, SKILL_MD_CONTENT } from './templates';
+import { SKILL_MD_CONTENT, buildClaudeSettingsJson } from './templates';
 
 const PACKAGE_JSON_SEARCH_DEPTH = 5;
 
@@ -149,6 +149,6 @@ async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   await mkdir(claudeDir, { recursive: true });
   const settingsPath = join(claudeDir, 'settings.json');
   if (!(await exists(settingsPath))) {
-    await writeFile(settingsPath, CLAUDE_SETTINGS_JSON, 'utf-8');
+    await writeFile(settingsPath, buildClaudeSettingsJson(targetDir), 'utf-8');
   }
 }
