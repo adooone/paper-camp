@@ -2,8 +2,9 @@
 id: IDEA-263
 title: Consistency is a manifest check
 type: fix
-status: review
+status: done
 created: 2026-09-12
+updated: 2026-09-12
 tags:
   - server
   - stack
