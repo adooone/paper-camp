@@ -56,9 +56,8 @@ export const DeliverChecksRow = () => {
   return (
     <div className="flex flex-col items-center gap-2">
       {
-        // Every check stamp is shown, manifest checks first in manifest order, Docs
-        // last — a single "Health" summary hid the one thing worth reading at a
-        // glance, which check is red.
+        // Every check stamp is shown (manifest order, Docs last) — a single
+        // "Health" summary hid which check is red.
         <div className="flex flex-wrap items-start justify-center gap-2">
           {deskChecks.map((check) => (
             <CheckStamp

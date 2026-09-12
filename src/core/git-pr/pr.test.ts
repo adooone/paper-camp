@@ -1300,6 +1300,10 @@ describe('syncConsistencyCommentToPr', () => {
       join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
       '---\nid: IDEA-9\ntitle: Some plan\ntype: feat\nsubject: Retired subject\ntags:\n  - ci\ncreated: 2026-07-01\n---\n\nBody.\n\n### Phases\n- [x] Phase one\n',
     );
+    writeFileSync(
+      join(root, 'ROADMAP.md'),
+      '## The goal\nGoal text.\n\n## Horizon 1 — Near term\n- **Some active subject** — description\n',
+    );
 
     const result = await syncConsistencyCommentToPr(root, '42');
     expect(result).toBe('created');
