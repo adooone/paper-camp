@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { runLs } from './daemon-lifecycle';
-import { runInit, runRm, runScan } from './index';
+import { runInit, runInitSettings, runRm, runScan } from './index';
 
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
@@ -163,6 +163,37 @@ describe('paper-camp scan / ls / rm / init', () => {
     );
     expect(registryAfterRerun.projects).toHaveLength(1);
   });
+
+  it('init --settings writes only the .claude allowlist and hook, without papercamp/ scaffolding', async () => {
+    const projectDir = await makeTempDir('paper-camp-init-settings-');
+
+    const ok = await runInitSettings(projectDir);
+    expect(ok).toBe(true);
+
+    const settings = JSON.parse(
+      await readFile(join(projectDir, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(settings.permissions.allow).toContain('Edit(src/**)');
+    expect(settings.hooks.SessionStart[0].hooks[0].command).toContain('session-focus');
+
+    await expect(readFile(join(projectDir, 'papercamp', 'config.json'), 'utf-8')).rejects.toThrow();
+  });
+
+  it('init --settings on an already-initialised project merges rather than erroring', async () => {
+    await useConfigDir();
+    const projectDir = await makeTempDir('paper-camp-init-settings-existing-');
+
+    const initOk = await runInit(projectDir);
+    expect(initOk).toBe(true);
+
+    const settingsOk = await runInitSettings(projectDir);
+    expect(settingsOk).toBe(true);
+
+    const settings = JSON.parse(
+      await readFile(join(projectDir, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(settings.permissions.allow).toContain('Edit(src/**)');
+  });
 });
 
 describe('paper-camp CLI entry point', () => {
@@ -175,5 +206,23 @@ describe('paper-camp CLI entry point', () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain('No projects registered.');
+  });
+
+  it('dispatches `init --settings` through commander to runInitSettings', async () => {
+    const configDir = await makeTempDir('paper-camp-config-');
+    const projectDir = await makeTempDir('paper-camp-init-settings-cli-');
+    const result = spawnSync('bun', [CLI_ENTRY, 'init', '--settings'], {
+      cwd: projectDir,
+      encoding: 'utf-8',
+      env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir },
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Wrote Claude Code integration');
+
+    const settings = JSON.parse(
+      await readFile(join(projectDir, '.claude', 'settings.json'), 'utf-8'),
+    );
+    expect(settings.permissions.allow).toContain('Edit(src/**)');
   });
 });

@@ -2,7 +2,7 @@
 id: IDEA-262
 title: Init scaffolds the agent allowlist
 type: fix
-status: idea
+status: review
 created: 2026-09-12
 tags:
   - cli
@@ -63,4 +63,5 @@ how the daemon launches agents.
       run: 56s · 26 in · 4.5k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
 - [x] Warn in `paper-camp doctor` when `permissions.allow` is absent
       run: 1m37s · 40 in · 7.9k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
-- [ ] Cover detection, merging, and both commands in tests
+- [x] Cover detection, merging, and both commands in tests
+      run: 2m27s · 60 in · 11.9k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
