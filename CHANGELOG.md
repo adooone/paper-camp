@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.0](https://github.com/adooone/paper-camp/compare/v0.32.0...v0.33.0) (2026-09-12)
+
+
+### Features
+
+* **app:** Add `sw.js` to the hosted client ([fc46f4d](https://github.com/adooone/paper-camp/commit/fc46f4d2a0b050fb30385a55b6a1c8ac3e6064b5))
+* **app:** Build Settings → Notifications ([10327a5](https://github.com/adooone/paper-camp/commit/10327a59e46b2307c36afca39a58273bf25f8b87))
+* **app:** Keep subscriptions and VAPID keys in the daemon ([98d9ba2](https://github.com/adooone/paper-camp/commit/98d9ba2b0409cfb17d6b85d19106aebfccc1c90e))
+* **app:** Send on append over Web Push and Expo ([4c69b92](https://github.com/adooone/paper-camp/commit/4c69b92ece7f4b826b710e633718e7ff26ccdc0a))
+* **app:** Store the per-kind switches in `papercamp/config.json` ([8ec56f7](https://github.com/adooone/paper-camp/commit/8ec56f7d84b010aa6a0770073a5aaa4ee47a82ba))
+* **app:** Widen the kinds into one union ([4776653](https://github.com/adooone/paper-camp/commit/47766530a701c7e9306546d1738079f993a13535))
+* **cli:** Add `--qr` to `paper-camp status` ([146f95e](https://github.com/adooone/paper-camp/commit/146f95e9d978d89ac67e7cc382e425552572350a))
+* **cli:** Add `qrcode` and a half-block renderer ([be02177](https://github.com/adooone/paper-camp/commit/be02177382da09b81db6d58b657b8016c9c721d3))
+* **cli:** Cover the renderer and the gating with tests ([8d22722](https://github.com/adooone/paper-camp/commit/8d227228c316107325b47de9595ad48041b6d459))
+* **cli:** Draw the code under the link in the banner ([032410c](https://github.com/adooone/paper-camp/commit/032410c3793e6b7264def2e135ca562192433475))
+
+
+### Bug Fixes
+
+* **app:** Apply the divider rule across Settings, the hub, and the Stack panel ([4a2055b](https://github.com/adooone/paper-camp/commit/4a2055b0935e6b19ab4e27d99d53ba3f4a2b40fa))
+* **app:** Move sidebar card into components, add IDEA phases ([04c3360](https://github.com/adooone/paper-camp/commit/04c3360976856ed1dbc9371dcecbfa9da4b9087a))
+* **app:** test, consistency ([8ee4326](https://github.com/adooone/paper-camp/commit/8ee43269415a5f1265a7c16599df193c99765f3e))
+* **app:** Turn sidebars into card stacks and delete the divider ([d06e339](https://github.com/adooone/paper-camp/commit/d06e339ded23104fcef531c35c8e71e74be86987))
+* **app:** Weight every clickable label at 600 ([44e8706](https://github.com/adooone/paper-camp/commit/44e87063a99327d3cefb400635cfc889159a1f0b))
+* **cli:** Cover detection, merging, and both commands in tests ([5b04d7f](https://github.com/adooone/paper-camp/commit/5b04d7fe75b5b30cd54acfe4862c8aefffe0ff32))
+* **cli:** Generate the allowlist and the hook command ([f8a4408](https://github.com/adooone/paper-camp/commit/f8a44089684afaae8221bd5232f37f0c8e5fa447))
+* **cli:** Merge an existing settings.json instead of skipping it ([49a3a62](https://github.com/adooone/paper-camp/commit/49a3a6277d5b2b0b6f9f7f4b501c59d3932cb51e))
+* **cli:** Offer `paper-camp init --settings` in an initialised project ([ed6b054](https://github.com/adooone/paper-camp/commit/ed6b0543ed787bda8b0eda59b356d513b8b88609))
+* **cli:** Warn in `paper-camp doctor` when `permissions.allow` is absent ([67067bb](https://github.com/adooone/paper-camp/commit/67067bbd291fb8ab7562e601ef7c5726089b06c2))
+* **docs:** Fix orphan subjects and an over-length title ([aac00ef](https://github.com/adooone/paper-camp/commit/aac00ef0905c3651a4a08af522963a14beb300eb))
+* **server:** Draw the checks group from the manifest ([d382132](https://github.com/adooone/paper-camp/commit/d3821323f6b0048131a0ea0e2aeda8d854516e89))
+* **server:** Gate the orphan-subject rule on a roadmap ([b0d1f54](https://github.com/adooone/paper-camp/commit/b0d1f5418e16d3bfb360416fa2ab63e32eb26f8d))
+* **server:** lint, test ([2ce7845](https://github.com/adooone/paper-camp/commit/2ce784563f90fea9135fabecf55d330fca0cf2bc))
+* **server:** Move Consistency into the manifest ([cd43b31](https://github.com/adooone/paper-camp/commit/cd43b314c5fb0ab408fcbf9c4f1213ef4f79d55a))
+* **server:** Propose Consistency only where it fits ([9832a54](https://github.com/adooone/paper-camp/commit/9832a5428111aa0f73ed29325bb88cf6e8d7f76d))
+* **server:** Run the manifest's checks by name ([7cf9c53](https://github.com/adooone/paper-camp/commit/7cf9c5358ee2916deb5e20c35e6c910b1ace1d71))
+* **server:** Trim the consistency types and client state ([7a12b71](https://github.com/adooone/paper-camp/commit/7a12b71090430149406939b3bec55e15bf0efec1))
+
 ## [0.32.0](https://github.com/adooone/paper-camp/compare/v0.31.1...v0.32.0) (2026-09-12)
 
 
