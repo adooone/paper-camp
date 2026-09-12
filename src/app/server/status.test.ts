@@ -41,13 +41,6 @@ describe('getCachedOrRunChecks', () => {
     const headSha = await git.getHeadSha();
 
     checks.getState().runtimes.set('lint', { status: 'fail', lastRun: '', output: '', headSha });
-    status.getState().snapshot.consistency = {
-      status: 'pass',
-      cmd: 'pnpm run consistency',
-      lastRun: '',
-      output: '',
-    };
-    status.getState().consistencyHeadSha = headSha;
     status.getState().docs = { headSha, passed: true, output: '' };
 
     // Every result is already on this HEAD, so none of them re-run — lint's cmd
@@ -62,13 +55,6 @@ describe('getCachedOrRunChecks', () => {
     const status = createStatusManager(root, checks, git);
     const headSha = await git.getHeadSha();
 
-    status.getState().snapshot.consistency = {
-      status: 'pass',
-      cmd: 'pnpm run consistency',
-      lastRun: '',
-      output: '',
-    };
-    status.getState().consistencyHeadSha = headSha;
     status.getState().docs = { headSha, passed: true, output: '' };
     // lint has no cached result yet, so it's the only check this call runs for real.
 

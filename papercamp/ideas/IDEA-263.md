@@ -47,10 +47,11 @@ Changing what knip and depcruise check in paper-camp. Doctor's own
 rules.
 
 ### Phases
-- [ ] Move Consistency into the manifest
+- [x] Move Consistency into the manifest
       Drop `CONSISTENCY_COMMAND`, the `consistency` snapshot slot, and its head-sha
       cache from `status.ts`, and list `Consistency` with `pnpm run consistency`
       among paper-camp's own `desk.checks`.
+      run: 5m23s · 82 in · 24.6k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
 - [ ] Run the manifest's checks by name
       The run-all sweep, the fix pass, the baseline, and the night gate iterate
       `loadManifestChecks` instead of the hardcoded `['lint', 'test']` pair.

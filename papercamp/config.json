@@ -92,6 +92,10 @@
       {
         "name": "build",
         "cmd": "pnpm build"
+      },
+      {
+        "name": "Consistency",
+        "cmd": "pnpm run consistency"
       }
     ],
     "ci": {
