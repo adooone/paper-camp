@@ -2,7 +2,7 @@
 id: IDEA-253
 title: Settings in the plans row grammar
 type: refactor
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - app
@@ -113,5 +113,6 @@ app-wide `STATUS_STAMP` pattern and move together in [[IDEA-111]].
 - [x] Rebuild Desk as header-then-rows tables
       Group label with *Add* action, column header row, unlabeled inputs per row, CI as three rows with the Release Please switch.
       run: 2m45s · 38 in · 13k out · sonnet-5 · sess:f49e9c57-c9cb-42d7-92dd-d3925fbab0fb
-- [ ] Remove the Subjects section
+- [x] Remove the Subjects section
       Delete `subjects-section.tsx`, its sidebar entry, and `subjects` from the `SettingsSection` union.
+      run: 1m4s · 18 in · 2.8k out · sonnet-5 · sess:f49e9c57-c9cb-42d7-92dd-d3925fbab0fb

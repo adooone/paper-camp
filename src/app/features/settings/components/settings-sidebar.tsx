@@ -47,17 +47,6 @@ export const SettingsSidebar = () => {
           Toolbar
         </ListItem>
       </div>
-      <SidebarLabel>Ideas</SidebarLabel>
-      <div className="flex flex-col">
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
-          active={section === 'subjects'}
-          onClick={() => navigate({ to: '/settings/$section', params: { section: 'subjects' } })}
-        >
-          Subjects
-        </ListItem>
-      </div>
       <SidebarLabel>Stack</SidebarLabel>
       <div className="flex flex-col">
         <ListItem
