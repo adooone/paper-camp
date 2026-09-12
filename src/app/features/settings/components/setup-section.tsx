@@ -1,7 +1,10 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Card } from '@dendelion/paper-ui';
+import { Alert, Switch } from '@dendelion/paper-ui';
 import { useSetupSection } from '../hooks';
 import { ConnectionRow } from './connection-row';
+import { SettingGroup } from './setting-group';
+import { SettingRow } from './setting-row';
+import { SettingsHeader } from './settings-header';
 
 export const SetupSection = () => {
   const {
@@ -20,71 +23,50 @@ export const SetupSection = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="m-0">Setup</h2>
-      </div>
+      <SettingsHeader title="Setup" />
+
       {connections === null && !loadFailed && <RowSkeleton />}
-      {loadFailed && (
-        <div className="mb-4">
-          <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>
-        </div>
-      )}
+      {loadFailed && <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>}
       {connections && (
-        <>
+        <div className="flex flex-col gap-1">
           {!allOk && (
-            <div className="mb-4">
-              <Alert variant="warning">
-                Some connections are incomplete — features that depend on them stay disabled until
-                fixed. Run the connect command below, then recheck.
-              </Alert>
-            </div>
+            <Alert variant="warning">
+              Some connections are incomplete — features that depend on them stay disabled until
+              fixed. Run the connect command below, then recheck.
+            </Alert>
           )}
           {externalConnections.length > 0 && (
-            <div className="mb-4">
-              <p className="opacity-[0.45] text-sm mt-0 mb-2">
-                External services — reached on your behalf with their own remote credential.
-              </p>
-              <Card size="small" texture="kraft">
-                {externalConnections.map((c, idx) => (
-                  <ConnectionRow
-                    key={c.id}
-                    connection={c}
-                    isLast={idx === externalConnections.length - 1}
-                    onRecheck={handleRecheck}
-                    rechecking={reloadingId === c.id}
-                    onConnect={handleConnect}
-                    connecting={connectingId === c.id}
-                  />
-                ))}
-              </Card>
-            </div>
+            <SettingGroup label="External services">
+              {externalConnections.map((c) => (
+                <ConnectionRow
+                  key={c.id}
+                  connection={c}
+                  onRecheck={handleRecheck}
+                  rechecking={reloadingId === c.id}
+                  onConnect={handleConnect}
+                  connecting={connectingId === c.id}
+                />
+              ))}
+            </SettingGroup>
           )}
           {localConnections.length > 0 && (
-            <div className="mb-4">
-              <p className="opacity-[0.45] text-sm mt-0 mb-2">
-                Local adapters — driven on this machine with their own local session.
-              </p>
-              <Card size="small" texture="kraft">
-                {localConnections.map((c, idx) => (
-                  <ConnectionRow
-                    key={c.id}
-                    connection={c}
-                    isLast={idx === localConnections.length - 1}
-                    onRecheck={handleRecheck}
-                    rechecking={reloadingId === c.id}
-                    onConnect={handleConnect}
-                    connecting={connectingId === c.id}
-                  />
-                ))}
-              </Card>
-            </div>
+            <SettingGroup label="Local adapters">
+              {localConnections.map((c) => (
+                <ConnectionRow
+                  key={c.id}
+                  connection={c}
+                  onRecheck={handleRecheck}
+                  rechecking={reloadingId === c.id}
+                  onConnect={handleConnect}
+                  connecting={connectingId === c.id}
+                />
+              ))}
+            </SettingGroup>
           )}
-          <div className="mt-4">
-            <Button size="small" onClick={handleDismissToggle}>
-              {setupDismissed ? 'Show Setup on open again' : "Don't show Setup on open"}
-            </Button>
-          </div>
-        </>
+          <SettingRow label="Show Setup on open">
+            <Switch size="small" checked={!setupDismissed} onChange={handleDismissToggle} />
+          </SettingRow>
+        </div>
       )}
     </div>
   );

@@ -1,15 +1,16 @@
+import { RefreshIcon } from '@/app/components/icons';
 import { SignInAction } from '@/app/components/sign-in-action';
 import type { ConnectionResult } from '@/types/index';
-import { Button, Divider, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { IconButton, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { CAPABILITY_STATUS_STAMP } from '../constants';
 import { ConnectActionView } from './connect-action-view';
+import { SettingRow } from './setting-row';
 
 // Only claude-code exposes `auth login`/`auth status` (see agentAuthenticated in server/services.ts).
 const RELAY_CONNECTION_ID: ConnectionResult['id'] = 'agent:claude-code';
 
 interface ConnectionRowProps {
   connection: ConnectionResult;
-  isLast: boolean;
   onRecheck: (id: string) => void;
   rechecking: boolean;
   onConnect: (id: string) => void;
@@ -18,18 +19,52 @@ interface ConnectionRowProps {
 
 export const ConnectionRow = ({
   connection,
-  isLast,
   onRecheck,
   rechecking,
   onConnect,
   connecting,
 }: ConnectionRowProps) => {
   const stamp = CAPABILITY_STATUS_STAMP[connection.status];
+  const healthy = connection.status === 'ok';
+
+  const recheckButton = (
+    <IconButton
+      icon={<RefreshIcon size={14} />}
+      label={rechecking ? 'Checking…' : 'Recheck'}
+      size="small"
+      variant="ghost"
+      disabled={rechecking}
+      onClick={() => onRecheck(connection.id)}
+    />
+  );
+
+  if (healthy) {
+    return (
+      <SettingRow label={connection.label}>
+        <div className="flex items-center gap-1.5">
+          <Tooltip content={connection.detail}>
+            <Stamp size="small" fillColor={stamp.fill} textColor={stamp.text}>
+              {stamp.label}
+            </Stamp>
+          </Tooltip>
+          {recheckButton}
+        </div>
+      </SettingRow>
+    );
+  }
+
   return (
-    <>
-      <div className="pb-3 pt-3">
-        <div className="flex items-center gap-3">
-          <span className="flex-1 font-medium">{connection.label}</span>
+    <SettingRow
+      label={connection.label}
+      hint={
+        <>
+          <div>Unlocks: {connection.unlocks}</div>
+          {connection.detail && <div>{connection.detail}</div>}
+        </>
+      }
+    >
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
           {connection.authenticated === false && (
             <Tooltip content="Installed, but not signed in">
               <Stamp size="small" variant="warning">
@@ -47,25 +82,18 @@ export const ConnectionRow = ({
           <Stamp size="small" fillColor={stamp.fill} textColor={stamp.text}>
             {stamp.label}
           </Stamp>
-          <Button size="small" onClick={() => onRecheck(connection.id)} disabled={rechecking}>
-            {rechecking ? 'Checking…' : 'Recheck'}
-          </Button>
+          {recheckButton}
         </div>
-        <p className="opacity-[0.65] text-sm mt-1 mx-0 mb-0">Unlocks: {connection.unlocks}</p>
-        <p className="opacity-50 text-sm mt-1 mx-0 mb-0">{connection.detail}</p>
-        <div className="mt-2">
-          {connection.id === RELAY_CONNECTION_ID && connection.authenticated === false ? (
-            <SignInAction onSignedIn={() => onRecheck(connection.id)} />
-          ) : (
-            <ConnectActionView
-              connection={connection}
-              onConnect={onConnect}
-              connecting={connecting}
-            />
-          )}
-        </div>
+        {connection.id === RELAY_CONNECTION_ID && connection.authenticated === false ? (
+          <SignInAction onSignedIn={() => onRecheck(connection.id)} />
+        ) : (
+          <ConnectActionView
+            connection={connection}
+            onConnect={onConnect}
+            connecting={connecting}
+          />
+        )}
       </div>
-      {!isLast && <Divider />}
-    </>
+    </SettingRow>
   );
 };
