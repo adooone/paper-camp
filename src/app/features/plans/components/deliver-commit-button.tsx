@@ -1,5 +1,4 @@
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Button } from '@dendelion/paper-ui';
 import { useMemo } from 'react';
@@ -24,11 +23,10 @@ interface DeliverCommitButtonProps {
 }
 
 export const DeliverCommitButton = ({ state, filesEmpty }: DeliverCommitButtonProps) => {
-  const status = useAppStore((s) => s.status);
   const { checks: deskChecks } = useDeskChecks();
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status, deskChecks),
-    [status, deskChecks],
+    () => deriveCheckStatuses(deskChecks),
+    [deskChecks],
   );
   const checksFailing =
     qualityStatus === 'fail' || testStatus === 'fail' || consistencyStatus === 'fail';

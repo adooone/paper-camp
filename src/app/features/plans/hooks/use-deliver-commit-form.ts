@@ -87,7 +87,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
     const planId = plan.id;
     setFixing(true);
     try {
-      const nextFixes = upsertCheckFixes(plan.fixes ?? [], status, deskChecks);
+      const nextFixes = upsertCheckFixes(plan.fixes ?? [], deskChecks);
       const wrote = await patchByTitle(plan.title, { fixes: nextFixes });
       if (wrote) await launchRunAll(planId);
     } finally {

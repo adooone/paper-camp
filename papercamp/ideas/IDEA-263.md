@@ -56,9 +56,10 @@ rules.
       The run-all sweep, the fix pass, the baseline, and the night gate iterate
       `loadManifestChecks` instead of the hardcoded `['lint', 'test']` pair.
       run: 2m59s · 56 in · 11.1k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
-- [ ] Trim the consistency types and client state
+- [x] Trim the consistency types and client state
       `CheckName`, `StatusPayload`, the status SSE messages, the run route, and the
       status slice lose the fixed consistency slot.
+      run: 8m55s · 154 in · 37.6k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
 - [ ] Gate the orphan-subject rule on a roadmap
       `findConsistencyIssues` skips the subject rule when no vocabulary exists, at
       every call site.

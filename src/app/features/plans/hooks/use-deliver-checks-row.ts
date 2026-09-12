@@ -6,8 +6,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useMemo, useState } from 'react';
 
 export const useDeliverChecksRow = () => {
-  const status = useAppStore((s) => s.status);
-  const runConsistencyCheck = useAppStore((s) => s.runConsistencyCheck);
   const { checks: deskChecks, run: runDeskCheck } = useDeskChecks();
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
@@ -15,8 +13,8 @@ export const useDeliverChecksRow = () => {
   const [docsExpanded, setDocsExpanded] = useState(false);
 
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status, deskChecks),
-    [status, deskChecks],
+    () => deriveCheckStatuses(deskChecks),
+    [deskChecks],
   );
   const anyRunning =
     qualityStatus === 'running' || testStatus === 'running' || consistencyStatus === 'running';
@@ -39,7 +37,6 @@ export const useDeliverChecksRow = () => {
     setDocsExpanded,
     navigate,
     runDeskCheck,
-    runConsistencyCheck,
     linkedPlanFor,
   };
 };

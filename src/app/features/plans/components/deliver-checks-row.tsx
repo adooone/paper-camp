@@ -50,7 +50,6 @@ export const DeliverChecksRow = () => {
     setDocsExpanded,
     navigate,
     runDeskCheck,
-    runConsistencyCheck,
     linkedPlanFor,
   } = useDeliverChecksRow();
 
@@ -79,7 +78,7 @@ export const DeliverChecksRow = () => {
             status={consistencyStatus}
             title="Dead code & architecture (Knip + dependency-cruiser). Click to run."
             anyRunning={anyRunning}
-            onClick={() => runConsistencyCheck()}
+            onClick={() => runDeskCheck('Consistency')}
           />
           <div>
             <Tooltip

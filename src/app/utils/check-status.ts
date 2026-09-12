@@ -1,4 +1,3 @@
-import type { StatusState } from '@/app/services/status-api';
 import type { CheckStatus, DeskCheckState } from '@/types/index';
 
 export interface DerivedCheckStatuses {
@@ -10,15 +9,12 @@ export interface DerivedCheckStatuses {
 const deskCheckStatus = (deskChecks: DeskCheckState[], name: string): CheckStatus =>
   deskChecks.find((c) => c.name === name)?.status ?? 'stale';
 
-// Quality/Tests come from `desk.checks` (IDEA-162) — `pnpm lint` already covers
-// formatting (`biome check .`), so there's no separate format check to combine.
-export function deriveCheckStatuses(
-  status: StatusState | null | undefined,
-  deskChecks: DeskCheckState[],
-): DerivedCheckStatuses {
+// Quality/Tests/Consistency all come from `desk.checks` (IDEA-162) — `pnpm lint`
+// already covers formatting (`biome check .`), so there's no separate format check.
+export function deriveCheckStatuses(deskChecks: DeskCheckState[]): DerivedCheckStatuses {
   return {
     qualityStatus: deskCheckStatus(deskChecks, 'lint'),
     testStatus: deskCheckStatus(deskChecks, 'test'),
-    consistencyStatus: status?.consistency?.status ?? 'stale',
+    consistencyStatus: deskCheckStatus(deskChecks, 'Consistency'),
   };
 }

@@ -1,7 +1,7 @@
 import { clearCiCache } from '@/core/ci';
 import { clearPrCache, resolvePrsByEntity } from '@/core/git-pr';
 import { invalidateCorpusCache } from '../corpus-cache';
-import { requestUrl, sendJson } from '../http';
+import { sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function statusRoutes({
@@ -39,20 +39,6 @@ export function statusRoutes({
     },
 
     {
-      method: 'POST',
-      path: '/api/status/check',
-      handle: (req, res) => {
-        const name = requestUrl(req).searchParams.get('name');
-        if (name !== 'consistency') {
-          sendJson(res, 400, { error: 'name must be consistency' });
-          return;
-        }
-        status.runCheck(name);
-        sendJson(res, 202, { ok: true });
-      },
-    },
-
-    {
       method: 'GET',
       path: '/api/activity/stream',
       handle: (_req, res) => {
@@ -62,7 +48,6 @@ export function statusRoutes({
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
         activity.subscribe(res);
-        status.subscribe(res);
         agent.subscribe(res);
         services.subscribe(res);
         checks.subscribe(res);

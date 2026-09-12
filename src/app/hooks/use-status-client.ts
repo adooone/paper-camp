@@ -97,10 +97,6 @@ export function useStatusClient(): StatusClientState {
       timers[key] = setTimeout(run, ms);
     };
     const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.type === 'status') {
-        schedule('git', () => loadGitStatus(), 80);
-        return;
-      }
       if (payload.type === 'agent') {
         schedule('agent', () => loadAgentStatus(), 120);
         return;

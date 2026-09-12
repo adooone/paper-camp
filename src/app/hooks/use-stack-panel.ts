@@ -71,12 +71,6 @@ export function useStackPanel(
       timers[key] = setTimeout(run, ms);
     };
     const unsubscribe = subscribeToActivityStream((payload) => {
-      // Keeps the commit gate's consistency check warm for other pages (e.g. deliver-checks-row)
-      // even while this panel — which no longer renders it — is what's mounted.
-      if (payload.type === 'status') {
-        schedule('status', () => useAppStore.getState().loadStatus(), 80);
-        return;
-      }
       // Agent progress, including the one-shot commit-suggest run.
       if (payload.type === 'agent') {
         schedule('agent', () => useAppStore.getState().loadAgentStatus(), 120);

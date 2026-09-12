@@ -126,8 +126,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           return true;
         });
         if (completedRun) {
-          get().runConsistencyCheck();
-          for (const name of ['lint', 'test']) {
+          for (const name of ['lint', 'test', 'Consistency']) {
             runDeskCheck(name).catch(() => {});
           }
         }

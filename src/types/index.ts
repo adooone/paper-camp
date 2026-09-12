@@ -888,7 +888,7 @@ export interface CheckResult {
   output: string;
 }
 
-export type CheckName = 'lint' | 'format' | 'test' | 'consistency' | 'docs' | 'build';
+export type CheckName = 'lint' | 'format' | 'test' | 'docs' | 'build';
 
 /** A failing check's captured output, so the fix pass can be told what actually
  * broke instead of just its name (IDEA-255). */

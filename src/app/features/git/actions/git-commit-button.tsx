@@ -1,6 +1,5 @@
 import type { GitCommitFormState } from '@/app/features/git/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { useAppStore } from '@/app/stores/app-store';
 import { deriveCheckStatuses } from '@/app/utils/check-status';
 import { Button, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { useMemo } from 'react';
@@ -12,11 +11,10 @@ interface GitCommitButtonProps {
 
 // Never Fix (plan-scoped, and the git page never has one) — a failing check is a warning instead.
 export const GitCommitButton = ({ state, filesEmpty }: GitCommitButtonProps) => {
-  const status = useAppStore((s) => s.status);
   const { checks: deskChecks } = useDeskChecks();
   const { qualityStatus, testStatus, consistencyStatus } = useMemo(
-    () => deriveCheckStatuses(status, deskChecks),
-    [status, deskChecks],
+    () => deriveCheckStatuses(deskChecks),
+    [deskChecks],
   );
   const failingChecks = [
     qualityStatus === 'fail' && 'Quality',

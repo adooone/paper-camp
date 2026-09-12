@@ -10,7 +10,7 @@ import type {
 import { fetchConsistency, fetchDoctor } from '../../services/content';
 import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../../services/git-api';
 import type { StatusState } from '../../services/status-api';
-import { dropServerCaches, fetchStatus, triggerConsistencyCheck } from '../../services/status-api';
+import { dropServerCaches, fetchStatus } from '../../services/status-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
@@ -19,7 +19,6 @@ export type StatusSlice = {
   loadStatus: () => Promise<void>;
   refreshAll: () => Promise<{ ok: boolean; error?: string }>;
   refreshing: boolean;
-  runConsistencyCheck: () => Promise<void>;
   quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string; warning?: string }>;
   // Shared by the status bar and the Stack panel so the two commit flows can't race.
   commitInFlight: boolean;
@@ -80,12 +79,6 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
         set({ refreshing: false });
       }
     },
-    runConsistencyCheck: async () => {
-      try {
-        await triggerConsistencyCheck();
-      } catch {}
-    },
-
     commitInFlight: false,
     setCommitInFlight: (inFlight) => set({ commitInFlight: inFlight }),
 

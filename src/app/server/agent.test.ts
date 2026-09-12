@@ -276,9 +276,9 @@ describe('buildFixPassPrompt', () => {
     expect(prompt).toContain('git diff');
   });
 
-  it('names the commands that reproduce a consistency or docs failure (IDEA-255)', () => {
+  it('names the commands that reproduce a build or docs failure (IDEA-255)', () => {
     const prompt = buildFixPassPrompt(plan, 'run', 'all phases', [
-      { name: 'consistency', output: '' },
+      { name: 'build', output: '' },
       { name: 'docs', output: '' },
     ]);
     expect(prompt).toContain('pnpm run consistency');
@@ -287,11 +287,11 @@ describe('buildFixPassPrompt', () => {
 
   it("passes each failing check's captured output into the prompt under its name (IDEA-255)", () => {
     const prompt = buildFixPassPrompt(plan, 'run', 'all phases', [
-      { name: 'consistency', output: 'knip: unused export `foo` in bar.ts' },
+      { name: 'build', output: 'knip: unused export `foo` in bar.ts' },
       { name: 'docs', output: 'Subject "widgets" is not in the roadmap vocabulary' },
       { name: 'lint', output: '' },
     ]);
-    expect(prompt).toContain('consistency:\nknip: unused export `foo` in bar.ts');
+    expect(prompt).toContain('build:\nknip: unused export `foo` in bar.ts');
     expect(prompt).toContain('docs:\nSubject "widgets" is not in the roadmap vocabulary');
     expect(prompt).not.toContain('lint:\n');
   });

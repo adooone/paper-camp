@@ -1,4 +1,3 @@
-import type { StatusState } from '@/app/services/status-api';
 import type { CheckResult, DeskCheckState, PhaseItem } from '@/types/index';
 
 const checkFixKey = (name: string) => `Fix the failing "${name}" check`;
@@ -6,19 +5,16 @@ const checkFixKey = (name: string) => `Fix the failing "${name}" check`;
 const formatCheckDetail = ({ cmd, output }: CheckResult): string =>
   `The command was \`${cmd}\`.\n\nOutput from the last run:\n\n${output || '(no output captured)'}`;
 
-// Quality/Tests come from `desk.checks` (IDEA-162); Consistency is the commit
-// gate's own check, kept on `/api/status`.
-const checkGroups = (
-  status: StatusState,
-  deskChecks: DeskCheckState[],
-): { name: string; results: CheckResult[] }[] => {
+// Quality/Tests/Consistency all come from `desk.checks` (IDEA-162).
+const checkGroups = (deskChecks: DeskCheckState[]): { name: string; results: CheckResult[] }[] => {
   const deskCheck = (checkName: string) => deskChecks.find((c) => c.name === checkName);
   const lint = deskCheck('lint');
   const test = deskCheck('test');
+  const consistency = deskCheck('Consistency');
   return [
     { name: 'Quality', results: lint ? [lint] : [] },
     { name: 'Tests', results: test ? [test] : [] },
-    { name: 'Consistency', results: [status.consistency] },
+    { name: 'Consistency', results: consistency ? [consistency] : [] },
   ];
 };
 
@@ -26,8 +22,8 @@ const checkGroups = (
  * carrying the same command + last-output content the Stack panel's `fixPrompt`
  * copy-paste flow already builds. Docs findings keep their own browse flow and are
  * excluded (IDEA-156). */
-export const buildCheckFixes = (status: StatusState, deskChecks: DeskCheckState[]): PhaseItem[] =>
-  checkGroups(status, deskChecks).flatMap(({ name, results }) => {
+export const buildCheckFixes = (deskChecks: DeskCheckState[]): PhaseItem[] =>
+  checkGroups(deskChecks).flatMap(({ name, results }) => {
     const failing = results.filter((result) => result.status === 'fail');
     if (failing.length === 0) return [];
     const details = failing.map(formatCheckDetail).join('\n\n');
@@ -46,10 +42,9 @@ export const buildCheckFixes = (status: StatusState, deskChecks: DeskCheckState[
  * with no prior entry is appended. */
 export const upsertCheckFixes = (
   existingFixes: PhaseItem[],
-  status: StatusState,
   deskChecks: DeskCheckState[],
 ): PhaseItem[] => {
-  const nextByKey = new Map(buildCheckFixes(status, deskChecks).map((fix) => [fix.text, fix]));
+  const nextByKey = new Map(buildCheckFixes(deskChecks).map((fix) => [fix.text, fix]));
   const merged = existingFixes.map((fix) => {
     const next = nextByKey.get(fix.text);
     if (!next) return fix;

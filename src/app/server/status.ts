@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { getPrMapFetchedAt } from '@/core/git-pr';
 import { findConsistencyIssues } from '@/core/parse';
@@ -47,12 +46,6 @@ export function createStatusManager(
   git: GitManager,
   state: StatusManagerState = createEmptyStatusState(),
 ) {
-  // Consistency is now an ordinary manifest check (named "Consistency"), so the
-  // desk-checks manager already owns its run, dedup, and headSha caching.
-  function runCheck(_name: 'consistency') {
-    checks.runCheck('Consistency');
-  }
-
   async function runManifestCheck(
     name: string,
     hasVitest: boolean,
@@ -163,9 +156,7 @@ export function createStatusManager(
       };
     },
     getState: (): StatusManagerState => state,
-    runCheck,
     runChecksAndWait,
     getCachedOrRunChecks,
-    subscribe(_res: ServerResponse) {},
   };
 }
