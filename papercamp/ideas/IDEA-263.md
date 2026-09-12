@@ -52,9 +52,10 @@ rules.
       cache from `status.ts`, and list `Consistency` with `pnpm run consistency`
       among paper-camp's own `desk.checks`.
       run: 5m23s · 82 in · 24.6k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
-- [ ] Run the manifest's checks by name
+- [x] Run the manifest's checks by name
       The run-all sweep, the fix pass, the baseline, and the night gate iterate
       `loadManifestChecks` instead of the hardcoded `['lint', 'test']` pair.
+      run: 2m59s · 56 in · 11.1k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
 - [ ] Trim the consistency types and client state
       `CheckName`, `StatusPayload`, the status SSE messages, the run route, and the
       status slice lose the fixed consistency slot.

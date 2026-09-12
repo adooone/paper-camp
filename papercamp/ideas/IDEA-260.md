@@ -7,7 +7,7 @@ created: 2026-09-12
 tags:
   - cli
 subject: Run & monitor
-order: 2
+order: 3
 ---
 
 The daemon prints one link, the best way in, and a phone has to type it.

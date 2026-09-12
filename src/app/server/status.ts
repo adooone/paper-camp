@@ -87,20 +87,12 @@ export function createStatusManager(
     return result;
   }
 
-  // The manifest name is capitalized ("Consistency"), but FailingCheck's name
-  // stays the fixed lowercase CheckName the run-all sweep already speaks.
-  const failingCheckName = (name: string): FailingCheck['name'] =>
-    name === 'Consistency' ? 'consistency' : (name as FailingCheck['name']);
-
   // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
   // nits can't hard-fail an autonomous run-all phase; always runs every check.
   function runChecksAndWait(): Promise<FailingCheck[]> {
     return new Promise<FailingCheck[]>((resolve) => {
       const runChecks = async () => {
-        const manifestChecks = loadManifestChecks(root);
-        const names = (['lint', 'test', 'Consistency'] as const).filter((n) =>
-          manifestChecks.some((c) => c.name === n),
-        );
+        const names = loadManifestChecks(root).map((c) => c.name);
         const hasVitest = repoHasVitest(root);
         const [deskResults, docsResult] = await Promise.all([
           Promise.all(names.map((name) => runManifestCheck(name, hasVitest))),
@@ -109,7 +101,7 @@ export function createStatusManager(
         const failing: FailingCheck[] = [];
         names.forEach((name, i) => {
           if (!deskResults[i].passed) {
-            failing.push({ name: failingCheckName(name), output: deskResults[i].output });
+            failing.push({ name: name as FailingCheck['name'], output: deskResults[i].output });
           }
         });
         if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });
@@ -126,10 +118,7 @@ export function createStatusManager(
   // HEAD, whether from an earlier sweep or an on-demand Stack click (IDEA-255).
   async function getCachedOrRunChecks(): Promise<FailingCheck[]> {
     const headSha = await git.getHeadSha();
-    const manifestChecks = loadManifestChecks(root);
-    const names = (['lint', 'test', 'Consistency'] as const).filter((n) =>
-      manifestChecks.some((c) => c.name === n),
-    );
+    const names = loadManifestChecks(root).map((c) => c.name);
     const hasVitest = repoHasVitest(root);
     const runtimes = checks.getState().runtimes;
 
@@ -160,7 +149,7 @@ export function createStatusManager(
     const failing: FailingCheck[] = [];
     names.forEach((name, i) => {
       if (!deskResults[i].passed) {
-        failing.push({ name: failingCheckName(name), output: deskResults[i].output });
+        failing.push({ name: name as FailingCheck['name'], output: deskResults[i].output });
       }
     });
     if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });

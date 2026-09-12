@@ -8,7 +8,7 @@ tags:
   - cli
   - core
 subject: Packaging
-order: 3
+order: 4
 ---
 
 `paper-camp init` writes `.claude/settings.json` with a SessionStart hook
