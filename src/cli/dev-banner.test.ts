@@ -97,6 +97,38 @@ describe('formatDevBanner', () => {
   });
 });
 
+describe('formatDevBanner QR gating', () => {
+  const tailnetLink =
+    'https://paper-camp.vercel.app/?runtime=https://box.tailnet.ts.net/&token=abc';
+  const tunnelLink =
+    'https://paper-camp.vercel.app/?runtime=https://foo.trycloudflare.com&token=abc';
+
+  it('draws the QR code under a Tailnet link on a TTY', () => {
+    const banner = formatDevBanner({ ...input, tailnetLink, color: false, tty: true });
+    expect(banner).toMatch(/[▄▀█]/);
+  });
+
+  it('draws the QR code under a Tunnel link on a TTY', () => {
+    const banner = formatDevBanner({ ...input, tunnelLink, color: false, tty: true });
+    expect(banner).toMatch(/[▄▀█]/);
+  });
+
+  it('omits the QR code off a TTY, even with a Tailnet link', () => {
+    const banner = formatDevBanner({ ...input, tailnetLink, color: false, tty: false });
+    expect(banner).not.toMatch(/[▄▀█]/);
+  });
+
+  it('omits the QR code for a Network link, reachable only by URL, not by scanning', () => {
+    const banner = formatDevBanner({ ...input, color: false, tty: true });
+    expect(banner).not.toMatch(/[▄▀█]/);
+  });
+
+  it('omits the QR code for the loopback-only This host link', () => {
+    const banner = formatDevBanner({ ...input, networkLink: undefined, color: false, tty: true });
+    expect(banner).not.toMatch(/[▄▀█]/);
+  });
+});
+
 describe('linkifyUrls', () => {
   it('wraps each plain URL in an OSC 8 hyperlink and leaves other text alone', () => {
     const out = linkifyUrls(

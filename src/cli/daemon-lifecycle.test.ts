@@ -19,6 +19,7 @@ import {
   buildDaemonArgs,
   formatProjectTable,
   lastLines,
+  printQrCode,
   projectState,
   restartOptionsFromState,
   runLogs,
@@ -302,6 +303,8 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
   const children: ChildProcess[] = [];
   let originalConfigDir: string | undefined;
   const originalPath = process.env.PATH;
+  const originalIsTTY = process.stdout.isTTY;
+  const originalNoColor = process.env.NO_COLOR;
 
   afterAll(async () => {
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
@@ -316,6 +319,10 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
     process.env.PATH = originalPath;
+    process.stdout.isTTY = originalIsTTY;
+    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
+    if (originalNoColor === undefined) delete process.env.NO_COLOR;
+    else process.env.NO_COLOR = originalNoColor;
     vi.unstubAllGlobals();
   });
 
@@ -750,6 +757,156 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     );
     expect(logs.output).not.toContain('Network');
     expect(logs.output).not.toContain('Tunnel');
+  });
+
+  it('status --qr prints the code for the Tailnet link', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: true,
+      links: {
+        host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+        tailnet: 'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=t',
+        tunnel: 'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=t',
+      },
+    });
+
+    const logs = captureLogs();
+    await runStatus({ qr: true });
+    logs.restore();
+
+    expect(logs.output).toMatch(/[▄▀█]/);
+  });
+
+  it('status --qr falls back to the Tunnel link when there is no Tailnet link', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: true,
+      tailnet: false,
+      links: {
+        host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+        tunnel: 'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=t',
+      },
+    });
+
+    const logs = captureLogs();
+    await runStatus({ qr: true });
+    logs.restore();
+
+    expect(logs.output).toMatch(/[▄▀█]/);
+  });
+
+  it('status --qr reports there is nothing to show without a Tailnet or Tunnel link', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: false,
+      links: { host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t' },
+    });
+
+    const logs = captureLogs();
+    await runStatus({ qr: true });
+    logs.restore();
+
+    expect(logs.output).not.toMatch(/[▄▀█]/);
+    expect(logs.output).toContain('paper-camp: no Tailnet or Tunnel link to print as a QR code');
+  });
+
+  it('status --qr reports there is nothing to show when the daemon is not running', async () => {
+    await makeConfigDir();
+
+    const logs = captureLogs();
+    await runStatus({ qr: true });
+    logs.restore();
+
+    expect(logs.output).toContain('paper-camp: no Tailnet or Tunnel link to print as a QR code');
+  });
+
+  it('printQrCode draws the code for the recorded Tailnet link on a TTY', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    const statePath = join(configDir, 'daemon.json');
+    await writeDaemonState(statePath, {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: true,
+      links: {
+        host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+        tailnet: 'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=t',
+      },
+    });
+    process.stdout.isTTY = true;
+
+    const logs = captureLogs();
+    await printQrCode(statePath);
+    logs.restore();
+
+    expect(logs.output).toMatch(/[▄▀█]/);
+  });
+
+  it('printQrCode stays silent off a TTY, so the daemon writing to its log keeps the link alone', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    const statePath = join(configDir, 'daemon.json');
+    await writeDaemonState(statePath, {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: true,
+      links: {
+        host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t',
+        tailnet: 'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=t',
+      },
+    });
+    process.stdout.isTTY = false;
+
+    const logs = captureLogs();
+    await printQrCode(statePath);
+    logs.restore();
+
+    expect(logs.output).toBe('');
+  });
+
+  it('printQrCode stays silent on a TTY when there is no Tailnet or Tunnel link', async () => {
+    const configDir = await makeConfigDir();
+    const port = await listenOnFreePort();
+    const statePath = join(configDir, 'daemon.json');
+    await writeDaemonState(statePath, {
+      pid: process.pid,
+      port,
+      version: '0.27.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: false,
+      links: { host: 'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=t' },
+    });
+    process.stdout.isTTY = true;
+
+    const logs = captureLogs();
+    await printQrCode(statePath);
+    logs.restore();
+
+    expect(logs.output).toBe('');
   });
 
   it('logs says so and exits 0 when there is no daemon.log yet', async () => {

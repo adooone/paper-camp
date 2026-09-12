@@ -114,7 +114,7 @@ async function printLog(logPath: string): Promise<void> {
 /** The daemon writes its banner to the log with no QR code — its own stdout
  * is a file, never a TTY — so `start` draws one itself for its own terminal,
  * from the same Tailnet-over-Tunnel link the banner would have picked. */
-async function printQrCode(statePath: string): Promise<void> {
+export async function printQrCode(statePath: string): Promise<void> {
   if (!(process.stdout.isTTY && !process.env.NO_COLOR)) return;
   const state = await readRunningDaemonState(statePath);
   const link = state?.links && qrEligibleLink(state.links);

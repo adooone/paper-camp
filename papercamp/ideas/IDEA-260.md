@@ -2,7 +2,7 @@
 id: IDEA-260
 title: A QR code in the banner
 type: feat
-status: idea
+status: review
 created: 2026-09-12
 tags:
   - cli
@@ -42,4 +42,5 @@ carries.
 - [x] Add `--qr` to `paper-camp status`
       Print the code for the link `status` lists first.
       run: 3m2s · 48 in · 8.6k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35
-- [ ] Cover the renderer and the gating with tests
+- [x] Cover the renderer and the gating with tests
+      run: 5m20s · 84 in · 16.4k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35

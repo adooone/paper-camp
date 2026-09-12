@@ -14,6 +14,7 @@ import {
   formatDaemonLinks,
   formatDaemonStatusLine,
   formatUpdateStatusLine,
+  qrEligibleLink,
   readRunningDaemonState,
   removeDaemonState,
   writeDaemonState,
@@ -435,5 +436,31 @@ describe('formatDaemonLinks', () => {
     const formatted = formatDaemonLinks(links);
     expect(formatted).not.toContain('Network');
     expect(formatted).not.toContain('Tunnel');
+  });
+});
+
+describe('qrEligibleLink', () => {
+  const localLink =
+    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
+  const networkLink =
+    'https://paper-camp.vercel.app/?machine=http://192.168.1.5:4333&token=shared-token';
+  const tailnetLink =
+    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
+  const tunnelLink =
+    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
+
+  it('prefers the Tailnet link over the Tunnel link', () => {
+    expect(qrEligibleLink({ host: localLink, tailnet: tailnetLink, tunnel: tunnelLink })).toBe(
+      tailnetLink,
+    );
+  });
+
+  it('falls back to the Tunnel link when there is no Tailnet link', () => {
+    expect(qrEligibleLink({ host: localLink, tunnel: tunnelLink })).toBe(tunnelLink);
+  });
+
+  it('is undefined for a host-only or Network-only link, neither reachable from a phone', () => {
+    expect(qrEligibleLink({ host: localLink })).toBeUndefined();
+    expect(qrEligibleLink({ host: localLink, network: networkLink })).toBeUndefined();
   });
 });
