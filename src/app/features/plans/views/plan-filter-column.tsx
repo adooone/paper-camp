@@ -1,5 +1,5 @@
 import { SidebarSkeleton } from '@/app/components';
-import { SidebarDivider, SidebarField, SidebarLabel } from '@/app/components/sidebar';
+import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
 import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -79,20 +79,17 @@ export const PlanFilterColumn = () => {
       </div>
 
       {hasActiveFilters && (
-        <>
-          <SidebarDivider />
-          <button
-            type="button"
-            data-testid="clear-plan-filters"
-            onClick={() => {
-              clearPlanFilters();
-              navigate({ to: '/', search: {} });
-            }}
-            className="pc-row-label text-2xs opacity-70 underline text-left"
-          >
-            Clear filters
-          </button>
-        </>
+        <button
+          type="button"
+          data-testid="clear-plan-filters"
+          onClick={() => {
+            clearPlanFilters();
+            navigate({ to: '/', search: {} });
+          }}
+          className="pc-row-label text-2xs opacity-70 underline text-left"
+        >
+          Clear filters
+        </button>
       )}
     </div>
   );

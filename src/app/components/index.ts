@@ -5,7 +5,7 @@ export { GitSyncActions } from './git/git-sync-actions';
 export { EmptyState } from './empty-state';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
-export { SidebarCommand, SidebarDivider, SidebarField, SidebarLabel } from './sidebar';
+export { SidebarCommand, SidebarField, SidebarLabel } from './sidebar';
 export { StackPanel } from './stack-panel';
 export { NightCriticalBanner } from './layout/night-critical-banner';
 export { ProjectIdentityHeader } from './layout/project-identity-header';

@@ -1,4 +1,4 @@
-import { SidebarDivider, SidebarField, SidebarLabel } from '@/app/components/sidebar';
+import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { useRoadmapSidebar } from './hooks';
@@ -77,16 +77,13 @@ export const RoadmapSidebar = () => {
       </div>
 
       {hasActiveFilters && (
-        <>
-          <SidebarDivider />
-          <button
-            type="button"
-            onClick={clearRoadmapFilters}
-            className="pc-row-label text-2xs opacity-70 underline text-left"
-          >
-            Clear filters
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={clearRoadmapFilters}
+          className="pc-row-label text-2xs opacity-70 underline text-left"
+        >
+          Clear filters
+        </button>
       )}
     </div>
   );

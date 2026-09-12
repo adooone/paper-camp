@@ -2,6 +2,7 @@ export * from './use-deliver-checks-row';
 export * from './use-deliver-commit-form';
 export * from './use-feedback-composer';
 export * from './use-feedback-quiet-summary';
+export * from './use-plan-actions-column';
 export * from './use-plan-status-patch';
 export * from './use-plans-page';
 export * from './use-promote-thread-message';

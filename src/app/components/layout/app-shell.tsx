@@ -12,17 +12,15 @@ import {
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { HubShell } from '@/app/features/hub';
-import { PlanActionsColumn, PlanFilterColumn, PlansListSkeleton } from '@/app/features/plans/index';
+import {
+  PlanActionsColumn,
+  PlanActionsCommandsColumn,
+  PlanFilterColumn,
+  PlansListSkeleton,
+} from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
-import {
-  Button,
-  Divider,
-  IconButton,
-  Layout,
-  ToastProvider,
-  getSurfaceStyles,
-} from '@dendelion/paper-ui';
+import { Button, IconButton, Layout, ToastProvider, getSurfaceStyles } from '@dendelion/paper-ui';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
 import { NavLabel, SidebarToggleIcon, navItems } from './nav';
@@ -52,6 +50,11 @@ const GitFileList = lazy(() =>
 const LogSidebar = lazy(() =>
   importWithRecovery('LogSidebar', () => import('@/app/features/runs/index')).then((m) => ({
     default: m.LogSidebar,
+  })),
+);
+const LogStatsSidebar = lazy(() =>
+  importWithRecovery('LogStatsSidebar', () => import('@/app/features/runs/index')).then((m) => ({
+    default: m.LogStatsSidebar,
   })),
 );
 
@@ -168,13 +171,9 @@ export const AppShell = () => {
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={closeMobileSidebar}
                   >
-                    {isPlansArea && (
-                      <>
-                        <PlanFilterColumn />
-                        <Divider />
-                        <PlanActionsColumn />
-                      </>
-                    )}
+                    {isPlansArea && <PlanFilterColumn />}
+                    {isPlansArea && <PlanActionsColumn />}
+                    {isPlansArea && <PlanActionsCommandsColumn />}
                     {isDocsArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <DocsSidebar />
@@ -198,6 +197,11 @@ export const AppShell = () => {
                     {isLogArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <LogSidebar />
+                      </Suspense>
+                    )}
+                    {isLogArea && (
+                      <Suspense fallback={<SidebarSkeleton />}>
+                        <LogStatsSidebar />
                       </Suspense>
                     )}
                   </SidebarShell>

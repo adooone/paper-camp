@@ -58,7 +58,8 @@ to which commands a sidebar offers.
 - [x] Weight every clickable label at 600
       The `utilities.css` rule with form controls excluded, `data-clickable` on interactive `.pc-row`s, and the redundant `font-semibold` classes removed.
       run: 6m9s · 98 in · 21.7k out · sonnet-5 · sess:756988cf-97bf-41f6-a56e-9d0ea6cff1df
-- [ ] Turn sidebars into card stacks and delete the divider
+- [x] Turn sidebars into card stacks and delete the divider
       `SidebarShell` renders one card per child; the idea sidebar splits into a main and an actions card, the filter sidebars into filters and stats.
+      run: 8m29s · 118 in · 37.1k out · sonnet-5 · sess:756988cf-97bf-41f6-a56e-9d0ea6cff1df
 - [ ] Apply the divider rule across Settings, the hub, and the Stack panel
       Remove dividers under inputs and between unlike groups, splitting those into cards; keep the ones inside uniform lists.
