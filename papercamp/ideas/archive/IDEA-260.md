@@ -2,8 +2,9 @@
 id: IDEA-260
 title: A QR code in the banner
 type: feat
-status: review
+status: done
 created: 2026-09-12
+updated: 2026-09-12
 tags:
   - cli
 subject: Run & monitor
