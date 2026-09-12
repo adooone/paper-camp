@@ -64,7 +64,7 @@ describe('initProject Claude Code integration scaffolding', () => {
     expect(config.version).toBe(CORPUS_FORMAT_VERSION);
   });
 
-  it('never overwrites an existing skill file or settings.json', async () => {
+  it('never overwrites an existing skill file', async () => {
     const root = await makeTempDir('papercamp-scaffold-noclobber-');
 
     await mkdir(join(root, '.claude', 'skills', 'paper-camp'), { recursive: true });
@@ -73,16 +73,56 @@ describe('initProject Claude Code integration scaffolding', () => {
       'custom skill content\n',
       'utf-8',
     );
-    await writeFile(join(root, '.claude', 'settings.json'), '{"custom":true}\n', 'utf-8');
 
     await initProject(root, { projectName: 'demo' });
 
     expect(await readFile(join(root, '.claude', 'skills', 'paper-camp', 'SKILL.md'), 'utf-8')).toBe(
       'custom skill content\n',
     );
-    expect(await readFile(join(root, '.claude', 'settings.json'), 'utf-8')).toBe(
-      '{"custom":true}\n',
+  });
+
+  it('merges permissions.allow into an existing settings.json, keeping its other keys and hook', async () => {
+    const root = await makeTempDir('papercamp-scaffold-merge-');
+
+    await mkdir(join(root, '.claude'), { recursive: true });
+    await writeFile(
+      join(root, '.claude', 'settings.json'),
+      `${JSON.stringify(
+        {
+          custom: true,
+          hooks: {
+            SessionStart: [{ matcher: '*', hooks: [{ type: 'command', command: 'my-hook' }] }],
+          },
+          permissions: { allow: ['Bash(git log*)'] },
+        },
+        null,
+        2,
+      )}\n`,
+      'utf-8',
     );
+
+    await initProject(root, { projectName: 'demo' });
+
+    const settings = JSON.parse(await readFile(join(root, '.claude', 'settings.json'), 'utf-8'));
+    expect(settings.custom).toBe(true);
+    expect(settings.hooks.SessionStart[0].hooks[0].command).toBe('my-hook');
+    expect(settings.permissions.allow).toContain('Bash(git log*)');
+    expect(settings.permissions.allow).toContain('Edit(src/**)');
+    expect(
+      settings.permissions.allow.filter((entry: string) => entry === 'Bash(git log*)'),
+    ).toHaveLength(1);
+  });
+
+  it('leaves settings.json untouched when its allow list already covers the generated entries', async () => {
+    const root = await makeTempDir('papercamp-scaffold-merge-noop-');
+
+    await mkdir(join(root, '.claude'), { recursive: true });
+    const before = await import('./templates').then((m) => m.buildClaudeSettingsJson(root));
+    await writeFile(join(root, '.claude', 'settings.json'), before, 'utf-8');
+
+    await initProject(root, { projectName: 'demo' });
+
+    expect(await readFile(join(root, '.claude', 'settings.json'), 'utf-8')).toBe(before);
   });
 });
 

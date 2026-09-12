@@ -68,6 +68,25 @@ export function buildSessionStartCommand(hasDependency: boolean): string {
   return hasDependency ? `"${PAPER_CAMP_BIN}" session-focus` : 'paper-camp session-focus';
 }
 
+export function mergeClaudeSettingsJson(existingContent: string, targetDir: string): string {
+  let settings: Record<string, unknown>;
+  try {
+    settings = JSON.parse(existingContent);
+  } catch {
+    return existingContent;
+  }
+
+  const generatedAllow = buildPermissionsAllow(detectPackageManager(targetDir));
+  const permissions = (settings.permissions as { allow?: string[] } | undefined) ?? {};
+  const existingAllow = Array.isArray(permissions.allow) ? permissions.allow : [];
+  const missing = generatedAllow.filter((entry) => !existingAllow.includes(entry));
+
+  if (missing.length === 0 && settings.permissions !== undefined) return existingContent;
+
+  settings.permissions = { ...permissions, allow: [...existingAllow, ...missing] };
+  return `${JSON.stringify(settings, null, 2)}\n`;
+}
+
 export function buildClaudeSettingsJson(targetDir: string): string {
   const packageManager = detectPackageManager(targetDir);
   const command = buildSessionStartCommand(hasPaperCampDependency(targetDir));

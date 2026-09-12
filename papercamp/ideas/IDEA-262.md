@@ -55,9 +55,10 @@ how the daemon launches agents.
       Detect the package manager from the lockfile and build both the
       `permissions.allow` list and the SessionStart command in `templates.ts`.
       run: 1m35s · 32 in · 8k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
-- [ ] Merge an existing settings.json instead of skipping it
+- [x] Merge an existing settings.json instead of skipping it
       `initProject` appends only the missing entries and leaves the user's
       hook and edits intact.
+      run: 1m18s · 26 in · 6.2k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
 - [ ] Offer `paper-camp init --settings` in an initialised project
 - [ ] Warn in `paper-camp doctor` when `permissions.allow` is absent
 - [ ] Cover detection, merging, and both commands in tests
