@@ -5,9 +5,10 @@ import {
   type AgentConfig,
   type AgentId,
 } from '@/types/index';
-import { Divider, Input, Select } from '@dendelion/paper-ui';
+import { Card, Input, Select } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
+import { AGENT_TABLE_GRID_CLASS } from './agent-task-row-header';
 
 const AGENT_COLUMN_WIDTH = 140;
 const MODEL_COLUMN_WIDTH = 160;
@@ -16,19 +17,12 @@ const EFFORT_COLUMN_WIDTH = 110;
 interface AgentTaskRowProps {
   taskKey: TaskTypeKey;
   agentConfig: AgentConfig;
-  isLast: boolean;
   onSave: (key: TaskTypeKey, config: AgentConfig) => Promise<void>;
   // The code-authoring task's config — codeReview's model must never match it (IDEA-170).
   authorConfig?: AgentConfig;
 }
 
-export const AgentTaskRow = ({
-  taskKey,
-  agentConfig,
-  isLast,
-  onSave,
-  authorConfig,
-}: AgentTaskRowProps) => {
+export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: AgentTaskRowProps) => {
   // Fall back if the config carries an unknown agent id — never white-screen the page.
   const opts = AGENT_OPTIONS[agentConfig.agent] ?? AGENT_OPTIONS['claude-code'];
   const excludedModel =
@@ -74,9 +68,9 @@ export const AgentTaskRow = ({
   };
 
   return (
-    <>
-      <div className="flex items-center gap-3 pb-2 pt-2">
-        <span className="w-[110px] shrink-0 text-sm opacity-[0.65]">
+    <Card size="small" texture="kraft" className="plan-row-card">
+      <div className={AGENT_TABLE_GRID_CLASS}>
+        <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">
           {TASK_TYPE_LABELS[taskKey]}
         </span>
         <Select
@@ -122,7 +116,6 @@ export const AgentTaskRow = ({
           />
         </div>
       </div>
-      {!isLast && <Divider />}
-    </>
+    </Card>
   );
 };

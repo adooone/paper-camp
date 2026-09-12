@@ -1,8 +1,15 @@
+import { Card } from '@dendelion/paper-ui';
+
+export const AGENT_TABLE_GRID_CLASS =
+  'grid grid-cols-[110px_140px_160px_110px] gap-3 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
 export const AgentTaskRowHeader = () => (
-  <div className="flex items-center gap-3 pb-1">
-    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Task</span>
-    <span className="w-[140px] shrink-0 text-sm opacity-[0.45]">Agent</span>
-    <span className="w-[160px] shrink-0 text-sm opacity-[0.45]">Model</span>
-    <span className="w-[110px] shrink-0 text-sm opacity-[0.45]">Effort</span>
-  </div>
+  <Card size="small" texture="kraft" className="plan-row-card">
+    <div className={AGENT_TABLE_GRID_CLASS}>
+      <span className="font-handwritten text-sm opacity-60 whitespace-nowrap">Task</span>
+      <span className="font-handwritten text-sm opacity-60 whitespace-nowrap">Agent</span>
+      <span className="font-handwritten text-sm opacity-60 whitespace-nowrap">Model</span>
+      <span className="font-handwritten text-sm opacity-60 whitespace-nowrap">Effort</span>
+    </div>
+  </Card>
 );

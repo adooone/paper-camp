@@ -89,6 +89,22 @@ export const useSettingsPage = () => {
     }
   };
 
+  const handleToggleToolbar = async () => {
+    if (!config) return;
+    const next = !(config.integration?.toolbar?.enabled ?? true);
+    const integration = {
+      ...config.integration,
+      toolbar: { ...config.integration?.toolbar, enabled: next },
+    };
+    const { ok, error } = await saveConfig({ integration });
+    if (ok) {
+      setConfig((prev) => (prev ? { ...prev, integration } : prev));
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({ title: 'Failed to save', description: error, variant: 'error' });
+    }
+  };
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -121,6 +137,7 @@ export const useSettingsPage = () => {
     handleSaveAgentConfig,
     handleSavePort,
     handleSaveName,
+    handleToggleToolbar,
     handleFile,
   };
 };
