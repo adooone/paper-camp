@@ -1,7 +1,8 @@
 import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { isNotificationKindEnabled, notificationSettingKind } from '@/core/notifications';
 import { parseNotificationLog } from '@/core/parse';
-import type { StoredNotification, StoredNotificationKind } from '@/types/index';
+import type { PaperCampConfig, StoredNotification, StoredNotificationKind } from '@/types/index';
 import { campFile, readMaybe } from './helpers';
 
 // Serialized like tasks.log: an append racing a mark-read read-modify-write
@@ -19,6 +20,13 @@ interface NewNotification {
 
 const notificationLogPath = (root: string) => campFile(root, 'notifications.log');
 
+async function resolvePush(root: string, notification: NewNotification): Promise<boolean> {
+  const raw = await readMaybe(campFile(root, 'config.json'));
+  const config = raw ? (JSON.parse(raw) as PaperCampConfig) : undefined;
+  const settingKind = notificationSettingKind(notification.kind, notification.outcome);
+  return isNotificationKindEnabled(config?.notifications?.kinds, settingKind);
+}
+
 // Best-effort: a log write failure must never take down the event that triggered it.
 export function appendNotification(root: string, notification: NewNotification): Promise<void> {
   const run = notificationChain.then(async () => {
@@ -26,6 +34,7 @@ export function appendNotification(root: string, notification: NewNotification):
       ...notification,
       date: new Date().toISOString(),
       read: false,
+      push: await resolvePush(root, notification),
     };
     const path = notificationLogPath(root);
     try {

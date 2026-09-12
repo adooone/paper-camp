@@ -81,6 +81,7 @@ describe('computeLogStats', () => {
           text: 'Answered',
           date: '2026-08-01T00:00:00.000Z',
           read: false,
+          push: true,
         },
       },
     };

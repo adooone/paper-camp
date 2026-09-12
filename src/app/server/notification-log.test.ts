@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -67,6 +67,35 @@ describe('appendNotification', () => {
 
     const logged = await readNotifications(root);
     expect(logged.map((n) => n.id)).toEqual(['notif-1', 'notif-2']);
+  });
+
+  it('stamps push true for a kind that is on by default', async () => {
+    const root = makeRoot();
+    await appendNotification(root, notification({ outcome: 'error' }));
+
+    const [logged] = await readNotifications(root);
+    expect(logged.push).toBe(true);
+  });
+
+  it('stamps push false for a kind that is off by default', async () => {
+    const root = makeRoot();
+    await appendNotification(root, notification({ kind: 'reply' }));
+
+    const [logged] = await readNotifications(root);
+    expect(logged.push).toBe(false);
+  });
+
+  it('stamps push false when the project config switches the kind off', async () => {
+    const root = makeRoot();
+    writeFileSync(
+      join(root, 'papercamp', 'config.json'),
+      JSON.stringify({ notifications: { kinds: { 'check-failed': false } } }),
+    );
+
+    await appendNotification(root, { ...notification(), kind: 'check-failed' });
+
+    const [logged] = await readNotifications(root);
+    expect(logged.push).toBe(false);
   });
 });
 

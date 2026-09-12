@@ -18,6 +18,7 @@ const stored = (overrides: Partial<StoredNotification> = {}): StoredNotification
   text: 'run-all finished',
   date: '2026-08-12T00:00:00.000Z',
   read: false,
+  push: true,
   ...overrides,
 });
 

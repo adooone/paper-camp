@@ -1,12 +1,13 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { deskConfigSchema, nightConfigSchema } from '@/core/parse';
+import { deskConfigSchema, nightConfigSchema, notificationsConfigSchema } from '@/core/parse';
 import {
   AGENT_IDS,
   type AgentId,
   type DefaultAgentsMap,
   type IntegrationConfig,
   type NightConfig,
+  type NotificationsConfig,
   type PaperCampConfig,
   TOOLBAR_SEGMENT_IDS,
   type ToolbarSegmentId,
@@ -65,6 +66,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           };
           desk?: unknown;
           night?: unknown;
+          notifications?: unknown;
         };
         const {
           port,
@@ -75,6 +77,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           integration,
           desk,
           night,
+          notifications,
         } = bodyParsed;
         const rawDefaultAgents = bodyParsed.defaultAgents;
         if (port !== undefined && (!Number.isInteger(port) || port <= 0)) {
@@ -178,6 +181,14 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: `night: ${nightResult.error.message}` });
           return;
         }
+        const notificationsResult =
+          notifications !== undefined
+            ? notificationsConfigSchema.safeParse(notifications)
+            : undefined;
+        if (notificationsResult && !notificationsResult.success) {
+          sendJson(res, 400, { error: `notifications: ${notificationsResult.error.message}` });
+          return;
+        }
         const config = JSON.parse(raw) as PaperCampConfig;
         const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
           ? {
@@ -229,6 +240,13 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
         const resolvedNight: NightConfig | undefined = nightResult?.success
           ? { ...config.night, ...nightResult.data }
           : undefined;
+        const resolvedNotifications: NotificationsConfig | undefined = notificationsResult?.success
+          ? {
+              ...config.notifications,
+              ...notificationsResult.data,
+              kinds: { ...config.notifications?.kinds, ...notificationsResult.data.kinds },
+            }
+          : undefined;
         const updated: PaperCampConfig = {
           ...configRest,
           ...(port !== undefined && { port }),
@@ -238,6 +256,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           ...(resolvedIntegration && { integration: resolvedIntegration }),
           ...(deskProvided && { desk: resolvedDesk }),
           ...(resolvedNight && { night: resolvedNight }),
+          ...(resolvedNotifications && { notifications: resolvedNotifications }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
         activity.notifyChanged();

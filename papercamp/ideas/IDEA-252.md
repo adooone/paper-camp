@@ -79,8 +79,9 @@ projects in the hub.
 - [x] Widen the kinds into one union
       Replace `StoredNotificationKind` in `src/types/index.ts` with the full list, and emit check failed, PR review requested changes, night review findings, and service stopped from where each is already detected.
       run: 8m20s · 142 in · 36.2k out · sonnet-5 · sess:4200702c-e400-4318-8bfe-785c07a70370
-- [ ] Store the per-kind switches in `papercamp/config.json`
+- [x] Store the per-kind switches in `papercamp/config.json`
       `notifications.kinds` with the stated defaults, read when the log appends so an off kind is still logged and counted but never pushed.
+      run: 6m41s · 132 in · 26.1k out · sonnet-5 · sess:824f9143-263b-413c-b928-13e253787727
 - [ ] Keep subscriptions and VAPID keys in the daemon
       `push.json` and `vapid.json` under `PAPERCAMP_CONFIG_DIR`, behind `POST`/`DELETE /p/<slug>/api/push/subscribe` and a public-key read.
 - [ ] Send on append over Web Push and Expo

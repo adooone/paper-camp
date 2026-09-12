@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AGENT_IDS, NIGHT_CHECK_IDS } from '../../types/index';
+import { AGENT_IDS, NIGHT_CHECK_IDS, NOTIFICATION_SETTING_KINDS } from '../../types/index';
 
 export const agentConfigSchema = z.preprocess(
   (v) => (typeof v === 'string' ? { agent: v } : v),
@@ -218,6 +218,10 @@ export const nightConfigSchema = z.object({
   maxCostUsd: z.number().positive().optional(),
 });
 
+export const notificationsConfigSchema = z.object({
+  kinds: z.record(z.enum(NOTIFICATION_SETTING_KINDS), z.boolean()).optional(),
+});
+
 export const paperCampConfigSchema = z.object({
   version: z
     .number()
@@ -253,6 +257,7 @@ export const paperCampConfigSchema = z.object({
     .optional(),
   desk: deskConfigSchema.optional(),
   night: nightConfigSchema.optional(),
+  notifications: notificationsConfigSchema.optional(),
 });
 
 // notifications.log entries — JSON Lines, so a corrupt or half-written line must
@@ -273,6 +278,7 @@ export const storedNotificationSchema = z.object({
   date: z.string(),
   read: z.boolean(),
   outcome: z.enum(['done', 'error']).optional(),
+  push: z.boolean().optional().default(true),
 });
 
 export type PlanFields = z.infer<typeof planFieldsSchema>;

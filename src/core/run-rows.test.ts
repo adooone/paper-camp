@@ -52,6 +52,7 @@ const storedNotification = (overrides: Partial<StoredNotification> = {}): Stored
   text: 'Phase run finished',
   date: '2026-08-01T00:05:00.000Z',
   read: false,
+  push: true,
   ...overrides,
 });
 

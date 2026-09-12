@@ -21,6 +21,7 @@ const stored = (overrides: Partial<StoredNotification> = {}): StoredNotification
   text: 'run-all finished',
   date: daysAgo(2),
   read: false,
+  push: true,
   ...overrides,
 });
 

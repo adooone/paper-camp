@@ -301,6 +301,37 @@ export interface StoredNotification {
   read: boolean;
   /** Only set for 'completed' — the task outcome that triggered it. */
   outcome?: 'done' | 'error' | 'interrupted';
+  push: boolean;
+}
+
+export const NOTIFICATION_SETTING_KINDS = [
+  'run-finished',
+  'run-failed',
+  'run-interrupted',
+  'check-failed',
+  'question-parked',
+  'pr-review-changes-requested',
+  'night-review-findings',
+  'service-stopped',
+  'reply-posted',
+] as const;
+
+export type NotificationSettingKind = (typeof NOTIFICATION_SETTING_KINDS)[number];
+
+export const DEFAULT_NOTIFICATION_KINDS: Record<NotificationSettingKind, boolean> = {
+  'run-finished': false,
+  'run-failed': true,
+  'run-interrupted': true,
+  'check-failed': true,
+  'question-parked': true,
+  'pr-review-changes-requested': true,
+  'night-review-findings': true,
+  'service-stopped': true,
+  'reply-posted': false,
+};
+
+export interface NotificationsConfig {
+  kinds?: Partial<Record<NotificationSettingKind, boolean>>;
 }
 
 /** One unified feed entry (IDEA-153) — a parked question (open→resolved, always
@@ -883,6 +914,7 @@ export interface PaperCampConfig {
   };
   /** Night shift gate and scoring settings (IDEA-241); merge with DEFAULT_NIGHT_CONFIG for unset fields. */
   night?: NightConfig;
+  notifications?: NotificationsConfig;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
