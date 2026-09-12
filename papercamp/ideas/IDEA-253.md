@@ -107,8 +107,9 @@ app-wide `STATUS_STAMP` pattern and move together in [[IDEA-111]].
 - [x] Rebuild Setup with collapsing connection rows
       Healthy rows are one line with a tooltip on the stamp; incomplete rows show detail and the connect action. *Show Setup on open* switch replaces the dismiss button.
       run: 2m7s · 34 in · 9.4k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
-- [ ] Make Merge Policy booleans live switches
+- [x] Make Merge Policy booleans live switches
       `applyMergePolicy(root, partial?)` PATCHes only the given fields; the route and `config-api.ts` pass the partial through; recommended hint on rows that differ.
+      run: 2m57s · 38 in · 14.2k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
 - [ ] Rebuild Desk as header-then-rows tables
       Group label with *Add* action, column header row, unlabeled inputs per row, CI as three rows with the Release Please switch.
 - [ ] Remove the Subjects section
