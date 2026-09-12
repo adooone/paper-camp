@@ -1,15 +1,15 @@
-import { CloseIcon, Divider, IconButton, Input } from '@dendelion/paper-ui';
+import { Card, CloseIcon, IconButton, Input } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import type { KeyedDeskCheck } from '../hooks/use-desk-section';
+import { DESK_CHECK_GRID_CLASS } from './desk-check-row-header';
 
 interface DeskCheckRowProps {
   check: KeyedDeskCheck;
   onSave: (check: KeyedDeskCheck) => void;
   onRemove: () => void;
-  isLast: boolean;
 }
 
-export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowProps) => {
+export const DeskCheckRow = ({ check, onSave, onRemove }: DeskCheckRowProps) => {
   const [local, setLocal] = useState(check);
 
   useEffect(() => setLocal(check), [check]);
@@ -26,25 +26,22 @@ export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowPr
   };
 
   return (
-    <>
-      <div className="flex items-end gap-3 pb-2 pt-2">
+    <Card size="small" texture="kraft" className="plan-row-card">
+      <div className={DESK_CHECK_GRID_CLASS}>
         <Input
           size="small"
-          label="Name"
           value={local.name}
           onChange={(e) => setLocal({ ...local, name: e.target.value })}
           onBlur={commit}
         />
         <Input
           size="small"
-          label="Command"
           value={local.cmd}
           onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
           onBlur={commit}
         />
         <Input
           size="small"
-          label="Fix command"
           value={local.fixCmd ?? ''}
           onChange={(e) => setLocal({ ...local, fixCmd: e.target.value || undefined })}
           onBlur={commit}
@@ -57,7 +54,6 @@ export const DeskCheckRow = ({ check, onSave, onRemove, isLast }: DeskCheckRowPr
           label={`Remove ${check.name || 'check'}`}
         />
       </div>
-      {!isLast && <Divider />}
-    </>
+    </Card>
   );
 };
