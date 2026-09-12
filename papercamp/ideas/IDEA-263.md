@@ -60,9 +60,10 @@ rules.
       `CheckName`, `StatusPayload`, the status SSE messages, the run route, and the
       status slice lose the fixed consistency slot.
       run: 8m55s · 154 in · 37.6k out · sonnet-5 · sess:e1d85bce-cd0c-45f4-87be-a350fe2f87db
-- [ ] Gate the orphan-subject rule on a roadmap
+- [x] Gate the orphan-subject rule on a roadmap
       `findConsistencyIssues` skips the subject rule when no vocabulary exists, at
       every call site.
+      run: 1m24s · 32 in · 3.3k out · sonnet-5 · sess:f5e8207c-ed8b-49b8-821f-e768006e4047
 - [ ] Propose Consistency only where it fits
       Desk discovery suggests such a check for knip/depcruise-like scripts only.
 - [ ] Draw the checks group from the manifest

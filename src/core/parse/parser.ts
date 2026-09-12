@@ -386,7 +386,8 @@ export function findConsistencyIssues(
     // Archived ideas have graduated; the roadmap prunes their subject when they ship,
     // so an off-vocabulary subject there is expected history, not a live inconsistency.
     if (plan.archived) continue;
-    if (plan.subject && !subjectVocabulary.includes(plan.subject)) {
+    // No vocabulary means no roadmap (or an empty one) — subjects are free-form until one exists.
+    if (subjectVocabulary.length > 0 && plan.subject && !subjectVocabulary.includes(plan.subject)) {
       issues.push({
         kind: 'orphan-subject',
         section: 'plans',

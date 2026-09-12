@@ -296,6 +296,12 @@ describe('findConsistencyIssues', () => {
     expect(findConsistencyIssues(plans, ['Packaging'])).toEqual(expected);
   });
 
+  it('does not flag any subject when there is no roadmap vocabulary', () => {
+    expect(
+      findConsistencyIssues([plan({ title: 'Plan A', id: 'FEAT-2', subject: 'Anything' })]),
+    ).toEqual([]);
+  });
+
   it.each<[string, PlanEntry[], unknown[]]>([
     [
       'flags an active idea whose title runs past 40 characters',
