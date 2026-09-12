@@ -61,5 +61,6 @@ how the daemon launches agents.
       run: 1m18s · 26 in · 6.2k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
 - [x] Offer `paper-camp init --settings` in an initialised project
       run: 56s · 26 in · 4.5k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
-- [ ] Warn in `paper-camp doctor` when `permissions.allow` is absent
+- [x] Warn in `paper-camp doctor` when `permissions.allow` is absent
+      run: 1m37s · 40 in · 7.9k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
 - [ ] Cover detection, merging, and both commands in tests

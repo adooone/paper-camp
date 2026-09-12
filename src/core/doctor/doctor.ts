@@ -1,8 +1,9 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import { metadataChecks } from './checks/metadata';
 import { structuralChecks } from './checks/structural';
+import { toolingChecks } from './checks/tooling';
 import type { DoctorFinding } from './finding';
 
 export interface DoctorEntityFile {
@@ -15,11 +16,16 @@ export interface DoctorEntityFile {
 export interface DoctorContext {
   files: DoctorEntityFile[];
   config: PaperCampConfig | null;
+  hasPermissionsAllow?: boolean;
 }
 
 export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
 
-export const DOCTOR_CHECKS: DoctorCheck[] = [...metadataChecks, ...structuralChecks];
+export const DOCTOR_CHECKS: DoctorCheck[] = [
+  ...metadataChecks,
+  ...structuralChecks,
+  ...toolingChecks,
+];
 
 function isEnoent(error: unknown): boolean {
   return (error as NodeJS.ErrnoException | null)?.code === 'ENOENT';
@@ -51,6 +57,22 @@ async function readConfig(configPath: string): Promise<PaperCampConfig | null> {
   }
 }
 
+async function readHasPermissionsAllow(root: string): Promise<boolean> {
+  let raw: string;
+  try {
+    raw = await readFile(join(root, '.claude', 'settings.json'), 'utf-8');
+  } catch (error) {
+    if (isEnoent(error)) return false;
+    throw error;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { permissions?: { allow?: unknown } };
+    return Array.isArray(parsed.permissions?.allow) && parsed.permissions.allow.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export async function collectDoctorContext(paperCampDir: string): Promise<DoctorContext> {
   const ideasDir = join(paperCampDir, 'ideas');
   const files: DoctorEntityFile[] = [];
@@ -76,7 +98,11 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
     }
   }
 
-  return { files, config: await readConfig(join(paperCampDir, 'config.json')) };
+  return {
+    files,
+    config: await readConfig(join(paperCampDir, 'config.json')),
+    hasPermissionsAllow: await readHasPermissionsAllow(dirname(paperCampDir)),
+  };
 }
 
 export function runDoctorChecks(context: DoctorContext): DoctorFinding[] {

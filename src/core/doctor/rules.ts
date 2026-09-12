@@ -1,6 +1,6 @@
 export type DoctorSeverity = 'error' | 'warning';
 
-export type DoctorCategory = 'metadata' | 'structural';
+export type DoctorCategory = 'metadata' | 'structural' | 'tooling';
 
 export interface DoctorRule {
   id: string;
@@ -75,6 +75,13 @@ export const DOCTOR_RULES = [
     category: 'structural',
     severity: 'warning',
     summary: 'A [[IDEA-N]] wikilink targets an id that no entity in the corpus defines.',
+  },
+  {
+    id: 'missing-permissions-allow',
+    category: 'tooling',
+    severity: 'warning',
+    summary:
+      '.claude/settings.json has no permissions.allow list, so a headless run denies every edit and shell command outside the defaults — run `paper-camp init --settings` to add it.',
   },
 ] as const satisfies readonly DoctorRule[];
 
