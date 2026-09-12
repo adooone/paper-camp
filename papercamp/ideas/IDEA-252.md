@@ -85,8 +85,9 @@ projects in the hub.
 - [x] Keep subscriptions and VAPID keys in the daemon
       `push.json` and `vapid.json` under `PAPERCAMP_CONFIG_DIR`, behind `POST`/`DELETE /p/<slug>/api/push/subscribe` and a public-key read.
       run: 5m17s · 78 in · 23.9k out · sonnet-5 · sess:824f9143-263b-413c-b928-13e253787727
-- [ ] Send on append over Web Push and Expo
+- [x] Send on append over Web Push and Expo
       Fan out to every subscription for the project, drop the ones the transport reports gone, and log failures to `daemon.log`.
+      run: 2m59s · 76 in · 20.5k out · sonnet-5 · sess:aa5e3cac-6d66-4d29-ade4-dc4aac0fc80c
 - [ ] Add `sw.js` to the hosted client
       Handle `push` and `notificationclick` with no precaching, register it when *This device* is switched on, and delete the tab-open announcement in `use-notification-push.ts`.
 - [ ] Build Settings → Notifications

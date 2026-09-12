@@ -2,6 +2,7 @@ import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { isNotificationKindEnabled, notificationSettingKind } from '@/core/notifications';
 import { parseNotificationLog } from '@/core/parse';
+import { sendPushForProject } from '@/core/push-send';
 import type { PaperCampConfig, StoredNotification, StoredNotificationKind } from '@/types/index';
 import { campFile, readMaybe } from './helpers';
 
@@ -42,6 +43,16 @@ export function appendNotification(root: string, notification: NewNotification):
       await appendFile(path, `${JSON.stringify(entry)}\n`, 'utf-8');
     } catch (err) {
       console.error(`papercamp: could not append notification ${notification.id}:`, err);
+    }
+    if (entry.push) {
+      void sendPushForProject(root, {
+        id: entry.id,
+        entityId: entry.entityId,
+        entityTitle: entry.entityTitle,
+        text: entry.text,
+      }).catch((err) => {
+        console.error(`papercamp: could not send push for notification ${notification.id}:`, err);
+      });
     }
   });
   notificationChain = run.catch(() => undefined);
