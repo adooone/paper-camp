@@ -1610,6 +1610,15 @@ export function createAgentManager(
         plan.id,
         `${context} finished but project checks (${introducedNames}) are still failing after ${fixAttempt} fix attempt(s). Reply here with guidance to unblock and resume.`,
       );
+      if (plan.id) {
+        void appendNotification(root, {
+          id: randomUUID(),
+          kind: 'check-failed',
+          entityId: plan.id,
+          entityTitle: plan.title,
+          text: `${introducedNames} still failing after ${fixAttempt} fix attempt(s)`,
+        });
+      }
       void setStatus(task, 'error');
       return false;
     }

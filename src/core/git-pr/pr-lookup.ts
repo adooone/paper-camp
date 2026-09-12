@@ -468,6 +468,31 @@ export async function resolvePrsByEntity(
   return cached?.prs;
 }
 
+/** The in-memory map as of the last resolved fetch, without triggering one — lets a
+ * caller diff "before" against `resolvePrsByEntity`'s "after" around a refresh. */
+export function peekCachedPrs(root: string): Map<string, PrInfo> | undefined {
+  return cache.get(root)?.prs;
+}
+
+/** Every entity whose PR just reached 'changes-requested' on this fetch — keyed by
+ * PR number + head sha, same continuity rule as `collectPrReviewIssues`, so a
+ * still-outstanding request doesn't re-notify and a fresh push that gets re-reviewed
+ * does. */
+export function entitiesWithNewChangesRequested(
+  previous: Map<string, PrInfo> | undefined,
+  fresh: Map<string, PrInfo>,
+): { entityId: string; pr: PrInfo }[] {
+  const reviewKey = (pr: PrInfo) => `${pr.number}:${pr.headSha ?? 'unknown'}`;
+  const result: { entityId: string; pr: PrInfo }[] = [];
+  for (const [entityId, pr] of fresh) {
+    if (pr.reviewDecision !== 'changes-requested') continue;
+    const prev = previous?.get(entityId);
+    const prevKey = prev?.reviewDecision === 'changes-requested' ? reviewKey(prev) : undefined;
+    if (prevKey !== reviewKey(pr)) result.push({ entityId, pr });
+  }
+  return result;
+}
+
 /** Reads the timestamp of the last successful GitHub fetch without triggering one
  * — falls back to the on-disk map if nothing's cached in memory yet. */
 export async function getPrMapFetchedAt(root: string): Promise<number | null> {

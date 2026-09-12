@@ -278,11 +278,18 @@ export interface ParkedQuestion {
   ageDays: number;
 }
 
-/** The two event-sourced notification kinds (IDEA-153) — 'completed' when a task
- * reaches done/error, 'reply' when an agent posts a non-blocking feedback thread
- * entry. Unlike ParkedQuestion (derived live from thread state), these are stored
- * as discrete events on read, so a since-resolved source can't erase them. */
-export type StoredNotificationKind = 'completed' | 'reply';
+/** The event-sourced notification kinds (IDEA-153, widened by IDEA-252) — 'completed'
+ * when a task reaches done/error, 'reply' when an agent posts a non-blocking feedback
+ * thread entry, and four kinds a run/desk/PR/night-review already detects but never
+ * used to log. Unlike ParkedQuestion (derived live from thread state), these are
+ * stored as discrete events on read, so a since-resolved source can't erase them. */
+export type StoredNotificationKind =
+  | 'completed'
+  | 'reply'
+  | 'check-failed'
+  | 'pr-review-changes-requested'
+  | 'night-review-findings'
+  | 'service-stopped';
 
 export interface StoredNotification {
   id: string;

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { appendNotification } from '../app/server/notification-log';
 import { logTaskCompletion, logTaskStart } from '../app/server/task-log';
 import {
   daemonStatePath,
@@ -290,6 +291,13 @@ async function reportNightPass(
     message: finding.message,
   }));
   await writeFile(suggestionsPath, appendNightFindings(raw, entries), 'utf-8');
+  await appendNotification(project.path, {
+    id: randomUUID(),
+    kind: 'night-review-findings',
+    entityId: result.chunkPath,
+    entityTitle: result.chunkPath,
+    text: `${accepted.length} finding(s) from tonight's review`,
+  });
   return { written: accepted.length, dropped };
 }
 

@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { deskConfigSchema } from '@/core/parse';
 import type * as Pty from 'node-pty';
 import type { DeskService, ServiceHealth, ServiceRunStatus, ServiceState } from '../../types';
+import { appendNotification } from './notification-log';
 
 const MAX_LOG_LINES = 500;
 const HEALTH_POLL_MS = 5000;
@@ -200,7 +202,17 @@ export function createDeskServiceManager(
       runtime.startedAt = null;
       runtime.exitCode = exitCode;
       runtime.health = 'unknown';
-      runtime.status = runtime.status === 'stopping' || exitCode === 0 ? 'stopped' : 'crashed';
+      const wasStopping = runtime.status === 'stopping';
+      runtime.status = wasStopping || exitCode === 0 ? 'stopped' : 'crashed';
+      if (!wasStopping && runtime.status === 'crashed') {
+        void appendNotification(root, {
+          id: randomUUID(),
+          kind: 'service-stopped',
+          entityId: name,
+          entityTitle: name,
+          text: `"${name}" stopped unexpectedly (exit ${exitCode})`,
+        });
+      }
       broadcast(name);
     });
 

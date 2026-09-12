@@ -259,7 +259,14 @@ export const paperCampConfigSchema = z.object({
 // fail validation and be skipped rather than reach the inbox as a broken row.
 export const storedNotificationSchema = z.object({
   id: z.string(),
-  kind: z.enum(['completed', 'reply']),
+  kind: z.enum([
+    'completed',
+    'reply',
+    'check-failed',
+    'pr-review-changes-requested',
+    'night-review-findings',
+    'service-stopped',
+  ]),
   entityId: z.string(),
   entityTitle: z.string(),
   text: z.string(),
