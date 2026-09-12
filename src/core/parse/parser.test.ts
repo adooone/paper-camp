@@ -869,7 +869,10 @@ describe('parseNotificationLog', () => {
       read: true,
     };
     const jsonl = `${JSON.stringify(entryA)}\n${JSON.stringify(entryB)}\n`;
-    expect(parseNotificationLog(jsonl)).toEqual([entryA, entryB]);
+    expect(parseNotificationLog(jsonl)).toEqual([
+      { ...entryA, push: true },
+      { ...entryB, push: true },
+    ]);
   });
 
   it('skips malformed lines and blank lines rather than failing the whole read', () => {
@@ -883,7 +886,7 @@ describe('parseNotificationLog', () => {
       read: false,
     };
     const jsonl = `${JSON.stringify(entry)}\n\nnot json\n`;
-    expect(parseNotificationLog(jsonl)).toEqual([entry]);
+    expect(parseNotificationLog(jsonl)).toEqual([{ ...entry, push: true }]);
   });
 
   it('returns an empty array for an empty file', () => {
@@ -910,7 +913,7 @@ describe('parseNotificationLog', () => {
       JSON.stringify(invalidKind),
       JSON.stringify(invalidOutcome),
     ].join('\n');
-    expect(parseNotificationLog(jsonl)).toEqual([valid]);
+    expect(parseNotificationLog(jsonl)).toEqual([{ ...valid, push: true }]);
   });
 });
 
