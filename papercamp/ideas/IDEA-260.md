@@ -31,3 +31,12 @@ or image encoding, and the package is the only addition.
 
 Rendering the code in the hosted client. Any change to what the link
 carries.
+
+### Phases
+- [ ] Add `qrcode` and a half-block renderer
+      One helper that turns a link into the smallest terminal code that fits it.
+- [ ] Draw the code under the link in the banner
+      Gate it on a Tailnet or Tunnel link and on a TTY, so the daemon's log keeps the link alone.
+- [ ] Add `--qr` to `paper-camp status`
+      Print the code for the link `status` lists first.
+- [ ] Cover the renderer and the gating with tests

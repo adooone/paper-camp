@@ -1,5 +1,4 @@
-import { Card } from '@dendelion/paper-ui';
-import { Children, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -64,17 +63,7 @@ export const SidebarShell = ({
         }`}
       >
         <div key={routeKey} className="mt-8 mb-8 flex min-h-0 flex-col gap-8 overflow-y-auto">
-          {Children.map(children, (child) =>
-            child ? (
-              <Card
-                size="small"
-                texture={{ texture: 'parchment', shade: true }}
-                className="pc-sidebar-card shrink-0"
-              >
-                {child}
-              </Card>
-            ) : null,
-          )}
+          {children}
         </div>
       </aside>
     </>

@@ -1,3 +1,4 @@
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField } from '@/app/components/sidebar';
 import { formatDuration } from '@/core/phase-run';
 import type { LogDateRange, LogSort } from '@/core/run-filters';
@@ -42,58 +43,60 @@ export const LogSidebar = () => {
   const { filters, setFilters, hasActiveFilters, clearFilters } = useLogPage();
 
   return (
-    <div className="flex flex-col">
-      <SidebarField label="Search">
-        <Input
-          type="search"
-          size="small"
-          placeholder="Search title, entity, or reason…"
-          aria-label="Search the log"
-          value={filters.q}
-          onChange={(event) => setFilters({ q: event.target.value })}
-        />
-      </SidebarField>
+    <SidebarCard>
+      <div className="flex flex-col">
+        <SidebarField label="Search">
+          <Input
+            type="search"
+            size="small"
+            placeholder="Search title, entity, or reason…"
+            aria-label="Search the log"
+            value={filters.q}
+            onChange={(event) => setFilters({ q: event.target.value })}
+          />
+        </SidebarField>
 
-      <SidebarField label="Agent">
-        <Select
-          size="small"
-          value={filters.agent ?? ''}
-          options={AGENT_OPTIONS}
-          onChange={(value) =>
-            setFilters({ agent: value ? (value as typeof filters.agent) : undefined })
-          }
-        />
-      </SidebarField>
+        <SidebarField label="Agent">
+          <Select
+            size="small"
+            value={filters.agent ?? ''}
+            options={AGENT_OPTIONS}
+            onChange={(value) =>
+              setFilters({ agent: value ? (value as typeof filters.agent) : undefined })
+            }
+          />
+        </SidebarField>
 
-      <SidebarField label="Range">
-        <Select
-          size="small"
-          value={filters.range}
-          options={RANGE_OPTIONS}
-          onChange={(value) => setFilters({ range: value as LogDateRange })}
-        />
-      </SidebarField>
+        <SidebarField label="Range">
+          <Select
+            size="small"
+            value={filters.range}
+            options={RANGE_OPTIONS}
+            onChange={(value) => setFilters({ range: value as LogDateRange })}
+          />
+        </SidebarField>
 
-      <SidebarField label="Sort">
-        <Select
-          size="small"
-          value={filters.sort}
-          options={SORT_OPTIONS}
-          onChange={(value) => setFilters({ sort: value as LogSort })}
-        />
-      </SidebarField>
+        <SidebarField label="Sort">
+          <Select
+            size="small"
+            value={filters.sort}
+            options={SORT_OPTIONS}
+            onChange={(value) => setFilters({ sort: value as LogSort })}
+          />
+        </SidebarField>
 
-      {hasActiveFilters && (
-        <button
-          type="button"
-          data-testid="clear-log-filters"
-          onClick={clearFilters}
-          className="pc-row-label text-2xs opacity-70 underline text-left"
-        >
-          Clear filters
-        </button>
-      )}
-    </div>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            data-testid="clear-log-filters"
+            onClick={clearFilters}
+            className="pc-row-label text-2xs opacity-70 underline text-left"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+    </SidebarCard>
   );
 };
 
@@ -101,18 +104,20 @@ export const LogStatsSidebar = () => {
   const { stats } = useLogPage();
 
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-      <StatRow label="Runs" value={String(stats.runs)} />
-      <StatRow label="Failed" value={String(stats.failed)} />
-      <StatRow
-        label="Success rate"
-        value={stats.successRate == null ? '—' : `${Math.round(stats.successRate * 100)}%`}
-      />
-      <StatRow label="Total cost" value={formatCost(stats.totalCostUsd)} />
-      <StatRow
-        label="Median duration"
-        value={stats.medianDurationMs == null ? '—' : formatDuration(stats.medianDurationMs)}
-      />
-    </div>
+    <SidebarCard>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        <StatRow label="Runs" value={String(stats.runs)} />
+        <StatRow label="Failed" value={String(stats.failed)} />
+        <StatRow
+          label="Success rate"
+          value={stats.successRate == null ? '—' : `${Math.round(stats.successRate * 100)}%`}
+        />
+        <StatRow label="Total cost" value={formatCost(stats.totalCostUsd)} />
+        <StatRow
+          label="Median duration"
+          value={stats.medianDurationMs == null ? '—' : formatDuration(stats.medianDurationMs)}
+        />
+      </div>
+    </SidebarCard>
   );
 };

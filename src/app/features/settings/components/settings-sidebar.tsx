@@ -1,3 +1,4 @@
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarLabel } from '@/app/components/sidebar';
 import { useActiveSettingsSection } from '@/app/hooks';
 import { ListItem } from '@dendelion/paper-ui';
@@ -8,7 +9,7 @@ export const SettingsSidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <>
+    <SidebarCard>
       <SidebarLabel>General</SidebarLabel>
       <div className="flex flex-col">
         <ListItem
@@ -79,6 +80,6 @@ export const SettingsSidebar = () => {
           Night shift
         </ListItem>
       </div>
-    </>
+    </SidebarCard>
   );
 };

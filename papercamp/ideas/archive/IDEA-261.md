@@ -3,9 +3,10 @@ id: IDEA-261
 title: Bold clickables, cards not dividers
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-259
 created: 2026-09-12
+updated: 2026-09-12
 tags:
   - app
   - ui

@@ -49,3 +49,14 @@ offers `--settings` to write the allowlist and hook alone.
 
 Per-project tuning of the list; a project edits the file. Any change to
 how the daemon launches agents.
+
+### Phases
+- [ ] Generate the allowlist and the hook command
+      Detect the package manager from the lockfile and build both the
+      `permissions.allow` list and the SessionStart command in `templates.ts`.
+- [ ] Merge an existing settings.json instead of skipping it
+      `initProject` appends only the missing entries and leaves the user's
+      hook and edits intact.
+- [ ] Offer `paper-camp init --settings` in an initialised project
+- [ ] Warn in `paper-camp doctor` when `permissions.allow` is absent
+- [ ] Cover detection, merging, and both commands in tests

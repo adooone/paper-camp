@@ -1,4 +1,5 @@
 import { EmptyState } from '@/app/components';
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarLabel } from '@/app/components/sidebar';
 import { Input, ListItem, Skeleton } from '@dendelion/paper-ui';
 import { useDocsSidebar } from '../hooks';
@@ -22,7 +23,7 @@ export const DocsSidebar = () => {
   } = useDocsSidebar();
 
   return (
-    <>
+    <SidebarCard>
       <div className="flex h-[64px] items-center">
         <Input
           size="small"
@@ -78,6 +79,6 @@ export const DocsSidebar = () => {
           <EmptyState message="No releases yet" />
         )}
       </div>
-    </>
+    </SidebarCard>
   );
 };
