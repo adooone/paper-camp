@@ -153,11 +153,27 @@ const AgentTaskCard = ({
         }}
         className="flex h-full min-w-0 cursor-pointer flex-col justify-between gap-1 rounded-[10px]"
       >
-        <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
-          {taskCardTitle(task)}
-        </span>
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="min-w-0 shrink-0 whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
+          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+            {taskCardTitle(task)}
+          </span>
+          {(task.status === 'running' ||
+            task.status === 'starting' ||
+            task.status === 'stopping') && (
+            <IconButton
+              icon={<CloseIcon />}
+              variant="ghost"
+              size="small"
+              surface="chalkboard"
+              label="Stop agent"
+              onClick={handleStop}
+              disabled={task.status === 'stopping'}
+              className="h-auto min-h-0 w-auto shrink-0 p-0"
+            />
+          )}
+        </div>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className="min-w-0 truncate whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
             {AGENT_LABELS[task.agentId]} · {formatLastRun(task.startedAt)}
           </span>
           <div className="flex shrink-0 items-center gap-2">
@@ -191,19 +207,6 @@ const AgentTaskCard = ({
               >
                 {task.status}
               </Stamp>
-            )}
-            {(task.status === 'running' ||
-              task.status === 'starting' ||
-              task.status === 'stopping') && (
-              <IconButton
-                icon={<CloseIcon />}
-                variant="ghost"
-                size="small"
-                label="Stop agent"
-                onClick={handleStop}
-                disabled={task.status === 'stopping'}
-                className="h-auto min-h-0 w-auto shrink-0 p-0"
-              />
             )}
           </div>
         </div>
