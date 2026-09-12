@@ -80,6 +80,19 @@ export const SettingsSidebar = () => {
           Night shift
         </ListItem>
       </div>
+      <SidebarLabel>Notifications</SidebarLabel>
+      <div className="flex flex-col">
+        <ListItem
+          size="small"
+          className="pc-row text-xs"
+          active={section === 'notifications'}
+          onClick={() =>
+            navigate({ to: '/settings/$section', params: { section: 'notifications' } })
+          }
+        >
+          Notifications
+        </ListItem>
+      </div>
     </SidebarCard>
   );
 };

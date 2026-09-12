@@ -4,7 +4,7 @@ import { MergePolicySection } from './components/merge-policy-section';
 import { SetupSection } from './components/setup-section';
 import { SubjectsSection } from './components/subjects-section';
 import { ToolbarSection } from './components/toolbar-section';
-import { DeskSection, GeneralSection, NightSection } from './views';
+import { DeskSection, GeneralSection, NightSection, NotificationsSection } from './views';
 
 export const SettingsPage = () => {
   const section = useActiveSettingsSection();
@@ -23,6 +23,8 @@ export const SettingsPage = () => {
         <ToolbarSection />
       ) : section === 'night' ? (
         <NightSection />
+      ) : section === 'notifications' ? (
+        <NotificationsSection />
       ) : (
         <GeneralSection />
       )}

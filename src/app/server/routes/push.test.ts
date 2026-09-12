@@ -93,6 +93,36 @@ describe('GET /api/push/public-key', () => {
   });
 });
 
+describe('GET /api/push/subscriptions', () => {
+  it('lists redacted subscriptions for the project only', async () => {
+    await useConfigDir();
+    await route('/repo/a', 'POST', '/api/push/subscribe').handle(
+      fakeReq(
+        JSON.stringify({
+          transport: 'webpush',
+          name: 'Chrome on laptop',
+          subscription: { endpoint: 'https://push.example/1', keys: { p256dh: 'p', auth: 'a' } },
+        }),
+      ),
+      fakeRes().res,
+    );
+    await route('/repo/b', 'POST', '/api/push/subscribe').handle(
+      fakeReq(
+        JSON.stringify({ transport: 'expo', name: 'Phone', token: 'ExponentPushToken[abc]' }),
+      ),
+      fakeRes().res,
+    );
+
+    const { res, status, json } = fakeRes();
+    await route('/repo/a', 'GET', '/api/push/subscriptions').handle(fakeReq(''), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toEqual([
+      { transport: 'webpush', name: 'Chrome on laptop', key: 'https://push.example/1' },
+    ]);
+  });
+});
+
 describe('POST /api/push/subscribe', () => {
   it('stores a webpush subscription for the project', async () => {
     await useConfigDir();

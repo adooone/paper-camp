@@ -2,7 +2,7 @@
 id: IDEA-252
 title: Push notifications you choose
 type: feat
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - app
@@ -91,5 +91,6 @@ projects in the hub.
 - [x] Add `sw.js` to the hosted client
       Handle `push` and `notificationclick` with no precaching, register it when *This device* is switched on, and delete the tab-open announcement in `use-notification-push.ts`.
       run: 6m12s · 102 in · 37.3k out · sonnet-5 · sess:aa5e3cac-6d66-4d29-ade4-dc4aac0fc80c
-- [ ] Build Settings → Notifications
+- [x] Build Settings → Notifications
       The switch per kind, *This device* with its permission state, and *Devices* with last delivery and a remove action.
+      run: 5m51s · 160 in · 41.6k out · sonnet-5 · sess:820e7fe1-12cf-4294-9061-939094ce0507

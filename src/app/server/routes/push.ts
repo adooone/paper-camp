@@ -5,6 +5,8 @@ import {
   loadPushStore,
   removeSubscription,
   savePushStore,
+  subscriptionKey,
+  subscriptionsForProject,
   upsertSubscription,
   withPushStoreLock,
 } from '@/core/push-store';
@@ -20,6 +22,20 @@ export function pushRoutes({ root }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const { publicKey } = await loadOrMintVapidKeys(defaultVapidKeysPath());
         sendJson(res, 200, { publicKey });
+      },
+    },
+    {
+      method: 'GET',
+      path: '/api/push/subscriptions',
+      handle: async (_req, res) => {
+        const store = await loadPushStore(defaultPushStorePath());
+        const devices = subscriptionsForProject(store, root).map((record) => ({
+          transport: record.transport,
+          name: record.name,
+          lastDeliveryAt: record.lastDeliveryAt,
+          key: subscriptionKey(record),
+        }));
+        sendJson(res, 200, devices);
       },
     },
     {

@@ -1,4 +1,4 @@
-import type { CapabilityStatus } from '@/types/index';
+import type { CapabilityStatus, NotificationSettingKind } from '@/types/index';
 
 export const TASK_TYPE_KEYS = [
   'phase',
@@ -38,3 +38,24 @@ export const MERGE_POLICY_STAMP: Record<'upToDate' | 'outdated', { fill: string;
 };
 
 export const VERSION_STAMP_FILL = 'rgba(143, 185, 150, 0.25)';
+
+export const NOTIFICATION_KIND_LABELS: Record<NotificationSettingKind, string> = {
+  'run-finished': 'Run finished',
+  'run-failed': 'Run failed',
+  'run-interrupted': 'Run interrupted',
+  'check-failed': 'Check failed',
+  'question-parked': 'Question parked',
+  'pr-review-changes-requested': 'PR review requested changes',
+  'night-review-findings': 'Night review findings',
+  'service-stopped': 'Service stopped',
+  'reply-posted': 'Reply posted',
+};
+
+export const PERMISSION_STAMP: Record<
+  NotificationPermission,
+  { variant: 'success' | 'warning' | 'error'; label: string }
+> = {
+  granted: { variant: 'success', label: 'Allowed' },
+  default: { variant: 'warning', label: 'Not requested' },
+  denied: { variant: 'error', label: 'Blocked' },
+};

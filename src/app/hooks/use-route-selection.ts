@@ -12,6 +12,7 @@ const SETTINGS_SECTIONS = [
   'desk',
   'toolbar',
   'night',
+  'notifications',
 ] as const;
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 

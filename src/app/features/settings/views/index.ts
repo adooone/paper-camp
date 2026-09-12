@@ -6,3 +6,5 @@ export * from './desk-service-row';
 export * from './general-section';
 export * from './night-custom-check-row';
 export * from './night-section';
+export * from './notification-device-row';
+export * from './notifications-section';
