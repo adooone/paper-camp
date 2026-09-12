@@ -466,6 +466,7 @@ export function formatDaemonBanner(
   tailnetLink: string | undefined,
   tunnelLink: string | undefined,
   color: boolean,
+  tty: boolean,
 ): string {
   return formatDevBanner({
     version: PAPER_CAMP_VERSION,
@@ -475,6 +476,7 @@ export function formatDaemonBanner(
     tailnetLink,
     tunnelLink,
     color,
+    tty,
   });
 }
 
@@ -590,7 +592,8 @@ export async function startDaemonServer({
     server.listen(port, resolve);
   });
 
-  const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
+  const tty = process.stdout.isTTY === true;
+  const color = tty && !process.env.NO_COLOR;
 
   let tailnetLink: string | undefined;
   if (tailnet) {
@@ -654,6 +657,7 @@ export async function startDaemonServer({
       tailnetLink,
       tunnelLink,
       color,
+      tty,
     ),
   );
 }

@@ -1,3 +1,5 @@
+import { formatLinkQrCode } from './link-qr-code';
+
 const paint = (code: string, text: string) => `\x1b[${code}m${text}\x1b[0m`;
 
 // OSC 8: the terminal treats the whole span as one link, so a URL that wraps
@@ -26,6 +28,7 @@ export interface DevBannerInput {
   tailnetLink?: string;
   tunnelLink?: string;
   color: boolean;
+  tty: boolean;
 }
 
 /** One entry per way in: a bold label, then the link alone on its own line so
@@ -48,10 +51,13 @@ function bestEntry({ localUrl, networkLink, tailnetLink, tunnelLink }: DevBanner
 }
 
 export function formatDevBanner(input: DevBannerInput): string {
-  const { version, networkBlocked, tailnetLink, tunnelLink, color } = input;
+  const { version, networkBlocked, tailnetLink, tunnelLink, color, tty } = input;
   const { dim, yellow } = palette(color);
   const { label, url } = bestEntry(input);
   const lines = [`${yellow('⛺ Paper Camp')} ${dim(`v${version}`)}`, '', entry(label, url, color)];
+  if (tty && (label === 'Tailnet' || label === 'Tunnel')) {
+    lines.push(formatLinkQrCode(url));
+  }
   if (!tailnetLink && !tunnelLink && !input.networkLink && networkBlocked) {
     lines.push(dim('Other devices need HTTPS — add --tailnet or --share.'));
   }

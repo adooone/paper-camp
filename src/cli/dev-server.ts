@@ -105,7 +105,8 @@ export async function startDevServer({
     server.listen(port, resolve);
   });
 
-  const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
+  const tty = process.stdout.isTTY === true;
+  const color = tty && !process.env.NO_COLOR;
   const network = await networkRegistrationLink(port, apiMiddleware.pairing.token);
 
   let tailnetLink: string | undefined;
@@ -144,6 +145,7 @@ export async function startDevServer({
       tailnetLink,
       tunnelLink,
       color,
+      tty,
     }),
   );
 }

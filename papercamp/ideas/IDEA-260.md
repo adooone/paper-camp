@@ -36,8 +36,9 @@ carries.
 - [x] Add `qrcode` and a half-block renderer
       One helper that turns a link into the smallest terminal code that fits it.
       run: 2m9s · 42 in · 4.2k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35
-- [ ] Draw the code under the link in the banner
+- [x] Draw the code under the link in the banner
       Gate it on a Tailnet or Tunnel link and on a TTY, so the daemon's log keeps the link alone.
+      run: 6m29s · 108 in · 20.6k out · sonnet-5 · sess:ecc13991-0465-4d3f-ba1e-64e0cc85df35
 - [ ] Add `--qr` to `paper-camp status`
       Print the code for the link `status` lists first.
 - [ ] Cover the renderer and the gating with tests

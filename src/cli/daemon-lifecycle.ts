@@ -28,6 +28,7 @@ import type { MachineProjectSummary } from '../types/index';
 import { installedVersionAt, runNpmInstall } from './auto-update';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
 import { linkifyUrls } from './dev-banner';
+import { formatLinkQrCode } from './link-qr-code';
 
 export interface StartOptions {
   port?: number;
@@ -109,6 +110,16 @@ async function printLog(logPath: string): Promise<void> {
   console.log(process.stdout.isTTY && !process.env.NO_COLOR ? linkifyUrls(text) : text);
 }
 
+/** The daemon writes its banner to the log with no QR code — its own stdout
+ * is a file, never a TTY — so `start` draws one itself for its own terminal,
+ * from the same Tailnet-over-Tunnel link the banner would have picked. */
+async function printQrCode(statePath: string): Promise<void> {
+  if (!(process.stdout.isTTY && !process.env.NO_COLOR)) return;
+  const state = await readRunningDaemonState(statePath);
+  const link = state?.links?.tailnet ?? state?.links?.tunnel;
+  if (link) console.log(formatLinkQrCode(link));
+}
+
 /** Spawns `paper-camp daemon` by re-invoking this same process's own entry
  * point with different argv — whatever ran `start` (bun on a `.ts` file, node
  * on the built `dist/cli/index.js`) is what spawns the daemon too. */
@@ -152,6 +163,7 @@ export async function runStart(opts: StartOptions): Promise<boolean> {
 
   await waitForBannerLines(logPath, pendingBannerMarkers(), child, BANNER_POLL_TIMEOUT_MS);
   await printLog(logPath);
+  await printQrCode(statePath);
   return true;
 }
 

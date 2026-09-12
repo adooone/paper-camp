@@ -5,6 +5,7 @@ const input = {
   version: '0.21.1',
   localUrl: 'http://localhost:3333',
   networkLink: 'https://paper-camp.vercel.app/?runtime=http://100.80.79.13:3333&token=abc',
+  tty: false,
 };
 
 describe('formatDevBanner', () => {
