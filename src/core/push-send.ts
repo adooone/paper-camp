@@ -1,4 +1,5 @@
 import webpush from 'web-push';
+import type { StoredNotificationKind } from '../types/index';
 import {
   type PushSubscriptionRecord,
   defaultPushStorePath,
@@ -15,6 +16,7 @@ const VAPID_SUBJECT = 'mailto:paper-camp@localhost';
 
 export interface PushPayload {
   id: string;
+  kind: StoredNotificationKind;
   entityId: string;
   entityTitle: string;
   text: string;

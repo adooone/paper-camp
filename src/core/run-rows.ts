@@ -142,6 +142,19 @@ function questionRow(question: ParkedQuestion, index: number): LogRow {
 
 const byNewest = (a: LogRow, b: LogRow) => b.timestamp.localeCompare(a.timestamp);
 
+const OPPOSITE_PREFIX: Record<string, string> = { task: 'running', running: 'task' };
+
+/** A deep link (a push notification's `task:<id>`) can outrun the client: the task
+ * may still show as `running:<id>` if it hasn't rolled into tasks.log yet. */
+export function resolveLogRow(rows: LogRow[], entryId: string): LogRow | undefined {
+  const direct = rows.find((row) => row.id === entryId);
+  if (direct) return direct;
+  const [prefix, ...rest] = entryId.split(':');
+  const altPrefix = OPPOSITE_PREFIX[prefix];
+  if (!altPrefix || rest.length === 0) return undefined;
+  return rows.find((row) => row.id === `${altPrefix}:${rest.join(':')}`);
+}
+
 /** The one stream (IDEA-237): every `tasks.log` entry, plus failures with no run
  * behind them (an 'agent-run' issue is the same failure as its tasks.log 'error'
  * entry, so it's excluded here to avoid a duplicate row), plus tasks still in

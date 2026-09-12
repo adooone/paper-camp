@@ -6,7 +6,7 @@ import type {
   StoredNotification,
   TaskLogEntry,
 } from '../types/index';
-import { buildLogRows, interruptedNotices } from './run-rows';
+import { buildLogRows, interruptedNotices, resolveLogRow } from './run-rows';
 
 const taskLogEntry = (overrides: Partial<TaskLogEntry> = {}): TaskLogEntry => ({
   id: 'task-1',
@@ -264,5 +264,36 @@ describe('buildLogRows', () => {
         unread: true,
       }),
     ]);
+  });
+});
+
+describe('resolveLogRow', () => {
+  const rows = buildLogRows([taskLogEntry()], [], [], []);
+
+  it('resolves the row whose id matches exactly', () => {
+    expect(resolveLogRow(rows, 'task:task-1')?.id).toBe('task:task-1');
+  });
+
+  it('falls back from a settled task id to its still-running row', () => {
+    const running = buildLogRows([], [], [runningTask({ id: 'run-1' })], []);
+    expect(resolveLogRow(running, 'task:run-1')?.id).toBe('running:run-1');
+  });
+
+  it('falls back from a running id to its settled task row', () => {
+    expect(resolveLogRow(rows, 'running:task-1')?.id).toBe('task:task-1');
+  });
+
+  it('returns undefined when nothing matches either prefix', () => {
+    expect(resolveLogRow(rows, 'task:does-not-exist')).toBeUndefined();
+  });
+
+  it('returns undefined for a prefix with no running/task counterpart', () => {
+    const notifRows = buildLogRows(
+      [],
+      [],
+      [],
+      [storedNotification({ id: 'notif-1', kind: 'reply' })],
+    );
+    expect(resolveLogRow(notifRows, 'notification:does-not-exist')).toBeUndefined();
   });
 });

@@ -47,6 +47,7 @@ export function appendNotification(root: string, notification: NewNotification):
     if (entry.push) {
       void sendPushForProject(root, {
         id: entry.id,
+        kind: entry.kind,
         entityId: entry.entityId,
         entityTitle: entry.entityTitle,
         text: entry.text,

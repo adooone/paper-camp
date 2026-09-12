@@ -28,7 +28,13 @@ async function makeStore() {
   return { storePath: join(dir, 'push.json'), vapidKeysPath: join(dir, 'vapid.json') };
 }
 
-const payload = { id: 'notif-1', entityId: 'IDEA-1', entityTitle: 'First', text: 'run failed' };
+const payload = {
+  id: 'notif-1',
+  kind: 'completed' as const,
+  entityId: 'IDEA-1',
+  entityTitle: 'First',
+  text: 'run failed',
+};
 
 describe('sendPushForProject', () => {
   it('does nothing when there are no subscriptions for the project', async () => {
