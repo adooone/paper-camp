@@ -1,7 +1,7 @@
 // Specific file, not the `actions` barrel: the barrel pulls in the whole plans
 // graph and loops back to components/index.ts, which depcruise fails as a cycle.
 import { useDeskDiscovery } from '@/app/hooks/use-desk-discovery';
-import { Button, Divider, Skeleton, Spinner } from '@dendelion/paper-ui';
+import { Button, Skeleton, Spinner } from '@dendelion/paper-ui';
 import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';
 import { CI_GROUP_LABEL, CiGroup } from './ci-group';
 import { DeskProposalModal } from './desk-proposal-modal';
@@ -58,7 +58,6 @@ export const DeskSection = () => {
 
   return (
     <>
-      <Divider surface="chalkboard" />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-[var(--pc-stack-pad)]">
         {!configLoaded ? (
           <DeskSectionSkeleton />

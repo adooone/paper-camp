@@ -1,4 +1,3 @@
-import { Divider } from '@dendelion/paper-ui';
 import { AddProjectColumn, ProjectsColumn } from '../components';
 import { useProjects } from '../hooks';
 
@@ -15,8 +14,6 @@ export const HubHome = () => {
           onRemove={removeEntry}
         />
       </div>
-      <Divider orientation="horizontal" className="md:hidden" />
-      <Divider orientation="vertical" className="hidden md:block" />
       <div className="min-w-0 md:flex-1">
         <AddProjectColumn projects={projects} />
       </div>

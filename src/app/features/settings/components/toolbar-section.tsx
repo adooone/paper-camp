@@ -1,5 +1,5 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Card, Divider, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
+import { Alert, Button, Card, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
 import { useToolbarSection } from '../hooks';
 
 export const ToolbarSection = () => {
@@ -27,67 +27,74 @@ export const ToolbarSection = () => {
         </Alert>
       )}
       {config && (
-        <Card size="small" texture="kraft">
-          <div className="flex items-center justify-between gap-3 pb-3">
-            <div>
-              <p className="m-0">Enable</p>
-              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-                Off skips the plugin entirely, even in a registered repo.
-              </p>
+        <>
+          <Card size="small" texture="kraft">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="m-0">Enable</p>
+                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                  Off skips the plugin entirely, even in a registered repo.
+                </p>
+              </div>
+              <Switch
+                checked={config.integration?.toolbar?.enabled ?? true}
+                onChange={handleToggleEnabled}
+              />
             </div>
-            <Switch
-              checked={config.integration?.toolbar?.enabled ?? true}
-              onChange={handleToggleEnabled}
-            />
-          </div>
-          <Divider />
+          </Card>
 
-          <div className="pb-1 pt-3">
-            <p className="m-0">Host app</p>
-            <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-              What the frontend service's Vite config looks like today.
-            </p>
-          </div>
-          {hostState === undefined && <RowSkeleton />}
-          {hostState === null && <Alert variant="warning">Failed to inspect the host app.</Alert>}
-          {hostState && (
-            <div className="flex flex-col gap-2 pt-3">
-              <div className="flex items-center gap-3">
-                <span className="flex-1">Vite config</span>
-                <Stamp size="small" variant={hostState.viteConfigPath ? 'success' : 'error'}>
-                  {hostState.viteConfigPath ?? 'Not found'}
-                </Stamp>
+          <div className="mt-6">
+            <Card size="small" texture="kraft">
+              <div>
+                <p className="m-0">Host app</p>
+                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                  What the frontend service's Vite config looks like today.
+                </p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="flex-1">Imports the plugin</span>
-                <Stamp size="small" variant={hostState.importsPlugin ? 'success' : 'warning'}>
-                  {hostState.importsPlugin ? 'Yes' : 'No'}
-                </Stamp>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="flex-1">Package dependency</span>
-                <Stamp size="small" variant={hostState.isDependency ? 'success' : 'warning'}>
-                  {hostState.isDependency ? 'Yes' : 'No'}
-                </Stamp>
-              </div>
-              {needsInstall && (
-                <div className="pt-2">
-                  <Tooltip
-                    content={hasAgent ? undefined : 'No agent CLI found — set up in Settings'}
-                  >
-                    <Button
-                      size="small"
-                      onClick={handleInstall}
-                      disabled={installRunning || !hasAgent}
-                    >
-                      {installRunning ? 'Installing…' : 'Install toolbar'}
-                    </Button>
-                  </Tooltip>
+              {hostState === undefined && <RowSkeleton />}
+              {hostState === null && (
+                <Alert variant="warning">Failed to inspect the host app.</Alert>
+              )}
+              {hostState && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1">Vite config</span>
+                    <Stamp size="small" variant={hostState.viteConfigPath ? 'success' : 'error'}>
+                      {hostState.viteConfigPath ?? 'Not found'}
+                    </Stamp>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1">Imports the plugin</span>
+                    <Stamp size="small" variant={hostState.importsPlugin ? 'success' : 'warning'}>
+                      {hostState.importsPlugin ? 'Yes' : 'No'}
+                    </Stamp>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex-1">Package dependency</span>
+                    <Stamp size="small" variant={hostState.isDependency ? 'success' : 'warning'}>
+                      {hostState.isDependency ? 'Yes' : 'No'}
+                    </Stamp>
+                  </div>
+                  {needsInstall && (
+                    <div className="pt-2">
+                      <Tooltip
+                        content={hasAgent ? undefined : 'No agent CLI found — set up in Settings'}
+                      >
+                        <Button
+                          size="small"
+                          onClick={handleInstall}
+                          disabled={installRunning || !hasAgent}
+                        >
+                          {installRunning ? 'Installing…' : 'Install toolbar'}
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-        </Card>
+            </Card>
+          </div>
+        </>
       )}
     </div>
   );

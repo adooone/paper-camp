@@ -1,4 +1,5 @@
 import { type ProjectEntry, projectEntryId } from '@/app/services/project-registry';
+import { Card } from '@dendelion/paper-ui';
 import { useRuntimeStatuses } from '../hooks';
 import { ProjectRow } from './project-row';
 
@@ -18,21 +19,23 @@ export const ProjectsColumn = ({ projects, onOpen, onRename, onRemove }: Project
       {projects.length === 0 ? (
         <p className="m-0 text-sm opacity-70">Nothing here yet — add a project from the right.</p>
       ) : (
-        <div className="flex flex-col gap-1">
-          {projects.map((entry) => {
-            const id = projectEntryId(entry);
-            return (
-              <ProjectRow
-                key={id}
-                entry={entry}
-                status={statuses[entry.runtimeUrl]}
-                onOpen={() => onOpen(id)}
-                onRename={(label) => onRename(id, label)}
-                onRemove={() => onRemove(id)}
-              />
-            );
-          })}
-        </div>
+        <Card size="small" texture="kraft">
+          <div className="flex flex-col gap-1">
+            {projects.map((entry) => {
+              const id = projectEntryId(entry);
+              return (
+                <ProjectRow
+                  key={id}
+                  entry={entry}
+                  status={statuses[entry.runtimeUrl]}
+                  onOpen={() => onOpen(id)}
+                  onRename={(label) => onRename(id, label)}
+                  onRemove={() => onRemove(id)}
+                />
+              );
+            })}
+          </div>
+        </Card>
       )}
     </div>
   );

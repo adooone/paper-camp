@@ -3,7 +3,7 @@ id: IDEA-261
 title: Bold clickables, cards instead of dividers
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-259
 created: 2026-09-12
 tags:
@@ -61,5 +61,6 @@ to which commands a sidebar offers.
 - [x] Turn sidebars into card stacks and delete the divider
       `SidebarShell` renders one card per child; the idea sidebar splits into a main and an actions card, the filter sidebars into filters and stats.
       run: 8m29s · 118 in · 37.1k out · sonnet-5 · sess:756988cf-97bf-41f6-a56e-9d0ea6cff1df
-- [ ] Apply the divider rule across Settings, the hub, and the Stack panel
+- [x] Apply the divider rule across Settings, the hub, and the Stack panel
       Remove dividers under inputs and between unlike groups, splitting those into cards; keep the ones inside uniform lists.
+      run: 6m12s · 86 in · 27.2k out · sonnet-5 · sess:f66660a8-f8f3-435e-b92a-febbe6fca09f

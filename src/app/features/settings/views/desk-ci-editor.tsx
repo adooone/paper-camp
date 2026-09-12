@@ -1,5 +1,5 @@
 import type { DeskCi } from '@/types/index';
-import { Divider, Input, Switch } from '@dendelion/paper-ui';
+import { Card, Input, Switch } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 interface DeskCiEditorProps {
@@ -24,35 +24,38 @@ export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
   };
 
   return (
-    <>
-      <div className="flex items-end gap-3 pb-3">
-        <Input
-          size="small"
-          label="Repo (owner/name)"
-          value={local.repo}
-          onChange={(e) => setLocal({ ...local, repo: e.target.value })}
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          label="Branch"
-          value={local.branch ?? ''}
-          onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
-          onBlur={commit}
-        />
-      </div>
-      <Divider />
-      <div className="flex items-center justify-between pt-3">
-        <span>Release Please</span>
-        <Switch
-          checked={local.releasePlease ?? false}
-          onChange={(e) => {
-            const next = { ...local, releasePlease: e.target.checked };
-            setLocal(next);
-            onSave(next);
-          }}
-        />
-      </div>
-    </>
+    <div className="flex flex-col gap-4">
+      <Card size="small" texture="kraft">
+        <div className="flex items-end gap-3">
+          <Input
+            size="small"
+            label="Repo (owner/name)"
+            value={local.repo}
+            onChange={(e) => setLocal({ ...local, repo: e.target.value })}
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            label="Branch"
+            value={local.branch ?? ''}
+            onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
+            onBlur={commit}
+          />
+        </div>
+      </Card>
+      <Card size="small" texture="kraft">
+        <div className="flex items-center justify-between">
+          <span>Release Please</span>
+          <Switch
+            checked={local.releasePlease ?? false}
+            onChange={(e) => {
+              const next = { ...local, releasePlease: e.target.checked };
+              setLocal(next);
+              onSave(next);
+            }}
+          />
+        </div>
+      </Card>
+    </div>
   );
 };

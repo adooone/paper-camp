@@ -102,9 +102,7 @@ export const DeskSection = () => {
 
           <div>
             <h3 className="m-0 mb-3">CI</h3>
-            <Card size="small" texture="kraft">
-              <DeskCiEditor ci={ci} onSave={updateCi} />
-            </Card>
+            <DeskCiEditor ci={ci} onSave={updateCi} />
           </div>
 
           {proposal && diff && (

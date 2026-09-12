@@ -21,21 +21,22 @@ export const SubjectsSection = () => {
         <p className="opacity-60 m-0">Couldn't load subjects — check the server config.</p>
       )}
       {!loading && available && (
-        <Card size="small" texture="kraft">
-          {subjects.length === 0 && <EmptyState message="No subjects yet." />}
-          {subjects.map((name, idx) => (
-            <div key={name}>
-              <div className="pb-2 pt-2">{name}</div>
-              {idx < subjects.length - 1 && <Divider />}
-            </div>
-          ))}
-          {subjects.length > 0 && <Divider />}
-          <div className="pt-3">
+        <>
+          <Card size="small" texture="kraft">
+            {subjects.length === 0 && <EmptyState message="No subjects yet." />}
+            {subjects.map((name, idx) => (
+              <div key={name}>
+                <div className="pb-2 pt-2">{name}</div>
+                {idx < subjects.length - 1 && <Divider />}
+              </div>
+            ))}
+          </Card>
+          <div className="mt-6">
             <Button size="small" onClick={() => navigate({ to: '/roadmap' })}>
               Go to Roadmap
             </Button>
           </div>
-        </Card>
+        </>
       )}
     </div>
   );
