@@ -1,6 +1,6 @@
 ---
 id: IDEA-261
-title: Bold clickables, cards instead of dividers
+title: Bold clickables, cards not dividers
 type: fix
 kind: fix
 status: review

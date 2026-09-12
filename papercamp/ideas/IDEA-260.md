@@ -6,7 +6,7 @@ status: idea
 created: 2026-09-12
 tags:
   - cli
-subject: Daemon
+subject: Run & monitor
 order: 2
 ---
 

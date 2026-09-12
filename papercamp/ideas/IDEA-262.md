@@ -7,7 +7,7 @@ created: 2026-09-12
 tags:
   - cli
   - core
-subject: Daemon
+subject: Packaging
 order: 3
 ---
 
