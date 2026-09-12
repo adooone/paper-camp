@@ -59,6 +59,7 @@ how the daemon launches agents.
       `initProject` appends only the missing entries and leaves the user's
       hook and edits intact.
       run: 1m18s · 26 in · 6.2k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
-- [ ] Offer `paper-camp init --settings` in an initialised project
+- [x] Offer `paper-camp init --settings` in an initialised project
+      run: 56s · 26 in · 4.5k out · sonnet-5 · sess:02dfa4bf-2bce-4aa2-9cee-5fa07d05c2c6
 - [ ] Warn in `paper-camp doctor` when `permissions.allow` is absent
 - [ ] Cover detection, merging, and both commands in tests

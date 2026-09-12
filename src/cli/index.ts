@@ -37,7 +37,12 @@ import {
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
 import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
-import { AlreadyInitializedError, PAPER_CAMP_VERSION, initProject } from '../core/scaffold';
+import {
+  AlreadyInitializedError,
+  PAPER_CAMP_VERSION,
+  initProject,
+  scaffoldClaudeCodeIntegration,
+} from '../core/scaffold';
 import { computePlanContentHash } from '../core/serialize';
 import { assignEntityId, formatEntityFile, todayDateString } from '../core/serialize';
 import { threadFromLegacy } from '../core/thread';
@@ -175,11 +180,23 @@ export async function runInit(targetDir: string, projectName?: string): Promise<
   }
 }
 
+export async function runInitSettings(targetDir: string): Promise<boolean> {
+  await scaffoldClaudeCodeIntegration(targetDir);
+  console.log(`Wrote Claude Code integration in ${targetDir}`);
+  console.log('  .claude/skills/paper-camp/SKILL.md');
+  console.log('  .claude/settings.json     (permissions.allow, SessionStart hook)');
+  return true;
+}
+
 program
   .command('init [project-name]')
   .description('Initialize Paper Camp in the current directory')
-  .action(async (projectName: string | undefined) => {
-    if (!(await runInit(process.cwd(), projectName))) process.exitCode = 1;
+  .option('--settings', 'write only the .claude allowlist and SessionStart hook')
+  .action(async (projectName: string | undefined, opts: { settings?: boolean }) => {
+    const ok = opts.settings
+      ? await runInitSettings(process.cwd())
+      : await runInit(process.cwd(), projectName);
+    if (!ok) process.exitCode = 1;
   });
 
 program

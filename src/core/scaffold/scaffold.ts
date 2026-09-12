@@ -137,7 +137,7 @@ async function ensureGitignoreEntry(targetDir: string): Promise<void> {
   await writeFile(gitignorePath, lines.join('\n'), 'utf-8');
 }
 
-async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
+export async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {
   const skillDir = join(targetDir, '.claude', 'skills', 'paper-camp');
   await mkdir(skillDir, { recursive: true });
   const skillPath = join(skillDir, 'SKILL.md');
