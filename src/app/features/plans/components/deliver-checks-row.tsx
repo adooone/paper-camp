@@ -21,6 +21,34 @@ interface CheckStampProps {
 
 const checkTooltip = (check: DeskCheckState) => `${check.cmd}. Click to run.`;
 
+interface FixStampProps {
+  label: string;
+  tooltip: string;
+  variant: StampVariant;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps) => (
+  <Tooltip content={tooltip}>
+    {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
+    <button
+      type="button"
+      className={`inline-flex bg-none bg-transparent border-none p-0 ${
+        disabled
+          ? 'cursor-not-allowed opacity-50'
+          : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95]'
+      }`}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <Stamp size="small" variant={variant}>
+        {label}
+      </Stamp>
+    </button>
+  </Tooltip>
+);
+
 const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
   <Tooltip content={title}>
     {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
@@ -51,6 +79,12 @@ export const DeliverChecksRow = () => {
     navigate,
     runDeskCheck,
     linkedPlanFor,
+    failing,
+    failingCheck,
+    fixState,
+    fixing,
+    runAutoFix,
+    fixCheck,
   } = useDeliverChecksRow();
 
   return (
@@ -122,6 +156,37 @@ export const DeliverChecksRow = () => {
           <GitStashSurface />
         </div>
       }
+      {failing && (
+        <div className="flex h-8 items-center justify-center gap-2 font-handwritten text-sm text-desk-text-muted">
+          <span>The {failing.sourceKey} check failed.</span>
+          {failingCheck?.fixCmd && (
+            <FixStamp
+              label={fixing ? 'fixing…' : 'auto-fix'}
+              tooltip={
+                fixing
+                  ? 'Running the fix command…'
+                  : `Run \`${failingCheck.fixCmd}\`, then re-check.`
+              }
+              variant={CHECK_VARIANT[failingCheck.status]}
+              disabled={fixing || fixState !== null}
+              onClick={() => runAutoFix(failingCheck.name)}
+            />
+          )}
+          <FixStamp
+            label={fixState === 'own' ? 'fixing…' : 'fix'}
+            tooltip={
+              fixState === 'own'
+                ? 'An agent is fixing this check.'
+                : fixState === 'other'
+                  ? 'Another fix is in flight — wait for it to finish.'
+                  : `Send an agent to fix the ${failing.sourceKey} check.`
+            }
+            variant="error"
+            disabled={fixState !== null || fixing}
+            onClick={fixCheck}
+          />
+        </div>
+      )}
     </div>
   );
 };

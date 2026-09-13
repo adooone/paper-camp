@@ -46,10 +46,11 @@ The Services and CI & release groups. What the checks run, which
 [[IDEA-263]] settles. The Stack panel's own layout.
 
 ### Phases
-- [ ] Move Fix and refresh into the checks row
+- [x] Move Fix and refresh into the checks row
       `firstFailingCheck`, `activeCheckFix` and the auto-fix/fix stamps move from
       `checks-group.tsx` into `deliver-checks-row.tsx` and `use-deliver-checks-row.ts`,
       with the group's tests rewritten against their new home.
+      run: 3m33s · 72 in · 19.7k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
 - [ ] Show the checks row on the Git page
       Beside the commit action in `git-page.tsx`, reading from the same row component.
 - [ ] Delete the Stack's Checks group
