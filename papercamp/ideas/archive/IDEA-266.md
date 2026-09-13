@@ -3,7 +3,7 @@ id: IDEA-266
 title: The completion gate knows a dirty tree
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-194
 created: 2026-09-13
 updated: 2026-09-13

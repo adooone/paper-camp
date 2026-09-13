@@ -2,7 +2,7 @@
 id: IDEA-253
 title: Settings in the plans row grammar
 type: refactor
-status: review
+status: done
 created: 2026-09-10
 updated: 2026-09-13
 tags:

@@ -2,9 +2,9 @@
 id: IDEA-241
 title: Night shift health reviews
 type: feat
-status: review
+status: done
 created: 2026-09-07
-updated: 2026-09-11
+updated: 2026-09-13
 tags:
   - cli
   - server
