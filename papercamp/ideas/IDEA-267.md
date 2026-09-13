@@ -56,3 +56,14 @@ not thirty boxes.
 
 The Stack panel, modals, toasts, and speech bubbles, as above. Any change
 to what a group contains or to the page grounds.
+
+### Phases
+- [ ] Adopt paper-ui's sketch Divider
+      Bump the dependency once the release lands and confirm the seeded stroke honours `surface`.
+- [ ] Rule the sidebar again
+      Delete `SidebarCard`, stack the groups in `SidebarShell`, and render a rule only between two groups that both have content.
+- [ ] Move the row affordances onto the row
+      Give `plan-row-card`'s grid, hover wash, and active state to the row itself in `utilities.css`.
+- [ ] Replace the page cards with ruled groups
+      Every `Card` on a paper surface becomes its children plus a rule before the next group, none after the last.
+- [ ] Delete `surface.card` and `surface.nestedCard`

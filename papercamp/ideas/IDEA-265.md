@@ -44,3 +44,16 @@ server; nothing about what a check is or when it runs changes.
 
 The Services and CI & release groups. What the checks run, which
 [[IDEA-263]] settles. The Stack panel's own layout.
+
+### Phases
+- [ ] Move Fix and refresh into the checks row
+      `firstFailingCheck`, `activeCheckFix` and the auto-fix/fix stamps move from
+      `checks-group.tsx` into `deliver-checks-row.tsx` and `use-deliver-checks-row.ts`,
+      with the group's tests rewritten against their new home.
+- [ ] Show the checks row on the Git page
+      Beside the commit action in `git-page.tsx`, reading from the same row component.
+- [ ] Delete the Stack's Checks group
+      Drop `checks-group.tsx` and its test and leave `desk-section.tsx` with Services and CI & release.
+- [ ] Move the failing signal to the status bar
+      `use-stack-panel.ts` loses `anyChecksFailing` and the toggle's red dot; the git
+      stamp in `status-bar-core.tsx` shows the failing count next to the changed-files count.

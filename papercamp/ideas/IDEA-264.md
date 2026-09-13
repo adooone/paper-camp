@@ -79,3 +79,14 @@ and slug; below that it is not drawn.
 Per-project figures that belong on the Stats page: coverage, comment
 ratio, the health map. Charts anywhere else in the app; the three helpers
 are built for the hub and may be reused later. Pairing and trust rules.
+
+### Phases
+- [ ] Build the machine-grouped hub model
+      Merge the remembered entries with each daemon's reported projects into one
+      list, with the row stamp and the sort order.
+- [ ] Replace the two columns with the one list
+      Machine sections, project rows, the Continue strip, the search row, and the
+      add-a-machine footer; the old columns and cards go.
+- [ ] Add the arc gauge, bar, and stacked-bar helpers
+- [ ] Sum the stats of every reachable project
+- [ ] Draw the six figures in the right column

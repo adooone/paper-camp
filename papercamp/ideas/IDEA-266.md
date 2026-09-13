@@ -38,3 +38,11 @@ nouns, matching the rest of the sidebar's commands.
 
 Committing on the user's behalf from the gate. Any change to what the
 route does after the tree is clean.
+
+### Phases
+- [ ] Take the changed-file count in `completionGate` and phrase `missing` as actions
+      In `plans/helpers/helpers.ts`; a non-zero count pushes *commit or stash the changes*, and the existing entries become *finish the phases*, *open a PR*, *wait for CI*.
+- [ ] Update the completion-gate tests for the new argument and wording
+- [ ] Pass the count from the idea sidebar
+      `usePlanActionsColumn` reads the `gitStatus` length the status bar already uses and hands it to `CompleteIdeaButton`, which forwards it to the gate.
+- [ ] Pass the same count from the Git page's deliver card
