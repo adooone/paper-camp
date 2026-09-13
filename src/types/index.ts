@@ -727,6 +727,8 @@ export interface CiRun {
   workflow: string;
   status: CiRunStatus;
   url: string | null;
+  /** Names of the jobs that failed in a failed run, so the card says which, not just that. */
+  failedJobs?: string[];
 }
 
 export interface ReleasePr {
