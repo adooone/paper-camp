@@ -2,8 +2,9 @@
 id: IDEA-252
 title: Push notifications you choose
 type: feat
-status: review
+status: done
 created: 2026-09-10
+updated: 2026-09-13
 tags:
   - app
   - server
