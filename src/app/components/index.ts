@@ -1,3 +1,9 @@
+export { ArcGauge } from './charts/arc-gauge';
+export type { ArcGaugeProps } from './charts/arc-gauge';
+export { BarChart } from './charts/bar-chart';
+export type { BarChartBar, BarChartProps } from './charts/bar-chart';
+export { StackedBar } from './charts/stacked-bar';
+export type { StackedBarProps, StackedBarSegment } from './charts/stacked-bar';
 export { CommitMessageFields } from './git/commit-message-fields';
 export type { CommitMessageFieldsState } from './git/commit-message-fields';
 export { GitStashSurface } from './git/git-stash-surface';

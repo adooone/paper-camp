@@ -89,6 +89,7 @@ are built for the hub and may be reused later. Pairing and trust rules.
       Machine sections, project rows, the Continue strip, the search row, and the
       add-a-machine footer; the old columns and cards go.
       run: 9m17s · 158 in · 52.9k out · sonnet-5 · sess:9ca06fbb-cf6a-4687-8e0e-11c7ba0e38bc
-- [ ] Add the arc gauge, bar, and stacked-bar helpers
+- [x] Add the arc gauge, bar, and stacked-bar helpers
+      run: 6m9s · 88 in · 22.7k out · sonnet-5 · sess:e1f36ef8-97a5-413a-a006-3d413f8da5fc
 - [ ] Sum the stats of every reachable project
 - [ ] Draw the six figures in the right column
