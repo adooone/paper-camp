@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import type { MergePolicyResult } from '../../types';
+import type { MergePolicy, MergePolicyResult } from '../../types';
 
 interface ProbeResult {
   code: number | null;
@@ -77,7 +77,26 @@ export async function getMergePolicy(root: string): Promise<MergePolicyResult> {
   }
 }
 
-export async function applyMergePolicy(root: string): Promise<MergePolicyResult> {
+const RECOMMENDED_POLICY: MergePolicy = {
+  allowSquashMerge: true,
+  allowMergeCommit: false,
+  allowRebaseMerge: false,
+  squashMergeCommitTitle: 'PR_TITLE',
+  squashMergeCommitMessage: 'PR_BODY',
+};
+
+const GH_FIELD_NAMES: Record<keyof MergePolicy, string> = {
+  allowSquashMerge: 'allow_squash_merge',
+  allowMergeCommit: 'allow_merge_commit',
+  allowRebaseMerge: 'allow_rebase_merge',
+  squashMergeCommitTitle: 'squash_merge_commit_title',
+  squashMergeCommitMessage: 'squash_merge_commit_message',
+};
+
+export async function applyMergePolicy(
+  root: string,
+  partial?: Partial<MergePolicy>,
+): Promise<MergePolicyResult> {
   const repo = await resolveRepoSlug(root);
   if (!repo) {
     return {
@@ -86,25 +105,14 @@ export async function applyMergePolicy(root: string): Promise<MergePolicyResult>
         'gh CLI is missing, unauthenticated, or the repository has no reachable GitHub origin',
     };
   }
-  const result = await runGh(
-    [
-      'api',
-      '-X',
-      'PATCH',
-      `repos/${repo}`,
-      '-F',
-      'allow_squash_merge=true',
-      '-F',
-      'allow_merge_commit=false',
-      '-F',
-      'allow_rebase_merge=false',
-      '-f',
-      'squash_merge_commit_title=PR_TITLE',
-      '-f',
-      'squash_merge_commit_message=PR_BODY',
-    ],
-    root,
-  );
+  const fields = partial ?? RECOMMENDED_POLICY;
+  const args = ['api', '-X', 'PATCH', `repos/${repo}`];
+  for (const key of Object.keys(GH_FIELD_NAMES) as (keyof MergePolicy)[]) {
+    if (!(key in fields)) continue;
+    const value = fields[key] as boolean | string;
+    args.push(typeof value === 'boolean' ? '-F' : '-f', `${GH_FIELD_NAMES[key]}=${value}`);
+  }
+  const result = await runGh(args, root);
   if (result.code !== 0) {
     return { status: 'unavailable', reason: `gh api -X PATCH repos/${repo} failed` };
   }

@@ -58,7 +58,7 @@ export const DeskSection = () => {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-[var(--pc-stack-pad)]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-[var(--pc-stack-pad)]">
         {!configLoaded ? (
           <DeskSectionSkeleton />
         ) : current ? (

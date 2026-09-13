@@ -12,17 +12,13 @@ interface RefreshButtonProps {
 
 /** Only re-reads what's already there — distinct from `WorklistActionsMenu`'s
  * "Reconcile all", which launches a reconcile agent that rewrites entities. */
-export const RefreshButton = ({
-  label = 'Refresh data',
-  refreshingLabel = 'Refreshing…',
-  surface,
-  withText = false,
-}: RefreshButtonProps = {}) => {
+/** The refresh action with its toasts, shared by the button and the status bar's overflow menu. */
+export const useRefreshAll = () => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const refreshing = useAppStore((s) => s.refreshing);
   const { toast } = useToast();
 
-  const handleClick = async () => {
+  const refresh = async () => {
     if (refreshing) return;
     const result = await refreshAll();
     if (result.ok) {
@@ -39,6 +35,17 @@ export const RefreshButton = ({
       });
     }
   };
+
+  return { refresh, refreshing };
+};
+
+export const RefreshButton = ({
+  label = 'Refresh data',
+  refreshingLabel = 'Refreshing…',
+  surface,
+  withText = false,
+}: RefreshButtonProps = {}) => {
+  const { refresh: handleClick, refreshing } = useRefreshAll();
 
   if (withText) {
     return (

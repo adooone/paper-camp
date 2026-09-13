@@ -1,5 +1,6 @@
 import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
+import { surface } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
@@ -91,7 +92,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
               }
               className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
             >
-              <Card size="small" texture="canvas" className="plan-row-card">
+              <Card size="small" texture={surface.card} className="plan-row-card">
                 <div className={gridClass}>
                   <PlanIdStamp id={plan.id} />
                   <span className="overflow-hidden text-ellipsis whitespace-nowrap">

@@ -23,11 +23,7 @@ export const ConnectActionView = ({
     );
   }
   if (connect.kind === 'command') {
-    return (
-      <div className="mt-2">
-        <CommandLine command={connect.command} />
-      </div>
-    );
+    return <CommandLine command={connect.command} />;
   }
   if (connect.kind === 'link') {
     return (
@@ -39,5 +35,5 @@ export const ConnectActionView = ({
       </Button>
     );
   }
-  return <p className="opacity-[0.65] text-sm mt-2 mx-0 mb-0">{connect.message}</p>;
+  return <p className="opacity-[0.65] text-sm m-0">{connect.message}</p>;
 };

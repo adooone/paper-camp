@@ -1,4 +1,5 @@
 import { LightbulbIcon } from '@/app/components/icons';
+import { surface } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
 import { Card, IconButton } from '@dendelion/paper-ui';
 
@@ -17,7 +18,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
       <div className="flex flex-col gap-1">
         {suggestions.map((suggestion) => (
           <div key={`${suggestion.date}-${suggestion.title}`} className="rounded-[10px]">
-            <Card size="small" texture="canvas" className="plan-row-card">
+            <Card size="small" texture={surface.card} className="plan-row-card">
               <div className="flex items-center gap-2">
                 {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
                 <button

@@ -1,15 +1,16 @@
-import { CloseIcon, Divider, IconButton, Input } from '@dendelion/paper-ui';
+import { surface } from '@/app/styles/tokens';
+import { Card, CloseIcon, IconButton, Input } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import type { KeyedDeskService } from '../hooks/use-desk-section';
+import { DESK_SERVICE_GRID_CLASS } from './desk-service-row-header';
 
 interface DeskServiceRowProps {
   service: KeyedDeskService;
   onSave: (service: KeyedDeskService) => void;
   onRemove: () => void;
-  isLast: boolean;
 }
 
-export const DeskServiceRow = ({ service, onSave, onRemove, isLast }: DeskServiceRowProps) => {
+export const DeskServiceRow = ({ service, onSave, onRemove }: DeskServiceRowProps) => {
   const [local, setLocal] = useState(service);
 
   useEffect(() => setLocal(service), [service]);
@@ -27,49 +28,45 @@ export const DeskServiceRow = ({ service, onSave, onRemove, isLast }: DeskServic
   };
 
   return (
-    <>
-      <div className="flex items-end gap-3 pb-2 pt-2">
-        <Input
-          size="small"
-          label="Name"
-          value={local.name}
-          onChange={(e) => setLocal({ ...local, name: e.target.value })}
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          label="Command"
-          value={local.cmd}
-          onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          type="number"
-          label="Port"
-          className="w-[100px]"
-          value={local.port ?? ''}
-          onChange={(e) =>
-            setLocal({ ...local, port: e.target.value ? Number(e.target.value) : undefined })
-          }
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          label="Healthcheck URL"
-          value={local.healthcheck ?? ''}
-          onChange={(e) => setLocal({ ...local, healthcheck: e.target.value || undefined })}
-          onBlur={commit}
-        />
-        <IconButton
-          icon={<CloseIcon size={16} />}
-          variant="danger"
-          size="small"
-          onClick={onRemove}
-          label={`Remove ${service.name || 'service'}`}
-        />
+    <Card size="small" texture={surface.card} className="plan-row-card">
+      <div className="overflow-x-auto">
+        <div className={DESK_SERVICE_GRID_CLASS}>
+          <Input
+            size="small"
+            value={local.name}
+            onChange={(e) => setLocal({ ...local, name: e.target.value })}
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            value={local.cmd}
+            onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            type="number"
+            value={local.port ?? ''}
+            onChange={(e) =>
+              setLocal({ ...local, port: e.target.value ? Number(e.target.value) : undefined })
+            }
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            value={local.healthcheck ?? ''}
+            onChange={(e) => setLocal({ ...local, healthcheck: e.target.value || undefined })}
+            onBlur={commit}
+          />
+          <IconButton
+            icon={<CloseIcon size={16} />}
+            variant="danger"
+            size="small"
+            onClick={onRemove}
+            label={`Remove ${service.name || 'service'}`}
+          />
+        </div>
       </div>
-      {!isLast && <Divider />}
-    </>
+    </Card>
   );
 };

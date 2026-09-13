@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { latestRunPerWorkflow, mapRunStatus, parseVersion, pickReleasePr } from './ci-release';
+import {
+  failedJobNames,
+  latestRunPerWorkflow,
+  mapRunStatus,
+  parseVersion,
+  pickReleasePr,
+} from './ci-release';
 
 describe('mapRunStatus', () => {
   it('maps completed conclusions', () => {
@@ -103,5 +109,17 @@ describe('pickReleasePr', () => {
 
   it('returns null when no release PR is open', () => {
     expect(pickReleasePr([])).toBeNull();
+  });
+});
+
+describe('failedJobNames', () => {
+  it('lists only the jobs that failed', () => {
+    expect(
+      failedJobNames([
+        { name: 'Quality', conclusion: 'success' },
+        { name: 'Smoke', conclusion: 'failure' },
+        { name: 'Tests', conclusion: 'cancelled' },
+      ]),
+    ).toEqual(['Smoke']);
   });
 });

@@ -2,14 +2,15 @@
 id: IDEA-252
 title: Push notifications you choose
 type: feat
-status: review
+status: done
 created: 2026-09-10
+updated: 2026-09-13
 tags:
   - app
   - server
   - notifications
 subject: Run & monitor
-order: 5
+order: 3
 ---
 
 The app already knows when something goes wrong and tells nobody who is

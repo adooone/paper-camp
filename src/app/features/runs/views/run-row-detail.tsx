@@ -1,5 +1,6 @@
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import { surface } from '@/app/styles/tokens';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { formatDuration, shortModel } from '@/core/phase-run';
 import { usageForEntry } from '@/core/run-rows';
@@ -280,7 +281,7 @@ const hasBody = (row: LogRow, lines: string[] | null): boolean => {
 
 export const EntryDetailsCard = ({ row, actions, lines }: EntryDetailsCardProps) => {
   return (
-    <Card size="small" texture="kraft" className="shrink-0">
+    <Card size="small" texture={surface.card} className="shrink-0">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="m-0 mr-1 font-serif text-lg font-semibold">{row.title}</h2>

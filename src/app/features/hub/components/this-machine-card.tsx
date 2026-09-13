@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
 import { useThisMachine } from '../hooks';
 import { MachineProjectRow, PendingUpdateStamp } from './remembered-machines-cards';
@@ -11,7 +12,7 @@ export const ThisMachineCard = ({ chosenRuntimeUrls }: ThisMachineCardProps) => 
   if (projects.length === 0) return null;
 
   return (
-    <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
+    <Card size="small" texture={surface.card} className="flex flex-1 flex-col gap-2 text-left">
       <div className="flex items-center justify-between gap-2">
         <p className="m-0 font-semibold">This machine</p>
         <PendingUpdateStamp pendingUpdateVersion={pendingUpdateVersion} />

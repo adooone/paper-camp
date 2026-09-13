@@ -1,10 +1,14 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
-import { Alert, Button, Card, PlusIcon, Spinner } from '@dendelion/paper-ui';
+import { Alert, Button, PlusIcon, Spinner } from '@dendelion/paper-ui';
+import { SettingGroup } from '../components/setting-group';
+import { SettingsHeader } from '../components/settings-header';
 import { useDeskSection } from '../hooks/use-desk-section';
 import { DeskCheckRow } from './desk-check-row';
+import { DeskCheckRowHeader } from './desk-check-row-header';
 import { DeskCiEditor } from './desk-ci-editor';
 import { DeskServiceRow } from './desk-service-row';
+import { DeskServiceRowHeader } from './desk-service-row-header';
 
 export const DeskSection = () => {
   const {
@@ -29,13 +33,7 @@ export const DeskSection = () => {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="m-0">Desk</h2>
-          <p className="opacity-50 mt-1">
-            Services, checks, and CI/release sources for this project's Stack panel.
-          </p>
-        </div>
+      <SettingsHeader title="Desk">
         {config && (
           <Button size="small" onClick={startDiscovery} disabled={discovering}>
             {discovering ? (
@@ -49,7 +47,8 @@ export const DeskSection = () => {
             )}
           </Button>
         )}
-      </div>
+      </SettingsHeader>
+
       {config === undefined && <RowSkeleton />}
       {config === null && (
         <Alert variant="warning">
@@ -57,53 +56,60 @@ export const DeskSection = () => {
         </Alert>
       )}
       {config && (
-        <>
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="m-0">Services</h3>
+        <div className="flex flex-col gap-4">
+          <SettingGroup
+            label="Services"
+            action={
               <Button size="small" icon={<PlusIcon size={16} />} onClick={addService}>
-                Add service
+                Add
               </Button>
-            </div>
-            <Card size="small" texture="kraft">
-              {services.length === 0 && <EmptyState message="No services yet." />}
-              {services.map((service, idx) => (
-                <DeskServiceRow
-                  key={service.id}
-                  service={service}
-                  onSave={(next) => updateService(service.id, next)}
-                  onRemove={() => removeService(service.id)}
-                  isLast={idx === services.length - 1}
-                />
-              ))}
-            </Card>
-          </div>
+            }
+          >
+            {services.length === 0 ? (
+              <EmptyState message="No services yet." />
+            ) : (
+              <>
+                <DeskServiceRowHeader />
+                {services.map((service) => (
+                  <DeskServiceRow
+                    key={service.id}
+                    service={service}
+                    onSave={(next) => updateService(service.id, next)}
+                    onRemove={() => removeService(service.id)}
+                  />
+                ))}
+              </>
+            )}
+          </SettingGroup>
 
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="m-0">Checks</h3>
+          <SettingGroup
+            label="Checks"
+            action={
               <Button size="small" icon={<PlusIcon size={16} />} onClick={addCheck}>
-                Add check
+                Add
               </Button>
-            </div>
-            <Card size="small" texture="kraft">
-              {checks.length === 0 && <EmptyState message="No checks yet." />}
-              {checks.map((check, idx) => (
-                <DeskCheckRow
-                  key={check.id}
-                  check={check}
-                  onSave={(next) => updateCheck(check.id, next)}
-                  onRemove={() => removeCheck(check.id)}
-                  isLast={idx === checks.length - 1}
-                />
-              ))}
-            </Card>
-          </div>
+            }
+          >
+            {checks.length === 0 ? (
+              <EmptyState message="No checks yet." />
+            ) : (
+              <>
+                <DeskCheckRowHeader />
+                {checks.map((check) => (
+                  <DeskCheckRow
+                    key={check.id}
+                    check={check}
+                    onSave={(next) => updateCheck(check.id, next)}
+                    onRemove={() => removeCheck(check.id)}
+                  />
+                ))}
+              </>
+            )}
+          </SettingGroup>
 
-          <div>
-            <h3 className="m-0 mb-3">CI</h3>
+          <SettingGroup label="CI">
             <DeskCiEditor ci={ci} onSave={updateCi} />
-          </div>
+          </SettingGroup>
 
           {proposal && diff && (
             <DeskProposalModal
@@ -114,7 +120,7 @@ export const DeskSection = () => {
               onCancel={cancelProposal}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   );

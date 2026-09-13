@@ -2,14 +2,15 @@
 id: IDEA-253
 title: Settings in the plans row grammar
 type: refactor
-status: idea
+status: review
 created: 2026-09-10
+updated: 2026-09-13
 tags:
   - app
   - ui
   - settings
 subject: App UI
-order: 6
+order: 5
 ---
 
 The settings page is the one surface that still looks like a form from
@@ -98,15 +99,27 @@ it lands. Stamp colours in `settings/constants.ts`, which follow the
 app-wide `STATUS_STAMP` pattern and move together in [[IDEA-111]].
 
 ### Phases
-- [ ] Add `SettingsHeader`, `SettingGroup`, and `SettingRow`
+- [x] Add `SettingsHeader`, `SettingGroup`, and `SettingRow`
       In `features/settings/components`; kraft `plan-row-card` rows with a 260px control column, handwritten group labels, and a `PlansHeader`-shaped section header. Drop the "Settings" `PageTitle` from `settings-page.tsx`.
-- [ ] Rebuild Project Info on the row grammar
+      run: 2m · 40 in · 8.3k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
+- [x] Rebuild Project Info on the row grammar
       Version stamp and initialized date in the header row; name, icon, port, toolbar switch rows; the agent table as header-then-rows.
-- [ ] Rebuild Setup with collapsing connection rows
+      run: 2m35s · 34 in · 12.3k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
+- [x] Rebuild Setup with collapsing connection rows
       Healthy rows are one line with a tooltip on the stamp; incomplete rows show detail and the connect action. *Show Setup on open* switch replaces the dismiss button.
-- [ ] Make Merge Policy booleans live switches
+      run: 2m7s · 34 in · 9.4k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
+- [x] Make Merge Policy booleans live switches
       `applyMergePolicy(root, partial?)` PATCHes only the given fields; the route and `config-api.ts` pass the partial through; recommended hint on rows that differ.
-- [ ] Rebuild Desk as header-then-rows tables
+      run: 2m57s · 38 in · 14.2k out · sonnet-5 · sess:6cf2e258-f96c-45b8-9876-ce6849b6ddc1
+- [x] Rebuild Desk as header-then-rows tables
       Group label with *Add* action, column header row, unlabeled inputs per row, CI as three rows with the Release Please switch.
-- [ ] Remove the Subjects section
+      run: 2m45s · 38 in · 13k out · sonnet-5 · sess:f49e9c57-c9cb-42d7-92dd-d3925fbab0fb
+- [x] Remove the Subjects section
       Delete `subjects-section.tsx`, its sidebar entry, and `subjects` from the `SettingsSection` union.
+      run: 1m4s · 18 in · 2.8k out · sonnet-5 · sess:f49e9c57-c9cb-42d7-92dd-d3925fbab0fb
+- [x] [manual] Harden merge-policy PATCH and keep tabular grids horizontal
+- [x] [manual] Show failed job names on red CI runs
+- [x] [manual] Stop overflow measurement from double-counting foldable items
+
+### Thread
+- [x] 2026-09-13 [review] [agent] Comments · 3 findings — The diff delivers all six phases faithfully: the three primitives match the spec's grammar, every boolean is a positively-phrased small Switch, Merge Policy toggles PATCH single fields end to end through a real partial, the Desk and agent tables use the header-then-rows shape, and Subjects is fully removed from the page, sidebar, and route union. tsc and biome are clean and the paper-ui prop usage (Switch, IconButton, Tooltip) checks out against the shipped types. The remaining issues are small: the new apply endpoint forwards unvalidated JSON keys into the gh invocation, and the tabular grids degrade poorly at the 480px breakpoint because the rows deliberately dropped their input labels.

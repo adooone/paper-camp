@@ -2,6 +2,7 @@ import { usePlanStatusPatch } from '@/app/features/plans/hooks';
 import { entityRouteParam, useOpenEntity, useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
+import { surface } from '@/app/styles/tokens';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -156,7 +157,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
               };
               const otherPlans = planEntries.filter((p) => p.id !== candidate.id);
               return (
-                <Card key={candidate.id ?? candidate.title} size="small" texture="canvas">
+                <Card key={candidate.id ?? candidate.title} size="small" texture={surface.card}>
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <PlanIdStamp id={candidate.id} />
@@ -207,7 +208,7 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
           </div>
           {overlapError && <p className="m-0 text-watercolor-rose-dark text-sm">{overlapError}</p>}
           {overlapVerdict && (
-            <Card size="small" texture="canvas">
+            <Card size="small" texture={surface.card}>
               <div className="flex flex-col gap-2">
                 <span className="font-semibold">
                   {overlapVerdict.verdict === 'new'

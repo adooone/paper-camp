@@ -1,6 +1,7 @@
 import type { DeskCi } from '@/types/index';
-import { Card, Input, Switch } from '@dendelion/paper-ui';
+import { Input, Switch } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
+import { SettingRow } from '../components/setting-row';
 
 interface DeskCiEditorProps {
   ci: DeskCi;
@@ -13,49 +14,39 @@ export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
   useEffect(() => setLocal(ci), [ci]);
 
   const commit = () => {
-    if (
-      local.repo === ci.repo &&
-      (local.branch ?? '') === (ci.branch ?? '') &&
-      (local.releasePlease ?? false) === (ci.releasePlease ?? false)
-    ) {
-      return;
-    }
+    if (local.repo === ci.repo && (local.branch ?? '') === (ci.branch ?? '')) return;
     onSave(local);
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card size="small" texture="kraft">
-        <div className="flex items-end gap-3">
-          <Input
-            size="small"
-            label="Repo (owner/name)"
-            value={local.repo}
-            onChange={(e) => setLocal({ ...local, repo: e.target.value })}
-            onBlur={commit}
-          />
-          <Input
-            size="small"
-            label="Branch"
-            value={local.branch ?? ''}
-            onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
-            onBlur={commit}
-          />
-        </div>
-      </Card>
-      <Card size="small" texture="kraft">
-        <div className="flex items-center justify-between">
-          <span>Release Please</span>
-          <Switch
-            checked={local.releasePlease ?? false}
-            onChange={(e) => {
-              const next = { ...local, releasePlease: e.target.checked };
-              setLocal(next);
-              onSave(next);
-            }}
-          />
-        </div>
-      </Card>
-    </div>
+    <>
+      <SettingRow label="Repo">
+        <Input
+          size="small"
+          value={local.repo}
+          onChange={(e) => setLocal({ ...local, repo: e.target.value })}
+          onBlur={commit}
+        />
+      </SettingRow>
+      <SettingRow label="Branch">
+        <Input
+          size="small"
+          value={local.branch ?? ''}
+          onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
+          onBlur={commit}
+        />
+      </SettingRow>
+      <SettingRow label="Release Please">
+        <Switch
+          size="small"
+          checked={local.releasePlease ?? false}
+          onChange={(e) => {
+            const next = { ...local, releasePlease: e.target.checked };
+            setLocal(next);
+            onSave(next);
+          }}
+        />
+      </SettingRow>
+    </>
   );
 };

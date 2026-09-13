@@ -1,4 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
+import { surface } from '@/app/styles/tokens';
 import type { ArchivableIdea } from '@/types/index';
 import { Button, Card, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
@@ -91,7 +92,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
               }
               className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
             >
-              <Card size="small" texture="canvas" shade className="plan-row-card">
+              <Card size="small" texture={surface.nestedCard} className="plan-row-card">
                 <div className={PLAN_ROWS_GRID_CLASS}>
                   <PlanIdStamp id={idea.id} />
                   <span className="overflow-hidden text-ellipsis whitespace-nowrap">

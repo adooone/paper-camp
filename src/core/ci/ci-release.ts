@@ -5,11 +5,17 @@ const GH_TIMEOUT_MS = 15_000;
 const CI_CACHE_TTL_MS = 60_000;
 
 interface GhRunRow {
+  databaseId?: number;
   workflowName: string;
   status: string;
   conclusion: string;
   url: string;
   headBranch: string;
+}
+
+interface GhJobRow {
+  name: string;
+  conclusion: string;
 }
 
 interface GhPrRow {
@@ -89,9 +95,12 @@ export function parseVersion(text: string): string | null {
   return match ? match[1] : null;
 }
 
-export function latestRunPerWorkflow(rows: GhRunRow[], branch: string): CiRun[] {
+export function latestRunPerWorkflow(
+  rows: GhRunRow[],
+  branch: string,
+): (CiRun & { runId?: number })[] {
   const seen = new Set<string>();
-  const runs: CiRun[] = [];
+  const runs: (CiRun & { runId?: number })[] = [];
   for (const row of rows) {
     if (row.headBranch !== branch || seen.has(row.workflowName)) continue;
     seen.add(row.workflowName);
@@ -99,9 +108,37 @@ export function latestRunPerWorkflow(rows: GhRunRow[], branch: string): CiRun[] 
       workflow: row.workflowName,
       status: mapRunStatus(row.status, row.conclusion),
       url: row.url || null,
+      ...(row.databaseId !== undefined && { runId: row.databaseId }),
     });
   }
   return runs;
+}
+
+export function failedJobNames(jobs: GhJobRow[]): string[] {
+  return jobs.filter((job) => job.conclusion === 'failure').map((job) => job.name);
+}
+
+// Only a failed run is asked for its jobs — one extra `gh` call per red workflow.
+async function withFailedJobs(
+  repo: string,
+  runs: (CiRun & { runId?: number })[],
+): Promise<CiRun[]> {
+  return Promise.all(
+    runs.map(async ({ runId, ...run }) => {
+      if (run.status !== 'failure' || runId === undefined) return run;
+      const view = await ghJson<{ jobs?: GhJobRow[] }>([
+        'run',
+        'view',
+        String(runId),
+        '-R',
+        repo,
+        '--json',
+        'jobs',
+      ]);
+      const failedJobs = failedJobNames(view?.jobs ?? []);
+      return failedJobs.length > 0 ? { ...run, failedJobs } : run;
+    }),
+  );
 }
 
 export function pickReleasePr(rows: GhPrRow[]): ReleasePr | null {
@@ -145,7 +182,7 @@ export async function fetchCiReleaseState(
       '--limit',
       '20',
       '--json',
-      'workflowName,status,conclusion,url,headBranch',
+      'databaseId,workflowName,status,conclusion,url,headBranch',
     ]),
     ci.releasePlease
       ? ghJson<GhPrRow[]>([
@@ -171,7 +208,7 @@ export async function fetchCiReleaseState(
     repo: ci.repo,
     branch,
     available,
-    runs: runRows ? latestRunPerWorkflow(runRows, branch) : [],
+    runs: runRows ? await withFailedJobs(ci.repo, latestRunPerWorkflow(runRows, branch)) : [],
     releasePr: prRows ? pickReleasePr(prRows) : null,
     releasedVersion: releasedTag ? releasedTag.replace(/^v/, '') : null,
   };

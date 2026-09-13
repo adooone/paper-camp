@@ -1,9 +1,11 @@
 import { RowSkeleton } from '@/app/components';
 import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
-import { Alert, Button, Card, Divider, Stamp, useToast } from '@dendelion/paper-ui';
+import { Alert, Button, Stamp, Switch, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { MERGE_POLICY_STAMP } from '../constants';
+import { SettingRow } from './setting-row';
+import { SettingsHeader } from './settings-header';
 
 const RECOMMENDED: MergePolicy = {
   allowSquashMerge: true,
@@ -13,48 +15,31 @@ const RECOMMENDED: MergePolicy = {
   squashMergeCommitMessage: 'PR_BODY',
 };
 
-const POLICY_ROWS: { key: keyof MergePolicy; label: string }[] = [
+const SWITCH_ROWS: {
+  key: 'allowSquashMerge' | 'allowMergeCommit' | 'allowRebaseMerge';
+  label: string;
+}[] = [
   { key: 'allowSquashMerge', label: 'Allow squash merge' },
   { key: 'allowMergeCommit', label: 'Allow merge commit' },
   { key: 'allowRebaseMerge', label: 'Allow rebase merge' },
-  { key: 'squashMergeCommitTitle', label: 'Squash commit title' },
-  { key: 'squashMergeCommitMessage', label: 'Squash commit message' },
 ];
 
-function formatValue(value: boolean | string): string {
-  return typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value;
-}
+const VALUE_ROWS: { key: 'squashMergeCommitTitle' | 'squashMergeCommitMessage'; label: string }[] =
+  [
+    { key: 'squashMergeCommitTitle', label: 'Squash commit title' },
+    { key: 'squashMergeCommitMessage', label: 'Squash commit message' },
+  ];
 
 function matchesRecommended(policy: MergePolicy): boolean {
-  return POLICY_ROWS.every((row) => policy[row.key] === RECOMMENDED[row.key]);
-}
-
-interface PolicyRowProps {
-  label: string;
-  current: boolean | string;
-  recommended: boolean | string;
-  isLast: boolean;
-}
-
-const PolicyRow = ({ label, current, recommended, isLast }: PolicyRowProps) => {
-  const matches = current === recommended;
-  return (
-    <>
-      <div className="flex items-center gap-3 pb-2 pt-2">
-        <span className="flex-1">{label}</span>
-        <span className={matches ? 'opacity-[0.65] font-normal' : 'font-semibold'}>
-          {formatValue(current)}
-        </span>
-        {!matches && <span className="opacity-[0.45]">→ {formatValue(recommended)}</span>}
-      </div>
-      {!isLast && <Divider />}
-    </>
+  return (Object.keys(RECOMMENDED) as (keyof MergePolicy)[]).every(
+    (key) => policy[key] === RECOMMENDED[key],
   );
-};
+}
 
 export const MergePolicySection = () => {
   const [result, setResult] = useState<MergePolicyResult | null | undefined>(undefined);
   const [applying, setApplying] = useState(false);
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,23 +62,31 @@ export const MergePolicySection = () => {
     }
   };
 
+  const handleToggle = async (key: (typeof SWITCH_ROWS)[number]['key']) => {
+    if (result?.status !== 'ok') return;
+    const next = !result.policy[key];
+    setTogglingKey(key);
+    const applied = await applyMergePolicy({ [key]: next });
+    setTogglingKey(null);
+    if (applied?.status === 'ok') {
+      setResult(applied);
+      toast({ title: 'Saved', variant: 'success' });
+    } else {
+      toast({
+        title: 'Failed to save',
+        description: applied?.status === 'unavailable' ? applied.reason : undefined,
+        variant: 'error',
+      });
+    }
+  };
+
   const upToDate = result?.status === 'ok' && matchesRecommended(result.policy);
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="m-0">Merge Policy</h2>
-        <p className="opacity-50 mt-1">
-          Paper Camp's canonical policy: squash-only merges, with the commit title and body taken
-          from the PR.
-        </p>
-      </div>
-      {result === undefined && <RowSkeleton />}
-      {result === null && <Alert variant="warning">Failed to load merge policy.</Alert>}
-      {result?.status === 'unavailable' && <Alert variant="warning">{result.reason}</Alert>}
-      {result?.status === 'ok' && (
-        <>
-          <div className="flex items-center gap-3 mb-3">
+      <SettingsHeader title="Merge Policy">
+        {result?.status === 'ok' && (
+          <>
             <span className="font-medium">{result.repo}</span>
             <Stamp
               size="small"
@@ -106,24 +99,49 @@ export const MergePolicySection = () => {
             >
               {upToDate ? 'Matches recommended policy' : 'Differs from recommended policy'}
             </Stamp>
-          </div>
-          <Card size="small" texture="kraft">
-            {POLICY_ROWS.map((row, idx) => (
-              <PolicyRow
-                key={row.key}
-                label={row.label}
-                current={result.policy[row.key]}
-                recommended={RECOMMENDED[row.key]}
-                isLast={idx === POLICY_ROWS.length - 1}
-              />
-            ))}
-          </Card>
-          <div className="mt-4">
             <Button size="small" onClick={handleApply} disabled={applying || upToDate}>
-              {applying ? 'Applying…' : 'Apply recommended policy'}
+              {applying ? 'Applying…' : 'Apply recommended'}
             </Button>
-          </div>
-        </>
+          </>
+        )}
+      </SettingsHeader>
+
+      <p className="opacity-50 text-sm mt-0 mb-4">
+        Paper Camp's canonical policy: squash-only merges, with the commit title and body taken from
+        the PR.
+      </p>
+
+      {result === undefined && <RowSkeleton />}
+      {result === null && <Alert variant="warning">Failed to load merge policy.</Alert>}
+      {result?.status === 'unavailable' && <Alert variant="warning">{result.reason}</Alert>}
+      {result?.status === 'ok' && (
+        <div className="flex flex-col gap-1">
+          {SWITCH_ROWS.map(({ key, label }) => {
+            const current = result.policy[key];
+            const recommended = RECOMMENDED[key];
+            return (
+              <SettingRow
+                key={key}
+                label={label}
+                hint={
+                  current !== recommended ? `recommended: ${recommended ? 'on' : 'off'}` : undefined
+                }
+              >
+                <Switch
+                  size="small"
+                  checked={current}
+                  disabled={togglingKey === key}
+                  onChange={() => handleToggle(key)}
+                />
+              </SettingRow>
+            );
+          })}
+          {VALUE_ROWS.map(({ key, label }) => (
+            <SettingRow key={key} label={label}>
+              <span className="text-sm opacity-[0.65]">{result.policy[key]}</span>
+            </SettingRow>
+          ))}
+        </div>
       )}
     </div>
   );

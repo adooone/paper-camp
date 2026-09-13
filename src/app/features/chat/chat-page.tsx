@@ -1,6 +1,7 @@
 import { RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { FeedbackThread } from '@/app/features/plans/components';
+import { surface } from '@/app/styles/tokens';
 import { Button, Card, Spinner, Textarea } from '@dendelion/paper-ui';
 import { useChatPage } from './hooks/use-chat-page';
 import { ChatTitleActions, ClearChatModal } from './views';
@@ -34,7 +35,7 @@ export const ChatPage = () => {
       {loading && thread.length === 0 ? (
         <RowSkeleton />
       ) : (
-        <Card size="small" accent accentColor="slate" texture="kraft">
+        <Card size="small" accent accentColor="slate" texture={surface.card}>
           <div className="flex flex-col gap-3 mb-4">
             {thread.length > 0 || pending ? (
               <>
@@ -56,7 +57,7 @@ export const ChatPage = () => {
                 )}
                 {sending && (
                   <div className="flex flex-col gap-1 items-start">
-                    <Card size="small" surface="paper" texture="kraft" shade>
+                    <Card size="small" texture={surface.nestedCard}>
                       <Spinner size="small" label="Agent thinking…" />
                     </Card>
                   </div>

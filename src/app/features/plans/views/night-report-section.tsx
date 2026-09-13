@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { Card, IconButton, Stamp, type StampVariant } from '@dendelion/paper-ui';
 
@@ -63,7 +64,7 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
                 <div key={nightFindingKey(finding)} className="rounded-[10px]">
                   <Card
                     size="small"
-                    texture="canvas"
+                    texture={surface.card}
                     accent
                     accentColor="slate"
                     className="plan-row-card"

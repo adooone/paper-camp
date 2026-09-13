@@ -29,7 +29,9 @@ const RunRow = ({ run }: { run: CiRun }) => {
       <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-desk-chalk">
         {run.workflow}
       </span>
-      <span className="shrink-0 font-mono text-2xs text-desk-text-muted">{run.status}</span>
+      <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
+        {run.failedJobs?.length ? `${run.status} · ${run.failedJobs.join(', ')}` : run.status}
+      </span>
     </span>
   );
   return run.url ? (

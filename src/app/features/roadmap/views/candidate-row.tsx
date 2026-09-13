@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import { Button, Card } from '@dendelion/paper-ui';
 
 interface CandidateRowProps {
@@ -6,7 +7,7 @@ interface CandidateRowProps {
 }
 
 export const CandidateRow = ({ name, onPromote }: CandidateRowProps) => (
-  <Card size="small" texture="kraft" className="plan-row-card">
+  <Card size="small" texture={surface.card} className="plan-row-card">
     <div className="flex items-center gap-3">
       <span className="flex-1">{name}</span>
       <Button type="button" variant="ghost" size="small" onClick={onPromote}>

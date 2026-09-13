@@ -6,7 +6,6 @@ const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
 
 const SETTINGS_SECTIONS = [
-  'subjects',
   'setup',
   'merge-policy',
   'desk',

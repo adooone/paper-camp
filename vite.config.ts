@@ -1,6 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { builtinModules } from 'node:module';
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
+
+const runtimeDependencies = Object.keys(
+  (JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')) as {
+    dependencies?: Record<string, string>;
+  }).dependencies ?? {},
+);
 
 export default defineConfig(({ command }) => {
   if (command === 'serve') {
@@ -46,11 +54,13 @@ export default defineConfig(({ command }) => {
         formats: ['es'],
       },
       rollupOptions: {
+        // Everything installed at runtime stays a runtime import: every `dependencies`
+        // entry (and its subpaths) plus Node's built-ins, with or without the `node:` prefix.
         external: (id) =>
           id.startsWith('node:') ||
-          ['commander', 'zustand', 'zod', 'node-pty', 'fs', 'path', 'url', 'http', 'vite'].includes(
-            id,
-          ),
+          builtinModules.includes(id) ||
+          runtimeDependencies.some((name) => id === name || id.startsWith(`${name}/`)) ||
+          ['zustand', 'vite'].includes(id),
         output: {
           entryFileNames: '[name]/index.js',
           chunkFileNames: 'chunks/[name].[hash].js',
