@@ -9,7 +9,7 @@ tags:
   - stack
   - ui
 subject: App UI
-order: 1
+order: 2
 ---
 
 The desk checks are shown twice. The Stack panel's *Checks* group draws
