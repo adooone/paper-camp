@@ -43,7 +43,8 @@ route does after the tree is clean.
 - [x] Take the changed-file count in `completionGate` and phrase `missing` as actions
       In `plans/helpers/helpers.ts`; a non-zero count pushes *commit or stash the changes*, and the existing entries become *finish the phases*, *open a PR*, *wait for CI*.
       run: 1m28s · 20 in · 4.9k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
-- [ ] Update the completion-gate tests for the new argument and wording
+- [x] Update the completion-gate tests for the new argument and wording
+      run: 52s · 16 in · 2.4k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
 - [ ] Pass the count from the idea sidebar
       `usePlanActionsColumn` reads the `gitStatus` length the status bar already uses and hands it to `CompleteIdeaButton`, which forwards it to the gate.
 - [ ] Pass the same count from the Git page's deliver card
