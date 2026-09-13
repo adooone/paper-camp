@@ -40,6 +40,7 @@ export interface StatusBarCoreProps {
   gitBranch: string | null;
   gitAhead: number;
   changedFileCount: number;
+  failingCheckCount?: number;
   agentActive: boolean;
   activeTaskStatus?: AgentTaskStatus;
   agentNotSignedIn: boolean;
@@ -100,6 +101,7 @@ export const StatusBarCore = ({
   gitBranch,
   gitAhead,
   changedFileCount,
+  failingCheckCount = 0,
   agentActive,
   activeTaskStatus,
   agentNotSignedIn,
@@ -219,6 +221,20 @@ export const StatusBarCore = ({
         <span ref={registerFixed('changed')} className={secondaryClass}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
+        {failingCheckCount > 0 && (
+          <Tooltip
+            content={`${failingCheckCount} check${failingCheckCount === 1 ? '' : 's'} failing — open Git`}
+          >
+            <span ref={registerFixed('failing')}>
+              {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
+              <button type="button" onClick={onOpenGit} className={stampTriggerClass}>
+                <Stamp size="small" variant="error">
+                  {failingCheckCount} failing
+                </Stamp>
+              </button>
+            </span>
+          </Tooltip>
+        )}
         {agentActive && (
           <span ref={registerFixed('spinner')}>
             <Spinner size="small" label={`Agent ${activeTaskStatus}…`} />

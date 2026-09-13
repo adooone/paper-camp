@@ -1,3 +1,4 @@
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import {
   selectAgentNotSignedIn,
   selectCapabilityGapCount,
@@ -12,6 +13,7 @@ export interface StatusBarState {
   gitBranch: string | null;
   gitAhead: number;
   changedFileCount: number;
+  failingCheckCount: number;
   agentActive: boolean;
   activeTaskStatus: AgentTaskStatus | undefined;
   agentNotSignedIn: boolean;
@@ -30,6 +32,9 @@ export function useStatusBar(): StatusBarState {
   const gitStatus = useAppStore((s) => s.gitStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
+  const doctor = useAppStore((s) => s.doctor);
+  const consistency = useAppStore((s) => s.consistency);
+  const { checks: deskChecks } = useDeskChecks();
   const capabilityGapCount = useAppStore(selectCapabilityGapCount);
   const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
   const rateLimit = useAppStore(selectLatestRateLimit);
@@ -42,11 +47,16 @@ export function useStatusBar(): StatusBarState {
   const activeTask = agentStatus.find(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
+  const failingCheckCount =
+    deskChecks.filter((c) => c.status === 'fail').length +
+    (doctor.errorCount > 0 ? 1 : 0) +
+    (consistency.length > 0 ? 1 : 0);
 
   return {
     gitBranch,
     gitAhead,
     changedFileCount: gitStatus?.length ?? 0,
+    failingCheckCount,
     agentActive: activeTask !== undefined,
     activeTaskStatus: activeTask?.status,
     agentNotSignedIn,

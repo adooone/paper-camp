@@ -2,7 +2,7 @@
 id: IDEA-265
 title: Checks leave the Stack
 type: refactor
-status: idea
+status: review
 created: 2026-09-13
 tags:
   - app
@@ -57,6 +57,7 @@ The Services and CI & release groups. What the checks run, which
 - [x] Delete the Stack's Checks group
       Drop `checks-group.tsx` and its test and leave `desk-section.tsx` with Services and CI & release.
       run: 54s · 26 in · 2.4k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
-- [ ] Move the failing signal to the status bar
+- [x] Move the failing signal to the status bar
       `use-stack-panel.ts` loses `anyChecksFailing` and the toggle's red dot; the git
       stamp in `status-bar-core.tsx` shows the failing count next to the changed-files count.
+      run: 3m47s · 74 in · 16k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84

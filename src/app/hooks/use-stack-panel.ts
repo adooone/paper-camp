@@ -1,11 +1,9 @@
-import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { type RefObject, useEffect, useRef } from 'react';
 
 export interface StackPanelState {
   panelRef: RefObject<HTMLElement>;
-  anyChecksFailing: boolean;
   agentActive: boolean;
 }
 
@@ -29,8 +27,6 @@ export function useStackPanel(
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, pinned, onToggle]);
 
-  const consistency = useAppStore((s) => s.consistency);
-  const doctor = useAppStore((s) => s.doctor);
   const agentStatus = useAppStore((s) => s.agentStatus);
 
   useEffect(() => {
@@ -114,15 +110,9 @@ export function useStackPanel(
     };
   }, []);
 
-  const { checks: deskChecks } = useDeskChecks();
-  // Plan *document* consistency (orphan subjects) — a separate concern from the
-  // code-consistency check, surfaced in its own "Docs" stamp.
-  const hasDocIssues = consistency.length > 0;
-  const anyChecksFailing =
-    deskChecks.some((check) => check.status === 'fail') || hasDocIssues || doctor.errorCount > 0;
   const agentActive = agentStatus.some(
     (t) => t.status === 'running' || t.status === 'starting' || t.status === 'stopping',
   );
 
-  return { panelRef, anyChecksFailing, agentActive };
+  return { panelRef, agentActive };
 }

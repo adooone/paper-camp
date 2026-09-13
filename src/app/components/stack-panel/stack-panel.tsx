@@ -13,7 +13,7 @@ interface StackPanelProps {
 
 export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) => {
   const isOpen = open || pinned;
-  const { panelRef, anyChecksFailing, agentActive } = useStackPanel(isOpen, pinned, onToggle);
+  const { panelRef, agentActive } = useStackPanel(isOpen, pinned, onToggle);
 
   return (
     <>
@@ -28,31 +28,16 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             icon={
               agentActive ? (
                 <Spinner size="small" surface="chalkboard" label="Agent running" />
-              ) : anyChecksFailing ? (
-                <span
-                  aria-hidden="true"
-                  className="h-2 w-2 rounded-full bg-chalk-fail-text shadow-[0_0_6px_rgba(214,160,160,0.9)]"
-                />
               ) : (
                 <span className="text-2xs">S</span>
               )
             }
             surface="chalkboard"
             size="small"
-            label={
-              agentActive
-                ? 'Open stack panel — agent running'
-                : anyChecksFailing
-                  ? 'Open stack panel — checks failing'
-                  : 'Open stack panel'
-            }
+            label={agentActive ? 'Open stack panel — agent running' : 'Open stack panel'}
             onClick={onToggle}
             className={`w-7 h-[64px] rounded-l-md ${
-              agentActive
-                ? 'shadow-[inset_0_0_0_1px_rgba(214,196,160,0.6)]'
-                : anyChecksFailing
-                  ? 'shadow-[inset_0_0_0_1px_rgba(214,160,160,0.6)]'
-                  : ''
+              agentActive ? 'shadow-[inset_0_0_0_1px_rgba(214,196,160,0.6)]' : ''
             }`}
           />
         </div>

@@ -65,6 +65,24 @@ describe('StatusBarCore', () => {
     expect(spans).toContain('2 changed');
   });
 
+  it('omits the failing stamp when nothing is failing', () => {
+    const stamps = collect(StatusBarCore(baseProps), (el) => el.type === Stamp);
+    expect(stamps).toHaveLength(0);
+  });
+
+  it('shows a failing stamp that opens git', () => {
+    const onOpenGit = vi.fn();
+    const tree = StatusBarCore({ ...baseProps, failingCheckCount: 2, onOpenGit });
+    const stamps = collect(tree, (el) => el.type === Stamp);
+    expect(textOf(stamps[0]?.props.children as ReactNode)).toBe('2 failing');
+    const trigger = collect(
+      tree,
+      (el) => el.type === 'button' && el.props.onClick === onOpenGit,
+    )[0];
+    (trigger?.props.onClick as () => void)?.();
+    expect(onOpenGit).toHaveBeenCalledTimes(1);
+  });
+
   it('renders an agent spinner only while a task is active', () => {
     const idle = collect(
       StatusBarCore(baseProps),
