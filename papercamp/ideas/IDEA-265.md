@@ -54,8 +54,9 @@ The Services and CI & release groups. What the checks run, which
 - [x] Show the checks row on the Git page
       Beside the commit action in `git-page.tsx`, reading from the same row component.
       run: 1m40s · 38 in · 6.5k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
-- [ ] Delete the Stack's Checks group
+- [x] Delete the Stack's Checks group
       Drop `checks-group.tsx` and its test and leave `desk-section.tsx` with Services and CI & release.
+      run: 54s · 26 in · 2.4k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
 - [ ] Move the failing signal to the status bar
       `use-stack-panel.ts` loses `anyChecksFailing` and the toggle's red dot; the git
       stamp in `status-bar-core.tsx` shows the failing count next to the changed-files count.

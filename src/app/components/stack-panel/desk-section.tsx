@@ -2,13 +2,12 @@
 // graph and loops back to components/index.ts, which depcruise fails as a cycle.
 import { useDeskDiscovery } from '@/app/hooks/use-desk-discovery';
 import { Button, Skeleton, Spinner } from '@dendelion/paper-ui';
-import { CHECKS_GROUP_LABEL, ChecksGroup } from './checks-group';
 import { CI_GROUP_LABEL, CiGroup } from './ci-group';
 import { DeskProposalModal } from './desk-proposal-modal';
 import { SERVICES_GROUP_LABEL, ServicesGroup } from './services-group';
 import { groupLabelClassName } from './shared';
 
-const GROUP_LABELS = [SERVICES_GROUP_LABEL, CHECKS_GROUP_LABEL, CI_GROUP_LABEL];
+const GROUP_LABELS = [SERVICES_GROUP_LABEL, CI_GROUP_LABEL];
 
 const DeskSectionSkeleton = () => (
   <div className="flex flex-col gap-4" aria-hidden="true">
@@ -64,7 +63,6 @@ export const DeskSection = () => {
         ) : current ? (
           <div className="flex flex-col gap-4">
             <ServicesGroup />
-            <ChecksGroup />
             <CiGroup />
           </div>
         ) : (
