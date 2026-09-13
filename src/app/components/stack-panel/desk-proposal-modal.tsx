@@ -1,4 +1,5 @@
 import type { DeskDiff } from '@/app/features/settings/helpers';
+import { randomId } from '@/app/utils/random-id';
 import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
 import {
   Button,
@@ -54,11 +55,11 @@ function buildServiceRows(
         ? 'kept'
         : 'changed'
       : 'added';
-    rows.push({ ...s, rowKey: crypto.randomUUID(), status });
+    rows.push({ ...s, rowKey: randomId(), status });
   }
   for (const c of currentServices) {
     if (!proposedKeys.has(c.cmd)) {
-      rows.push({ ...c, rowKey: crypto.randomUUID(), status: 'removed' });
+      rows.push({ ...c, rowKey: randomId(), status: 'removed' });
     }
   }
   return { rows };
@@ -81,11 +82,11 @@ function buildCheckRows(
         ? 'kept'
         : 'changed'
       : 'added';
-    rows.push({ ...c, rowKey: crypto.randomUUID(), status });
+    rows.push({ ...c, rowKey: randomId(), status });
   }
   for (const x of currentChecks) {
     if (!proposedKeys.has(x.cmd)) {
-      rows.push({ ...x, rowKey: crypto.randomUUID(), status: 'removed' });
+      rows.push({ ...x, rowKey: randomId(), status: 'removed' });
     }
   }
   return { rows };
@@ -120,10 +121,7 @@ export const DeskProposalModal = ({
     );
 
   const addService = () =>
-    setServices((prev) => [
-      ...prev,
-      { rowKey: crypto.randomUUID(), name: '', cmd: '', status: 'added' },
-    ]);
+    setServices((prev) => [...prev, { rowKey: randomId(), name: '', cmd: '', status: 'added' }]);
 
   const updateCheck = (rowKey: string, patch: Partial<DeskCheck>) =>
     setChecks((prev) => prev.map((c) => (c.rowKey === rowKey ? { ...c, ...patch } : c)));
@@ -141,10 +139,7 @@ export const DeskProposalModal = ({
   };
 
   const addCheck = () =>
-    setChecks((prev) => [
-      ...prev,
-      { rowKey: crypto.randomUUID(), name: '', cmd: '', status: 'added' },
-    ]);
+    setChecks((prev) => [...prev, { rowKey: randomId(), name: '', cmd: '', status: 'added' }]);
 
   const completeServices = services
     .filter((s) => s.status !== 'removed' && s.name.trim() !== '' && s.cmd.trim() !== '')

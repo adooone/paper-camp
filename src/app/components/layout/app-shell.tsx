@@ -20,6 +20,7 @@ import {
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
+import { surface } from '@/app/styles/tokens';
 import { Button, IconButton, Layout, ToastProvider, getSurfaceStyles } from '@dendelion/paper-ui';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
@@ -156,7 +157,7 @@ export const AppShell = () => {
         </div>
         <Layout
           style={{ flex: '1 1 0%', minHeight: 0, height: 'auto' }}
-          background={{ texture: 'paper', shade: true }}
+          background={surface.page}
           showHeader={false}
           showSidebar={false}
           showPage={false}

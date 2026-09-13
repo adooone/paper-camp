@@ -1,4 +1,5 @@
 import { useFeedbackComposer } from '@/app/features/plans/hooks';
+import { surface } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Button, Card, Spinner, Textarea } from '@dendelion/paper-ui';
 import { FeedbackThread } from '../components';
@@ -39,7 +40,7 @@ export const FeedbackSection = ({
   return (
     <div className="mb-8">
       <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
-      <Card size="small" accent accentColor="slate" texture="kraft">
+      <Card size="small" accent accentColor="slate" texture={surface.card}>
         <div className="flex flex-col gap-3 mb-4">
           {thread.length > 0 || pending ? (
             <>
@@ -68,7 +69,7 @@ export const FeedbackSection = ({
               )}
               {updating && (
                 <div className="flex flex-col gap-1 items-start">
-                  <Card size="small" surface="paper" texture="kraft" shade>
+                  <Card size="small" texture={surface.nestedCard}>
                     <Spinner size="small" label="Agent thinking…" />
                   </Card>
                 </div>

@@ -7,6 +7,7 @@ import {
   saveConfig,
   toggleNightShift,
 } from '@/app/services/system';
+import { randomId } from '@/app/utils/random-id';
 import { NIGHT_BUILTIN_CHECKS } from '@/core/night-checks';
 import {
   DEFAULT_NIGHT_CONFIG,
@@ -37,7 +38,7 @@ function reconcileRows(
     const match = row.name
       ? prev.find((p) => !usedIds.has(p.id) && p.name === row.name)
       : undefined;
-    if (!match) return { ...row, id: crypto.randomUUID() };
+    if (!match) return { ...row, id: randomId() };
     usedIds.add(match.id);
     const { id, ...matchRest } = match;
     return JSON.stringify(matchRest) === JSON.stringify(row) ? match : { ...row, id };
@@ -156,7 +157,7 @@ export const useNightSection = () => {
   };
 
   const addCustomCheck = () =>
-    setCustomChecks((prev) => [...prev, { id: crypto.randomUUID(), name: '', prompt: '' }]);
+    setCustomChecks((prev) => [...prev, { id: randomId(), name: '', prompt: '' }]);
 
   const updateCustomCheck = (id: string, next: NightCustomCheck) => {
     const nextChecks = customChecks.map((c) => (c.id === id ? { ...next, id } : c));

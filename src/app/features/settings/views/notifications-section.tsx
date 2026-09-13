@@ -1,4 +1,5 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
+import { surface } from '@/app/styles/tokens';
 import { Alert, Card, Divider, Stamp, Switch } from '@dendelion/paper-ui';
 import { NOTIFICATION_KIND_LABELS, PERMISSION_STAMP } from '../constants';
 import { useNotificationsSection } from '../hooks/use-notifications-section';
@@ -35,7 +36,7 @@ export const NotificationsSection = () => {
       )}
       {config && (
         <>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             {kindList.map((kind, idx) => (
               <div key={kind}>
                 <div className="flex items-center justify-between gap-3 pb-2 pt-2">
@@ -50,7 +51,7 @@ export const NotificationsSection = () => {
           <div className="mt-6 mb-3">
             <h3 className="m-0">This device</h3>
           </div>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             {!supported ? (
               <Alert variant="warning">This browser doesn't support push notifications.</Alert>
             ) : (
@@ -73,7 +74,7 @@ export const NotificationsSection = () => {
           <div className="mt-6 mb-3">
             <h3 className="m-0">Devices</h3>
           </div>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             {devices === undefined && <RowSkeleton />}
             {devices && devices.length === 0 && <EmptyState message="No subscribed devices yet." />}
             {devices?.map((device, idx) => (

@@ -10,7 +10,7 @@ tags:
   - ui
   - settings
 subject: App UI
-order: 4
+order: 5
 ---
 
 The settings page is the one surface that still looks like a form from
@@ -119,6 +119,7 @@ app-wide `STATUS_STAMP` pattern and move together in [[IDEA-111]].
       run: 1m4s · 18 in · 2.8k out · sonnet-5 · sess:f49e9c57-c9cb-42d7-92dd-d3925fbab0fb
 - [x] [manual] Harden merge-policy PATCH and keep tabular grids horizontal
 - [x] [manual] Show failed job names on red CI runs
+- [x] [manual] Stop overflow measurement from double-counting foldable items
 
 ### Thread
 - [x] 2026-09-13 [review] [agent] Comments · 3 findings — The diff delivers all six phases faithfully: the three primitives match the spec's grammar, every boolean is a positively-phrased small Switch, Merge Policy toggles PATCH single fields end to end through a real partial, the Desk and agent tables use the header-then-rows shape, and Subjects is fully removed from the page, sidebar, and route union. tsc and biome are clean and the paper-ui prop usage (Switch, IconButton, Tooltip) checks out against the shipped types. The remaining issues are small: the new apply endpoint forwards unvalidated JSON keys into the gh invocation, and the tabular grids degrade poorly at the 480px breakpoint because the rows deliberately dropped their input labels.

@@ -1,6 +1,7 @@
 import { NoteIcon } from '@/app/components/icons';
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
+import { surface } from '@/app/styles/tokens';
 import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
@@ -121,7 +122,7 @@ export const WorklistRows = ({
           </button>
         </span>
         <div className="flex-1 min-w-0">
-          <Card size="small" texture="kraft" className="plan-row-card">
+          <Card size="small" texture={surface.card} className="plan-row-card">
             <div className={gridClass}>
               {SORT_COLUMNS.map(({ key, label }) => {
                 const active = key === sortKey;
@@ -209,7 +210,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
         }
         className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
       >
-        <Card size="small" texture="canvas" className="plan-row-card">
+        <Card size="small" texture={surface.card} className="plan-row-card">
           <div className={PLAN_ROWS_GRID_CLASS}>
             {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
             <span className={`${titleButtonClass} [cursor:inherit]`}>
@@ -272,7 +273,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
         }
         className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
       >
-        <Card size="small" texture="kraft" className="plan-row-card">
+        <Card size="small" texture={surface.card} className="plan-row-card">
           <div className={FIX_ROW_GRID_CLASS}>
             <PlanIdStamp id={fix.id} />
             <span className={`${titleButtonClass} [cursor:inherit]`}>

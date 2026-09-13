@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import { Card, Skeleton } from '@dendelion/paper-ui';
 import { PLAN_ROWS_GRID_CLASS } from './plan-rows';
 
@@ -20,7 +21,7 @@ export const PlansListSkeleton = () => (
     <div className="flex items-center">
       <span className="flex-[0_0_36px]" />
       <div className="flex-1 min-w-0">
-        <Card size="small" texture="kraft" className="plan-row-card">
+        <Card size="small" texture={surface.card} className="plan-row-card">
           <div className={PLAN_ROWS_GRID_CLASS}>
             <Skeleton variant="text" width={28} />
             <Skeleton variant="text" width={44} />

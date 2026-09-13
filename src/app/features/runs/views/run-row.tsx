@@ -1,4 +1,5 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
+import { surface } from '@/app/styles/tokens';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
@@ -22,7 +23,7 @@ export const LogRowView = ({ row }: LogRowViewProps) => {
       onClick={() => navigate({ to: '/log/$entryId', params: { entryId: row.id } })}
       className="group block w-full cursor-pointer rounded-[10px] border-none bg-transparent p-0 text-left"
     >
-      <Card size="small" texture="canvas" className="plan-row-card">
+      <Card size="small" texture={surface.card} className="plan-row-card">
         <div className={LOG_ROW_GRID_CLASS}>
           <span className="font-handwritten text-xs opacity-[0.55] whitespace-nowrap">
             {formatTime(row.timestamp)}

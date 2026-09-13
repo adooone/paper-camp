@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 
@@ -11,7 +12,7 @@ interface SettingRowProps {
 }
 
 export const SettingRow = ({ label, hint, children }: SettingRowProps) => (
-  <Card size="small" texture="kraft" className="plan-row-card">
+  <Card size="small" texture={surface.card} className="plan-row-card">
     <div className={SETTING_ROW_GRID_CLASS}>
       <div className="min-w-0">
         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{label}</div>

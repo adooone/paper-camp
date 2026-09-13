@@ -1,4 +1,5 @@
 import { RowSkeleton } from '@/app/components';
+import { surface } from '@/app/styles/tokens';
 import { Alert, Button, Card, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
 import { useToolbarSection } from '../hooks';
 
@@ -28,7 +29,7 @@ export const ToolbarSection = () => {
       )}
       {config && (
         <>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="m-0">Enable</p>
@@ -44,7 +45,7 @@ export const ToolbarSection = () => {
           </Card>
 
           <div className="mt-6">
-            <Card size="small" texture="kraft">
+            <Card size="small" texture={surface.card}>
               <div>
                 <p className="m-0">Host app</p>
                 <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">

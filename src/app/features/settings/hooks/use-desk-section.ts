@@ -1,5 +1,6 @@
 import { useDeskDiscovery } from '@/app/hooks/use-desk-discovery';
 import { fetchConfig, saveConfig } from '@/app/services/system';
+import { randomId } from '@/app/utils/random-id';
 import type { DeskCheck, DeskCi, DeskConfig, DeskService, PaperCampConfig } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useState } from 'react';
@@ -28,7 +29,7 @@ function reconcileRows<T extends { name: string; cmd: string }>(
   const usedIds = new Set<string>();
   const merged = next.map((row) => {
     const match = row.cmd ? prev.find((p) => !usedIds.has(p.id) && p.cmd === row.cmd) : undefined;
-    if (!match) return { ...row, id: crypto.randomUUID() };
+    if (!match) return { ...row, id: randomId() };
     usedIds.add(match.id);
     const { id, ...matchRest } = match;
     return JSON.stringify(matchRest) === JSON.stringify(row) ? match : { ...row, id };
@@ -87,8 +88,7 @@ export const useDeskSection = () => {
     }
   };
 
-  const addService = () =>
-    setServices((prev) => [...prev, { id: crypto.randomUUID(), name: '', cmd: '' }]);
+  const addService = () => setServices((prev) => [...prev, { id: randomId(), name: '', cmd: '' }]);
 
   const updateService = (id: string, next: DeskService) => {
     const nextServices = services.map((s) => (s.id === id ? { ...next, id } : s));
@@ -102,8 +102,7 @@ export const useDeskSection = () => {
     commit(nextServices, checks, ci);
   };
 
-  const addCheck = () =>
-    setChecks((prev) => [...prev, { id: crypto.randomUUID(), name: '', cmd: '' }]);
+  const addCheck = () => setChecks((prev) => [...prev, { id: randomId(), name: '', cmd: '' }]);
 
   const updateCheck = (id: string, next: DeskCheck) => {
     const nextChecks = checks.map((c) => (c.id === id ? { ...next, id } : c));

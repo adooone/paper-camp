@@ -32,6 +32,8 @@ export function pickHidden(
 const MORE_BUTTON_WIDTH = 28;
 const ITEM_GAP = 12;
 
+// Fixed refs must never wrap a candidate: measuring a group that contains foldable
+// items counts them twice and makes the hide decision oscillate every layout.
 export function useStatusBarOverflow(candidates: { key: string; priority: number }[]) {
   const barRef = useRef<HTMLDivElement>(null);
   const fixedRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -54,6 +56,7 @@ export function useStatusBarOverflow(candidates: { key: string; priority: number
     [],
   );
 
+  const candidatesKey = candidates.map((c) => `${c.key}:${c.priority}`).join('|');
   const measure = useCallback(() => {
     const bar = barRef.current;
     if (!bar) return;
@@ -66,7 +69,13 @@ export function useStatusBarOverflow(candidates: { key: string; priority: number
     for (const [key, el] of itemRefs.current) widths.current.set(key, el.offsetWidth);
     let fixedWidth = 0;
     for (const el of fixedRefs.current.values()) fixedWidth += el.offsetWidth + ITEM_GAP;
-    const measured = candidates
+    const measured = candidatesKey
+      .split('|')
+      .filter(Boolean)
+      .map((entry) => {
+        const [key, priority] = entry.split(':');
+        return { key, priority: Number(priority) };
+      })
       .filter((c) => widths.current.has(c.key))
       .map((c) => ({ ...c, width: widths.current.get(c.key) ?? 0 }));
     const next = pickHidden(available, fixedWidth, measured, MORE_BUTTON_WIDTH, ITEM_GAP);
@@ -74,7 +83,8 @@ export function useStatusBarOverflow(candidates: { key: string; priority: number
       if (prev.size === next.size && [...prev].every((k) => next.has(k))) return prev;
       return next;
     });
-  }, [candidates]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: candidatesKey stands in for the array, which callers rebuild every render.
+  }, [candidatesKey]);
 
   useLayoutEffect(() => {
     measure();

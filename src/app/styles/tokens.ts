@@ -1,3 +1,5 @@
+import type { SurfaceConfig } from '@dendelion/paper-ui';
+
 // Mirror of paper-ui's _tokens.scss values — keep in sync with that upstream source.
 
 export const color = {
@@ -31,3 +33,11 @@ export const color = {
   chalkRunning: '#5a4a2d',
   chalkRunningText: '#d6c4a0',
 } as const;
+
+/** The three warm steps the app paints with: the page ground the Layout sets, a card
+ *  on it, and a card nested in that card — each one shade darker than the last. */
+export const surface = {
+  page: { texture: 'paper', shade: true },
+  card: { texture: 'parchment', shade: true },
+  nestedCard: { texture: 'canvas', shade: true },
+} as const satisfies Record<string, SurfaceConfig>;

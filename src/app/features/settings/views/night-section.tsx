@@ -1,4 +1,5 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
+import { surface } from '@/app/styles/tokens';
 import { Alert, Button, Card, Divider, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
 import { useNightSection } from '../hooks/use-night-section';
 import { NightCustomCheckRow } from './night-custom-check-row';
@@ -41,7 +42,7 @@ export const NightSection = () => {
       )}
       {config && status && (
         <>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             <div className="flex items-center justify-between gap-3 pb-3">
               <div>
                 <p className="m-0">Run the night shift for this project</p>
@@ -97,7 +98,7 @@ export const NightSection = () => {
           <div className="mt-6 mb-3">
             <h3 className="m-0">Checks</h3>
           </div>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             {builtinChecks.map((check, idx) => (
               <div key={check.id}>
                 <div className="flex items-center justify-between gap-3 pb-2 pt-2">
@@ -118,7 +119,7 @@ export const NightSection = () => {
               Add check
             </Button>
           </div>
-          <Card size="small" texture="kraft">
+          <Card size="small" texture={surface.card}>
             {customChecks.length === 0 && <EmptyState message="No custom checks yet." />}
             {customChecks.map((check, idx) => (
               <NightCustomCheckRow

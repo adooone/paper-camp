@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 
@@ -8,7 +9,7 @@ export interface StatCardProps {
 
 export const StatCard = ({ title, children }: StatCardProps) => (
   <div className="flex-[1_1_260px] max-w-[360px] max-[480px]:flex-[1_1_100%] max-[480px]:max-w-none">
-    <Card size="small" texture="kraft" className="h-full">
+    <Card size="small" texture={surface.card} className="h-full">
       <div className="flex flex-col gap-3">
         <span className="font-handwritten text-xs font-semibold opacity-[0.55]">{title}</span>
         {children}

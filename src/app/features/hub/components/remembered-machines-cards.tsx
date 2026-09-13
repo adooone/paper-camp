@@ -1,4 +1,5 @@
 import { runtimeRowLabel } from '@/app/services/hub';
+import { surface } from '@/app/styles/tokens';
 import type { MachineProjectSummary } from '@/types/index';
 import { Button, Card, ListItem, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { type MachineReach, useRememberedMachines } from '../hooks';
@@ -88,7 +89,7 @@ export const RememberedMachinesCards = ({ chosenRuntimeUrls }: RememberedMachine
           <Card
             key={machineUrl}
             size="small"
-            texture="kraft"
+            texture={surface.card}
             className="flex flex-1 flex-col gap-2 text-left"
           >
             <div className="flex items-center justify-between gap-2">

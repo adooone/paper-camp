@@ -1,12 +1,13 @@
 import { CommandLine } from '@/app/components/command-line';
 import { daemonStartCommand } from '@/app/services/hub';
+import { surface } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
 
 export const GetStartedCard = () => {
   const startCommand = daemonStartCommand(window.location.origin);
 
   return (
-    <Card size="small" texture="kraft" className="flex flex-1 flex-col gap-2 text-left">
+    <Card size="small" texture={surface.card} className="flex flex-1 flex-col gap-2 text-left">
       <p className="m-0 font-semibold">Get started</p>
       <div className="flex flex-col gap-2">
         <CommandLine command="npm install -g @dendelion/paper-camp" />

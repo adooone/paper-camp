@@ -1,3 +1,4 @@
+import { surface } from '@/app/styles/tokens';
 import {
   AGENT_IDS,
   AGENT_LABELS,
@@ -68,7 +69,7 @@ export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: Age
   };
 
   return (
-    <Card size="small" texture="kraft" className="plan-row-card">
+    <Card size="small" texture={surface.card} className="plan-row-card">
       <div className="overflow-x-auto">
         <div className={AGENT_TABLE_GRID_CLASS}>
           <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">

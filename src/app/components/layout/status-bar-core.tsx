@@ -235,7 +235,7 @@ export const StatusBarCore = ({
 
       <div className={spacerClass} />
 
-      <div ref={registerFixed('right')} className={rightGroupClass}>
+      <div className={rightGroupClass}>
         {rightItems.map((item) =>
           visible(item.key) ? (
             <span key={item.key} ref={registerItem(item.key)} className="inline-flex items-center">
@@ -258,7 +258,7 @@ export const StatusBarCore = ({
           />
         )}
         <Tooltip content="Chat">
-          <span className={notificationButtonClass}>
+          <span ref={registerFixed('chat')} className={notificationButtonClass}>
             <IconButton
               variant="ghost"
               size="small"
@@ -277,7 +277,7 @@ export const StatusBarCore = ({
           </span>
         </Tooltip>
         <Tooltip content="Notifications">
-          <span className={notificationButtonClass}>
+          <span ref={registerFixed('bell')} className={notificationButtonClass}>
             <IconButton
               variant="ghost"
               size="small"

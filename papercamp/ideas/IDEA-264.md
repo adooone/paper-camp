@@ -9,7 +9,7 @@ tags:
   - ui
   - multi-project
 subject: Multi-project
-order: 3
+order: 4
 ---
 
 The hub shows every project twice. `projects-column.tsx` lists the
