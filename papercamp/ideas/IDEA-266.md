@@ -3,9 +3,10 @@ id: IDEA-266
 title: The completion gate knows a dirty tree
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-194
 created: 2026-09-13
+updated: 2026-09-13
 tags:
   - app
   - plans
@@ -48,4 +49,9 @@ route does after the tree is clean.
 - [x] Pass the count from the idea sidebar
       `usePlanActionsColumn` reads the `gitStatus` length the status bar already uses and hands it to `CompleteIdeaButton`, which forwards it to the gate.
       run: 1m34s · 40 in · 4k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
-- [ ] Pass the same count from the Git page's deliver card
+- [x] Pass the same count from the Git page's deliver card
+
+### Thread
+- [ ] 2026-09-13 [question] [agent] Run-all parked on phase 4 ("Pass the same count from the Git page's deliver card") — the agent needs a decision: Phase 4 says "the Git page's deliver card, which shows the same command, passes the same [count]" — but `CompleteIdeaButton` is not currently rendered anywhere in `deliver-section.tsx` (the idea view's deliver panel) or on the `/git` route; it only exists in `plan-actions-column.tsx` (the idea sidebar). I checked git history and it's never been wired into the deliver card. Should I add `CompleteIdeaButton` to `DeliverSection` (e.g., in the empty-state branch, gated the same way as the sidebar: `underReview && plan.pr`) as part of this phase, or is this phase premised on a component that hasn't been built yet and needs to be re-scoped?
+- [x] 2026-09-13 [chat] do not add anything, just adapt all changes to other views if needed
+- [x] 2026-09-13 [chat] [agent] Got it — leaving phase 4 as is since there's nothing to wire it into. No other views currently render CompleteIdeaButton, so there's nothing left to adapt.
