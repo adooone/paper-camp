@@ -85,9 +85,10 @@ are built for the hub and may be reused later. Pairing and trust rules.
       Merge the remembered entries with each daemon's reported projects into one
       list, with the row stamp and the sort order.
       run: 7m55s · 100 in · 45.9k out · sonnet-5 · sess:5ef2063c-0577-4f96-bdd5-2e62b0ffc93b
-- [ ] Replace the two columns with the one list
+- [x] Replace the two columns with the one list
       Machine sections, project rows, the Continue strip, the search row, and the
       add-a-machine footer; the old columns and cards go.
+      run: 9m17s · 158 in · 52.9k out · sonnet-5 · sess:9ca06fbb-cf6a-4687-8e0e-11c7ba0e38bc
 - [ ] Add the arc gauge, bar, and stacked-bar helpers
 - [ ] Sum the stats of every reachable project
 - [ ] Draw the six figures in the right column

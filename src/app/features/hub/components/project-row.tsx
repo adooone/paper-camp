@@ -1,99 +1,80 @@
-import type { ProjectEntry } from '@/app/services/project-registry';
-import { CLIENT_VERSION } from '@/app/services/version';
-import { ListItem, Stamp, Tooltip } from '@dendelion/paper-ui';
+import type { HubProjectRow, ProjectRowStamp } from '@/app/services/hub-machines';
+import { ListItem, Stamp } from '@dendelion/paper-ui';
 import { ProjectActionsMenu } from '../actions';
-import type { ProjectActionsMenuProps } from '../actions/project-actions-menu';
-import { projectAddress, projectName } from '../helpers/project-row';
-import type { RuntimeStatus } from '../hooks';
+import { formatLastOpened } from '../helpers/format-last-opened';
 
-export interface StatusStampProps {
-  status: RuntimeStatus | undefined;
-}
-
-export function StatusStamp({ status }: StatusStampProps) {
-  if (!status) {
-    return (
-      <Stamp size="small" variant="neutral">
-        Checking…
-      </Stamp>
-    );
-  }
-  if (status.runningPlanTitle) {
-    return (
-      <Stamp size="small" variant="success">
-        Running: {status.runningPlanTitle}
-      </Stamp>
-    );
-  }
-  if (status.schemeBlocked) {
-    return (
-      <Tooltip content="The browser blocked this http runtime as mixed content — rerun with --tailnet or --share for an HTTPS address.">
-        <Stamp size="small" variant="warning">
-          Needs HTTPS
+function RowStamp({ stamp }: { stamp: ProjectRowStamp }) {
+  switch (stamp.kind) {
+    case 'running':
+      return (
+        <Stamp size="small" variant="success">
+          {stamp.ideaId ? `Running · ${stamp.ideaId}` : 'Running'}
         </Stamp>
-      </Tooltip>
-    );
-  }
-  if (!status.reachable) {
-    return (
-      <Stamp size="small" variant="info">
-        Offline
-      </Stamp>
-    );
-  }
-  if (status.versionSkew) {
-    return (
-      <Tooltip
-        content={`Runtime is on ${status.remoteVersion}, this client is on ${CLIENT_VERSION}`}
-      >
-        <Stamp size="small" variant="warning">
-          Version mismatch
+      );
+    case 'interrupted':
+      return (
+        <Stamp size="small" variant="error">
+          {stamp.count} interrupted
         </Stamp>
-      </Tooltip>
-    );
+      );
+    case 'missing':
+      return (
+        <Stamp size="small" variant="neutral">
+          Missing
+        </Stamp>
+      );
+    case 'idle':
+      return (
+        <Stamp size="small" variant="neutral">
+          Idle
+        </Stamp>
+      );
   }
-  return (
-    <Stamp size="small" variant="success">
-      Can execute
-    </Stamp>
-  );
 }
 
 export interface ProjectRowProps {
-  entry: ProjectEntry;
-  status: RuntimeStatus | undefined;
+  row: HubProjectRow;
+  chosen: boolean;
   onOpen: () => void;
-  onRename: ProjectActionsMenuProps['onRename'];
-  onRemove: () => void;
+  onRename: (label: string) => void;
+  onForget: () => void;
 }
 
-export const ProjectRow = ({ entry, status, onOpen, onRename, onRemove }: ProjectRowProps) => {
-  const address = projectAddress(entry);
-  const name = projectName(entry, status?.name ?? null);
+export const ProjectRow = ({ row, chosen, onOpen, onRename, onForget }: ProjectRowProps) => {
+  const missing = row.stamp.kind === 'missing';
+  const lastOpened = formatLastOpened(row.lastOpenedAt);
 
   return (
     <div className="flex items-center gap-1">
       <ListItem
         size="medium"
-        className="min-w-0 flex-1"
-        onClick={onOpen}
-        action={<StatusStamp status={status} />}
+        className={`min-w-0 flex-1 ${missing ? 'cursor-not-allowed opacity-50' : ''}`}
+        disabled={missing}
+        onClick={missing ? undefined : onOpen}
+        action={<RowStamp stamp={row.stamp} />}
       >
-        {name ? (
-          <span className="flex min-w-0 flex-col gap-0.5 text-left">
-            <span className="break-words">{name}</span>
-            <span className="break-words font-handwritten text-2xs opacity-60">{address}</span>
+        <span className="flex min-w-0 flex-col gap-0.5 text-left">
+          <span className="flex min-w-0 flex-wrap items-baseline gap-2">
+            <span className="break-words">{row.slug}</span>
+            {row.packageName && (
+              <span className="break-words font-mono text-2xs opacity-60">{row.packageName}</span>
+            )}
           </span>
-        ) : (
-          <span className="block break-words text-left">{address}</span>
-        )}
+          {lastOpened && (
+            <span className="break-words font-handwritten text-2xs opacity-60">
+              Opened {lastOpened}
+            </span>
+          )}
+        </span>
       </ListItem>
-      <ProjectActionsMenu
-        projectName={name ?? address}
-        currentLabel={entry.label ?? ''}
-        onRename={onRename}
-        onRemove={onRemove}
-      />
+      {chosen && (
+        <ProjectActionsMenu
+          projectName={row.slug}
+          currentLabel={row.label ?? ''}
+          onRename={onRename}
+          onRemove={onForget}
+        />
+      )}
     </div>
   );
 };
