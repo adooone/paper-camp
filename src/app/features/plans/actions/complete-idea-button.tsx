@@ -11,14 +11,19 @@ import { completionGate } from '../helpers';
 interface CompleteIdeaButtonProps {
   plan: PlanEntry;
   disabled?: boolean;
+  changedFileCount?: number;
 }
 
-export const CompleteIdeaButton = ({ plan, disabled }: CompleteIdeaButtonProps) => {
+export const CompleteIdeaButton = ({
+  plan,
+  disabled,
+  changedFileCount,
+}: CompleteIdeaButtonProps) => {
   const refreshAll = useAppStore((s) => s.refreshAll);
   const [completing, setCompleting] = useState(false);
   const { toast } = useToast();
   const reviewStatus = usePrReviewStatus(plan.id);
-  const gate = completionGate(plan, reviewStatus?.ciGreen);
+  const gate = completionGate(plan, reviewStatus?.ciGreen, changedFileCount);
 
   const handleClick = async () => {
     if (!plan.id) return;

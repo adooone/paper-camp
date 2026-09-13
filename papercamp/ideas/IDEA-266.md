@@ -45,6 +45,7 @@ route does after the tree is clean.
       run: 1m28s · 20 in · 4.9k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
 - [x] Update the completion-gate tests for the new argument and wording
       run: 52s · 16 in · 2.4k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
-- [ ] Pass the count from the idea sidebar
+- [x] Pass the count from the idea sidebar
       `usePlanActionsColumn` reads the `gitStatus` length the status bar already uses and hands it to `CompleteIdeaButton`, which forwards it to the gate.
+      run: 1m34s · 40 in · 4k out · sonnet-5 · sess:944f78ac-7b9b-46f0-be92-04d74c29bb13
 - [ ] Pass the same count from the Git page's deliver card

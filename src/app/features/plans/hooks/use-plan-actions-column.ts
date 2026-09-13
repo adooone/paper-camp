@@ -15,6 +15,7 @@ export const usePlanActionsColumn = () => {
   const agentBusy = useAppStore(selectAgentBusy);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitStatus = useAppStore((s) => s.gitStatus);
   const allPlans = useAppStore((s) => s.plans);
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
@@ -41,6 +42,7 @@ export const usePlanActionsColumn = () => {
   const canRunAll = (plan.status === 'planned' || inProgress || underReview) && hasUnchecked;
   const canRedraft = isUntouchedPlan(plan);
   const canMarkDone = canMarkPlanDone(plan);
+  const changedFileCount = gitStatus?.length ?? 0;
   const onOwnBranch = plan.id !== undefined && branchEntityId(gitBranch) === plan.id;
   // A board holds no code of its own — its tickets carry the work, and each branches
   // for itself — so it never offers a branch.
@@ -143,6 +145,7 @@ export const usePlanActionsColumn = () => {
     canReviewPr,
     underReview,
     canMarkDone,
+    changedFileCount,
     orphanSubject,
     ideaView,
     otherPlans,

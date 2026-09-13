@@ -130,6 +130,7 @@ export const PlanActionsCommandsColumn = () => {
     canReviewPr,
     underReview,
     canMarkDone,
+    changedFileCount,
     ideaView,
     otherPlans,
     patch,
@@ -147,7 +148,11 @@ export const PlanActionsCommandsColumn = () => {
         {canReviewPr && <PrReviewButton plan={plan} disabled={agentBusy || updating} />}
 
         {underReview && plan.pr && (
-          <CompleteIdeaButton plan={plan} disabled={agentBusy || updating} />
+          <CompleteIdeaButton
+            plan={plan}
+            disabled={agentBusy || updating}
+            changedFileCount={changedFileCount}
+          />
         )}
 
         {done && (
