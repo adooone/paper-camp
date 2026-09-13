@@ -2,7 +2,7 @@
 id: IDEA-264
 title: The hub as one list with numbers
 type: feat
-status: idea
+status: review
 created: 2026-09-12
 tags:
   - app
@@ -93,4 +93,5 @@ are built for the hub and may be reused later. Pairing and trust rules.
       run: 6m9s · 88 in · 22.7k out · sonnet-5 · sess:e1f36ef8-97a5-413a-a006-3d413f8da5fc
 - [x] Sum the stats of every reachable project
       run: 8m20s · 116 in · 36.7k out · sonnet-5 · sess:e1f36ef8-97a5-413a-a006-3d413f8da5fc
-- [ ] Draw the six figures in the right column
+- [x] Draw the six figures in the right column
+      run: 3m22s · 104 in · 31.2k out · sonnet-5 · sess:ba1dcd67-bdfb-46aa-840e-37fe1b833d0e

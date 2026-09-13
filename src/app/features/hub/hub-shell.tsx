@@ -15,7 +15,7 @@ export const HubShell = ({ children }: HubShellProps) => (
     bleedBottom
   >
     <div className="h-full overflow-y-auto px-6 py-16">
-      <Page texture={{ texture: 'parchment' }} className="m-auto w-full max-w-3xl">
+      <Page texture={{ texture: 'parchment' }} className="m-auto w-full max-w-5xl">
         <PageTitle>Paper Camp</PageTitle>
         {children}
       </Page>
