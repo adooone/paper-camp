@@ -2,8 +2,9 @@
 id: IDEA-265
 title: Checks leave the Stack
 type: refactor
-status: review
+status: done
 created: 2026-09-13
+updated: 2026-09-13
 tags:
   - app
   - stack
