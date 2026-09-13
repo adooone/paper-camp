@@ -2,7 +2,7 @@
 id: IDEA-267
 title: Hand-drawn rules replace cards
 type: refactor
-status: idea
+status: in-progress
 created: 2026-09-13
 tags:
   - app
@@ -67,3 +67,6 @@ to what a group contains or to the page grounds.
 - [ ] Replace the page cards with ruled groups
       Every `Card` on a paper surface becomes its children plus a rule before the next group, none after the last.
 - [ ] Delete `surface.card` and `surface.nestedCard`
+
+### Thread
+- [ ] 2026-09-13 [question] [agent] Run-all parked on phase 1 ("Adopt paper-ui's sketch Divider") — the agent needs a decision: The paper-ui release with the sketch Divider hasn't shipped yet — latest published `@dendelion/paper-ui` is 0.19.0 and its `DividerProps` still only has `orientation`, `label`, `surface`, `className` (no `sketch`). The plan states "Until that release lands, this idea does not start." Should I wait for that release, or is there a different/prerelease version I should be pointed at?

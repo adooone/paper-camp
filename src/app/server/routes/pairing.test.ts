@@ -61,7 +61,7 @@ describe('GET /api/pairing', () => {
     await registrationRoute(pairing).handle(fakeReq('', undefined), res);
     expect(status()).toBe(200);
     expect(json()).toEqual({
-      hostedClientUrl: 'https://paper-camp.vercel.app',
+      hostedClientUrl: 'https://paper.adoo.one',
       token: pairing.token,
     });
   });

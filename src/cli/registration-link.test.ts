@@ -20,7 +20,7 @@ describe('hostedClientUrl', () => {
   });
 
   it('defaults to the hosted client this package deploys', () => {
-    expect(hostedClientUrl()).toBe('https://paper-camp.vercel.app');
+    expect(hostedClientUrl()).toBe('https://paper.adoo.one');
   });
 
   it('is overridable for a fork serving its own deployment', () => {
@@ -35,7 +35,7 @@ describe('hostedClientUrl', () => {
 
   it('falls back to the default when the override is blank', () => {
     process.env.PAPERCAMP_HOSTED_CLIENT_URL = '   ';
-    expect(hostedClientUrl()).toBe('https://paper-camp.vercel.app');
+    expect(hostedClientUrl()).toBe('https://paper.adoo.one');
   });
 });
 
@@ -49,9 +49,9 @@ describe('buildRegistrationLinkForRuntime', () => {
       buildRegistrationLinkForRuntime(
         'https://foo-bar.trycloudflare.com',
         'abc123',
-        'https://paper-camp.vercel.app',
+        'https://paper.adoo.one',
       ),
-    ).toBe('https://paper-camp.vercel.app/?runtime=https://foo-bar.trycloudflare.com&token=abc123');
+    ).toBe('https://paper.adoo.one/?runtime=https://foo-bar.trycloudflare.com&token=abc123');
   });
 
   it('is adopted back into the same runtime URL and token by the client', async () => {
@@ -59,7 +59,7 @@ describe('buildRegistrationLinkForRuntime', () => {
     const link = buildRegistrationLinkForRuntime(
       'https://foo-bar.trycloudflare.com',
       'def456',
-      'https://paper-camp.vercel.app',
+      'https://paper.adoo.one',
     );
     const search = link.slice(link.indexOf('?'));
     expect(loadRuntimeConnection({ search }, null)).toEqual({
@@ -70,7 +70,7 @@ describe('buildRegistrationLinkForRuntime', () => {
 
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForRuntime('http://localhost:3333', 'abc123')).toBe(
-      'https://paper-camp.vercel.app/?runtime=http://localhost:3333&token=abc123',
+      'https://paper.adoo.one/?runtime=http://localhost:3333&token=abc123',
     );
   });
 });
@@ -83,14 +83,14 @@ describe('buildRegistrationLinkForMachine', () => {
       buildRegistrationLinkForMachine(
         'http://100.80.79.13:4333',
         'abc123',
-        'https://paper-camp.vercel.app',
+        'https://paper.adoo.one',
       ),
-    ).toBe('https://paper-camp.vercel.app/?machine=http://100.80.79.13:4333&token=abc123');
+    ).toBe('https://paper.adoo.one/?machine=http://100.80.79.13:4333&token=abc123');
   });
 
   it('defaults to the configured hosted client when none is passed', () => {
     expect(buildRegistrationLinkForMachine('http://localhost:4333', 'abc123')).toBe(
-      'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=abc123',
+      'https://paper.adoo.one/?machine=http://localhost:4333&token=abc123',
     );
   });
 });

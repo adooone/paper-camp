@@ -23,7 +23,7 @@ paper-camp start
 ```
 
 Open the Local link `start` prints — it opens
-[the hosted client](https://paper-camp.vercel.app), the one dashboard for
+[the hosted client](https://paper.adoo.one), the one dashboard for
 every project this package runs, pointed at the API `start` just launched on
 this machine. `~/dev` stands for the folder holding your repositories;
 `paper-camp init` run inside a single repo registers just that one instead of

@@ -1,4 +1,4 @@
-const DEFAULT_HOSTED_CLIENT_URL = 'https://paper-camp.vercel.app';
+const DEFAULT_HOSTED_CLIENT_URL = 'https://paper.adoo.one';
 
 export function hostedClientUrl(): string {
   const configured = process.env.PAPERCAMP_HOSTED_CLIENT_URL?.trim();

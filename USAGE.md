@@ -100,7 +100,7 @@ run inside a single repo scaffolds that corpus and registers just that one
 repo, with no `scan` step. The package installs no dashboard of its own —
 `start` launches the daemon detached, logging to `daemon.log` in the machine
 config dir, serving only the API, and prints a **Local** link that opens the
-one dashboard, [the hosted client](https://paper-camp.vercel.app), pointed at
+one dashboard, [the hosted client](https://paper.adoo.one), pointed at
 this machine's API. Reaching that same API from another device needs
 `paper-camp start --tailnet` or `--share` instead — see "Adding a project"
 below.
@@ -129,7 +129,7 @@ dashboard, not the packaged runtime.
 
 The hub is the `/projects` view of the hosted client: the registry of your
 projects plus the cross-project tabs — **Projects**, **In review**, **Agent
-activity**, **Ideas**. The hosted client at `https://paper-camp.vercel.app`
+activity**, **Ideas**. The hosted client at `https://paper.adoo.one`
 is the one dashboard — a static build with no project of its own, so it opens
 straight into the hub. Every link a `paper-camp start`, `daemon`, or `dev`
 banner prints (Local, Network, Tailnet, Tunnel) opens this same client,
