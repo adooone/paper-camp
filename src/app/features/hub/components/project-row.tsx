@@ -47,22 +47,21 @@ export const ProjectRow = ({ row, chosen, onOpen, onRename, onForget }: ProjectR
   return (
     <div className="flex items-center gap-1">
       <ListItem
-        size="medium"
+        size="small"
         className={`min-w-0 flex-1 ${missing ? 'cursor-not-allowed opacity-50' : ''}`}
         disabled={missing}
         onClick={missing ? undefined : onOpen}
         action={<RowStamp stamp={row.stamp} />}
       >
-        <span className="flex min-w-0 flex-col gap-0.5 text-left">
-          <span className="flex min-w-0 flex-wrap items-baseline gap-2">
-            <span className="break-words">{row.slug}</span>
-            {row.packageName && (
-              <span className="break-words font-mono text-2xs opacity-60">{row.packageName}</span>
-            )}
-          </span>
+        {/* One line: the name carries the row, the package and the last visit trail it. */}
+        <span className="flex min-w-0 items-baseline gap-2 text-left">
+          <span className="truncate">{row.slug}</span>
+          {row.packageName && (
+            <span className="shrink-0 font-mono text-2xs opacity-60">{row.packageName}</span>
+          )}
           {lastOpened && (
-            <span className="break-words font-handwritten text-2xs opacity-60">
-              Opened {lastOpened}
+            <span className="ml-auto shrink-0 pr-2 font-handwritten text-2xs opacity-50">
+              {lastOpened}
             </span>
           )}
         </span>

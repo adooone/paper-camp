@@ -44,9 +44,9 @@ export const MachineSection = ({
   onForgetRow,
   onRetry,
 }: MachineSectionProps) => (
-  <div className="flex flex-col gap-2">
+  <div className="flex flex-col gap-1.5">
     <div className="flex flex-wrap items-baseline gap-2">
-      <p className="m-0 font-handwritten text-lg">{machine.host}</p>
+      <p className="m-0 font-handwritten text-base">{machine.host}</p>
       {machine.runtimeVersion && (
         <span className="font-mono text-2xs opacity-60">{machine.runtimeVersion}</span>
       )}
@@ -70,7 +70,7 @@ export const MachineSection = ({
     </div>
     {machine.projects.length > 0 && (
       <Card size="small" texture={surface.card}>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col">
           {machine.projects.map((row) => (
             <ProjectRow
               key={row.runtimeUrl}

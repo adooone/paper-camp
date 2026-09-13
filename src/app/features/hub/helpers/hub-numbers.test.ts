@@ -1,7 +1,12 @@
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import type { NightReportGroup, ProjectStats } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { type HubProjectData, reachableProjectRuntimeUrls, sumHubNumbers } from './hub-numbers';
+import {
+  type HubProjectData,
+  lastIsoWeeks,
+  reachableProjectRuntimeUrls,
+  sumHubNumbers,
+} from './hub-numbers';
 
 function machine(overrides: Partial<HubMachine> = {}): HubMachine {
   return {
@@ -117,24 +122,59 @@ describe('sumHubNumbers', () => {
   });
 
   it('sums the last 8 weeks of runs across projects, keyed by week', () => {
+    const week = lastIsoWeeks(3)[0];
     const result = sumHubNumbers({
       totalCount: 2,
       dataByUrl: {
+        a1: projectData({ stats: stats({ tasksPerWeek: [{ week, count: 3, failedCount: 1 }] }) }),
+        a2: projectData({ stats: stats({ tasksPerWeek: [{ week, count: 2, failedCount: 0 }] }) }),
+      },
+      continueRuntimeUrl: null,
+      continueFloorPct: 70,
+    });
+    expect(result.runsPerWeek).toHaveLength(8);
+    expect(result.runsPerWeek.find((entry) => entry.week === week)).toEqual({
+      week,
+      total: 5,
+      failed: 1,
+    });
+  });
+
+  it('drops a week older than the range and keeps the range full', () => {
+    const weeks = lastIsoWeeks(8);
+    const result = sumHubNumbers({
+      totalCount: 1,
+      dataByUrl: {
+        a1: projectData({
+          stats: stats({ tasksPerWeek: [{ week: weeks[7], count: 3, failedCount: 1 }] }),
+        }),
+      },
+      continueRuntimeUrl: null,
+      continueFloorPct: 70,
+    });
+    expect(result.runsPerWeek.map((week) => week.week)).toEqual(weeks);
+    expect(result.runsPerWeek[7]).toEqual({ week: weeks[7], total: 3, failed: 1 });
+    expect(result.runsPerWeek[0]).toEqual({ week: weeks[0], total: 0, failed: 0 });
+  });
+
+  it('tolerates a runtime whose stats omit failedCount and costUsd', () => {
+    const result = sumHubNumbers({
+      totalCount: 1,
+      dataByUrl: {
         a1: projectData({
           stats: stats({
-            tasksPerWeek: [{ week: '2026-W30', count: 3, failedCount: 1 }],
-          }),
-        }),
-        a2: projectData({
-          stats: stats({
-            tasksPerWeek: [{ week: '2026-W30', count: 2, failedCount: 0 }],
+            tasksPerWeek: [{ week: lastIsoWeeks(1)[0], count: 4 } as never],
+            usagePerWeek: [
+              { week: lastIsoWeeks(1)[0], agentMinutes: 9, inputTokens: 10, outputTokens: 20 },
+            ] as never,
           }),
         }),
       },
       continueRuntimeUrl: null,
       continueFloorPct: 70,
     });
-    expect(result.runsPerWeek).toEqual([{ week: '2026-W30', total: 5, failed: 1 }]);
+    expect(result.runsPerWeek[7]).toEqual({ week: lastIsoWeeks(1)[0], total: 4, failed: 0 });
+    expect(result.spend).toEqual({ costUsd: 0, tokens: 30, changeVsLastWeekPct: null });
   });
 
   it("takes this week and last week as each project's two most recent buckets", () => {

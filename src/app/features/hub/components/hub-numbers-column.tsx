@@ -1,20 +1,25 @@
-import { ArcGauge, BarChart, EmptyState, StackedBar } from '@/app/components';
+import { ArcGauge, BarChart, StackedBar } from '@/app/components';
 import { ENTITY_STATUS_LABEL, ENTITY_STATUS_ORDER } from '@/app/features/stats/constants';
-import { surface } from '@/app/styles/tokens';
 import { formatTokens } from '@/core/phase-run';
 import { Card } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { ENTITY_STATUS_COLOR, SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER } from '../constants';
 import type { HubNumbers } from '../helpers/hub-numbers';
 
+const Muted = ({ children }: { children: ReactNode }) => (
+  <span className="text-2xs opacity-50">{children}</span>
+);
+
 interface NumberCardProps {
   title: string;
   children: ReactNode;
 }
 
+// Kraft on the grid, a shade below the sheet's parchment: the numbers read as a
+// separate material beside the page rather than a second copy of it.
 const NumberCard = ({ title, children }: NumberCardProps) => (
-  <Card size="small" texture={surface.card}>
-    <div className="flex flex-col gap-3">
+  <Card size="small" texture="kraft">
+    <div className="flex flex-col gap-1.5">
       <span className="font-handwritten text-xs font-semibold opacity-[0.55]">{title}</span>
       {children}
     </div>
@@ -60,26 +65,32 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
   const hadNight = lastNight.passCount > 0 || severitySegments.length > 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <NumberCard title="Capacity">
         {capacity ? (
-          <div className="flex justify-center gap-4">
-            <ArcGauge value={capacity.fiveHour?.utilization ?? 0} max={1} label="5-hour" />
+          <div className="flex justify-center gap-3">
+            <ArcGauge
+              value={capacity.fiveHour?.utilization ?? 0}
+              max={1}
+              label="5-hour"
+              size={68}
+            />
             <ArcGauge
               value={capacity.sevenDay?.utilization ?? 0}
               max={1}
               label="7-day"
+              size={68}
               floor={capacity.sevenDayFloorPct / 100}
             />
           </div>
         ) : (
-          <EmptyState message="No capacity reported yet." />
+          <Muted>No capacity reported yet.</Muted>
         )}
       </NumberCard>
 
       <NumberCard title="Runs, last 8 weeks">
         {runsPerWeek.length === 0 ? (
-          <EmptyState message="No runs yet." />
+          <Muted>No runs yet.</Muted>
         ) : (
           <>
             <BarChart
@@ -96,21 +107,27 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
         )}
       </NumberCard>
 
-      <NumberCard title="Spend this week">
-        <div className="font-handwritten text-lg font-semibold">${spend.costUsd.toFixed(2)}</div>
-        <span className="text-2xs opacity-50">
-          {formatTokens(spend.tokens)} tokens{changeSuffix(spend.changeVsLastWeekPct)}
-        </span>
-      </NumberCard>
+      <div className="grid grid-cols-2 gap-4">
+        <NumberCard title="This week">
+          <div className="font-handwritten text-lg font-semibold">
+            {spend.costUsd > 0 ? `$${spend.costUsd.toFixed(2)}` : formatTokens(spend.tokens)}
+          </div>
+          <span className="text-2xs opacity-50">
+            {spend.costUsd > 0
+              ? `${formatTokens(spend.tokens)} tokens${changeSuffix(spend.changeVsLastWeekPct)}`
+              : 'tokens · no cost reported'}
+          </span>
+        </NumberCard>
 
-      <NumberCard title="Waiting on you">
-        <div className="font-handwritten text-lg font-semibold">{openQuestions}</div>
-        <span className="text-2xs opacity-50">open questions</span>
-      </NumberCard>
+        <NumberCard title="Waiting on you">
+          <div className="font-handwritten text-lg font-semibold">{openQuestions}</div>
+          <span className="text-2xs opacity-50">open questions</span>
+        </NumberCard>
+      </div>
 
       <NumberCard title="Ideas in flight">
         {entitySegments.length === 0 ? (
-          <EmptyState message="Nothing in flight." />
+          <Muted>Nothing in flight.</Muted>
         ) : (
           <StackedBar segments={entitySegments} />
         )}
@@ -120,13 +137,13 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
         {hadNight ? (
           <>
             <span className="text-2xs opacity-50">
-              {lastNight.passCount} {lastNight.passCount === 1 ? 'pass' : 'passes'} · $
-              {lastNight.costUsd.toFixed(2)}
+              {lastNight.passCount} {lastNight.passCount === 1 ? 'pass' : 'passes'}
+              {lastNight.costUsd > 0 ? ` · $${lastNight.costUsd.toFixed(2)}` : ''}
             </span>
             {severitySegments.length > 0 && <StackedBar segments={severitySegments} />}
           </>
         ) : (
-          <EmptyState message="No night run yet." />
+          <Muted>No night run yet.</Muted>
         )}
       </NumberCard>
 

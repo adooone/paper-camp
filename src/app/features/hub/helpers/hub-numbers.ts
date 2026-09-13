@@ -64,6 +64,29 @@ export function reachableProjectRuntimeUrls(machines: HubMachine[]): string[] {
   return urls;
 }
 
+/** The last `count` ISO weeks ending with the current one, oldest first — the chart
+ *  keeps its full range so a quiet week reads as a gap, not as a missing column. */
+export function lastIsoWeeks(count: number, now: Date = new Date()): string[] {
+  const weeks: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const day = new Date(now);
+    day.setUTCDate(day.getUTCDate() - i * 7);
+    weeks.push(isoWeekOf(day));
+  }
+  return weeks;
+}
+
+function isoWeekOf(date: Date): string {
+  const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNumber = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNumber + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const firstDayNumber = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNumber + 3);
+  const week = 1 + Math.round((target.getTime() - firstThursday.getTime()) / (7 * 86_400_000));
+  return `${target.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
 export function sumHubNumbers(params: {
   totalCount: number;
   dataByUrl: Record<string, HubProjectData | null>;
@@ -76,10 +99,14 @@ export function sumHubNumbers(params: {
   );
 
   const continueData = continueRuntimeUrl ? dataByUrl[continueRuntimeUrl] : null;
-  const capacity: HubCapacityFigure | null = continueData?.stats.capacity
+  // The machine's windows are the machine's, so any reachable project reports the same
+  // ones — the Continue project is only preferred for its own floor setting.
+  const capacitySource =
+    continueData?.stats.capacity ?? reachable.find(({ stats }) => stats.capacity)?.stats.capacity;
+  const capacity: HubCapacityFigure | null = capacitySource
     ? {
-        fiveHour: continueData.stats.capacity.snapshot.unifiedWindows?.five_hour ?? null,
-        sevenDay: continueData.stats.capacity.snapshot.unifiedWindows?.seven_day ?? null,
+        fiveHour: capacitySource.snapshot.unifiedWindows?.five_hour ?? null,
+        sevenDay: capacitySource.snapshot.unifiedWindows?.seven_day ?? null,
         sevenDayFloorPct: continueFloorPct,
       }
     : null;
@@ -88,15 +115,16 @@ export function sumHubNumbers(params: {
   for (const { stats } of reachable) {
     for (const week of stats.tasksPerWeek.slice(-RUNS_WEEK_COUNT)) {
       const bucket = weekTotals.get(week.week) ?? { total: 0, failed: 0 };
-      bucket.total += week.count;
-      bucket.failed += week.failedCount;
+      bucket.total += week.count ?? 0;
+      // An older runtime's stats omit these two fields; unguarded they poison the sum.
+      bucket.failed += week.failedCount ?? 0;
       weekTotals.set(week.week, bucket);
     }
   }
-  const runsPerWeek: HubRunsWeek[] = [...weekTotals.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-RUNS_WEEK_COUNT)
-    .map(([week, totals]) => ({ week, ...totals }));
+  const runsPerWeek: HubRunsWeek[] = lastIsoWeeks(RUNS_WEEK_COUNT).map((week) => ({
+    week,
+    ...(weekTotals.get(week) ?? { total: 0, failed: 0 }),
+  }));
 
   let thisWeekCost = 0;
   let thisWeekTokens = 0;
@@ -106,15 +134,15 @@ export function sumHubNumbers(params: {
     const curr = weeks[weeks.length - 1];
     const prev = weeks[weeks.length - 2];
     if (curr) {
-      thisWeekCost += curr.costUsd;
-      thisWeekTokens += curr.inputTokens + curr.outputTokens;
+      thisWeekCost += curr.costUsd ?? 0;
+      thisWeekTokens += (curr.inputTokens ?? 0) + (curr.outputTokens ?? 0);
     }
-    if (prev) lastWeekCost += prev.costUsd;
+    if (prev) lastWeekCost += prev.costUsd ?? 0;
   }
   const changeVsLastWeekPct =
     lastWeekCost > 0 ? ((thisWeekCost - lastWeekCost) / lastWeekCost) * 100 : null;
 
-  const openQuestions = reachable.reduce((sum, { stats }) => sum + stats.openQuestions, 0);
+  const openQuestions = reachable.reduce((sum, { stats }) => sum + (stats.openQuestions ?? 0), 0);
 
   const entitiesByStatus: Partial<Record<EntityStatus, number>> = {};
   for (const { stats } of reachable) {
@@ -130,8 +158,8 @@ export function sumHubNumbers(params: {
   for (const { nightGroups } of reachable) {
     const lastNight = nightGroups[0];
     if (!lastNight) continue;
-    nightPassCount += lastNight.passCount;
-    nightCostUsd += lastNight.costUsd;
+    nightPassCount += lastNight.passCount ?? 0;
+    nightCostUsd += lastNight.costUsd ?? 0;
     for (const finding of lastNight.findings) {
       findingsBySeverity[finding.severity] = (findingsBySeverity[finding.severity] ?? 0) + 1;
     }

@@ -1,4 +1,5 @@
-import { Input } from '@dendelion/paper-ui';
+import { PageTitle } from '@/app/components/page-title';
+import { Input, Page } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { AddMachineFooter, ContinueStrip, HubNumbersColumn, MachineSection } from '../components';
 import { pickContinueTarget } from '../helpers/continue-target';
@@ -20,8 +21,9 @@ export const HubHome = () => {
   const numbers = useHubNumbers(machines, totalProjectCount(machines), continueTarget);
 
   return (
-    <div className="grid grid-cols-[2fr_1fr] gap-6 items-start max-[480px]:grid-cols-1">
-      <div className="flex flex-col gap-6">
+    <div className="grid grid-cols-[2fr_1fr] gap-3 items-start max-[480px]:grid-cols-1">
+      <Page texture={{ texture: 'parchment' }} className="w-full max-w-none flex flex-col gap-4">
+        <PageTitle>Paper Camp</PageTitle>
         {continueTarget && (
           <ContinueStrip
             target={continueTarget}
@@ -43,7 +45,7 @@ export const HubHome = () => {
               : 'No project matches your search.'}
           </p>
         ) : (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             {visibleMachines.map((machine) => (
               <MachineSection
                 key={machine.machineUrl}
@@ -58,7 +60,7 @@ export const HubHome = () => {
           </div>
         )}
         <AddMachineFooter />
-      </div>
+      </Page>
       <HubNumbersColumn numbers={numbers} />
     </div>
   );

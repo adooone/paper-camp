@@ -4,6 +4,7 @@ title: The hub as one list with numbers
 type: feat
 status: review
 created: 2026-09-12
+updated: 2026-09-13
 tags:
   - app
   - ui
@@ -95,3 +96,4 @@ are built for the hub and may be reused later. Pairing and trust rules.
       run: 8m20s · 116 in · 36.7k out · sonnet-5 · sess:e1f36ef8-97a5-413a-a006-3d413f8da5fc
 - [x] Draw the six figures in the right column
       run: 3m22s · 104 in · 31.2k out · sonnet-5 · sess:ba1dcd67-bdfb-46aa-840e-37fe1b833d0e
+- [x] [manual] Tighten hub numbers column visuals and layout
