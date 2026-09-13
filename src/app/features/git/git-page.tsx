@@ -3,6 +3,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { FileDiffSection } from '@/app/features/git/views';
+import { DeliverChecksRow } from '@/app/features/plans/components';
 import { Button, Divider, Spinner } from '@dendelion/paper-ui';
 import { Fragment } from 'react';
 
@@ -55,11 +56,14 @@ export const GitPage = () => {
         </div>
       ) : (
         <>
-          <div className="sticky top-0 z-10 mb-4 flex items-center gap-2 py-2">
-            <div className="flex-1">
-              <CommitMessageFields state={commitForm} filesEmpty={false} />
+          <div className="sticky top-0 z-10 mb-4 flex flex-col gap-2 py-2">
+            <DeliverChecksRow showStash={false} />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <CommitMessageFields state={commitForm} filesEmpty={false} />
+              </div>
+              <GitCommitButton state={commitForm} filesEmpty={false} />
             </div>
-            <GitCommitButton state={commitForm} filesEmpty={false} />
           </div>
           <div ref={sectionsRef} className={`flex min-w-0 flex-col gap-6 ${contentClass}`}>
             {files.map((entry, idx) => (

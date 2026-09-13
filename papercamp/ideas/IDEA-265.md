@@ -51,8 +51,9 @@ The Services and CI & release groups. What the checks run, which
       `checks-group.tsx` into `deliver-checks-row.tsx` and `use-deliver-checks-row.ts`,
       with the group's tests rewritten against their new home.
       run: 3m33s · 72 in · 19.7k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
-- [ ] Show the checks row on the Git page
+- [x] Show the checks row on the Git page
       Beside the commit action in `git-page.tsx`, reading from the same row component.
+      run: 1m40s · 38 in · 6.5k out · sonnet-5 · sess:380fae25-37c1-4434-a648-41d3721bcb84
 - [ ] Delete the Stack's Checks group
       Drop `checks-group.tsx` and its test and leave `desk-section.tsx` with Services and CI & release.
 - [ ] Move the failing signal to the status bar

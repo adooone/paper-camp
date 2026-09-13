@@ -68,7 +68,11 @@ const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampPro
   </Tooltip>
 );
 
-export const DeliverChecksRow = () => {
+interface DeliverChecksRowProps {
+  showStash?: boolean;
+}
+
+export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {}) => {
   const {
     deskChecks,
     anyRunning,
@@ -153,7 +157,7 @@ export const DeliverChecksRow = () => {
               </div>
             )}
           </div>
-          <GitStashSurface />
+          {showStash && <GitStashSurface />}
         </div>
       }
       {failing && (
