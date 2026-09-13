@@ -29,6 +29,16 @@ function writeStoredStackOpen(value: boolean): void {
   }
 }
 
+export function shouldShowUsageFallback(
+  openedOnRoot: boolean,
+  pathnameAtResolve: string,
+  ideaCount: number,
+  planCount: number,
+): boolean {
+  if (!openedOnRoot || pathnameAtResolve !== '/') return false;
+  return ideaCount <= 1 && planCount === 0;
+}
+
 export interface AppShellState {
   navigate: ReturnType<typeof useNavigate>;
   pathname: string;
@@ -106,6 +116,9 @@ export function useAppShell(): AppShellState {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
   const firstRunChecked = useRef(false);
+  const openedOnRoot = useRef(pathname === '/');
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
 
   useNotificationPush();
 
@@ -135,17 +148,26 @@ export function useAppShell(): AppShellState {
 
   // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
   // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
+  // Armed once at mount so a session that opened elsewhere (a deep link, a remembered
+  // route) never has the probe fire later against a pathname it didn't open on.
   useEffect(() => {
-    if (firstRunChecked.current || pathname !== '/') return;
+    if (firstRunChecked.current) return;
     firstRunChecked.current = true;
+    if (!openedOnRoot.current) return;
     Promise.all([fetchIdeas(), fetchPlans()])
       .then(([ideas, plans]) => {
-        if ((ideas.entries?.length ?? 0) > 1 || (plans.entries?.length ?? 0) > 0) return;
+        const shouldShow = shouldShowUsageFallback(
+          openedOnRoot.current,
+          pathnameRef.current,
+          ideas.entries?.length ?? 0,
+          plans.entries?.length ?? 0,
+        );
+        if (!shouldShow) return;
         setActiveDocTitle('USAGE.md');
         navigate({ to: '/docs' });
       })
       .catch(() => {});
-  }, [pathname, navigate, setActiveDocTitle]);
+  }, [navigate, setActiveDocTitle]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger, not a value read in the body.
   useEffect(() => {

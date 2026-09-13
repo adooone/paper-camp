@@ -43,7 +43,8 @@ The Setup page itself and the *Show Setup on open* switch, which
 [[IDEA-253]] reshapes.
 
 ### Phases
-- [ ] Arm the first-run guard once at mount and gate the redirect on the opening pathname
+- [x] Arm the first-run guard once at mount and gate the redirect on the opening pathname
       In `src/app/hooks/use-app-shell.ts`; the redirect fires only when the app opened on `/` and is still there when the probe resolves.
+      run: 3m35s · 60 in · 11.6k out · sonnet-5 · sess:736dba6e-8344-4338-b9ed-1c2165c83109
 - [ ] Add the regression test
       Open on `/settings/setup`, navigate to `/`, resolve the probe with an incomplete capability; the pathname stays `/`.
