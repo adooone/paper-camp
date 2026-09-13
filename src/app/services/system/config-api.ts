@@ -19,6 +19,18 @@ export const fetchConfig = async (): Promise<PaperCampConfig | null> => {
   }
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchConfigAt = async (baseUrl: string): Promise<PaperCampConfig | null> => {
+  try {
+    const response = await fetch(`${baseUrl}/api/config`);
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+};
+
 export interface SaveConfigResult {
   ok: boolean;
   error?: string;

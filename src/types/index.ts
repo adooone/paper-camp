@@ -358,6 +358,8 @@ export interface TasksPerWeek {
   /** ISO week, e.g. "2026-W05". */
   week: string;
   count: number;
+  /** Runs whose `outcome` is `error` or `interrupted`. */
+  failedCount: number;
 }
 
 export interface UsagePerWeek {
@@ -366,6 +368,7 @@ export interface UsagePerWeek {
   agentMinutes: number;
   inputTokens: number;
   outputTokens: number;
+  costUsd: number;
 }
 
 export interface IdeaCost {

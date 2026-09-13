@@ -120,27 +120,38 @@ export function isoWeekKey(dateStr: string): string {
   return `${target.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
 }
 
+const FAILED_OUTCOMES: TaskLogEntry['outcome'][] = ['error', 'interrupted'];
+
 export function tasksPerWeek(entries: TaskLogEntry[]): TasksPerWeek[] {
-  const counts = new Map<string, number>();
-  for (const { startedAt } of entries) {
+  const counts = new Map<string, { count: number; failedCount: number }>();
+  for (const { startedAt, outcome } of entries) {
     const week = isoWeekKey(startedAt);
-    counts.set(week, (counts.get(week) ?? 0) + 1);
+    const bucket = counts.get(week) ?? { count: 0, failedCount: 0 };
+    bucket.count += 1;
+    if (FAILED_OUTCOMES.includes(outcome)) bucket.failedCount += 1;
+    counts.set(week, bucket);
   }
   return [...counts.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([week, count]) => ({ week, count }));
+    .map(([week, bucket]) => ({ week, ...bucket }));
 }
 
-function entryTokens(entry: TaskLogEntry): { inputTokens: number; outputTokens: number } {
+function entryTokens(entry: TaskLogEntry): {
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+} {
   let inputTokens = 0;
   let outputTokens = 0;
+  let costUsd = 0;
   const add = (usage: RunUsage) => {
     inputTokens += usage.inputTokens;
     outputTokens += usage.outputTokens;
+    costUsd += usage.costUsd;
   };
   if (entry.phaseRuns?.length) for (const p of entry.phaseRuns) add(p.usage);
   else if (entry.usage) add(entry.usage);
-  return { inputTokens, outputTokens };
+  return { inputTokens, outputTokens, costUsd };
 }
 
 function taskWallClockMs(entry: TaskLogEntry): number {
@@ -151,15 +162,19 @@ function taskWallClockMs(entry: TaskLogEntry): number {
 }
 
 export function usagePerWeek(entries: TaskLogEntry[]): UsagePerWeek[] {
-  const buckets = new Map<string, { agentMs: number; inputTokens: number; outputTokens: number }>();
+  const buckets = new Map<
+    string,
+    { agentMs: number; inputTokens: number; outputTokens: number; costUsd: number }
+  >();
   for (const entry of entries) {
     if (Number.isNaN(Date.parse(entry.startedAt))) continue;
     const week = isoWeekKey(entry.startedAt);
-    const bucket = buckets.get(week) ?? { agentMs: 0, inputTokens: 0, outputTokens: 0 };
-    const { inputTokens, outputTokens } = entryTokens(entry);
+    const bucket = buckets.get(week) ?? { agentMs: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+    const { inputTokens, outputTokens, costUsd } = entryTokens(entry);
     bucket.agentMs += taskWallClockMs(entry);
     bucket.inputTokens += inputTokens;
     bucket.outputTokens += outputTokens;
+    bucket.costUsd += costUsd;
     buckets.set(week, bucket);
   }
   return [...buckets.entries()]
@@ -169,6 +184,7 @@ export function usagePerWeek(entries: TaskLogEntry[]): UsagePerWeek[] {
       agentMinutes: Math.round(b.agentMs / 60000),
       inputTokens: b.inputTokens,
       outputTokens: b.outputTokens,
+      costUsd: b.costUsd,
     }));
 }
 

@@ -101,8 +101,18 @@ describe('tasksPerWeek', () => {
       },
     ];
     expect(tasksPerWeek(entries)).toEqual([
-      { week: isoWeekKey('2026-06-01T10:00:00Z'), count: 1 },
-      { week: isoWeekKey('2026-07-27T10:00:00Z'), count: 2 },
+      { week: isoWeekKey('2026-06-01T10:00:00Z'), count: 1, failedCount: 1 },
+      { week: isoWeekKey('2026-07-27T10:00:00Z'), count: 2, failedCount: 0 },
+    ]);
+  });
+
+  it('counts an interrupted run as failed alongside an errored one', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({ startedAt: '2026-07-27T10:00:00Z', outcome: 'interrupted' }),
+      logEntry({ startedAt: '2026-07-27T10:00:00Z', outcome: 'superseded' }),
+    ];
+    expect(tasksPerWeek(entries)).toEqual([
+      { week: isoWeekKey('2026-07-27T10:00:00Z'), count: 2, failedCount: 1 },
     ]);
   });
 });
@@ -153,9 +163,39 @@ describe('usagePerWeek', () => {
       logEntry({ startedAt: '2026-06-01T10:00:00Z', endedAt: '2026-06-01T10:05:00Z' }),
     ];
     expect(usagePerWeek(entries)).toEqual([
-      { week: isoWeekKey('2026-06-01'), agentMinutes: 5, inputTokens: 0, outputTokens: 0 },
-      { week: isoWeekKey('2026-07-27'), agentMinutes: 30, inputTokens: 3500, outputTokens: 350 },
+      {
+        week: isoWeekKey('2026-06-01'),
+        agentMinutes: 5,
+        inputTokens: 0,
+        outputTokens: 0,
+        costUsd: 0,
+      },
+      {
+        week: isoWeekKey('2026-07-27'),
+        agentMinutes: 30,
+        inputTokens: 3500,
+        outputTokens: 350,
+        costUsd: 0,
+      },
     ]);
+  });
+
+  it('sums cost per week across phase runs', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({
+        startedAt: '2026-07-27T10:00:00Z',
+        usage: usage({ costUsd: 1.5 }),
+      }),
+      logEntry({
+        startedAt: '2026-07-28T10:00:00Z',
+        taskKind: 'run-all',
+        phaseRuns: [
+          { kind: 'phase', index: 0, usage: usage({ costUsd: 0.5 }) },
+          { kind: 'fix', index: 0, usage: usage({ costUsd: 0.25 }) },
+        ],
+      }),
+    ];
+    expect(usagePerWeek(entries).map((w) => w.costUsd)).toEqual([2.25]);
   });
 
   it('skips records with an unparseable startedAt', () => {
@@ -168,7 +208,13 @@ describe('usagePerWeek', () => {
       }),
     ];
     expect(usagePerWeek(entries)).toEqual([
-      { week: isoWeekKey('2026-07-27'), agentMinutes: 10, inputTokens: 1000, outputTokens: 100 },
+      {
+        week: isoWeekKey('2026-07-27'),
+        agentMinutes: 10,
+        inputTokens: 1000,
+        outputTokens: 100,
+        costUsd: 0,
+      },
     ]);
   });
 });

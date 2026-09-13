@@ -69,6 +69,19 @@ export const fetchNightReport = async () => {
   return res.json() as Promise<{ groups: NightReportGroup[] }>;
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchNightReportAt = async (baseUrl: string): Promise<NightReportGroup[] | null> => {
+  try {
+    const res = await fetch(`${baseUrl}/api/night-findings`);
+    if (!res.ok) return null;
+    const body = (await res.json()) as { groups: NightReportGroup[] };
+    return body.groups;
+  } catch {
+    return null;
+  }
+};
+
 export const promoteNightFinding = async (finding: NightSuggestionEntry) => {
   const res = await fetch(apiUrl('/api/night-findings/promote'), {
     method: 'POST',
