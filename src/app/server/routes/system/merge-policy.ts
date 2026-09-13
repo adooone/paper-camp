@@ -19,12 +19,18 @@ export function mergePolicyRoutes({ root }: RouteContext): Route[] {
         const raw = await readBody(req);
         let partial: Partial<MergePolicy> | undefined;
         if (raw) {
+          let parsed: unknown;
           try {
-            partial = JSON.parse(raw) as Partial<MergePolicy>;
+            parsed = JSON.parse(raw);
           } catch {
             sendJson(res, 400, { error: 'invalid JSON body' });
             return;
           }
+          if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+            sendJson(res, 400, { error: 'body must be a JSON object' });
+            return;
+          }
+          partial = parsed as Partial<MergePolicy>;
         }
         sendJson(res, 200, await applyMergePolicy(root, partial));
       },

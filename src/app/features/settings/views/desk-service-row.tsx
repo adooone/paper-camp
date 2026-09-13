@@ -28,41 +28,43 @@ export const DeskServiceRow = ({ service, onSave, onRemove }: DeskServiceRowProp
 
   return (
     <Card size="small" texture="kraft" className="plan-row-card">
-      <div className={DESK_SERVICE_GRID_CLASS}>
-        <Input
-          size="small"
-          value={local.name}
-          onChange={(e) => setLocal({ ...local, name: e.target.value })}
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          value={local.cmd}
-          onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          type="number"
-          value={local.port ?? ''}
-          onChange={(e) =>
-            setLocal({ ...local, port: e.target.value ? Number(e.target.value) : undefined })
-          }
-          onBlur={commit}
-        />
-        <Input
-          size="small"
-          value={local.healthcheck ?? ''}
-          onChange={(e) => setLocal({ ...local, healthcheck: e.target.value || undefined })}
-          onBlur={commit}
-        />
-        <IconButton
-          icon={<CloseIcon size={16} />}
-          variant="danger"
-          size="small"
-          onClick={onRemove}
-          label={`Remove ${service.name || 'service'}`}
-        />
+      <div className="overflow-x-auto">
+        <div className={DESK_SERVICE_GRID_CLASS}>
+          <Input
+            size="small"
+            value={local.name}
+            onChange={(e) => setLocal({ ...local, name: e.target.value })}
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            value={local.cmd}
+            onChange={(e) => setLocal({ ...local, cmd: e.target.value })}
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            type="number"
+            value={local.port ?? ''}
+            onChange={(e) =>
+              setLocal({ ...local, port: e.target.value ? Number(e.target.value) : undefined })
+            }
+            onBlur={commit}
+          />
+          <Input
+            size="small"
+            value={local.healthcheck ?? ''}
+            onChange={(e) => setLocal({ ...local, healthcheck: e.target.value || undefined })}
+            onBlur={commit}
+          />
+          <IconButton
+            icon={<CloseIcon size={16} />}
+            variant="danger"
+            size="small"
+            onClick={onRemove}
+            label={`Remove ${service.name || 'service'}`}
+          />
+        </div>
       </div>
     </Card>
   );

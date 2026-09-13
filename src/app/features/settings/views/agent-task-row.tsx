@@ -69,51 +69,56 @@ export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: Age
 
   return (
     <Card size="small" texture="kraft" className="plan-row-card">
-      <div className={AGENT_TABLE_GRID_CLASS}>
-        <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">
-          {TASK_TYPE_LABELS[taskKey]}
-        </span>
-        <Select
-          size="small"
-          width={AGENT_COLUMN_WIDTH}
-          value={agentConfig.agent}
-          onChange={handleAgentChange}
-          options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
-        />
-        {Array.isArray(modelOpts) ? (
+      <div className="overflow-x-auto">
+        <div className={AGENT_TABLE_GRID_CLASS}>
+          <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">
+            {TASK_TYPE_LABELS[taskKey]}
+          </span>
           <Select
             size="small"
-            width={MODEL_COLUMN_WIDTH}
-            value={agentConfig.model ?? ''}
-            onChange={handleModelSelectChange}
-            options={[
-              ...(excludedModel === '' ? [] : [{ value: '', label: 'Default' }]),
-              ...modelOpts.map((m) => ({ value: m, label: m })),
-            ]}
+            width={AGENT_COLUMN_WIDTH}
+            value={agentConfig.agent}
+            onChange={handleAgentChange}
+            options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
           />
-        ) : modelOpts === null ? (
-          <Input
-            size="small"
-            className="w-[160px]"
-            value={localModel}
-            placeholder="Default model"
-            onChange={(e) => setLocalModel(e.target.value)}
-            onBlur={handleModelInputBlur}
-          />
-        ) : null}
-        {/* Reserve the effort slot even when the agent has no effort options, so
-            switching agents doesn't change the control count and shift the row. */}
-        <div className={Array.isArray(effortOpts) ? 'visible' : 'invisible'}>
-          <Select
-            size="small"
-            width={EFFORT_COLUMN_WIDTH}
-            value={agentConfig.effort ?? ''}
-            onChange={handleEffortChange}
-            options={[
-              { value: '', label: 'Default' },
-              ...(Array.isArray(effortOpts) ? effortOpts : []).map((e) => ({ value: e, label: e })),
-            ]}
-          />
+          {Array.isArray(modelOpts) ? (
+            <Select
+              size="small"
+              width={MODEL_COLUMN_WIDTH}
+              value={agentConfig.model ?? ''}
+              onChange={handleModelSelectChange}
+              options={[
+                ...(excludedModel === '' ? [] : [{ value: '', label: 'Default' }]),
+                ...modelOpts.map((m) => ({ value: m, label: m })),
+              ]}
+            />
+          ) : modelOpts === null ? (
+            <Input
+              size="small"
+              className="w-[160px]"
+              value={localModel}
+              placeholder="Default model"
+              onChange={(e) => setLocalModel(e.target.value)}
+              onBlur={handleModelInputBlur}
+            />
+          ) : null}
+          {/* Reserve the effort slot even when the agent has no effort options, so
+              switching agents doesn't change the control count and shift the row. */}
+          <div className={Array.isArray(effortOpts) ? 'visible' : 'invisible'}>
+            <Select
+              size="small"
+              width={EFFORT_COLUMN_WIDTH}
+              value={agentConfig.effort ?? ''}
+              onChange={handleEffortChange}
+              options={[
+                { value: '', label: 'Default' },
+                ...(Array.isArray(effortOpts) ? effortOpts : []).map((e) => ({
+                  value: e,
+                  label: e,
+                })),
+              ]}
+            />
+          </div>
         </div>
       </div>
     </Card>

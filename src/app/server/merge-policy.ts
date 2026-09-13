@@ -107,9 +107,10 @@ export async function applyMergePolicy(
   }
   const fields = partial ?? RECOMMENDED_POLICY;
   const args = ['api', '-X', 'PATCH', `repos/${repo}`];
-  for (const [key, value] of Object.entries(fields) as [keyof MergePolicy, boolean | string][]) {
-    const ghKey = GH_FIELD_NAMES[key];
-    args.push(typeof value === 'boolean' ? '-F' : '-f', `${ghKey}=${value}`);
+  for (const key of Object.keys(GH_FIELD_NAMES) as (keyof MergePolicy)[]) {
+    if (!(key in fields)) continue;
+    const value = fields[key] as boolean | string;
+    args.push(typeof value === 'boolean' ? '-F' : '-f', `${GH_FIELD_NAMES[key]}=${value}`);
   }
   const result = await runGh(args, root);
   if (result.code !== 0) {
