@@ -125,16 +125,20 @@ export interface CompletionGateResult {
 export const completionGate = (
   plan: PlanEntry,
   ciGreen: boolean | null | undefined,
+  changedFileCount = 0,
 ): CompletionGateResult => {
   const missing: string[] = [];
-  if (!(plan.phases.length > 0 && plan.phases.every((p) => p.done))) missing.push('open phases');
-  if (!(plan.fixes ?? []).every((f) => f.done)) missing.push('open fixes');
+  if (changedFileCount > 0) missing.push('commit or stash the changes');
+  if (!(plan.phases.length > 0 && plan.phases.every((p) => p.done)))
+    missing.push('finish the phases');
+  if (!(plan.fixes ?? []).every((f) => f.done)) missing.push('finish the fixes');
   // Need not be approved — clicking Complete is the approval; main only requires
   // the Quality/Tests/Consistency checks, not a review.
-  if (!plan.pr) missing.push('an open PR');
+  if (!plan.pr) missing.push('open a PR');
   // A reviewer explicitly saying no blocks even when findings already became fixes.
-  else if (plan.pr.reviewDecision === 'changes-requested') missing.push('requested changes');
-  if (ciGreen !== true) missing.push('CI');
+  else if (plan.pr.reviewDecision === 'changes-requested')
+    missing.push('address the requested changes');
+  if (ciGreen !== true) missing.push('wait for CI');
   return { ready: missing.length === 0, missing };
 };
 
