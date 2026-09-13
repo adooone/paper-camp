@@ -2,8 +2,9 @@
 id: IDEA-254
 title: First Plans click lands on Setup
 type: fix
-status: review
+status: done
 created: 2026-09-10
+updated: 2026-09-13
 tags:
   - app
   - ui
