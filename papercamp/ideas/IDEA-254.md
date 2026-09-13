@@ -2,7 +2,7 @@
 id: IDEA-254
 title: First Plans click lands on Setup
 type: fix
-status: idea
+status: review
 created: 2026-09-10
 tags:
   - app
@@ -46,5 +46,6 @@ The Setup page itself and the *Show Setup on open* switch, which
 - [x] Arm the first-run guard once at mount and gate the redirect on the opening pathname
       In `src/app/hooks/use-app-shell.ts`; the redirect fires only when the app opened on `/` and is still there when the probe resolves.
       run: 3m35s · 60 in · 11.6k out · sonnet-5 · sess:736dba6e-8344-4338-b9ed-1c2165c83109
-- [ ] Add the regression test
+- [x] Add the regression test
       Open on `/settings/setup`, navigate to `/`, resolve the probe with an incomplete capability; the pathname stays `/`.
+      run: 1m46s · 28 in · 3.3k out · sonnet-5 · sess:736dba6e-8344-4338-b9ed-1c2165c83109
