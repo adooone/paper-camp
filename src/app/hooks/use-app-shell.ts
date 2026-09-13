@@ -146,10 +146,8 @@ export function useAppShell(): AppShellState {
     loadIdeas,
   ]);
 
-  // A corpus at or below `init`'s single seeded example idea (IDEA-1, no plans yet)
-  // hasn't been used for real work — point it at USAGE.md instead of an empty Ideas list.
-  // Armed once at mount so a session that opened elsewhere (a deep link, a remembered
-  // route) never has the probe fire later against a pathname it didn't open on.
+  // An unused corpus (IDEA-1 only, no plans) points at USAGE.md instead of an empty
+  // Ideas list; armed once at mount so a session that opened elsewhere never trips it.
   useEffect(() => {
     if (firstRunChecked.current) return;
     firstRunChecked.current = true;
