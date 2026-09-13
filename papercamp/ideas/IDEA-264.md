@@ -81,9 +81,10 @@ ratio, the health map. Charts anywhere else in the app; the three helpers
 are built for the hub and may be reused later. Pairing and trust rules.
 
 ### Phases
-- [ ] Build the machine-grouped hub model
+- [x] Build the machine-grouped hub model
       Merge the remembered entries with each daemon's reported projects into one
       list, with the row stamp and the sort order.
+      run: 7m55s · 100 in · 45.9k out · sonnet-5 · sess:5ef2063c-0577-4f96-bdd5-2e62b0ffc93b
 - [ ] Replace the two columns with the one list
       Machine sections, project rows, the Continue strip, the search row, and the
       add-a-machine footer; the old columns and cards go.

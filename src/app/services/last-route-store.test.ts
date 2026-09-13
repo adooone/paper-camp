@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { lastRouteFor, rememberRoute } from './last-route-store';
+import { lastOpenedAt, lastRouteFor, rememberRoute } from './last-route-store';
 
 function createStorage(seed: Record<string, string> = {}): Storage {
   const data = new Map<string, string>(Object.entries(seed));
@@ -84,5 +84,31 @@ describe('rememberRoute / lastRouteFor', () => {
 
     expect(() => rememberRoute('http://localhost:4333', '/log', throwing)).not.toThrow();
     expect(lastRouteFor('http://localhost:4333', throwing, exists)).toBeNull();
+  });
+});
+
+describe('lastOpenedAt', () => {
+  it('is null with nothing stored', () => {
+    expect(lastOpenedAt('http://localhost:4333', createStorage())).toBeNull();
+  });
+
+  it('is null without a storage backend', () => {
+    expect(lastOpenedAt('http://localhost:4333', null)).toBeNull();
+  });
+
+  it('records the time of the most recent rememberRoute call', () => {
+    const storage = createStorage();
+    const before = new Date().toISOString();
+    rememberRoute('http://localhost:4333', '/log', storage);
+    const after = new Date().toISOString();
+    const at = lastOpenedAt('http://localhost:4333', storage);
+    expect(at).not.toBeNull();
+    expect(at! >= before && at! <= after).toBe(true);
+  });
+
+  it('is null for a pre-timestamp entry stored as a bare pathname', () => {
+    const storage = createStorage({ 'paper-camp.lastRoute:http://localhost:4333': '/log' });
+    expect(lastOpenedAt('http://localhost:4333', storage)).toBeNull();
+    expect(lastRouteFor('http://localhost:4333', storage, exists)).toBe('/log');
   });
 });
