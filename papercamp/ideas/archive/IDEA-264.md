@@ -2,7 +2,7 @@
 id: IDEA-264
 title: The hub as one list with numbers
 type: feat
-status: review
+status: done
 created: 2026-09-12
 updated: 2026-09-13
 tags:
