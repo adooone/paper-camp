@@ -1,4 +1,3 @@
-import { surface } from '@/app/styles/tokens';
 import {
   AGENT_IDS,
   AGENT_LABELS,
@@ -6,7 +5,7 @@ import {
   type AgentConfig,
   type AgentId,
 } from '@/types/index';
-import { Card, Input, Select } from '@dendelion/paper-ui';
+import { Input, Select } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
 import { AGENT_TABLE_GRID_CLASS } from './agent-task-row-header';
@@ -69,7 +68,7 @@ export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: Age
   };
 
   return (
-    <Card size="small" texture={surface.card} className="plan-row-card">
+    <div className="plan-row-card">
       <div className="overflow-x-auto">
         <div className={AGENT_TABLE_GRID_CLASS}>
           <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">
@@ -122,6 +121,6 @@ export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: Age
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

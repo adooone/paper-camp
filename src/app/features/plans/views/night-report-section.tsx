@@ -1,6 +1,5 @@
-import { surface } from '@/app/styles/tokens';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Card, IconButton, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { IconButton, Stamp, type StampVariant } from '@dendelion/paper-ui';
 
 interface NightReportSectionProps {
   groups: NightReportGroup[];
@@ -61,42 +60,34 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
           ) : (
             <div className="flex flex-col gap-1">
               {sortedFindings(group.findings).map((finding) => (
-                <div key={nightFindingKey(finding)} className="rounded-[10px]">
-                  <Card
-                    size="small"
-                    texture={surface.card}
-                    accent
-                    accentColor="slate"
-                    className="plan-row-card"
-                  >
-                    <div className="flex items-center gap-2">
-                      {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
-                      <button
-                        type="button"
-                        onClick={() => onOpen(finding)}
-                        className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
-                      >
-                        <Stamp size="small" variant="neutral">
-                          night
-                        </Stamp>
-                        <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
-                          {finding.severity}
-                        </Stamp>
-                        <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                          {finding.file}
-                          {finding.line ? `:${finding.line}` : ''} — {finding.message}
-                        </span>
-                      </button>
-                      <IconButton
-                        icon={<span>×</span>}
-                        variant="ghost"
-                        size="small"
-                        label="Dismiss"
-                        className="w-[28px] h-[28px]"
-                        onClick={() => onDismiss(finding)}
-                      />
-                    </div>
-                  </Card>
+                <div key={nightFindingKey(finding)} className="plan-row-card">
+                  <div className="flex items-center gap-2">
+                    {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
+                    <button
+                      type="button"
+                      onClick={() => onOpen(finding)}
+                      className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
+                    >
+                      <Stamp size="small" variant="neutral">
+                        night
+                      </Stamp>
+                      <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
+                        {finding.severity}
+                      </Stamp>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                        {finding.file}
+                        {finding.line ? `:${finding.line}` : ''} — {finding.message}
+                      </span>
+                    </button>
+                    <IconButton
+                      icon={<span>×</span>}
+                      variant="ghost"
+                      size="small"
+                      label="Dismiss"
+                      className="w-[28px] h-[28px]"
+                      onClick={() => onDismiss(finding)}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

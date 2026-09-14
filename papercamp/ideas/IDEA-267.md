@@ -65,8 +65,9 @@ to what a group contains or to the page grounds.
 - [x] Rule the sidebar again
       Delete `SidebarCard`, stack the groups in `SidebarShell`, and render a rule only between two groups that both have content.
       run: 4m46s · 94 in · 22.8k out · sonnet-5 · sess:91d86db6-2928-46f6-9b64-e4856c7edf61
-- [ ] Move the row affordances onto the row
+- [x] Move the row affordances onto the row
       Give `plan-row-card`'s grid, hover wash, and active state to the row itself in `utilities.css`.
+      run: 6m39s · 116 in · 40.7k out · sonnet-5 · sess:91d86db6-2928-46f6-9b64-e4856c7edf61
 - [ ] Replace the page cards with ruled groups
       Every `Card` on a paper surface becomes its children plus a rule before the next group, none after the last.
 - [ ] Delete `surface.card` and `surface.nestedCard`

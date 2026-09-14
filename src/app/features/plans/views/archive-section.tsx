@@ -1,7 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { surface } from '@/app/styles/tokens';
 import type { ArchivableIdea } from '@/types/index';
-import { Button, Card, useToast } from '@dendelion/paper-ui';
+import { Button, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
 import { PLAN_ROWS_GRID_CLASS, RowMarker } from './plan-rows';
@@ -90,31 +89,29 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                     }
                   : undefined
               }
-              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
+              className={`plan-row-card flex-1 min-w-0 ${onOpen ? 'cursor-pointer' : ''}`}
             >
-              <Card size="small" texture={surface.nestedCard} className="plan-row-card">
-                <div className={PLAN_ROWS_GRID_CLASS}>
-                  <PlanIdStamp id={idea.id} />
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    {idea.title}
-                  </span>
-                  <span className="max-lg:hidden text-sm opacity-30">—</span>
-                  <span className="text-sm opacity-30">—</span>
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    className="archive-row-action"
-                    disabled={archivingId === idea.id || archivingAll}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleArchiveOne(idea);
-                    }}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    {archivingId === idea.id ? 'Archiving…' : 'Archive'}
-                  </Button>
-                </div>
-              </Card>
+              <div className={PLAN_ROWS_GRID_CLASS}>
+                <PlanIdStamp id={idea.id} />
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                  {idea.title}
+                </span>
+                <span className="max-lg:hidden text-sm opacity-30">—</span>
+                <span className="text-sm opacity-30">—</span>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  className="archive-row-action"
+                  disabled={archivingId === idea.id || archivingAll}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleArchiveOne(idea);
+                  }}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  {archivingId === idea.id ? 'Archiving…' : 'Archive'}
+                </Button>
+              </div>
             </div>
           </div>
         ))}

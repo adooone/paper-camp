@@ -58,19 +58,25 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
- * for content cards; rows need a tighter, single-line fit. Reaches into the
- * nested textureLayer div from outside, since Card exposes no padding prop.
+ * A dense list row, not a Card: no fill of its own, just a hover wash and an
+ * outlined active state so a list of rows reads as one ruled block instead of
+ * thirty boxes.
  */
-.plan-row-card [class*="textureLayer"] {
+.plan-row-card {
+  display: block;
   padding: 0.375rem 0.875rem;
+  border-radius: 10px;
 }
 
-/*
- * The Stack's Agent section is a column of one Card per task; Card's smallest
- * padding is still sized for content cards, so tighten it to a single-line row
- * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
- */
+.plan-row-card:hover {
+  background: var(--pui-btn-secondary-hover);
+}
+
+.plan-row-card.plan-row-highlighted {
+  outline: 2px solid rgba(200, 154, 90, 0.5);
+  outline-offset: -2px;
+}
+
 /*
  * paper-ui's phase Table is a real <table> with fixed pixel column widths
  * (colgroup), which don't reflow — below phone width this drops every table
@@ -176,10 +182,9 @@ header[class*="layout-module__header___"] {
  * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/Roadmap/
  * worklist rows) are sized for desktop pointer precision; widen their tap area
  * at phone width so a thumb doesn't need to land on a single-line-tall target.
- * Same reach-into-the-nested-div pattern as the base .plan-row-card rule above.
  */
 @media (max-width: 480px) {
-  .plan-row-card [class*="textureLayer"] {
+  .plan-row-card {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
   }

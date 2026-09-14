@@ -1,5 +1,4 @@
-import { surface } from '@/app/styles/tokens';
-import { Card, CloseIcon, IconButton, Input } from '@dendelion/paper-ui';
+import { CloseIcon, IconButton, Input } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import type { KeyedDeskCheck } from '../hooks/use-desk-section';
 import { DESK_CHECK_GRID_CLASS } from './desk-check-row-header';
@@ -27,7 +26,7 @@ export const DeskCheckRow = ({ check, onSave, onRemove }: DeskCheckRowProps) => 
   };
 
   return (
-    <Card size="small" texture={surface.card} className="plan-row-card">
+    <div className="plan-row-card">
       <div className="overflow-x-auto">
         <div className={DESK_CHECK_GRID_CLASS}>
           <Input
@@ -57,6 +56,6 @@ export const DeskCheckRow = ({ check, onSave, onRemove }: DeskCheckRowProps) => 
           />
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
