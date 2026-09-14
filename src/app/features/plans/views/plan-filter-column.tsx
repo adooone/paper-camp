@@ -1,6 +1,6 @@
 import { SidebarSkeleton } from '@/app/components';
-import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
+import { SidebarGroup } from '@/app/components/sidebar';
 import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -42,7 +42,7 @@ export const PlanFilterColumn = () => {
     filters.search !== '' || filters.subject !== null || !isDefaultStatuses(filters.statuses);
 
   return (
-    <SidebarCard>
+    <SidebarGroup>
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -94,6 +94,6 @@ export const PlanFilterColumn = () => {
           </button>
         )}
       </div>
-    </SidebarCard>
+    </SidebarGroup>
   );
 };

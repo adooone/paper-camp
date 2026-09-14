@@ -62,8 +62,9 @@ to what a group contains or to the page grounds.
 - [x] Adopt paper-ui's sketch Divider
       Bump the dependency once the release lands and confirm the seeded stroke honours `surface`.
       run: 1m49s · 56 in · 4.7k out · sonnet-5 · sess:91d86db6-2928-46f6-9b64-e4856c7edf61
-- [ ] Rule the sidebar again
+- [x] Rule the sidebar again
       Delete `SidebarCard`, stack the groups in `SidebarShell`, and render a rule only between two groups that both have content.
+      run: 4m46s · 94 in · 22.8k out · sonnet-5 · sess:91d86db6-2928-46f6-9b64-e4856c7edf61
 - [ ] Move the row affordances onto the row
       Give `plan-row-card`'s grid, hover wash, and active state to the row itself in `utilities.css`.
 - [ ] Replace the page cards with ruled groups

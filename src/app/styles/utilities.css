@@ -308,15 +308,12 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The sidebar card is capped at the viewport and scrolls inside; Card's own
- * border and texture layers have to pass that constraint down, or the inner
- * scroll region never gets a bounded height. Same reach-in pattern as above.
+ * A group's leading rule separates it from the previous one; an empty group
+ * renders nothing, so this :first-child only ever matches whichever group is
+ * actually first among the DOM siblings the shell renders.
  */
-.pc-sidebar-card [class*="borderLayer"],
-.pc-sidebar-card [class*="textureLayer"] {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.pc-sidebar-group:first-child > .pc-sidebar-group-rule {
+  display: none;
 }
 
 button,
