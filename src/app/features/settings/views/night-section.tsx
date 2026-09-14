@@ -1,6 +1,5 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { surface } from '@/app/styles/tokens';
-import { Alert, Button, Card, Divider, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
+import { Alert, Button, Divider, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
 import { useNightSection } from '../hooks/use-night-section';
 import { NightCustomCheckRow } from './night-custom-check-row';
 
@@ -42,95 +41,93 @@ export const NightSection = () => {
       )}
       {config && status && (
         <>
-          <Card size="small" texture={surface.card}>
-            <div className="flex items-center justify-between gap-3 pb-3">
-              <div>
-                <p className="m-0">Run the night shift for this project</p>
-                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-                  Only one project on this machine runs it at a time.
-                </p>
-              </div>
-              <Switch checked={enabled} onChange={handleToggleEnabled} />
+          <div className="flex items-center justify-between gap-3 pb-3">
+            <div>
+              <p className="m-0">Run the night shift for this project</p>
+              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                Only one project on this machine runs it at a time.
+              </p>
             </div>
-            <Divider />
+            <Switch checked={enabled} onChange={handleToggleEnabled} />
+          </div>
+          <Divider />
 
-            <div className="flex items-center justify-between gap-3 pb-3 pt-3">
-              <div>
-                <p className="m-0">Pause tonight</p>
-                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-                  Skips passes until the next rate-limit reset.
-                </p>
-              </div>
-              <Switch checked={paused} onChange={handleTogglePause} disabled={!enabled} />
+          <div className="flex items-center justify-between gap-3 pb-3 pt-3">
+            <div>
+              <p className="m-0">Pause tonight</p>
+              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                Skips passes until the next rate-limit reset.
+              </p>
             </div>
-            <Divider />
+            <Switch checked={paused} onChange={handleTogglePause} disabled={!enabled} />
+          </div>
+          <Divider />
 
-            <div className="flex items-center justify-between gap-3 pb-3 pt-3">
-              <div>
-                <p className="m-0">Run a pass now</p>
-                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-                  Reviews the highest-scoring chunk immediately, gate or not.
-                </p>
-              </div>
-              <Button size="small" onClick={handleRunNow} disabled={!enabled || running}>
-                {running ? 'Starting…' : 'Run a pass now'}
-              </Button>
+          <div className="flex items-center justify-between gap-3 pb-3 pt-3">
+            <div>
+              <p className="m-0">Run a pass now</p>
+              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                Reviews the highest-scoring chunk immediately, gate or not.
+              </p>
             </div>
-            <Divider />
+            <Button size="small" onClick={handleRunNow} disabled={!enabled || running}>
+              {running ? 'Starting…' : 'Run a pass now'}
+            </Button>
+          </div>
+          <Divider />
 
-            <div className="flex items-center justify-between gap-3 pt-3">
-              <div>
-                <p className="m-0">Health threshold</p>
-                <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
-                  Chunks scoring above this, out of 100, get reviewed; lower it to review more.
-                </p>
-              </div>
-              <Input
-                value={thresholdInput}
-                onChange={(e) => setThresholdInput(e.target.value)}
-                onBlur={handleSaveThreshold}
-                label="Threshold"
-                className="w-24"
-              />
+          <div className="flex items-center justify-between gap-3 pt-3">
+            <div>
+              <p className="m-0">Health threshold</p>
+              <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
+                Chunks scoring above this, out of 100, get reviewed; lower it to review more.
+              </p>
             </div>
-          </Card>
+            <Input
+              value={thresholdInput}
+              onChange={(e) => setThresholdInput(e.target.value)}
+              onBlur={handleSaveThreshold}
+              label="Threshold"
+              className="w-24"
+            />
+          </div>
 
-          <div className="mt-6 mb-3">
+          <Divider sketch className="my-6" />
+
+          <div className="mb-3">
             <h3 className="m-0">Checks</h3>
           </div>
-          <Card size="small" texture={surface.card}>
-            {builtinChecks.map((check, idx) => (
-              <div key={check.id}>
-                <div className="flex items-center justify-between gap-3 pb-2 pt-2">
-                  <span>{check.name}</span>
-                  <Switch
-                    checked={(config.night?.checks?.[check.id] ?? true) !== false}
-                    onChange={() => handleToggleCheck(check.id)}
-                  />
-                </div>
-                {idx < builtinChecks.length - 1 && <Divider />}
+          {builtinChecks.map((check, idx) => (
+            <div key={check.id}>
+              <div className="flex items-center justify-between gap-3 pb-2 pt-2">
+                <span>{check.name}</span>
+                <Switch
+                  checked={(config.night?.checks?.[check.id] ?? true) !== false}
+                  onChange={() => handleToggleCheck(check.id)}
+                />
               </div>
-            ))}
-          </Card>
+              {idx < builtinChecks.length - 1 && <Divider />}
+            </div>
+          ))}
 
-          <div className="mt-6 flex items-center justify-between mb-3">
+          <Divider sketch className="my-6" />
+
+          <div className="flex items-center justify-between mb-3">
             <h3 className="m-0">Custom checks</h3>
             <Button size="small" icon={<PlusIcon size={16} />} onClick={addCustomCheck}>
               Add check
             </Button>
           </div>
-          <Card size="small" texture={surface.card}>
-            {customChecks.length === 0 && <EmptyState message="No custom checks yet." />}
-            {customChecks.map((check, idx) => (
-              <NightCustomCheckRow
-                key={check.id}
-                check={check}
-                onSave={(next) => updateCustomCheck(check.id, next)}
-                onRemove={() => removeCustomCheck(check.id)}
-                isLast={idx === customChecks.length - 1}
-              />
-            ))}
-          </Card>
+          {customChecks.length === 0 && <EmptyState message="No custom checks yet." />}
+          {customChecks.map((check, idx) => (
+            <NightCustomCheckRow
+              key={check.id}
+              check={check}
+              onSave={(next) => updateCustomCheck(check.id, next)}
+              onRemove={() => removeCustomCheck(check.id)}
+              isLast={idx === customChecks.length - 1}
+            />
+          ))}
         </>
       )}
     </div>

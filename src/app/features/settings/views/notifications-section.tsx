@@ -1,6 +1,5 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
-import { surface } from '@/app/styles/tokens';
-import { Alert, Card, Divider, Stamp, Switch } from '@dendelion/paper-ui';
+import { Alert, Divider, Stamp, Switch } from '@dendelion/paper-ui';
 import { NOTIFICATION_KIND_LABELS, PERMISSION_STAMP } from '../constants';
 import { useNotificationsSection } from '../hooks/use-notifications-section';
 import { NotificationDeviceRow } from './notification-device-row';
@@ -36,56 +35,54 @@ export const NotificationsSection = () => {
       )}
       {config && (
         <>
-          <Card size="small" texture={surface.card}>
-            {kindList.map((kind, idx) => (
-              <div key={kind}>
-                <div className="flex items-center justify-between gap-3 pb-2 pt-2">
-                  <span>{NOTIFICATION_KIND_LABELS[kind]}</span>
-                  <Switch checked={kinds[kind]} onChange={() => handleToggleKind(kind)} />
-                </div>
-                {idx < kindList.length - 1 && <Divider />}
+          {kindList.map((kind, idx) => (
+            <div key={kind}>
+              <div className="flex items-center justify-between gap-3 pb-2 pt-2">
+                <span>{NOTIFICATION_KIND_LABELS[kind]}</span>
+                <Switch checked={kinds[kind]} onChange={() => handleToggleKind(kind)} />
               </div>
-            ))}
-          </Card>
+              {idx < kindList.length - 1 && <Divider />}
+            </div>
+          ))}
 
-          <div className="mt-6 mb-3">
+          <Divider sketch className="my-6" />
+
+          <div className="mb-3">
             <h3 className="m-0">This device</h3>
           </div>
-          <Card size="small" texture={surface.card}>
-            {!supported ? (
-              <Alert variant="warning">This browser doesn't support push notifications.</Alert>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span>Push notifications</span>
-                  <Stamp size="small" variant={PERMISSION_STAMP[permission].variant}>
-                    {PERMISSION_STAMP[permission].label}
-                  </Stamp>
-                </div>
-                <Switch
-                  checked={subscribed}
-                  onChange={handleToggleDevice}
-                  disabled={busyDevice || permission === 'denied'}
-                />
+          {!supported ? (
+            <Alert variant="warning">This browser doesn't support push notifications.</Alert>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span>Push notifications</span>
+                <Stamp size="small" variant={PERMISSION_STAMP[permission].variant}>
+                  {PERMISSION_STAMP[permission].label}
+                </Stamp>
               </div>
-            )}
-          </Card>
+              <Switch
+                checked={subscribed}
+                onChange={handleToggleDevice}
+                disabled={busyDevice || permission === 'denied'}
+              />
+            </div>
+          )}
 
-          <div className="mt-6 mb-3">
+          <Divider sketch className="my-6" />
+
+          <div className="mb-3">
             <h3 className="m-0">Devices</h3>
           </div>
-          <Card size="small" texture={surface.card}>
-            {devices === undefined && <RowSkeleton />}
-            {devices && devices.length === 0 && <EmptyState message="No subscribed devices yet." />}
-            {devices?.map((device, idx) => (
-              <NotificationDeviceRow
-                key={`${device.transport}:${device.key}`}
-                device={device}
-                isLast={idx === devices.length - 1}
-                onRemove={() => handleRemoveDevice(device)}
-              />
-            ))}
-          </Card>
+          {devices === undefined && <RowSkeleton />}
+          {devices && devices.length === 0 && <EmptyState message="No subscribed devices yet." />}
+          {devices?.map((device, idx) => (
+            <NotificationDeviceRow
+              key={`${device.transport}:${device.key}`}
+              device={device}
+              isLast={idx === devices.length - 1}
+              onRemove={() => handleRemoveDevice(device)}
+            />
+          ))}
         </>
       )}
     </div>

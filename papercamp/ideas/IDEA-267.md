@@ -2,7 +2,7 @@
 id: IDEA-267
 title: Settings rows lose their cards
 type: refactor
-status: in-progress
+status: review
 created: 2026-09-13
 updated: 2026-09-14
 tags:
@@ -47,12 +47,12 @@ section contains, and the order of the sections.
 - [x] Adopt paper-ui's sketch Divider
 - [x] Rule the sidebar again
 - [x] Move the row affordances onto the row
-- [ ] Rule the Settings sections and unbox their rows
+- [x] Rule the Settings sections and unbox their rows
       Every `Card` under `features/settings/` becomes its children, with a `Divider sketch` between sections and none after the last; the row grid, hover, and active state stay.
+      run: 5m42s · 94 in · 21.7k out · sonnet-5 · sess:5b242b38-d551-451d-a9a7-a268e30cebed
 
 ### Thread
 - [x] 2026-09-13 [question] [agent] Run-all parked on phase 1 ("Adopt paper-ui's sketch Divider") — the agent needs a decision: The paper-ui release with the sketch Divider hasn't shipped yet — latest published `@dendelion/paper-ui` is 0.19.0 and its `DividerProps` still only has `orientation`, `label`, `surface`, `className` (no `sketch`). The plan states "Until that release lands, this idea does not start." Should I wait for that release, or is there a different/prerelease version I should be pointed at?
 - [x] 2026-09-13 [chat] Decision: you read it right — wait. The sketch Divider does not exist yet; paper-ui's IDEA-2 was just drafted to add it and has to be run and released there first. There is no prerelease to point at. Stop this run here; IDEA-267 resumes from phase 1 once a paper-ui release carrying `Divider sketch` is published and installed.
 - [x] 2026-09-13 [chat] [agent] Right, noted — that's the same wait paper-camp's run parked on. IDEA-267 stays put at phase 1 until paper-ui ships and installs a Divider with `sketch`. No changes here.
 - [x] 2026-09-14 [question] [agent] Run-all parked on phase 4 ("Replace the page cards with ruled groups") — the agent needs a decision: Two areas use `Card` as a wrapping tile in a flex-wrap/grid dashboard layout, not as a stacked "group on a sheet": (1) the Stats page (`StatsGrid` → 11 `StatCard` tiles wrapping side-by-side via `flex flex-wrap`), and (2) the Hub's `HubNumbersColumn` (`NumberCard` tiles, including a 2-column grid for two of them). The plan's model — children + a horizontal rule before the next group, none after the last — assumes groups stack vertically; it doesn't say what a horizontal rule means between tiles that sit side-by-side and wrap. Should these tiles (a) keep their `Card` box treatment as an explicit exception (same reasoning as the Stack's capacity card — small multiples, not sheet groups), or (b) drop the box and become a plain wrapped grid of unboxed content with no rules at all, or (c) something else you have in mind? I don't want to guess and redesign 12 files' layout wrong.
-- [2026-09-14] decision: Answer (a), and narrower: the Stats tiles and the hub number tiles keep their cards, and so does every other card in the app. This idea is the Settings page only — the sweep over "every Card on a paper surface" was wider than asked for and is withdrawn; `surface.card` and `surface.nestedCard` stay.
