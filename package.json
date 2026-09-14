@@ -95,7 +95,7 @@
     "@biomejs/biome": "^1.9.3",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
-    "@dendelion/paper-ui": "^0.20.0",
+    "@dendelion/paper-ui": "^0.20.1",
     "@tanstack/react-router": "^1.58.3",
     "@types/node": "^20.0.0",
     "@types/qrcode": "^1.5.6",
