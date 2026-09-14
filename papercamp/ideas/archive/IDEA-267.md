@@ -2,7 +2,7 @@
 id: IDEA-267
 title: Settings rows lose their cards
 type: refactor
-status: review
+status: done
 created: 2026-09-13
 updated: 2026-09-14
 tags:

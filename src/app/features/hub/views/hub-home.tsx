@@ -1,8 +1,7 @@
 import { PageTitle } from '@/app/components/page-title';
 import { Input, Page } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { AddMachineFooter, ContinueStrip, HubNumbersColumn, MachineSection } from '../components';
-import { pickContinueTarget } from '../helpers/continue-target';
+import { AddMachineFooter, HubNumbersColumn, MachineSection } from '../components';
 import {
   SEARCH_ROW_THRESHOLD,
   filterHubMachines,
@@ -15,21 +14,14 @@ export const HubHome = () => {
     useHubMachines();
   const [query, setQuery] = useState('');
 
-  const continueTarget = pickContinueTarget(machines);
   const showSearch = totalProjectCount(machines) > SEARCH_ROW_THRESHOLD;
   const visibleMachines = showSearch ? filterHubMachines(machines, query) : machines;
-  const numbers = useHubNumbers(machines, totalProjectCount(machines), continueTarget);
+  const numbers = useHubNumbers(machines, totalProjectCount(machines));
 
   return (
     <div className="grid grid-cols-[2fr_1fr] gap-3 items-start max-[480px]:grid-cols-1">
       <Page texture={{ texture: 'parchment' }} className="w-full max-w-none flex flex-col gap-4">
         <PageTitle>Paper Camp</PageTitle>
-        {continueTarget && (
-          <ContinueStrip
-            target={continueTarget}
-            onOpen={() => openRow(continueTarget.row, continueTarget.machineUrl)}
-          />
-        )}
         {showSearch && (
           <Input
             size="small"

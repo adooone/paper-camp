@@ -90,24 +90,20 @@ function isoWeekOf(date: Date): string {
 export function sumHubNumbers(params: {
   totalCount: number;
   dataByUrl: Record<string, HubProjectData | null>;
-  continueRuntimeUrl: string | null;
-  continueFloorPct: number;
+  sevenDayFloorPct: number;
 }): HubNumbers {
-  const { totalCount, dataByUrl, continueRuntimeUrl, continueFloorPct } = params;
+  const { totalCount, dataByUrl, sevenDayFloorPct } = params;
   const reachable = Object.values(dataByUrl).filter(
     (data): data is HubProjectData => data !== null,
   );
 
-  const continueData = continueRuntimeUrl ? dataByUrl[continueRuntimeUrl] : null;
-  // The machine's windows are the machine's, so any reachable project reports the same
-  // ones — the Continue project is only preferred for its own floor setting.
-  const capacitySource =
-    continueData?.stats.capacity ?? reachable.find(({ stats }) => stats.capacity)?.stats.capacity;
+  // The machine's windows are the machine's, so any reachable project reports them.
+  const capacitySource = reachable.find(({ stats }) => stats.capacity)?.stats.capacity;
   const capacity: HubCapacityFigure | null = capacitySource
     ? {
         fiveHour: capacitySource.snapshot.unifiedWindows?.five_hour ?? null,
         sevenDay: capacitySource.snapshot.unifiedWindows?.seven_day ?? null,
-        sevenDayFloorPct: continueFloorPct,
+        sevenDayFloorPct,
       }
     : null;
 

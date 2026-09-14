@@ -3,7 +3,6 @@ import type { HubMachine } from '@/app/services/hub-machines';
 import { fetchConfigAt } from '@/app/services/system';
 import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import { useEffect, useState } from 'react';
-import type { ContinueTarget } from '../helpers/continue-target';
 import {
   type HubNumbers,
   type HubProjectData,
@@ -21,15 +20,11 @@ async function fetchProjectData(runtimeUrl: string): Promise<HubProjectData | nu
 
 /** Reads `/api/stats` (and last night's findings) off every reachable project once
  * per set of reachable machines, and sums them into the right column's six figures.
- * The seven-day floor comes from the Continue project's own night config, so the
- * gauge marks the threshold that project actually gates on. */
-export function useHubNumbers(
-  machines: HubMachine[],
-  totalCount: number,
-  continueTarget: ContinueTarget | null,
-): HubNumbers {
+ * The seven-day floor is read off the first reachable project — the windows are the
+ * machine's, so any project on it gates on the same threshold. */
+export function useHubNumbers(machines: HubMachine[], totalCount: number): HubNumbers {
   const [dataByUrl, setDataByUrl] = useState<Record<string, HubProjectData | null>>({});
-  const [continueFloorPct, setContinueFloorPct] = useState(DEFAULT_NIGHT_CONFIG.floor);
+  const [sevenDayFloorPct, setSevenDayFloorPct] = useState(DEFAULT_NIGHT_CONFIG.floor);
 
   const reachableUrls = reachableProjectRuntimeUrls(machines);
   const urlsKey = reachableUrls.join('\n');
@@ -47,20 +42,20 @@ export function useHubNumbers(
     };
   }, [urlsKey]);
 
-  const continueRuntimeUrl = continueTarget?.row.runtimeUrl ?? null;
+  const floorRuntimeUrl = reachableUrls[0] ?? null;
   useEffect(() => {
-    if (!continueRuntimeUrl) {
-      setContinueFloorPct(DEFAULT_NIGHT_CONFIG.floor);
+    if (!floorRuntimeUrl) {
+      setSevenDayFloorPct(DEFAULT_NIGHT_CONFIG.floor);
       return;
     }
     let cancelled = false;
-    fetchConfigAt(continueRuntimeUrl).then((config) => {
-      if (!cancelled) setContinueFloorPct(config?.night?.floor ?? DEFAULT_NIGHT_CONFIG.floor);
+    fetchConfigAt(floorRuntimeUrl).then((config) => {
+      if (!cancelled) setSevenDayFloorPct(config?.night?.floor ?? DEFAULT_NIGHT_CONFIG.floor);
     });
     return () => {
       cancelled = true;
     };
-  }, [continueRuntimeUrl]);
+  }, [floorRuntimeUrl]);
 
-  return sumHubNumbers({ totalCount, dataByUrl, continueRuntimeUrl, continueFloorPct });
+  return sumHubNumbers({ totalCount, dataByUrl, sevenDayFloorPct });
 }

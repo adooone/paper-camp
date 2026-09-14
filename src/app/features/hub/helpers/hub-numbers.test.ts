@@ -84,15 +84,14 @@ describe('sumHubNumbers', () => {
         a1: projectData({ stats: stats({ openQuestions: 3 }) }),
         a2: null,
       },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.reachableCount).toBe(1);
     expect(result.totalCount).toBe(2);
     expect(result.openQuestions).toBe(3);
   });
 
-  it('reads capacity only from the Continue project, marked with its own floor', () => {
+  it('reads capacity off the first reachable project, marked with the night floor', () => {
     const result = sumHubNumbers({
       totalCount: 1,
       dataByUrl: {
@@ -111,8 +110,7 @@ describe('sumHubNumbers', () => {
           }),
         }),
       },
-      continueRuntimeUrl: 'a1',
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.capacity).toEqual({
       fiveHour: { utilization: 0.4 },
@@ -129,8 +127,7 @@ describe('sumHubNumbers', () => {
         a1: projectData({ stats: stats({ tasksPerWeek: [{ week, count: 3, failedCount: 1 }] }) }),
         a2: projectData({ stats: stats({ tasksPerWeek: [{ week, count: 2, failedCount: 0 }] }) }),
       },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.runsPerWeek).toHaveLength(8);
     expect(result.runsPerWeek.find((entry) => entry.week === week)).toEqual({
@@ -149,8 +146,7 @@ describe('sumHubNumbers', () => {
           stats: stats({ tasksPerWeek: [{ week: weeks[7], count: 3, failedCount: 1 }] }),
         }),
       },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.runsPerWeek.map((week) => week.week)).toEqual(weeks);
     expect(result.runsPerWeek[7]).toEqual({ week: weeks[7], total: 3, failed: 1 });
@@ -170,8 +166,7 @@ describe('sumHubNumbers', () => {
           }),
         }),
       },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.runsPerWeek[7]).toEqual({ week: lastIsoWeeks(1)[0], total: 4, failed: 0 });
     expect(result.spend).toEqual({ costUsd: 0, tokens: 30, changeVsLastWeekPct: null });
@@ -190,8 +185,7 @@ describe('sumHubNumbers', () => {
           }),
         }),
       },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.spend).toEqual({ costUsd: 6, tokens: 150, changeVsLastWeekPct: 50 });
   });
@@ -246,8 +240,7 @@ describe('sumHubNumbers', () => {
     const result = sumHubNumbers({
       totalCount: 1,
       dataByUrl: { a1: projectData({ nightGroups: groups }) },
-      continueRuntimeUrl: null,
-      continueFloorPct: 70,
+      sevenDayFloorPct: 70,
     });
     expect(result.lastNight).toEqual({
       passCount: 2,
