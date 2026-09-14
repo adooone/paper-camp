@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.1](https://github.com/adooone/paper-camp/compare/v0.33.0...v0.33.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* **deps:** Resolve the broken Tailwind preset by pinning paper-ui 0.20.1 ([fab3824](https://github.com/adooone/paper-camp/commit/fab38246dfcf006399734d1326b11f4dee3fd492))
+
 ## [0.33.0](https://github.com/adooone/paper-camp/compare/v0.32.0...v0.33.0) (2026-09-13)
 
 
