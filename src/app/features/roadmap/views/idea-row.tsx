@@ -1,7 +1,8 @@
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
+import { surface } from '@/app/styles/tokens';
 import type { PlanEntry, PlanStatus, PrInfo, RoadmapLink } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { Card, Stamp } from '@dendelion/paper-ui';
 
 export interface MergedIdea {
   key: string;
@@ -39,7 +40,7 @@ interface IdeaRowProps {
 }
 
 export const IdeaRow = ({ idea, onOpen }: IdeaRowProps) => (
-  <div className="plan-row-card">
+  <Card size="small" texture={surface.card} className="plan-row-card">
     <div className="flex items-center gap-3">
       {onOpen ? (
         <button
@@ -63,5 +64,5 @@ export const IdeaRow = ({ idea, onOpen }: IdeaRowProps) => (
         {STATUS_LABEL[idea.status]}
       </Stamp>
     </div>
-  </div>
+  </Card>
 );

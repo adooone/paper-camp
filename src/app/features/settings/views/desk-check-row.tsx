@@ -26,7 +26,7 @@ export const DeskCheckRow = ({ check, onSave, onRemove }: DeskCheckRowProps) => 
   };
 
   return (
-    <div className="plan-row-card">
+    <div className="pc-setting-row">
       <div className="overflow-x-auto">
         <div className={DESK_CHECK_GRID_CLASS}>
           <Input

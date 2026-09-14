@@ -1,5 +1,5 @@
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
-import { SidebarGroup } from '@/app/components/sidebar';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { useRoadmapSidebar } from './hooks';
@@ -24,7 +24,7 @@ export const RoadmapSidebar = () => {
   if (!roadmap) return null;
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -88,6 +88,6 @@ export const RoadmapSidebar = () => {
           </button>
         )}
       </div>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };

@@ -10,7 +10,7 @@ interface SettingRowProps {
 }
 
 export const SettingRow = ({ label, hint, children }: SettingRowProps) => (
-  <div className="plan-row-card">
+  <div className="pc-setting-row">
     <div className={SETTING_ROW_GRID_CLASS}>
       <div className="min-w-0">
         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{label}</div>

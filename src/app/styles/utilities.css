@@ -58,25 +58,19 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * A dense list row, not a Card: no fill of its own, just a hover wash and an
- * outlined active state so a list of rows reads as one ruled block instead of
- * thirty boxes.
+ * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
+ * for content cards; rows need a tighter, single-line fit. Reaches into the
+ * nested textureLayer div from outside, since Card exposes no padding prop.
  */
-.plan-row-card {
-  display: block;
+.plan-row-card [class*="textureLayer"] {
   padding: 0.375rem 0.875rem;
-  border-radius: 10px;
 }
 
-.plan-row-card:hover {
-  background: var(--pui-btn-secondary-hover);
-}
-
-.plan-row-card.plan-row-highlighted {
-  outline: 2px solid rgba(200, 154, 90, 0.5);
-  outline-offset: -2px;
-}
-
+/*
+ * The Stack's Agent section is a column of one Card per task; Card's smallest
+ * padding is still sized for content cards, so tighten it to a single-line row
+ * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
+ */
 /*
  * paper-ui's phase Table is a real <table> with fixed pixel column widths
  * (colgroup), which don't reflow — below phone width this drops every table
@@ -182,9 +176,10 @@ header[class*="layout-module__header___"] {
  * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/Roadmap/
  * worklist rows) are sized for desktop pointer precision; widen their tap area
  * at phone width so a thumb doesn't need to land on a single-line-tall target.
+ * Same reach-into-the-nested-div pattern as the base .plan-row-card rule above.
  */
 @media (max-width: 480px) {
-  .plan-row-card {
+  .plan-row-card [class*="textureLayer"] {
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
   }
@@ -313,12 +308,15 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * A group's leading rule separates it from the previous one; an empty group
- * renders nothing, so this :first-child only ever matches whichever group is
- * actually first among the DOM siblings the shell renders.
+ * The sidebar card is capped at the viewport and scrolls inside; Card's own
+ * border and texture layers have to pass that constraint down, or the inner
+ * scroll region never gets a bounded height. Same reach-in pattern as above.
  */
-.pc-sidebar-group:first-child > .pc-sidebar-group-rule {
-  display: none;
+.pc-sidebar-card [class*="borderLayer"],
+.pc-sidebar-card [class*="textureLayer"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 button,
@@ -328,4 +326,25 @@ a,
 [role="menuitem"],
 .pc-row[data-clickable] {
   font-weight: 600;
+}
+
+/*
+ * A Settings row is not a Card (IDEA-267): no fill of its own, just the row's
+ * padding, a hover wash, and the same tap area the dense row cards get on a phone.
+ */
+.pc-setting-row {
+  display: block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 10px;
+}
+
+.pc-setting-row:hover {
+  background: var(--pui-btn-secondary-hover);
+}
+
+@media (max-width: 480px) {
+  .pc-setting-row {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
 }

@@ -1,4 +1,4 @@
-import { Skeleton } from '@dendelion/paper-ui';
+import { Card, Skeleton } from '@dendelion/paper-ui';
 
 // Shared by every runtime area without its own list skeleton (Docs, Roadmap, Settings,
 // Tasks) — reuses `.plan-row-card`, the row styling already shared across those areas.
@@ -16,9 +16,9 @@ export const RowSkeleton = () => (
     </output>
     <div className="flex flex-col gap-1" aria-hidden="true">
       {ROWS.map((r) => (
-        <div key={r.key} className="plan-row-card">
+        <Card key={r.key} size="small" className="plan-row-card">
           <Skeleton variant="text" width={r.width} />
-        </div>
+        </Card>
       ))}
     </div>
   </div>

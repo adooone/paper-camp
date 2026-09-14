@@ -50,6 +50,7 @@ section contains, and the order of the sections.
 - [x] Rule the Settings sections and unbox their rows
       Every `Card` under `features/settings/` becomes its children, with a `Divider sketch` between sections and none after the last; the row grid, hover, and active state stay.
       run: 5m42s · 94 in · 21.7k out · sonnet-5 · sess:5b242b38-d551-451d-a9a7-a268e30cebed
+- [x] [manual] Settings rows lose their cards
 
 ### Thread
 - [x] 2026-09-13 [question] [agent] Run-all parked on phase 1 ("Adopt paper-ui's sketch Divider") — the agent needs a decision: The paper-ui release with the sketch Divider hasn't shipped yet — latest published `@dendelion/paper-ui` is 0.19.0 and its `DividerProps` still only has `orientation`, `label`, `surface`, `className` (no `sketch`). The plan states "Until that release lands, this idea does not start." Should I wait for that release, or is there a different/prerelease version I should be pointed at?

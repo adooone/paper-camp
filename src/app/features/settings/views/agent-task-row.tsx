@@ -68,7 +68,7 @@ export const AgentTaskRow = ({ taskKey, agentConfig, onSave, authorConfig }: Age
   };
 
   return (
-    <div className="plan-row-card">
+    <div className="pc-setting-row">
       <div className="overflow-x-auto">
         <div className={AGENT_TABLE_GRID_CLASS}>
           <span className="text-sm opacity-[0.65] overflow-hidden text-ellipsis whitespace-nowrap">

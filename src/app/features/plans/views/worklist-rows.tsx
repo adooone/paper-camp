@@ -1,7 +1,8 @@
 import { NoteIcon } from '@/app/components/icons';
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { Stamp, Switch } from '@dendelion/paper-ui';
+import { surface } from '@/app/styles/tokens';
+import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
@@ -120,36 +121,38 @@ export const WorklistRows = ({
             #{sortKey === 'order' && (sortDirection === 'asc' ? '▲' : '▼')}
           </button>
         </span>
-        <div className="plan-row-card flex-1 min-w-0">
-          <div className={gridClass}>
-            {SORT_COLUMNS.map(({ key, label }) => {
-              const active = key === sortKey;
-              return (
-                <span
-                  // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
-                  key={key}
-                  role="columnheader"
-                  className={key === 'updated' ? 'max-lg:hidden' : undefined}
-                  aria-sort={
-                    sortReflectsRows && active
-                      ? sortDirection === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : undefined
-                  }
-                >
-                  <button
-                    type="button"
-                    className={headerButtonClass}
-                    onClick={() => handleSort(key)}
+        <div className="flex-1 min-w-0">
+          <Card size="small" texture={surface.card} className="plan-row-card">
+            <div className={gridClass}>
+              {SORT_COLUMNS.map(({ key, label }) => {
+                const active = key === sortKey;
+                return (
+                  <span
+                    // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
+                    key={key}
+                    role="columnheader"
+                    className={key === 'updated' ? 'max-lg:hidden' : undefined}
+                    aria-sort={
+                      sortReflectsRows && active
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : undefined
+                    }
                   >
-                    {label}
-                    {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
-                  </button>
-                </span>
-              );
-            })}
-          </div>
+                    <button
+                      type="button"
+                      className={headerButtonClass}
+                      onClick={() => handleSort(key)}
+                    >
+                      {label}
+                      {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       </div>
       {showSubjectHeaders
@@ -205,24 +208,26 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
               }
             : undefined
         }
-        className={`plan-row-card flex-1 min-w-0 ${onOpen ? 'cursor-pointer' : ''}`}
+        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
       >
-        <div className={PLAN_ROWS_GRID_CLASS}>
-          {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
-          <span className={`${titleButtonClass} [cursor:inherit]`}>
-            <NoteIcon />
-            <span className={titleTextClass}>{idea.title}</span>
-          </span>
-          <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
-          <span className="text-sm opacity-30">—</span>
-          <Stamp
-            size="small"
-            fillColor={IDEA_STATUS_STAMP[status].fill}
-            textColor={IDEA_STATUS_STAMP[status].text}
-          >
-            {IDEA_STATUS_LABEL[status]}
-          </Stamp>
-        </div>
+        <Card size="small" texture={surface.card} className="plan-row-card">
+          <div className={PLAN_ROWS_GRID_CLASS}>
+            {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
+            <span className={`${titleButtonClass} [cursor:inherit]`}>
+              <NoteIcon />
+              <span className={titleTextClass}>{idea.title}</span>
+            </span>
+            <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
+            <span className="text-sm opacity-30">—</span>
+            <Stamp
+              size="small"
+              fillColor={IDEA_STATUS_STAMP[status].fill}
+              textColor={IDEA_STATUS_STAMP[status].text}
+            >
+              {IDEA_STATUS_LABEL[status]}
+            </Stamp>
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -266,27 +271,29 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
               }
             : undefined
         }
-        className={`plan-row-card flex-1 min-w-0 ${onOpen ? 'cursor-pointer' : ''} ${fix.title === activePlanTitle ? 'plan-row-highlighted' : ''}`}
+        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
       >
-        <div className={FIX_ROW_GRID_CLASS}>
-          <PlanIdStamp id={fix.id} />
-          <span className={`${titleButtonClass} [cursor:inherit]`}>
-            <Stamp size="small" variant="warning">
-              fix
+        <Card size="small" texture={surface.card} className="plan-row-card">
+          <div className={FIX_ROW_GRID_CLASS}>
+            <PlanIdStamp id={fix.id} />
+            <span className={`${titleButtonClass} [cursor:inherit]`}>
+              <Stamp size="small" variant="warning">
+                fix
+              </Stamp>
+              <span className={titleTextClass}>{fix.title}</span>
+              {fix.idea && (
+                <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
+              )}
+            </span>
+            <Stamp
+              size="small"
+              fillColor={STATUS_STAMP[status].fill}
+              textColor={STATUS_STAMP[status].text}
+            >
+              {STATUS_LABEL[status]}
             </Stamp>
-            <span className={titleTextClass}>{fix.title}</span>
-            {fix.idea && (
-              <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
-            )}
-          </span>
-          <Stamp
-            size="small"
-            fillColor={STATUS_STAMP[status].fill}
-            textColor={STATUS_STAMP[status].text}
-          >
-            {STATUS_LABEL[status]}
-          </Stamp>
-        </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

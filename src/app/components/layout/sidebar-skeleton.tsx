@@ -1,4 +1,4 @@
-import { SidebarGroup } from '@/app/components/sidebar';
+import { SidebarCard } from '@/app/components/sidebar';
 import { Skeleton } from '@dendelion/paper-ui';
 
 const LINES = [
@@ -9,9 +9,9 @@ const LINES = [
 ];
 
 // Same slots the real sidebars fill — a 64px search row, then 32px rows — so the
-// group keeps its height when the content arrives.
+// card keeps its height when the content arrives.
 export const SidebarSkeleton = () => (
-  <SidebarGroup>
+  <SidebarCard>
     <div className="flex flex-col" aria-hidden="true">
       <div className="flex h-[64px] items-center">
         <Skeleton variant="rect" width="100%" height={28} />
@@ -22,5 +22,5 @@ export const SidebarSkeleton = () => (
         </div>
       ))}
     </div>
-  </SidebarGroup>
+  </SidebarCard>
 );

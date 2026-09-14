@@ -27,7 +27,7 @@ export const DeskServiceRow = ({ service, onSave, onRemove }: DeskServiceRowProp
   };
 
   return (
-    <div className="plan-row-card">
+    <div className="pc-setting-row">
       <div className="overflow-x-auto">
         <div className={DESK_SERVICE_GRID_CLASS}>
           <Input

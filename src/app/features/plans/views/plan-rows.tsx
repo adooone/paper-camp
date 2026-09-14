@@ -1,7 +1,8 @@
 import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
+import { surface } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
-import { Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
@@ -89,47 +90,49 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                     }
                   : undefined
               }
-              className={`plan-row-card flex-1 min-w-0 ${onOpen ? 'cursor-pointer' : ''} ${plan.title === activePlanTitle ? 'plan-row-highlighted' : ''}`}
+              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
             >
-              <div className={gridClass}>
-                <PlanIdStamp id={plan.id} />
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                  {plan.title}
-                </span>
-                <span className="max-lg:hidden font-handwritten text-sm opacity-[0.45] whitespace-nowrap">
-                  {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
-                </span>
-                {progress ? (
-                  <span className="font-handwritten text-sm opacity-50 whitespace-nowrap">
-                    {progress.done}/{progress.total}
+              <Card size="small" texture={surface.card} className="plan-row-card">
+                <div className={gridClass}>
+                  <PlanIdStamp id={plan.id} />
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    {plan.title}
                   </span>
-                ) : (
-                  <span className="text-sm opacity-30">—</span>
-                )}
-                <div className="flex items-center gap-1">
-                  <Stamp
-                    size="small"
-                    fillColor={STATUS_STAMP[status].fill}
-                    textColor={STATUS_STAMP[status].text}
-                  >
-                    {STATUS_LABEL[status]}
-                  </Stamp>
-                  {plan.statusFallback && (
-                    <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
-                      <Stamp size="small" variant="warning" dot>
-                        Guess
-                      </Stamp>
-                    </Tooltip>
+                  <span className="max-lg:hidden font-handwritten text-sm opacity-[0.45] whitespace-nowrap">
+                    {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
+                  </span>
+                  {progress ? (
+                    <span className="font-handwritten text-sm opacity-50 whitespace-nowrap">
+                      {progress.done}/{progress.total}
+                    </span>
+                  ) : (
+                    <span className="text-sm opacity-30">—</span>
                   )}
-                  {plan.pr?.state === 'merged' && (
-                    <Tooltip content={`Merged in #${plan.pr.number}`}>
-                      <span className="inline-flex text-[#7B5E9E]">
-                        <MergeIcon size={14} />
-                      </span>
-                    </Tooltip>
-                  )}
+                  <div className="flex items-center gap-1">
+                    <Stamp
+                      size="small"
+                      fillColor={STATUS_STAMP[status].fill}
+                      textColor={STATUS_STAMP[status].text}
+                    >
+                      {STATUS_LABEL[status]}
+                    </Stamp>
+                    {plan.statusFallback && (
+                      <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
+                        <Stamp size="small" variant="warning" dot>
+                          Guess
+                        </Stamp>
+                      </Tooltip>
+                    )}
+                    {plan.pr?.state === 'merged' && (
+                      <Tooltip content={`Merged in #${plan.pr.number}`}>
+                        <span className="inline-flex text-[#7B5E9E]">
+                          <MergeIcon size={14} />
+                        </span>
+                      </Tooltip>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         );

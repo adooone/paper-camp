@@ -1,6 +1,6 @@
 import { RefreshIcon } from '@/app/components/icons';
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarCommand, SidebarField } from '@/app/components/sidebar';
-import { SidebarGroup } from '@/app/components/sidebar';
 import { usePlanActionsColumn } from '@/app/features/plans/hooks';
 import {
   CheckIcon,
@@ -42,7 +42,7 @@ export const PlanActionsColumn = () => {
   } = data;
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <div className="flex flex-col">
         <div className="flex flex-col">
           <ListItem
@@ -109,7 +109,7 @@ export const PlanActionsColumn = () => {
           </SidebarField>
         )}
       </div>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };
 
@@ -139,7 +139,7 @@ export const PlanActionsCommandsColumn = () => {
   } = data;
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <div className="flex flex-col">
         {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
         {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
@@ -188,6 +188,6 @@ export const PlanActionsCommandsColumn = () => {
           </SidebarCommand>
         )}
       </div>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };

@@ -1,5 +1,6 @@
+import { surface } from '@/app/styles/tokens';
 import type { LogRow } from '@/types/index';
-import { Button } from '@dendelion/paper-ui';
+import { Button, Card } from '@dendelion/paper-ui';
 import { LOG_ROW_GRID_CLASS, LogRowView } from './run-row';
 
 const headerLabelClassName = 'font-handwritten text-sm font-semibold whitespace-nowrap opacity-60';
@@ -12,7 +13,7 @@ export interface LogListProps {
 
 export const LogList = ({ rows, hasMore, onLoadMore }: LogListProps) => (
   <div className="flex flex-col gap-1">
-    <div className="plan-row-card">
+    <Card size="small" texture={surface.card} className="plan-row-card">
       <div className={LOG_ROW_GRID_CLASS}>
         <span className={headerLabelClassName}>Time</span>
         <span className={headerLabelClassName}>Type</span>
@@ -21,7 +22,7 @@ export const LogList = ({ rows, hasMore, onLoadMore }: LogListProps) => (
         <span className={headerLabelClassName}>Duration</span>
         <span className={headerLabelClassName}>Outcome</span>
       </div>
-    </div>
+    </Card>
     {rows.map((row) => (
       <LogRowView key={row.id} row={row} />
     ))}

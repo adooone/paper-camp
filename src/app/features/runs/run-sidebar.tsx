@@ -1,5 +1,5 @@
+import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField } from '@/app/components/sidebar';
-import { SidebarGroup } from '@/app/components/sidebar';
 import { formatDuration } from '@/core/phase-run';
 import type { LogDateRange, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS } from '@/types/index';
@@ -43,7 +43,7 @@ export const LogSidebar = () => {
   const { filters, setFilters, hasActiveFilters, clearFilters } = useLogPage();
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -96,7 +96,7 @@ export const LogSidebar = () => {
           </button>
         )}
       </div>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };
 
@@ -104,7 +104,7 @@ export const LogStatsSidebar = () => {
   const { stats } = useLogPage();
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <StatRow label="Runs" value={String(stats.runs)} />
         <StatRow label="Failed" value={String(stats.failed)} />
@@ -118,6 +118,6 @@ export const LogStatsSidebar = () => {
           value={stats.medianDurationMs == null ? '—' : formatDuration(stats.medianDurationMs)}
         />
       </div>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };

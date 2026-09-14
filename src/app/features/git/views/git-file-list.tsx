@@ -1,6 +1,6 @@
 import { EmptyState, SidebarSkeleton } from '@/app/components';
 import { CheckAllIcon } from '@/app/components/icons';
-import { SidebarGroup } from '@/app/components/sidebar';
+import { SidebarCard } from '@/app/components/sidebar';
 import { CountBadge, GitStatusMarker } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
@@ -40,19 +40,17 @@ export const GitFileList = () => {
   if (!files) return <SidebarSkeleton />;
   if (files.length === 0) {
     return (
-      <SidebarGroup>
-        <div className="flex flex-col">
-          <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
-            <span>Changed files</span>
-          </div>
-          <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
+      <div className="flex flex-col">
+        <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
+          <span>Changed files</span>
         </div>
-      </SidebarGroup>
+        <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
+      </div>
     );
   }
 
   return (
-    <SidebarGroup>
+    <SidebarCard>
       <nav aria-label="Changed files" className="flex flex-col">
         <div className={`${sectionLabelClass} flex h-[32px] items-end justify-between pb-1`}>
           <span>Changed files</span>
@@ -117,6 +115,6 @@ export const GitFileList = () => {
           ))}
         </ul>
       </nav>
-    </SidebarGroup>
+    </SidebarCard>
   );
 };
