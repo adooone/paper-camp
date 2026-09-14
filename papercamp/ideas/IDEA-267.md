@@ -2,8 +2,9 @@
 id: IDEA-267
 title: Hand-drawn rules replace cards
 type: refactor
-status: in-progress
+status: planned
 created: 2026-09-13
+updated: 2026-09-13
 tags:
   - app
   - ui
@@ -69,4 +70,6 @@ to what a group contains or to the page grounds.
 - [ ] Delete `surface.card` and `surface.nestedCard`
 
 ### Thread
-- [ ] 2026-09-13 [question] [agent] Run-all parked on phase 1 ("Adopt paper-ui's sketch Divider") — the agent needs a decision: The paper-ui release with the sketch Divider hasn't shipped yet — latest published `@dendelion/paper-ui` is 0.19.0 and its `DividerProps` still only has `orientation`, `label`, `surface`, `className` (no `sketch`). The plan states "Until that release lands, this idea does not start." Should I wait for that release, or is there a different/prerelease version I should be pointed at?
+- [x] 2026-09-13 [question] [agent] Run-all parked on phase 1 ("Adopt paper-ui's sketch Divider") — the agent needs a decision: The paper-ui release with the sketch Divider hasn't shipped yet — latest published `@dendelion/paper-ui` is 0.19.0 and its `DividerProps` still only has `orientation`, `label`, `surface`, `className` (no `sketch`). The plan states "Until that release lands, this idea does not start." Should I wait for that release, or is there a different/prerelease version I should be pointed at?
+- [x] 2026-09-13 [chat] Decision: you read it right — wait. The sketch Divider does not exist yet; paper-ui's IDEA-2 was just drafted to add it and has to be run and released there first. There is no prerelease to point at. Stop this run here; IDEA-267 resumes from phase 1 once a paper-ui release carrying `Divider sketch` is published and installed.
+- [x] 2026-09-13 [chat] [agent] Right, noted — that's the same wait paper-camp's run parked on. IDEA-267 stays put at phase 1 until paper-ui ships and installs a Divider with `sketch`. No changes here.
