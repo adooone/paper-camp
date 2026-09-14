@@ -59,8 +59,9 @@ The Stack panel, modals, toasts, and speech bubbles, as above. Any change
 to what a group contains or to the page grounds.
 
 ### Phases
-- [ ] Adopt paper-ui's sketch Divider
+- [x] Adopt paper-ui's sketch Divider
       Bump the dependency once the release lands and confirm the seeded stroke honours `surface`.
+      run: 1m49s · 56 in · 4.7k out · sonnet-5 · sess:91d86db6-2928-46f6-9b64-e4856c7edf61
 - [ ] Rule the sidebar again
       Delete `SidebarCard`, stack the groups in `SidebarShell`, and render a rule only between two groups that both have content.
 - [ ] Move the row affordances onto the row
