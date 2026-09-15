@@ -55,8 +55,9 @@ Any change to how promote builds its idea.
       Head card with stamps, chunk and `file:line`, the finding's text as the body, and a
       facts grid of commit, date and the staleness the reader already computes.
       run: 6m17s · 136 in · 23.7k out · sonnet-5 · sess:e7d7963f-9837-450e-aa1d-beb36e8048c5
-- [ ] Move promote and dismiss onto the page's bottom bar
+- [x] Move promote and dismiss onto the page's bottom bar
       Reuse `promoteNightFinding` and the dismiss action, landing on the new idea.
+      run: 2m11s · 62 in · 11k out · sonnet-5 · sess:fb5e9cdf-d079-46e3-a601-71a98b919e7a
 - [ ] Add "Fix it here"
       Launch an `issue-fix` task with the finding as its prompt, render its card on the
       page, and drop the line from `suggestions.md` when it lands green.

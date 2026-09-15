@@ -1,7 +1,12 @@
+import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
+import { entityRouteParam } from '@/app/hooks';
 import { fetchNightFindingStaleness } from '@/app/services/content';
+import { useAppStore } from '@/app/stores/app-store';
 import { surface } from '@/app/styles/tokens';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { NightSuggestionEntry } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
+import { Button, Card, Stamp, useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { SEVERITY_STAMP_VARIANT } from './night-report-section';
 
@@ -31,6 +36,14 @@ const FactsGrid = ({ facts }: { facts: Fact[] }) => (
 
 export const FindingDetail = ({ finding }: FindingDetailProps) => {
   const [stale, setStale] = useState<boolean | null>(null);
+  const promoteNightFinding = useAppStore((s) => s.promoteNightFinding);
+  const dismissNightFinding = useAppStore((s) => s.dismissNightFinding);
+  const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
+  const [promoting, setPromoting] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     setStale(null);
@@ -38,6 +51,48 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
       .then((result) => setStale(result.stale))
       .catch(() => setStale(null));
   }, [finding]);
+
+  const handlePromote = async () => {
+    setPromoting(true);
+    setError(null);
+    try {
+      const id = await promoteNightFinding(finding);
+      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === id);
+      if (idea) {
+        try {
+          await launchIdeaExtend(id, buildSuggestionPromotePrompt(idea));
+        } catch (err) {
+          toast({
+            title: 'Idea created, but the refine agent failed to launch',
+            description: oneLineErrorSummary((err as Error).message),
+            variant: 'error',
+          });
+        }
+      }
+      navigate({
+        to: '/ideas/$ideaId',
+        params: { ideaId: entityRouteParam(id, idea?.title ?? '') },
+      });
+    } catch (err) {
+      setError((err as Error).message);
+      setPromoting(false);
+    }
+  };
+
+  const handleDismiss = async () => {
+    setDismissing(true);
+    try {
+      await dismissNightFinding(finding);
+      navigate({ to: '/' });
+    } catch (err) {
+      toast({
+        title: 'Failed to dismiss finding',
+        description: (err as Error).message,
+        variant: 'error',
+      });
+      setDismissing(false);
+    }
+  };
 
   const facts: Fact[] = [
     { label: 'Commit', value: finding.commit.slice(0, 7) },
@@ -71,6 +126,25 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
           </div>
         </div>
       </Card>
+      <div className="flex items-center justify-end gap-2 border-t border-paper-950/[12%] pt-4">
+        {error && <p className="m-0 mr-auto text-watercolor-rose-dark text-sm">{error}</p>}
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={handleDismiss}
+          disabled={promoting || dismissing}
+        >
+          {dismissing ? 'Dismissing…' : 'Dismiss'}
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handlePromote}
+          disabled={promoting || dismissing}
+        >
+          {promoting ? 'Promoting…' : 'Promote'}
+        </Button>
+      </div>
     </div>
   );
 };
