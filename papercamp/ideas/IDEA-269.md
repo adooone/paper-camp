@@ -61,9 +61,10 @@ which are plain rows and stay that way.
       Task, Agent, Model, and Effort columns whose cells carry today's controls
       and save on change.
       run: 5m24s · 78 in · 27.4k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
-- [ ] Carry the agent rules into the cells
+- [x] Carry the agent rules into the cells
       Agent-filtered models, the excluded author model, the free-text input, and
       the unknown-agent fallback.
+      run: 35s · 16 in · 1.8k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
 - [ ] Turn the desk services and checks into tables
       Editable name and command cells, row actions in a trailing column.
 - [ ] Delete the retired rows, headers, and grid constants
