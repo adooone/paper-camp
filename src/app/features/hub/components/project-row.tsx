@@ -1,10 +1,12 @@
 import type { HubProjectRow, ProjectRowStamp } from '@/app/services/hub-machines';
-import { ListItem, Stamp } from '@dendelion/paper-ui';
+import { ListItem, Spinner, Stamp } from '@dendelion/paper-ui';
 import { ProjectActionsMenu } from '../actions';
 import { formatLastOpened } from '../helpers/format-last-opened';
 
 function RowStamp({ stamp }: { stamp: ProjectRowStamp }) {
   switch (stamp.kind) {
+    case 'loading':
+      return <Spinner size="small" />;
     case 'running':
       return (
         <Stamp size="small" variant="success">
