@@ -1,6 +1,7 @@
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { nightFindingTitle } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
 import { Button, Modal, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
@@ -8,11 +9,6 @@ import { useEffect, useState } from 'react';
 interface PromoteNightFindingModalProps {
   finding: NightSuggestionEntry | null;
   onClose: () => void;
-}
-
-function nightFindingTitle(finding: NightSuggestionEntry): string {
-  const base = finding.file.split('/').pop() ?? finding.file;
-  return `${finding.check}: ${base}`;
 }
 
 export const PromoteNightFindingModal = ({ finding, onClose }: PromoteNightFindingModalProps) => {

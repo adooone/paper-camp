@@ -4,10 +4,12 @@ import { fetchNightFindingStaleness } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { surface } from '@/app/styles/tokens';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { NightSuggestionEntry } from '@/types/index';
-import { Button, Card, Stamp, useToast } from '@dendelion/paper-ui';
+import { logRowIdForTask } from '@/core/run-rows';
+import type { AgentTaskState, NightSuggestionEntry, TaskLogEntry } from '@/types/index';
+import { Button, Card, Stamp, type StampVariant, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { useFindingFixTask } from '../hooks';
 import { SEVERITY_STAMP_VARIANT } from './night-report-section';
 
 interface FindingDetailProps {
@@ -34,6 +36,52 @@ const FactsGrid = ({ facts }: { facts: Fact[] }) => (
   </dl>
 );
 
+const FIX_OUTCOME_VARIANT: Record<string, StampVariant> = {
+  done: 'success',
+  error: 'error',
+  superseded: 'neutral',
+  interrupted: 'warning',
+};
+
+const FIX_OUTCOME_LABEL: Record<string, string> = {
+  done: 'fixed',
+  error: 'fix failed',
+  superseded: 'superseded',
+  interrupted: 'interrupted',
+};
+
+const FixTaskCard = ({
+  activeTask,
+  outcome,
+}: {
+  activeTask?: AgentTaskState;
+  outcome?: TaskLogEntry;
+}) => {
+  const navigate = useNavigate();
+  if (!activeTask && !outcome) return null;
+  const entryId = activeTask ? logRowIdForTask(activeTask) : `task:${outcome?.id}`;
+  const label = activeTask ? 'fixing…' : (FIX_OUTCOME_LABEL[outcome?.outcome ?? ''] ?? 'unknown');
+  const variant: StampVariant = activeTask
+    ? 'warning'
+    : (FIX_OUTCOME_VARIANT[outcome?.outcome ?? ''] ?? 'neutral');
+  return (
+    <button
+      type="button"
+      onClick={() => navigate({ to: '/log/$entryId', params: { entryId } })}
+      className="mb-4 block w-full cursor-pointer border-none bg-transparent p-0 text-left"
+    >
+      <Card size="small" texture={surface.card}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm opacity-70">Fix it here</span>
+          <Stamp size="small" variant={variant}>
+            {label}
+          </Stamp>
+        </div>
+      </Card>
+    </button>
+  );
+};
+
 export const FindingDetail = ({ finding }: FindingDetailProps) => {
   const [stale, setStale] = useState<boolean | null>(null);
   const promoteNightFinding = useAppStore((s) => s.promoteNightFinding);
@@ -44,6 +92,12 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {
+    activeTask: fixTask,
+    outcome: fixOutcome,
+    launching: fixing,
+    launchFix,
+  } = useFindingFixTask(finding);
 
   useEffect(() => {
     setStale(null);
@@ -94,6 +148,18 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
     }
   };
 
+  const handleFixItHere = async () => {
+    try {
+      await launchFix();
+    } catch (err) {
+      toast({
+        title: 'Failed to launch the fix agent',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    }
+  };
+
   const facts: Fact[] = [
     { label: 'Commit', value: finding.commit.slice(0, 7) },
     { label: 'Date', value: finding.date },
@@ -126,21 +192,30 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
           </div>
         </div>
       </Card>
+      <FixTaskCard activeTask={fixTask} outcome={fixOutcome} />
       <div className="flex items-center justify-end gap-2 border-t border-paper-950/[12%] pt-4">
         {error && <p className="m-0 mr-auto text-watercolor-rose-dark text-sm">{error}</p>}
         <Button
           type="button"
           variant="ghost"
           onClick={handleDismiss}
-          disabled={promoting || dismissing}
+          disabled={promoting || dismissing || fixing || Boolean(fixTask)}
         >
           {dismissing ? 'Dismissing…' : 'Dismiss'}
         </Button>
         <Button
           type="button"
+          variant="secondary"
+          onClick={handleFixItHere}
+          disabled={promoting || dismissing || fixing || Boolean(fixTask)}
+        >
+          {fixing || fixTask ? 'Fixing…' : 'Fix it here'}
+        </Button>
+        <Button
+          type="button"
           variant="primary"
           onClick={handlePromote}
-          disabled={promoting || dismissing}
+          disabled={promoting || dismissing || fixing || Boolean(fixTask)}
         >
           {promoting ? 'Promoting…' : 'Promote'}
         </Button>

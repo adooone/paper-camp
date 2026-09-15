@@ -58,9 +58,10 @@ Any change to how promote builds its idea.
 - [x] Move promote and dismiss onto the page's bottom bar
       Reuse `promoteNightFinding` and the dismiss action, landing on the new idea.
       run: 2m11s · 62 in · 11k out · sonnet-5 · sess:fb5e9cdf-d079-46e3-a601-71a98b919e7a
-- [ ] Add "Fix it here"
+- [x] Add "Fix it here"
       Launch an `issue-fix` task with the finding as its prompt, render its card on the
       page, and drop the line from `suggestions.md` when it lands green.
+      run: 5m39s · 104 in · 28.6k out · sonnet-5 · sess:fb5e9cdf-d079-46e3-a601-71a98b919e7a
 - [ ] Rework the group's rows and drop the modal
       Rows open the page and show severity, check and `file:line`, sorted critical first
       then by file, collapsing per chunk past ten.

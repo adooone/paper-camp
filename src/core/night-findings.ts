@@ -6,6 +6,11 @@ export function nightFindingKey(finding: NightSuggestionEntry): string {
   return `${finding.date}-${finding.check}-${finding.file}-${finding.line ?? 'null'}`;
 }
 
+export function nightFindingTitle(finding: NightSuggestionEntry): string {
+  const base = finding.file.split('/').pop() ?? finding.file;
+  return `${finding.check}: ${base}`;
+}
+
 export function parseNightCheckFindings(resultText: string): NightRawFinding[] | undefined {
   const match = resultText.match(/\[[\s\S]*\]/);
   if (!match) return undefined;
