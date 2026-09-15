@@ -34,7 +34,7 @@ export const NightCriticalBanner = () => {
         onClick={() => navigate({ to: '/' })}
         className="bg-none bg-transparent border-none p-0 cursor-pointer text-inherit underline [font:inherit] text-left"
       >
-        Critical from the night shift — {formatCriticalSummary(criticals)}
+        Critical from a review pass — {formatCriticalSummary(criticals)}
       </button>
     </div>
   );

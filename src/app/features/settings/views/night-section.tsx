@@ -28,7 +28,7 @@ export const NightSection = () => {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="m-0">Night shift</h2>
+        <h2 className="m-0">Review passes</h2>
         <p className="opacity-50 mt-1">
           Runs read-only health reviews against this project while the machine is otherwise idle.
         </p>
@@ -43,7 +43,7 @@ export const NightSection = () => {
         <>
           <div className="flex items-center justify-between gap-3 pb-3">
             <div>
-              <p className="m-0">Run the night shift for this project</p>
+              <p className="m-0">Run review passes for this project</p>
               <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
                 Only one project on this machine runs it at a time.
               </p>
@@ -54,7 +54,7 @@ export const NightSection = () => {
 
           <div className="flex items-center justify-between gap-3 pb-3 pt-3">
             <div>
-              <p className="m-0">Pause tonight</p>
+              <p className="m-0">Pause until the next reset</p>
               <p className="opacity-[0.45] text-sm mt-1 mx-0 mb-0">
                 Skips passes until the next rate-limit reset.
               </p>

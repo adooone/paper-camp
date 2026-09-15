@@ -56,8 +56,9 @@ an optional extra gate for anyone who wants one.
       Fold `isMachineBusy` into the pass's per-check gate so a pass stops after the
       check in flight instead of finishing the chunk.
       run: 7m16s · 104 in · 34.2k out · sonnet-5 · sess:463a86ee-b2b6-4042-9af3-4a596414c33c
-- [ ] Rename the strings the app shows
+- [x] Rename the strings the app shows
       Settings section and switches, the Ideas page finding group, and the critical banner.
+      run: 2m6s · 74 in · 7.9k out · sonnet-5 · sess:3501f362-f568-49e1-9dbb-5f0fc99945f5
 - [ ] Rename the strings the CLI prints
       Command help, status lines, and errors — the `night` command name, config, and
       files keep their spelling.

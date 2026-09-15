@@ -66,7 +66,7 @@ export const SettingsSidebar = () => {
           active={section === 'night'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'night' } })}
         >
-          Night shift
+          Review passes
         </ListItem>
       </div>
       <SidebarLabel>Notifications</SidebarLabel>

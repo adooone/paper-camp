@@ -99,7 +99,7 @@ export const useNightSection = () => {
     const { ok, error } = await runNightPassNow();
     setRunning(false);
     if (ok) {
-      toast({ title: 'Night pass started', variant: 'success' });
+      toast({ title: 'Review pass started', variant: 'success' });
     } else {
       toast({ title: 'Failed to start', description: error, variant: 'error' });
     }

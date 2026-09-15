@@ -45,7 +45,7 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
       {groups.map((group) => (
         <div key={group.date} className="mb-4">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h2 className="text-sm m-0 opacity-60">Night report — {group.date}</h2>
+            <h2 className="text-sm m-0 opacity-60">Review findings — {group.date}</h2>
             <Stamp size="small" variant="neutral">
               {group.passCount} {group.passCount === 1 ? 'pass' : 'passes'} · $
               {group.costUsd.toFixed(2)}
@@ -77,7 +77,7 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
                         className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
                       >
                         <Stamp size="small" variant="neutral">
-                          night
+                          review
                         </Stamp>
                         <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
                           {finding.severity}

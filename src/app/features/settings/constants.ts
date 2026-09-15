@@ -20,7 +20,7 @@ export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
   feedback: 'Scout chat',
   codeReview: 'Code review',
   deskDiscovery: 'Desk discovery',
-  nightShift: 'Night shift',
+  nightShift: 'Review passes',
 };
 
 export const CAPABILITY_STATUS_STAMP: Record<
@@ -46,7 +46,7 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationSettingKind, string> =
   'check-failed': 'Check failed',
   'question-parked': 'Question parked',
   'pr-review-changes-requested': 'PR review requested changes',
-  'night-review-findings': 'Night review findings',
+  'night-review-findings': 'Review findings',
   'service-stopped': 'Service stopped',
   'reply-posted': 'Reply posted',
 };
