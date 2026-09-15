@@ -3,9 +3,10 @@ id: IDEA-268
 title: The hub shows what it already knows
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-264
 created: 2026-09-15
+updated: 2026-09-15
 tags:
   - app
   - ui
