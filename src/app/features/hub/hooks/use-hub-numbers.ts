@@ -25,6 +25,7 @@ async function fetchProjectData(runtimeUrl: string): Promise<HubProjectData | nu
 export function useHubNumbers(machines: HubMachine[], totalCount: number): HubNumbers {
   const [dataByUrl, setDataByUrl] = useState<Record<string, HubProjectData | null>>({});
   const [sevenDayFloorPct, setSevenDayFloorPct] = useState(DEFAULT_NIGHT_CONFIG.floor);
+  const [loading, setLoading] = useState(false);
 
   const reachableUrls = reachableProjectRuntimeUrls(machines);
   const urlsKey = reachableUrls.join('\n');
@@ -32,9 +33,13 @@ export function useHubNumbers(machines: HubMachine[], totalCount: number): HubNu
   useEffect(() => {
     let cancelled = false;
     const urls = urlsKey === '' ? [] : urlsKey.split('\n');
+    setLoading(urls.length > 0);
     Promise.all(urls.map(async (url) => [url, await fetchProjectData(url)] as const)).then(
       (entries) => {
-        if (!cancelled) setDataByUrl(Object.fromEntries(entries));
+        if (!cancelled) {
+          setDataByUrl(Object.fromEntries(entries));
+          setLoading(false);
+        }
       },
     );
     return () => {
@@ -57,5 +62,5 @@ export function useHubNumbers(machines: HubMachine[], totalCount: number): HubNu
     };
   }, [floorRuntimeUrl]);
 
-  return sumHubNumbers({ totalCount, dataByUrl, sevenDayFloorPct });
+  return { ...sumHubNumbers({ totalCount, dataByUrl, sevenDayFloorPct }), loading };
 }

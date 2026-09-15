@@ -1,7 +1,7 @@
 import { ArcGauge, BarChart, StackedBar } from '@/app/components';
 import { ENTITY_STATUS_LABEL, ENTITY_STATUS_ORDER } from '@/app/features/stats/constants';
 import { formatTokens } from '@/core/phase-run';
-import { Card } from '@dendelion/paper-ui';
+import { Card, Spinner } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { ENTITY_STATUS_COLOR, SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER } from '../constants';
 import type { HubNumbers } from '../helpers/hub-numbers';
@@ -41,7 +41,8 @@ export interface HubNumbersColumnProps {
 }
 
 export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
-  const { capacity, runsPerWeek, spend, openQuestions, entitiesByStatus, lastNight } = numbers;
+  const { loading, capacity, runsPerWeek, spend, openQuestions, entitiesByStatus, lastNight } =
+    numbers;
 
   const totalRuns = runsPerWeek.reduce((sum, week) => sum + week.total, 0);
   const failedRuns = runsPerWeek.reduce((sum, week) => sum + week.failed, 0);
@@ -67,7 +68,9 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
   return (
     <div className="flex flex-col gap-3">
       <NumberCard title="Capacity">
-        {capacity ? (
+        {loading ? (
+          <Spinner size="small" />
+        ) : capacity ? (
           <div className="flex justify-center gap-3">
             <ArcGauge
               value={capacity.fiveHour?.utilization ?? 0}
@@ -89,7 +92,9 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
       </NumberCard>
 
       <NumberCard title="Runs, last 8 weeks">
-        {runsPerWeek.length === 0 ? (
+        {loading ? (
+          <Spinner size="small" />
+        ) : runsPerWeek.length === 0 ? (
           <Muted>No runs yet.</Muted>
         ) : (
           <>
@@ -109,24 +114,38 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
 
       <div className="grid grid-cols-2 gap-4">
         <NumberCard title="This week">
-          <div className="font-handwritten text-lg font-semibold">
-            {spend.costUsd > 0 ? `$${spend.costUsd.toFixed(2)}` : formatTokens(spend.tokens)}
-          </div>
-          <span className="text-2xs opacity-50">
-            {spend.costUsd > 0
-              ? `${formatTokens(spend.tokens)} tokens${changeSuffix(spend.changeVsLastWeekPct)}`
-              : 'tokens · no cost reported'}
-          </span>
+          {loading ? (
+            <Spinner size="small" />
+          ) : (
+            <>
+              <div className="font-handwritten text-lg font-semibold">
+                {spend.costUsd > 0 ? `$${spend.costUsd.toFixed(2)}` : formatTokens(spend.tokens)}
+              </div>
+              <span className="text-2xs opacity-50">
+                {spend.costUsd > 0
+                  ? `${formatTokens(spend.tokens)} tokens${changeSuffix(spend.changeVsLastWeekPct)}`
+                  : 'tokens · no cost reported'}
+              </span>
+            </>
+          )}
         </NumberCard>
 
         <NumberCard title="Waiting on you">
-          <div className="font-handwritten text-lg font-semibold">{openQuestions}</div>
-          <span className="text-2xs opacity-50">open questions</span>
+          {loading ? (
+            <Spinner size="small" />
+          ) : (
+            <>
+              <div className="font-handwritten text-lg font-semibold">{openQuestions}</div>
+              <span className="text-2xs opacity-50">open questions</span>
+            </>
+          )}
         </NumberCard>
       </div>
 
       <NumberCard title="Ideas in flight">
-        {entitySegments.length === 0 ? (
+        {loading ? (
+          <Spinner size="small" />
+        ) : entitySegments.length === 0 ? (
           <Muted>Nothing in flight.</Muted>
         ) : (
           <StackedBar segments={entitySegments} />
@@ -134,7 +153,9 @@ export const HubNumbersColumn = ({ numbers }: HubNumbersColumnProps) => {
       </NumberCard>
 
       <NumberCard title="Last night">
-        {hadNight ? (
+        {loading ? (
+          <Spinner size="small" />
+        ) : hadNight ? (
           <>
             <span className="text-2xs opacity-50">
               {lastNight.passCount} {lastNight.passCount === 1 ? 'pass' : 'passes'}

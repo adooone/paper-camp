@@ -39,6 +39,7 @@ export interface HubNightFigure {
 export interface HubNumbers {
   reachableCount: number;
   totalCount: number;
+  loading: boolean;
   capacity: HubCapacityFigure | null;
   runsPerWeek: HubRunsWeek[];
   spend: HubSpendFigure;
@@ -91,7 +92,7 @@ export function sumHubNumbers(params: {
   totalCount: number;
   dataByUrl: Record<string, HubProjectData | null>;
   sevenDayFloorPct: number;
-}): HubNumbers {
+}): Omit<HubNumbers, 'loading'> {
   const { totalCount, dataByUrl, sevenDayFloorPct } = params;
   const reachable = Object.values(dataByUrl).filter(
     (data): data is HubProjectData => data !== null,

@@ -63,7 +63,8 @@ What the figures count, and the machine grouping itself, which
       run: 1m32s · 26 in · 5.7k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d
 - [x] Give a loading row a spinner where its stamp goes
       run: 53s · 20 in · 1.9k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d
-- [ ] Track each figure's in-flight state and spin it
+- [x] Track each figure's in-flight state and spin it
       `useHubNumbers` tells the column which figures have no data yet, so a
       spinner stands in for a figure that would otherwise print a bare zero.
+      run: 2m27s · 42 in · 11.1k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d
 - [ ] Outline the hub sheet and mark the title with the logo
