@@ -1,12 +1,8 @@
+import { nightFindingKey } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import {
-  NightReportSection,
-  nightFindingKey,
-  severityCounts,
-  sortedFindings,
-} from './night-report-section';
+import { NightReportSection, severityCounts, sortedFindings } from './night-report-section';
 
 function finding(overrides: Partial<NightSuggestionEntry> = {}): NightSuggestionEntry {
   return {

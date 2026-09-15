@@ -1,6 +1,10 @@
-import type { NightFindingSeverity, NightRawFinding } from '../types/index';
+import type { NightFindingSeverity, NightRawFinding, NightSuggestionEntry } from '../types/index';
 
 const SEVERITIES: NightFindingSeverity[] = ['critical', 'high', 'normal'];
+
+export function nightFindingKey(finding: NightSuggestionEntry): string {
+  return `${finding.date}-${finding.check}-${finding.file}-${finding.line ?? 'null'}`;
+}
 
 export function parseNightCheckFindings(resultText: string): NightRawFinding[] | undefined {
   const match = resultText.match(/\[[\s\S]*\]/);

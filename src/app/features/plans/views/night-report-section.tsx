@@ -1,4 +1,5 @@
 import { surface } from '@/app/styles/tokens';
+import { nightFindingKey } from '@/core/night-findings';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { Card, IconButton, Stamp, type StampVariant } from '@dendelion/paper-ui';
 
@@ -31,10 +32,6 @@ export function sortedFindings(findings: NightSuggestionEntry[]): NightSuggestio
       SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) ||
       a.file.localeCompare(b.file),
   );
-}
-
-export function nightFindingKey(finding: NightSuggestionEntry): string {
-  return `${finding.date}-${finding.check}-${finding.file}-${finding.line ?? 'null'}`;
 }
 
 export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSectionProps) => {

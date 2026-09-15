@@ -47,9 +47,10 @@ The night gate and what the checks look for. Editing a finding's text.
 Any change to how promote builds its idea.
 
 ### Phases
-- [ ] Give a finding a stable id and a lookup
+- [x] Give a finding a stable id and a lookup
       Derive the id from date, file and line the way `nightFindingKey` already does, and
       expose a by-id finder on the night report slice.
+      run: 2m30s · 54 in · 7.5k out · sonnet-5 · sess:e7d7963f-9837-450e-aa1d-beb36e8048c5
 - [ ] Add the `/findings/$findingId` route and page
       Head card with stamps, chunk and `file:line`, the finding's text as the body, and a
       facts grid of commit, date and the staleness the reader already computes.
