@@ -8,7 +8,8 @@ export type ProjectRowStamp =
   | { kind: 'running'; ideaId: string | null }
   | { kind: 'interrupted'; count: number }
   | { kind: 'missing' }
-  | { kind: 'idle' };
+  | { kind: 'idle' }
+  | { kind: 'loading' };
 
 export interface ProjectRunState {
   missing: boolean;
@@ -130,25 +131,46 @@ export function buildHubMachines(
   const consumed = new Set<string>();
 
   const daemonMachines = machines.map((machine): HubMachine => {
-    const rows = machine.reportedProjects.map((project): HubProjectRow => {
-      const runtimeUrl = machineProjectRuntimeUrl(machine.machineUrl, project.slug);
-      const remembered = rememberedByUrl.get(runtimeUrl);
-      if (remembered) consumed.add(runtimeUrl);
-      const runState: ProjectRunState = remembered?.runState ?? {
-        missing: project.missing,
-        running: project.busy,
-        runningIdeaId: null,
-        interruptedCount: project.interruptedCount ?? 0,
-      };
-      return {
-        runtimeUrl,
-        slug: project.slug,
-        packageName: project.name !== project.slug ? project.name : null,
-        label: remembered?.label,
-        stamp: projectRowStamp({ ...runState, missing: project.missing || runState.missing }),
-        lastOpenedAt: remembered?.lastOpenedAt ?? null,
-      };
-    });
+    const pending = machine.reach === 'loading' || machine.reach === 'waiting';
+    const rows = pending
+      ? rememberedProjects
+          .filter(
+            (project) =>
+              parseMachineProjectRuntimeUrl(project.runtimeUrl)?.machineUrl === machine.machineUrl,
+          )
+          .map((project): HubProjectRow => {
+            consumed.add(project.runtimeUrl);
+            const slug =
+              parseMachineProjectRuntimeUrl(project.runtimeUrl)?.slug ??
+              runtimeRowLabel(project.runtimeUrl);
+            return {
+              runtimeUrl: project.runtimeUrl,
+              slug,
+              packageName: project.packageName !== slug ? project.packageName : null,
+              label: project.label,
+              stamp: { kind: 'loading' },
+              lastOpenedAt: project.lastOpenedAt,
+            };
+          })
+      : machine.reportedProjects.map((project): HubProjectRow => {
+          const runtimeUrl = machineProjectRuntimeUrl(machine.machineUrl, project.slug);
+          const remembered = rememberedByUrl.get(runtimeUrl);
+          if (remembered) consumed.add(runtimeUrl);
+          const runState: ProjectRunState = remembered?.runState ?? {
+            missing: project.missing,
+            running: project.busy,
+            runningIdeaId: null,
+            interruptedCount: project.interruptedCount ?? 0,
+          };
+          return {
+            runtimeUrl,
+            slug: project.slug,
+            packageName: project.name !== project.slug ? project.name : null,
+            label: remembered?.label,
+            stamp: projectRowStamp({ ...runState, missing: project.missing || runState.missing }),
+            lastOpenedAt: remembered?.lastOpenedAt ?? null,
+          };
+        });
     rows.sort(compareProjectRows);
     return {
       machineUrl: machine.machineUrl,
