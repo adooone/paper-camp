@@ -1,4 +1,10 @@
-import { entityRouteParam, useActiveIdea, useActivePlan, useOpenEntity } from '@/app/hooks';
+import {
+  entityRouteParam,
+  useActiveIdea,
+  useActiveNightFinding,
+  useActivePlan,
+  useOpenEntity,
+} from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, NightSuggestionEntry, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
@@ -18,7 +24,8 @@ export const usePlansPage = () => {
   const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
-  const { planId, ideaId } = useParams({ strict: false });
+  const activeFinding = useActiveNightFinding();
+  const { planId, ideaId, findingId } = useParams({ strict: false });
   const navigate = useNavigate();
   const openEntity = useOpenEntity();
   const { toast } = useToast();
@@ -30,7 +37,7 @@ export const usePlansPage = () => {
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
   // otherwise a reload would stomp the detailView restored from storage.
-  const entityKey = planId ?? ideaId;
+  const entityKey = planId ?? ideaId ?? findingId;
   const previousEntityKey = useRef(entityKey);
   useEffect(() => {
     if (previousEntityKey.current !== entityKey) {
@@ -95,8 +102,10 @@ export const usePlansPage = () => {
     planFilters,
     activePlan,
     activeIdea,
+    activeFinding,
     planId,
     ideaId,
+    findingId,
     openSuggestion,
     setOpenSuggestion,
     openNightFinding,

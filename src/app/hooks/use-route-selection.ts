@@ -1,5 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
-import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { IdeaEntry, NightSuggestionEntry, PlanEntry } from '@/types/index';
 import { useParams } from '@tanstack/react-router';
 
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
@@ -94,6 +94,13 @@ export function useActiveIdea(): IdeaEntry | null {
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   if (typeof ideaId !== 'string') return null;
   return resolveByIdOrTitle(ideaEntries, decodeURIComponent(ideaId));
+}
+
+export function useActiveNightFinding(): NightSuggestionEntry | null {
+  const { findingId } = useParams({ strict: false });
+  const findNightFindingById = useAppStore((s) => s.findNightFindingById);
+  if (typeof findingId !== 'string') return null;
+  return findNightFindingById(decodeURIComponent(findingId)) ?? null;
 }
 
 function useActiveDocSection(): DocSection | null {

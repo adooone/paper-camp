@@ -8,6 +8,7 @@ import { PromoteNightFindingModal, PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
   EntityDetail,
+  FindingDetail,
   ListView,
   NightReportSection,
   NoteDetail,
@@ -27,8 +28,10 @@ export const PlansPage = () => {
     planFilters,
     activePlan,
     activeIdea,
+    activeFinding,
     planId,
     ideaId,
+    findingId,
     openSuggestion,
     setOpenSuggestion,
     openNightFinding,
@@ -54,9 +57,10 @@ export const PlansPage = () => {
   }
 
   if (!plans) {
-    // A direct reload/deep-link into a plan or idea route lands here too — the worklist
-    // skeleton would flash as the wrong page instead of the detail view's own loading state.
-    if (planId || ideaId) {
+    // A direct reload/deep-link into a plan, idea, or finding route lands here too — the
+    // worklist skeleton would flash as the wrong page instead of the detail view's own
+    // loading state.
+    if (planId || ideaId || findingId) {
       return (
         <div>
           <RowSkeleton />
@@ -89,6 +93,10 @@ export const PlansPage = () => {
       ) : activeIdea ? (
         <div>
           <NoteDetail idea={activeIdea} />
+        </div>
+      ) : activeFinding ? (
+        <div>
+          <FindingDetail finding={activeFinding} />
         </div>
       ) : (
         <div>

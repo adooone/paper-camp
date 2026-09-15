@@ -2,6 +2,7 @@ import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import { removeNightFindingLine } from '@/core/night-suggestions';
+import { hasFileChangedSince } from '@/core/night-worktree';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import {
   addRoadmapCandidate,
@@ -363,6 +364,25 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         await writeFile(suggestionsPath, updated, 'utf-8');
         activity.notifyChanged();
         sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Recomputed live rather than trusting the group load: time passes between
+    // fetching the list and opening a finding's own page.
+    {
+      method: 'POST',
+      path: '/api/night-findings/staleness',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { finding } = JSON.parse(reqBody) as { finding?: NightSuggestionEntry };
+        if (!finding?.file || !finding.commit) {
+          sendJson(res, 400, { error: 'finding is required' });
+          return;
+        }
+        const stale = await hasFileChangedSince(root, finding.file, finding.commit).catch(
+          () => true,
+        );
+        sendJson(res, 200, { stale });
       },
     },
 

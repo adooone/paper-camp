@@ -5,6 +5,7 @@ export {
   entityLink,
   entityRouteParam,
   useActiveIdea,
+  useActiveNightFinding,
   useActivePlan,
   useActiveSettingsSection,
   useResolvedDocSection,

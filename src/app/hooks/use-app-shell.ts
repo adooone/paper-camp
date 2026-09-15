@@ -86,7 +86,10 @@ export function useAppShell(): AppShellState {
     checking: runtimeChecking,
   });
   const isPlansArea =
-    pathname === '/' || pathname.startsWith('/plans/') || pathname.startsWith('/ideas/');
+    pathname === '/' ||
+    pathname.startsWith('/plans/') ||
+    pathname.startsWith('/ideas/') ||
+    pathname.startsWith('/findings/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
   const isRoadmapArea = pathname === '/roadmap';

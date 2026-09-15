@@ -9,7 +9,7 @@ interface NightReportSectionProps {
   onDismiss: (finding: NightSuggestionEntry) => void;
 }
 
-const SEVERITY_STAMP_VARIANT: Record<NightFindingSeverity, StampVariant> = {
+export const SEVERITY_STAMP_VARIANT: Record<NightFindingSeverity, StampVariant> = {
   critical: 'error',
   high: 'warning',
   normal: 'info',
