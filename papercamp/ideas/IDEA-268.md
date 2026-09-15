@@ -3,7 +3,7 @@ id: IDEA-268
 title: The hub shows what it already knows
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-264
 created: 2026-09-15
 tags:
@@ -67,4 +67,5 @@ What the figures count, and the machine grouping itself, which
       `useHubNumbers` tells the column which figures have no data yet, so a
       spinner stands in for a figure that would otherwise print a bare zero.
       run: 2m27s · 42 in · 11.1k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d
-- [ ] Outline the hub sheet and mark the title with the logo
+- [x] Outline the hub sheet and mark the title with the logo
+      run: 1m29s · 38 in · 3.8k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d

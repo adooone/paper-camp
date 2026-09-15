@@ -20,8 +20,15 @@ export const HubHome = () => {
 
   return (
     <div className="grid grid-cols-[2fr_1fr] gap-3 items-start max-[480px]:grid-cols-1">
-      <Page texture={{ texture: 'parchment' }} className="w-full max-w-none flex flex-col gap-4">
-        <PageTitle>Paper Camp</PageTitle>
+      <Page
+        texture={{ texture: 'parchment' }}
+        outline
+        className="w-full max-w-none flex flex-col gap-4"
+      >
+        <PageTitle className="flex items-center gap-2">
+          <img src="/img/paper-logo.svg" alt="" className="h-[1cap]" />
+          Paper Camp
+        </PageTitle>
         {showSearch && (
           <Input
             size="small"
