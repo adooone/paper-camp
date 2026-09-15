@@ -6,6 +6,7 @@ import { logTaskCompletion, logTaskStart } from '../app/server/task-log';
 import {
   daemonStatePath,
   fetchMachineNightGate,
+  fetchMachineProjects,
   readRunningDaemonState,
 } from '../core/daemon-state';
 import {
@@ -196,6 +197,16 @@ async function readLastReviewedCommit(root: string, chunkPath: string): Promise<
   }
 }
 
+/** No running daemon means no other project can be mid-task, so there's nothing to gate on. */
+async function machineBusyGate(): Promise<(() => Promise<boolean>) | undefined> {
+  const daemonState = await readRunningDaemonState(daemonStatePath());
+  if (!daemonState) return undefined;
+  return async () => {
+    const projects = await fetchMachineProjects(daemonState.port);
+    return !(projects?.some((project) => project.busy) ?? false);
+  };
+}
+
 const SEVERITY_LABEL: Record<NightFindingSeverity, string> = {
   critical: 'critical',
   high: 'high',
@@ -374,7 +385,7 @@ export async function runNight(target: string | undefined, chunk?: string): Prom
       );
       return false;
     }
-    return runNightPass(project, chunk);
+    return runNightPass(project, chunk, await machineBusyGate());
   }
 
   if (target === 'off') {

@@ -473,4 +473,89 @@ describe('runNight("run", chunk)', () => {
     expect(ok).toBe(false);
     expect(errors.output).toContain('night pass failed — worktree add failed');
   });
+
+  it('gates the pass on the machine busy state reported by a running daemon', async () => {
+    const configDir = await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    await makeProjectDir(scanRoot, 'demo');
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    const server = createServer((req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      if (req.url === MACHINE_PROJECTS_PATH) {
+        res.end(
+          JSON.stringify({
+            projects: [{ slug: 'other', name: 'other', mounted: true, busy: true, missing: false }],
+          }),
+        );
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, () => resolve((server.address() as AddressInfo).port));
+    });
+    await writeDaemonState(join(configDir, 'daemon.json'), {
+      pid: process.pid,
+      port,
+      version: '0.30.0',
+      startedAt: new Date().toISOString(),
+      share: false,
+      tailnet: false,
+    });
+
+    vi.mocked(runNightChunkPass).mockResolvedValue({
+      chunkPath: 'src/core',
+      reviewedCommit: 'deadbeefdeadbeef',
+      findings: [],
+      usage: {
+        numTurns: 0,
+        costUsd: 0,
+        cappedByTurns: false,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+      },
+      checks: [],
+    });
+
+    try {
+      await runNight('run', 'src/core');
+      const passedGate = vi.mocked(runNightChunkPass).mock.calls[0][0].checkGate;
+      expect(await passedGate?.()).toBe(false);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  });
+
+  it('leaves the pass ungated when no daemon is running to report machine busy state', async () => {
+    await useConfigDir();
+    const scanRoot = await makeTempDir('paper-camp-night-run-');
+    await makeProjectDir(scanRoot, 'demo');
+    await runScan(scanRoot);
+    await runNight('demo');
+
+    vi.mocked(runNightChunkPass).mockResolvedValue({
+      chunkPath: 'src/core',
+      reviewedCommit: 'deadbeefdeadbeef',
+      findings: [],
+      usage: {
+        numTurns: 0,
+        costUsd: 0,
+        cappedByTurns: false,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+      },
+      checks: [],
+    });
+
+    await runNight('run', 'src/core');
+
+    expect(vi.mocked(runNightChunkPass).mock.calls[0][0].checkGate).toBeUndefined();
+  });
 });

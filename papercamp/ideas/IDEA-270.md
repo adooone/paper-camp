@@ -52,9 +52,10 @@ an optional extra gate for anyone who wants one.
       Filter chunk selection by `git diff --quiet <lastReviewedCommit> -- <chunk>` so a
       pass with nothing new does no work and writes no row.
       run: 2m11s · 56 in · 9k out · sonnet-5 · sess:463a86ee-b2b6-4042-9af3-4a596414c33c
-- [ ] Re-check the busy flag between every check
+- [x] Re-check the busy flag between every check
       Fold `isMachineBusy` into the pass's per-check gate so a pass stops after the
       check in flight instead of finishing the chunk.
+      run: 7m16s · 104 in · 34.2k out · sonnet-5 · sess:463a86ee-b2b6-4042-9af3-4a596414c33c
 - [ ] Rename the strings the app shows
       Settings section and switches, the Ideas page finding group, and the critical banner.
 - [ ] Rename the strings the CLI prints
