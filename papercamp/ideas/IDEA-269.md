@@ -11,7 +11,7 @@ tags:
   - settings
   - ui
 subject: App UI
-order: 2
+order: 1
 ---
 
 Settings → General lists the default agents as `AgentTaskRowHeader` plus

@@ -1,0 +1,47 @@
+---
+id: IDEA-271
+title: A page for a review finding
+type: feat
+status: idea
+created: 2026-09-15
+tags:
+  - app
+  - ui
+  - plans
+subject: App UI
+order: 3
+---
+
+One pass filed 26 findings, and the Ideas page shows them as a list of
+one-line rows whose only actions are dismiss and a promote modal. A
+finding carries more than a line — a check, a chunk, a file and line, the
+commit it was found at, a severity, and a paragraph of reasoning — and
+deciding what to do with it means reading all of that, which a row cannot
+show and a modal shows badly: it covers the list, it cannot be linked to,
+and it offers one verb.
+
+**A finding opens as a page.** `/findings/$findingId` renders like an idea
+detail and is reached by clicking the row, with the id derived from the
+finding's date, file and line so the URL survives a reload. The head card
+carries the check and severity stamps, the chunk, and `file:line` in mono;
+the body is the finding's own text; a facts grid gives the commit it was
+found at, the date, and whether the file has changed since. The Ideas
+page's group keeps its rows and loses its modal.
+
+**Two verbs, both on the page's bottom bar.** *Promote* makes an idea from
+the finding exactly as the modal does today, and lands on the new idea.
+*Fix it here* launches an agent task with the finding as its prompt — the
+same `issue-fix` shape the checks group uses — and the page shows that
+task's card while it runs, then its outcome. A fixed finding is removed
+from `suggestions.md` when the task lands green, the way a promoted one is
+removed when its idea is created. *Dismiss* stays, quiet, beside them.
+
+**The list gets what a list needs.** The group's rows show severity, check
+and `file:line`, sorted critical first then by file, and collapse per
+chunk once a date carries more than ten — 26 rows in one flat list is the
+shape that made this hard to read.
+
+### Out of scope
+
+The night gate and what the checks look for. Editing a finding's text.
+Any change to how promote builds its idea.
