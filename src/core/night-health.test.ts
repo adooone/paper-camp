@@ -247,7 +247,7 @@ describe('markChunkReviewed and selectNightChunks', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it('picks chunks above the threshold, highest first, capped, skipping the excluded', () => {
+  it('picks chunks above the threshold, highest first, capped, skipping the excluded', async () => {
     const map: NightHealthMap = {
       generatedAt: '2026-09-11T00:00:00.000Z',
       chunks: ['src/a:30', 'src/b:90', 'src/c:70', 'src/d:50'].map((entry) => {
@@ -267,11 +267,42 @@ describe('markChunkReviewed and selectNightChunks', () => {
         };
       }),
     };
-    const picked = selectNightChunks(map, {
+    const picked = await selectNightChunks('/tmp/unused-root', map, {
       threshold: 40,
       maxChunks: 2,
       exclude: new Set(['src/b']),
     });
     expect(picked.map((c) => c.path)).toEqual(['src/c', 'src/d']);
+  });
+
+  it('skips a chunk whose files have not changed since its last review', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-night-select-'));
+    gitRoots.push(root);
+    git(root, 'init', '-b', 'main');
+    git(root, 'config', 'user.email', 'test@example.com');
+    git(root, 'config', 'user.name', 'Test User');
+    git(root, 'config', 'commit.gpgsign', 'false');
+    commitFiles(root, ['src/a/index.ts'], 'a v1');
+    const shaAfterA = git(root, 'rev-parse', 'HEAD');
+    commitFiles(root, ['src/b/index.ts'], 'b v1');
+
+    const map: NightHealthMap = {
+      generatedAt: '2026-09-11T00:00:00.000Z',
+      chunks: ['src/a', 'src/b'].map((path) => ({
+        path,
+        score: 90,
+        signals: {
+          churnCommits: 0,
+          lines: 0,
+          coveragePct: null,
+          openFindings: 0,
+          daysSinceReviewed: null,
+        },
+        lastReviewedAt: '2026-09-10T00:00:00.000Z',
+        lastReviewedCommit: shaAfterA,
+      })),
+    };
+    const picked = await selectNightChunks(root, map, { threshold: 0, maxChunks: 10 });
+    expect(picked.map((c) => c.path)).toEqual(['src/b']);
   });
 });

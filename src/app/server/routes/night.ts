@@ -106,7 +106,8 @@ export function nightRoutes({ root }: RouteContext): Route[] {
           return;
         }
         const map = await computeNightHealthMap(root);
-        const chunkPath = selectNightChunks(map, { threshold: 0, maxChunks: 1 })[0]?.path;
+        const chunkPath = (await selectNightChunks(root, map, { threshold: 0, maxChunks: 1 }))[0]
+          ?.path;
         if (!chunkPath) {
           sendJson(res, 400, { error: 'no chunks to review yet' });
           return;

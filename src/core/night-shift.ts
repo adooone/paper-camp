@@ -67,7 +67,7 @@ export async function nightShiftTick(state: NightShiftState, deps: NightShiftDep
   const settings = await deps.readSettings(project.path);
   const map = await deps.computeMap(project.path);
   const remainingBudget = Math.max(0, settings.maxChunks - state.reviewedTonight.size);
-  const chunks = selectNightChunks(map, {
+  const chunks = await selectNightChunks(project.path, map, {
     threshold: settings.threshold,
     maxChunks: remainingBudget,
     exclude: state.reviewedTonight,

@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import type { ChunkHealth, ChunkSignals, NightConfig, NightHealthMap } from '../types/index';
 import { runGit } from './git-log';
 import { readNightFindings } from './night-suggestions';
+import { hasFileChangedSince } from './night-worktree';
 
 const CHURN_WINDOW_DAYS = 30;
 const CHURN_SATURATION = 20;
@@ -251,14 +252,25 @@ export async function markChunkReviewed(
   await persistNightHealthMap(root, map);
 }
 
-/** The chunks one night reviews: above the threshold, highest score first, at most
- *  `maxChunks`, skipping any already reviewed tonight. */
-export function selectNightChunks(
+/** The chunks one pass reviews: above the threshold, changed since their last review,
+ *  highest score first, at most `maxChunks`, skipping any already reviewed this pass. */
+export async function selectNightChunks(
+  root: string,
   map: NightHealthMap,
   options: { threshold: number; maxChunks: number; exclude?: ReadonlySet<string> },
-): ChunkHealth[] {
-  return [...map.chunks]
-    .filter((chunk) => chunk.score > options.threshold && !options.exclude?.has(chunk.path))
+): Promise<ChunkHealth[]> {
+  const eligible = map.chunks.filter(
+    (chunk) => chunk.score > options.threshold && !options.exclude?.has(chunk.path),
+  );
+  const changed = await Promise.all(
+    eligible.map((chunk) =>
+      chunk.lastReviewedCommit
+        ? hasFileChangedSince(root, chunk.path, chunk.lastReviewedCommit)
+        : Promise.resolve(true),
+    ),
+  );
+  return eligible
+    .filter((_chunk, index) => changed[index])
     .sort((a, b) => b.score - a.score)
     .slice(0, options.maxChunks);
 }

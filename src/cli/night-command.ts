@@ -168,7 +168,7 @@ async function printNightStatus(registry: MachineRegistry): Promise<void> {
 
   const chunks = await readPersistedChunks(project.path);
   const map: NightHealthMap = { generatedAt: new Date().toISOString(), chunks };
-  const nextChunks = selectNightChunks(map, {
+  const nextChunks = await selectNightChunks(project.path, map, {
     threshold: resolved.threshold,
     maxChunks: resolved.maxChunks,
   });
