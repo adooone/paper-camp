@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.0](https://github.com/adooone/paper-camp/compare/v0.33.1...v0.34.0) (2026-09-15)
+
+
+### Features
+
+* **app:** Add "Fix it here" ([27d9309](https://github.com/adooone/paper-camp/commit/27d93091c8ff92e8581d2faf5c43c742f77da235))
+* **app:** Add the `/findings/$findingId` route and page ([2e6dc97](https://github.com/adooone/paper-camp/commit/2e6dc97f93e8c32e4e33b56a482d5590445f7e1a))
+* **app:** Give a finding a stable id and a lookup ([df7eb37](https://github.com/adooone/paper-camp/commit/df7eb37d2bacab550704fea6292a8ffcc3c18d13))
+* **app:** Move promote and dismiss onto the page's bottom bar ([22c9f50](https://github.com/adooone/paper-camp/commit/22c9f50146259d183c7c72b3c7d0ab0443ff68a4))
+* **app:** Rework the group's rows and drop the modal ([6f66c53](https://github.com/adooone/paper-camp/commit/6f66c53cf02c651c2cce08664d720ecae2c76f79))
+
+
+### Bug Fixes
+
+* **app:** Allowlist git-page's surface-token inline style ([96b35c6](https://github.com/adooone/paper-camp/commit/96b35c6658af50d0d93589f53bda08b3275d48e6))
+* **app:** Build rows from remembered projects while a machine is unreported ([b9dc42f](https://github.com/adooone/paper-camp/commit/b9dc42f151648e8f97b0369303e3afabb6f26172))
+* **app:** Carry the agent rules into the cells ([4f5412f](https://github.com/adooone/paper-camp/commit/4f5412fc03ffb846e1619779f096472d8d05dd5e))
+* **app:** Delete the retired rows, headers, and grid constants ([d6b5d41](https://github.com/adooone/paper-camp/commit/d6b5d41081fe65f81435bf8390ac5bf129918b56))
+* **app:** Give a loading row a spinner where its stamp goes ([11f12da](https://github.com/adooone/paper-camp/commit/11f12da7dfc512ff507dea546a3baf45b25fbfdc))
+* **app:** lint ([b7c0fef](https://github.com/adooone/paper-camp/commit/b7c0fef84c5aa22e1565ce645781e01d9509614b))
+* **app:** lint ([8b7c4af](https://github.com/adooone/paper-camp/commit/8b7c4af10caec0d9f719b8896563c8cb3b761195))
+* **app:** Outline the hub sheet and mark the title with the logo ([f3ac092](https://github.com/adooone/paper-camp/commit/f3ac09262af752ba0c4a3f38fa93b01b52943c18))
+* **app:** Render the default agents as one Table ([ce3c71d](https://github.com/adooone/paper-camp/commit/ce3c71d226d40b4290a7676649201ed5b05860f2))
+* **app:** Report the projects without waiting on the version ([fcd9347](https://github.com/adooone/paper-camp/commit/fcd9347a04b96bcb062e3f15516c1d79949216ef))
+* **app:** Track each figure's in-flight state and spin it ([0706f7d](https://github.com/adooone/paper-camp/commit/0706f7d41d163b8986b72b644502514de4efcfe0))
+* **app:** Turn the desk services and checks into tables ([02ad25a](https://github.com/adooone/paper-camp/commit/02ad25a4507b6d6d8c717d3fe906c380c56cdb11))
+
 ## [0.33.1](https://github.com/adooone/paper-camp/compare/v0.33.0...v0.33.1) (2026-09-14)
 
 
