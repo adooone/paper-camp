@@ -102,8 +102,10 @@ export function useHubMachines(): UseHubMachinesResult {
         window.location.assign(mountPrefix || '/');
         return;
       }
+      // Land on the project's own root, not on the hub path this click came from —
+      // adopting the runtime there leaves the reload sitting on the hub again.
       window.location.assign(
-        runtimeAdditionUrl(window.location.pathname, row.runtimeUrl, machineToken(machineUrl)),
+        runtimeAdditionUrl(mountPrefix || '/', row.runtimeUrl, machineToken(machineUrl)),
       );
     },
     renameRow: (runtimeUrl, label) => {

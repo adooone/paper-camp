@@ -20,7 +20,7 @@ export const ToolbarSection = () => {
           the daemon.
         </p>
       </div>
-      {config === undefined && <RowSkeleton />}
+      {config === undefined && <RowSkeleton boxless />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.
@@ -49,7 +49,7 @@ export const ToolbarSection = () => {
               What the frontend service's Vite config looks like today.
             </p>
           </div>
-          {hostState === undefined && <RowSkeleton />}
+          {hostState === undefined && <RowSkeleton boxless />}
           {hostState === null && <Alert variant="warning">Failed to inspect the host app.</Alert>}
           {hostState && (
             <div className="flex flex-col gap-2">

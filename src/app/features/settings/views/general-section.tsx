@@ -43,7 +43,7 @@ export const GeneralSection = () => {
         )}
       </SettingsHeader>
 
-      {config === undefined && <RowSkeleton />}
+      {config === undefined && <RowSkeleton boxless />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.

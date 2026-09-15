@@ -1,7 +1,7 @@
 import { Card, Skeleton } from '@dendelion/paper-ui';
 
-// Shared by every runtime area without its own list skeleton (Docs, Roadmap, Settings,
-// Tasks) — reuses `.plan-row-card`, the row styling already shared across those areas.
+// `boxless` matches Settings, whose rows lost their Card in IDEA-267: a skeleton
+// promises the shape that replaces it, never a box that never arrives.
 const ROWS = [
   { key: 'a', width: '76%' },
   { key: 'b', width: '52%' },
@@ -9,17 +9,27 @@ const ROWS = [
   { key: 'd', width: '44%' },
 ];
 
-export const RowSkeleton = () => (
+export interface RowSkeletonProps {
+  boxless?: boolean;
+}
+
+export const RowSkeleton = ({ boxless = false }: RowSkeletonProps) => (
   <div className="flex flex-col gap-1">
     <output aria-live="polite" className="sr-only">
       Loading…
     </output>
-    <div className="flex flex-col gap-1" aria-hidden="true">
-      {ROWS.map((r) => (
-        <Card key={r.key} size="small" className="plan-row-card">
-          <Skeleton variant="text" width={r.width} />
-        </Card>
-      ))}
+    <div className={`flex flex-col ${boxless ? '' : 'gap-1'}`} aria-hidden="true">
+      {ROWS.map((r) =>
+        boxless ? (
+          <div key={r.key} className="pc-setting-row">
+            <Skeleton variant="text" width={r.width} />
+          </div>
+        ) : (
+          <Card key={r.key} size="small" className="plan-row-card">
+            <Skeleton variant="text" width={r.width} />
+          </Card>
+        ),
+      )}
     </div>
   </div>
 );

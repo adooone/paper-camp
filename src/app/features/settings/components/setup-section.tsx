@@ -25,7 +25,7 @@ export const SetupSection = () => {
     <div>
       <SettingsHeader title="Setup" />
 
-      {connections === null && !loadFailed && <RowSkeleton />}
+      {connections === null && !loadFailed && <RowSkeleton boxless />}
       {loadFailed && <Alert variant="warning">Failed to load connections. Try refreshing.</Alert>}
       {connections && (
         <div className="flex flex-col gap-1">

@@ -111,7 +111,7 @@ export const MergePolicySection = () => {
         the PR.
       </p>
 
-      {result === undefined && <RowSkeleton />}
+      {result === undefined && <RowSkeleton boxless />}
       {result === null && <Alert variant="warning">Failed to load merge policy.</Alert>}
       {result?.status === 'unavailable' && <Alert variant="warning">{result.reason}</Alert>}
       {result?.status === 'ok' && (

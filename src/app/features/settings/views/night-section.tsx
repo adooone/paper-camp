@@ -33,7 +33,7 @@ export const NightSection = () => {
           Runs read-only health reviews against this project while the machine is otherwise idle.
         </p>
       </div>
-      {(config === undefined || status === undefined) && <RowSkeleton />}
+      {(config === undefined || status === undefined) && <RowSkeleton boxless />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.

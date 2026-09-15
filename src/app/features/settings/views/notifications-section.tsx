@@ -27,7 +27,7 @@ export const NotificationsSection = () => {
           Choose which events interrupt you, and which devices hear about them.
         </p>
       </div>
-      {config === undefined && <RowSkeleton />}
+      {config === undefined && <RowSkeleton boxless />}
       {config === null && (
         <Alert variant="warning">
           No papercamp/config.json found — run <code>paper-camp init</code> in this directory first.
@@ -73,7 +73,7 @@ export const NotificationsSection = () => {
           <div className="mb-3">
             <h3 className="m-0">Devices</h3>
           </div>
-          {devices === undefined && <RowSkeleton />}
+          {devices === undefined && <RowSkeleton boxless />}
           {devices && devices.length === 0 && <EmptyState message="No subscribed devices yet." />}
           {devices?.map((device, idx) => (
             <NotificationDeviceRow

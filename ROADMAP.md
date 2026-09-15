@@ -84,13 +84,13 @@ The loop works; make it smarter and more observable.
   can share a desk without stepping on each other.
 - **Remote/hosted mode** — the desk reachable from anywhere (the Tailscale
   workflow, made first-class), agents running on a box that isn't your laptop.
-- **Mobile control desk** — direct the flow from a phone: check the agent
-  stack, approve/promote/archive, nudge a run. PWA over the existing
-  responsive web app first (it already reaches phones via Tailscale), push
-  notifications included; a native wrapper only if the PWA ceiling is hit.
-  A big bet: graduates as a Subject, starting with responsive-polish ideas.
-  - PWA manifest + install to home screen
-  - Push notifications for task/check events
+- **Mobile control desk** — shipped as its own repository, not as a horizon
+  here: `paper-camp-mobile` is a React Native app on Expo whose four screens
+  (Projects, Chat, Log, and the idea detail) read this daemon's API and take
+  its Expo push subscriptions. The PWA route was dropped with IDEA-249 once
+  the native app was chosen; responsive polish (IDEA-78) and the push
+  subscriptions (IDEA-252) stayed here and are done. Every remaining item
+  lives in that repository's own corpus.
 
 ## Horizon 4 — Beyond Paper Camp
 

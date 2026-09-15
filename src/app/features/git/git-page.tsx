@@ -4,7 +4,8 @@ import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { FileDiffSection } from '@/app/features/git/views';
 import { DeliverChecksRow } from '@/app/features/plans/components';
-import { Button, Divider, Spinner } from '@dendelion/paper-ui';
+import { surface } from '@/app/styles/tokens';
+import { Button, Divider, Spinner, getSurfaceStyles } from '@dendelion/paper-ui';
 import { Fragment } from 'react';
 
 export const GitPage = () => {
@@ -56,7 +57,12 @@ export const GitPage = () => {
         </div>
       ) : (
         <>
-          <div className="sticky top-0 z-10 mb-4 flex flex-col gap-2 py-2">
+          {/* Opaque: a transparent sticky bar lets the diff scroll through the commit
+              field and the check stamps, which are then unreadable. */}
+          <div
+            className="sticky top-0 z-10 mb-4 flex flex-col gap-2 py-2"
+            style={getSurfaceStyles(surface.page)}
+          >
             <DeliverChecksRow showStash={false} />
             <div className="flex items-center gap-2">
               <div className="flex-1">
