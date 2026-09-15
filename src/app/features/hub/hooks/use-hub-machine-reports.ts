@@ -21,18 +21,23 @@ const LOADING: MachineReport = {
  * Chrome that is the local-network permission prompt the page cannot see. */
 const WAITING_AFTER_MS = 4_000;
 
-async function fetchOne(machineUrl: string): Promise<MachineReport> {
-  const [projectsResult, runtimeVersion] = await Promise.all([
-    fetchMachineProjects(machineUrl),
-    fetchRuntimeVersionAt(machineUrl),
-  ]);
-  if (projectsResult === null) return { ...LOADING, reach: 'unreachable' };
-  return {
-    reach: 'ready',
-    runtimeVersion,
-    pendingUpdateVersion: projectsResult.pendingUpdateVersion,
-    reportedProjects: projectsResult.projects,
-  };
+function fetchOne(machineUrl: string, onReport: (report: MachineReport) => void): void {
+  fetchMachineProjects(machineUrl).then((projectsResult) => {
+    if (projectsResult === null) {
+      onReport({ ...LOADING, reach: 'unreachable' });
+      return;
+    }
+    const report: MachineReport = {
+      reach: 'ready',
+      runtimeVersion: null,
+      pendingUpdateVersion: projectsResult.pendingUpdateVersion,
+      reportedProjects: projectsResult.projects,
+    };
+    onReport(report);
+    fetchRuntimeVersionAt(machineUrl).then((runtimeVersion) =>
+      onReport({ ...report, runtimeVersion }),
+    );
+  });
 }
 
 export interface UseHubMachineReportsResult {
@@ -57,7 +62,7 @@ export function useHubMachineReports(machineUrls: string[]): UseHubMachineReport
           : current,
       );
     }, WAITING_AFTER_MS);
-    fetchOne(machineUrl).then((result) => {
+    fetchOne(machineUrl, (result) => {
       clearTimeout(slow);
       if (mounted.current) setReports((current) => ({ ...current, [machineUrl]: result }));
     });

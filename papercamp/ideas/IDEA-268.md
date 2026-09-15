@@ -53,9 +53,10 @@ What the figures count, and the machine grouping itself, which
 [[IDEA-264]] settled.
 
 ### Phases
-- [ ] Report the projects without waiting on the version
+- [x] Report the projects without waiting on the version
       Split the two requests in `fetchOne` so the machine report resolves on
       the project list and folds `runtimeVersion` in when it lands.
+      run: 1m14s · 24 in · 3.8k out · sonnet-5 · sess:80c068d1-ed21-4412-bc26-637786a08e0d
 - [ ] Build rows from remembered projects while a machine is unreported
       `buildHubMachines` groups remembered runtime URLs under their machine
       while its reach is `loading` or `waiting`, with a `loading` stamp kind.
