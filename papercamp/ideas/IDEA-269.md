@@ -57,9 +57,10 @@ service or check declares. The CI block and every other settings section,
 which are plain rows and stay that way.
 
 ### Phases
-- [ ] Render the default agents as one Table
+- [x] Render the default agents as one Table
       Task, Agent, Model, and Effort columns whose cells carry today's controls
       and save on change.
+      run: 5m24s · 78 in · 27.4k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
 - [ ] Carry the agent rules into the cells
       Agent-filtered models, the excluded author model, the free-text input, and
       the unknown-agent fallback.

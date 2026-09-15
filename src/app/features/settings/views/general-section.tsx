@@ -1,14 +1,12 @@
 import { RowSkeleton } from '@/app/components';
 import { color } from '@/app/styles/tokens';
-import { DEFAULT_AGENTS } from '@/types/index';
 import { Alert, Button, Input, Stamp, Switch } from '@dendelion/paper-ui';
 import { SettingGroup } from '../components/setting-group';
 import { SettingRow } from '../components/setting-row';
 import { SettingsHeader } from '../components/settings-header';
-import { TASK_TYPE_KEYS, VERSION_STAMP_FILL } from '../constants';
+import { VERSION_STAMP_FILL } from '../constants';
 import { useSettingsPage } from '../hooks';
-import { AgentTaskRow } from './agent-task-row';
-import { AgentTaskRowHeader } from './agent-task-row-header';
+import { AgentTaskTable } from './agent-task-table';
 
 export const GeneralSection = () => {
   const {
@@ -111,20 +109,7 @@ export const GeneralSection = () => {
           </SettingRow>
 
           <SettingGroup label="Default agents">
-            <AgentTaskRowHeader />
-            {TASK_TYPE_KEYS.map((key) => (
-              <AgentTaskRow
-                key={key}
-                taskKey={key}
-                agentConfig={config.defaultAgents?.[key] ?? DEFAULT_AGENTS[key]}
-                onSave={handleSaveAgentConfig}
-                authorConfig={
-                  key === 'codeReview'
-                    ? (config.defaultAgents?.phase ?? DEFAULT_AGENTS.phase)
-                    : undefined
-                }
-              />
-            ))}
+            <AgentTaskTable defaultAgents={config.defaultAgents} onSave={handleSaveAgentConfig} />
           </SettingGroup>
         </div>
       )}
