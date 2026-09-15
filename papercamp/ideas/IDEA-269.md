@@ -3,7 +3,7 @@ id: IDEA-269
 title: Agents and desk as editable tables
 type: fix
 kind: fix
-status: idea
+status: review
 idea: IDEA-267
 created: 2026-09-15
 tags:
@@ -68,5 +68,6 @@ which are plain rows and stay that way.
 - [x] Turn the desk services and checks into tables
       Editable name and command cells, row actions in a trailing column.
       run: 2m48s · 44 in · 26.7k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
-- [ ] Delete the retired rows, headers, and grid constants
+- [x] Delete the retired rows, headers, and grid constants
       Drop them from `views/index.ts` too.
+      run: 32s · 16 in · 1.6k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
