@@ -19,6 +19,7 @@ const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'features/plans/views/phases-section.tsx', // running-phase fill fraction via --phase-fill CSS var
   'components/charts/bar-chart.tsx', // label column width computed from bar count
   'components/charts/stacked-bar.tsx', // legend dot colour computed per segment
+  'features/git/git-page.tsx', // paper-ui's getSurfaceStyles() has no className form
 ]);
 
 const APP_DIR = dirname(fileURLToPath(import.meta.url));
