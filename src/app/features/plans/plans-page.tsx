@@ -57,8 +57,7 @@ export const PlansPage = () => {
 
   if (!plans) {
     // A direct reload/deep-link into a plan, idea, or finding route lands here too — the
-    // worklist skeleton would flash as the wrong page instead of the detail view's own
-    // loading state.
+    // worklist skeleton would flash as the wrong page instead of the detail view's own state.
     if (planId || ideaId || findingId) {
       return (
         <div>
