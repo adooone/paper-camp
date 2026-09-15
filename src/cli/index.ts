@@ -417,7 +417,7 @@ program
 program
   .command('night <target> [chunk]')
   .description(
-    'Choose the one registered project `paper-camp daemon` runs the night shift for: a slug, "off", "status", or "run <chunk>" to run a pass now',
+    'Choose the one registered project `paper-camp daemon` runs review passes for: a slug, "off", "status", or "run <chunk>" to run a pass now',
   )
   .action(async (target: string, chunk: string | undefined) => {
     if (!(await runNight(target, chunk))) process.exitCode = 1;

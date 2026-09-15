@@ -59,7 +59,8 @@ an optional extra gate for anyone who wants one.
 - [x] Rename the strings the app shows
       Settings section and switches, the Ideas page finding group, and the critical banner.
       run: 2m6s · 74 in · 7.9k out · sonnet-5 · sess:3501f362-f568-49e1-9dbb-5f0fc99945f5
-- [ ] Rename the strings the CLI prints
+- [x] Rename the strings the CLI prints
       Command help, status lines, and errors — the `night` command name, config, and
       files keep their spelling.
+      run: 1m56s · 58 in · 9.7k out · sonnet-5 · sess:3501f362-f568-49e1-9dbb-5f0fc99945f5
 - [ ] Update the tests and about.md to the new vocabulary

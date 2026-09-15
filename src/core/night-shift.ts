@@ -82,12 +82,12 @@ export async function nightShiftTick(state: NightShiftState, deps: NightShiftDep
         gate = await deps.evaluateGate();
         if (!gate.gate?.open || deps.isMachineBusy()) {
           log(
-            `paper-camp: night shift stopping — ${gate.gate?.reasons.join(', ') || 'machine busy'}`,
+            `paper-camp: review pass stopping — ${gate.gate?.reasons.join(', ') || 'machine busy'}`,
           );
           break;
         }
       }
-      log(`paper-camp: night shift reviewing "${chunk.path}" (score ${chunk.score})`);
+      log(`paper-camp: review pass reviewing "${chunk.path}" (score ${chunk.score})`);
       state.reviewedTonight.add(chunk.path);
       await deps.runPass(project, chunk.path);
     }
@@ -102,7 +102,7 @@ export function startNightShift(deps: NightShiftDeps, tickMs: number = NIGHT_TIC
   const tick = () => {
     nightShiftTick(state, deps).catch((error) => {
       (deps.log ?? console.log)(
-        `paper-camp: night shift tick failed — ${(error as Error).message}`,
+        `paper-camp: review pass tick failed — ${(error as Error).message}`,
       );
     });
   };

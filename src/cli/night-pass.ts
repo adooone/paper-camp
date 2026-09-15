@@ -252,7 +252,7 @@ export async function runNightChunkPass(opts: {
 }): Promise<NightChunkPassResult> {
   if (opts.agentConfig.agent !== 'claude-code') {
     throw new Error(
-      `night shift checks require the claude-code agent (got "${opts.agentConfig.agent}") — only its CLI supports the tool restrictions and cost cap a read-only pass depends on`,
+      `review pass checks require the claude-code agent (got "${opts.agentConfig.agent}") — only its CLI supports the tool restrictions and cost cap a read-only pass depends on`,
     );
   }
 

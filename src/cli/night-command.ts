@@ -102,7 +102,7 @@ const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
   'five-hour-ceiling': '5h ceiling exceeded',
   'seven-day-floor': '7d floor exceeded',
   'outside-window': 'outside the configured window',
-  paused: 'paused for tonight',
+  paused: 'paused until the next reset',
 };
 
 function formatGateLine(response: MachineNightGateResponse | null): string {
@@ -139,26 +139,26 @@ function formatNextChunks(chunks: ChunkHealth[]): string {
 }
 
 function formatLastNightTotals(group: NightReportGroup | undefined): string {
-  if (!group) return '  last night:    no reviews yet';
+  if (!group) return '  last review:   no reviews yet';
   return (
-    `  last night:    ${group.date} — ${group.passCount} pass(es), ` +
+    `  last review:   ${group.date} — ${group.passCount} pass(es), ` +
     `$${group.costUsd.toFixed(2)}, ${group.findings.length} finding(s)`
   );
 }
 
 async function printNightStatus(registry: MachineRegistry): Promise<void> {
   if (!registry.night) {
-    console.log('paper-camp: night shift is off');
+    console.log('paper-camp: review passes are off');
     return;
   }
   const project = registry.projects.find((p) => p.slug === registry.night?.slug);
   if (!project) {
     console.log(
-      `paper-camp: night shift is set to "${registry.night.slug}", but that project is no longer registered`,
+      `paper-camp: review passes are set to "${registry.night.slug}", but that project is no longer registered`,
     );
     return;
   }
-  console.log(`paper-camp: night shift runs for "${project.slug}" (${project.path})`);
+  console.log(`paper-camp: review passes run for "${project.slug}" (${project.path})`);
   const config = await readNightConfig(project.path);
   const resolved = resolveNightConfig(config);
   console.log(formatNightSettings(resolved));
@@ -307,7 +307,7 @@ async function reportNightPass(
     kind: 'night-review-findings',
     entityId: result.chunkPath,
     entityTitle: result.chunkPath,
-    text: `${accepted.length} finding(s) from tonight's review`,
+    text: `${accepted.length} finding(s) from a review pass`,
   });
   return { written: accepted.length, dropped };
 }
@@ -350,7 +350,7 @@ export async function runNightPass(
     console.log(formatPassResult(result, written, dropped));
     return true;
   } catch (error) {
-    console.error(`paper-camp: night pass failed — ${(error as Error).message}`);
+    console.error(`paper-camp: review pass failed — ${(error as Error).message}`);
     return false;
   }
 }
@@ -375,7 +375,7 @@ export async function runNight(target: string | undefined, chunk?: string): Prom
       return false;
     }
     if (!registry.night) {
-      console.error('paper-camp: night shift is off — run `paper-camp night <slug>` first');
+      console.error('paper-camp: review passes are off — run `paper-camp night <slug>` first');
       return false;
     }
     const project = registry.projects.find((p) => p.slug === registry.night?.slug);
@@ -390,11 +390,11 @@ export async function runNight(target: string | undefined, chunk?: string): Prom
 
   if (target === 'off') {
     if (!registry.night) {
-      console.log('paper-camp: night shift is already off');
+      console.log('paper-camp: review passes are already off');
       return true;
     }
     await saveRegistry(path, clearNightProject(registry));
-    console.log('paper-camp: night shift turned off');
+    console.log('paper-camp: review passes turned off');
     return true;
   }
 
@@ -407,6 +407,6 @@ export async function runNight(target: string | undefined, chunk?: string): Prom
   }
   await saveRegistry(path, result.registry);
   const project = result.registry.projects.find((p) => p.slug === target) as MachineProject;
-  console.log(`paper-camp: night shift set to "${project.slug}" (${project.path})`);
+  console.log(`paper-camp: review passes set to "${project.slug}" (${project.path})`);
   return true;
 }
