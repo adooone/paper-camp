@@ -2,7 +2,7 @@
 id: IDEA-270
 title: Review passes, not a night shift
 type: refactor
-status: idea
+status: review
 created: 2026-09-15
 tags:
   - app
@@ -63,4 +63,5 @@ an optional extra gate for anyone who wants one.
       Command help, status lines, and errors — the `night` command name, config, and
       files keep their spelling.
       run: 1m56s · 58 in · 9.7k out · sonnet-5 · sess:3501f362-f568-49e1-9dbb-5f0fc99945f5
-- [ ] Update the tests and about.md to the new vocabulary
+- [x] Update the tests and about.md to the new vocabulary
+      run: 1m47s · 68 in · 6.6k out · sonnet-5 · sess:3501f362-f568-49e1-9dbb-5f0fc99945f5

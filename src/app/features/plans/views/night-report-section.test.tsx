@@ -99,12 +99,12 @@ describe('NightReportSection', () => {
       onDismiss: () => {},
     });
     const text = textOf(tree);
-    expect(text).toContain('Night report — 2026-09-10');
+    expect(text).toContain('Review findings — 2026-09-10');
     expect(text).toContain('3 passes');
     expect(text).toContain('$0.45');
     expect(text).toContain('1 critical');
     expect(text).toContain('1 high');
-    expect(text).toContain('night');
+    expect(text).toContain('review');
     expect(text).toContain('Off-by-one in the turn counter.');
   });
 

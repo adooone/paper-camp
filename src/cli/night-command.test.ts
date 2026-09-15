@@ -150,18 +150,18 @@ describe('runNight', () => {
     const offLogs = captureLogs();
     await runNight('status');
     offLogs.restore();
-    expect(offLogs.output).toContain('night shift is off');
+    expect(offLogs.output).toContain('review passes are off');
 
     const setLogs = captureLogs();
     const ok = await runNight('demo');
     setLogs.restore();
     expect(ok).toBe(true);
-    expect(setLogs.output).toContain('night shift set to "demo"');
+    expect(setLogs.output).toContain('review passes set to "demo"');
 
     const statusLogs = captureLogs();
     await runNight('status');
     statusLogs.restore();
-    expect(statusLogs.output).toContain('night shift runs for "demo"');
+    expect(statusLogs.output).toContain('review passes run for "demo"');
     expect(statusLogs.output).toContain('ceiling (5h):   40%');
     expect(statusLogs.output).toContain('floor (7d):     65%');
     expect(statusLogs.output).toContain('maxChunks:      2');
@@ -171,12 +171,12 @@ describe('runNight', () => {
     const cleared = await runNight('off');
     offAgainLogs.restore();
     expect(cleared).toBe(true);
-    expect(offAgainLogs.output).toContain('night shift turned off');
+    expect(offAgainLogs.output).toContain('review passes turned off');
 
     const finalStatusLogs = captureLogs();
     await runNight('status');
     finalStatusLogs.restore();
-    expect(finalStatusLogs.output).toContain('night shift is off');
+    expect(finalStatusLogs.output).toContain('review passes are off');
   });
 
   it('prints the live gate from a running daemon', async () => {
@@ -255,7 +255,7 @@ describe('runNight("run", chunk)', () => {
     const ok = await runNight('run', 'src/core');
     errors.restore();
     expect(ok).toBe(false);
-    expect(errors.output).toContain('night shift is off');
+    expect(errors.output).toContain('review passes are off');
   });
 
   it('fails when no checks are enabled', async () => {
@@ -471,7 +471,7 @@ describe('runNight("run", chunk)', () => {
     errors.restore();
 
     expect(ok).toBe(false);
-    expect(errors.output).toContain('night pass failed — worktree add failed');
+    expect(errors.output).toContain('review pass failed — worktree add failed');
   });
 
   it('gates the pass on the machine busy state reported by a running daemon', async () => {
