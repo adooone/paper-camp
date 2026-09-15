@@ -45,3 +45,19 @@ shape that made this hard to read.
 
 The night gate and what the checks look for. Editing a finding's text.
 Any change to how promote builds its idea.
+
+### Phases
+- [ ] Give a finding a stable id and a lookup
+      Derive the id from date, file and line the way `nightFindingKey` already does, and
+      expose a by-id finder on the night report slice.
+- [ ] Add the `/findings/$findingId` route and page
+      Head card with stamps, chunk and `file:line`, the finding's text as the body, and a
+      facts grid of commit, date and the staleness the reader already computes.
+- [ ] Move promote and dismiss onto the page's bottom bar
+      Reuse `promoteNightFinding` and the dismiss action, landing on the new idea.
+- [ ] Add "Fix it here"
+      Launch an `issue-fix` task with the finding as its prompt, render its card on the
+      page, and drop the line from `suggestions.md` when it lands green.
+- [ ] Rework the group's rows and drop the modal
+      Rows open the page and show severity, check and `file:line`, sorted critical first
+      then by file, collapsing per chunk past ten.

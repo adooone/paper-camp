@@ -3,9 +3,10 @@ id: IDEA-269
 title: Agents and desk as editable tables
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-267
 created: 2026-09-15
+updated: 2026-09-15
 tags:
   - app
   - settings

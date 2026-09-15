@@ -46,3 +46,17 @@ list. A review must never sit alongside the work it is reviewing.
 
 The checks themselves and the health map. The clock window, which stays
 an optional extra gate for anyone who wants one.
+
+### Phases
+- [ ] Skip chunks unchanged since their last review
+      Filter chunk selection by `git diff --quiet <lastReviewedCommit> -- <chunk>` so a
+      pass with nothing new does no work and writes no row.
+- [ ] Re-check the busy flag between every check
+      Fold `isMachineBusy` into the pass's per-check gate so a pass stops after the
+      check in flight instead of finishing the chunk.
+- [ ] Rename the strings the app shows
+      Settings section and switches, the Ideas page finding group, and the critical banner.
+- [ ] Rename the strings the CLI prints
+      Command help, status lines, and errors — the `night` command name, config, and
+      files keep their spelling.
+- [ ] Update the tests and about.md to the new vocabulary
