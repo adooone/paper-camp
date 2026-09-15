@@ -2,7 +2,12 @@ import { nightFindingKey } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { NightReportSection, severityCounts, sortedFindings } from './night-report-section';
+import {
+  NightReportSection,
+  groupByChunk,
+  severityCounts,
+  sortedFindings,
+} from './night-report-section';
 
 function finding(overrides: Partial<NightSuggestionEntry> = {}): NightSuggestionEntry {
   return {
@@ -62,6 +67,20 @@ describe('sortedFindings', () => {
   });
 });
 
+describe('groupByChunk', () => {
+  it('groups by chunk, preserving first-occurrence order', () => {
+    const findings = [
+      finding({ chunk: 'src/core', file: 'a.ts' }),
+      finding({ chunk: 'src/app', file: 'b.ts' }),
+      finding({ chunk: 'src/core', file: 'c.ts' }),
+    ];
+    expect(groupByChunk(findings).map((g) => [g.chunk, g.findings.length])).toEqual([
+      ['src/core', 2],
+      ['src/app', 1],
+    ]);
+  });
+});
+
 describe('nightFindingKey', () => {
   it('combines date, check, file, and line into a stable key', () => {
     expect(nightFindingKey(finding())).toBe('2026-09-10-bugs-src/core/a.ts-12');
@@ -100,8 +119,25 @@ describe('NightReportSection', () => {
     expect(text).toContain('$0.45');
     expect(text).toContain('1 critical');
     expect(text).toContain('1 high');
-    expect(text).toContain('review');
-    expect(text).toContain('Off-by-one in the turn counter.');
+    expect(text).toContain('bugs');
+    expect(text).toContain('b.ts');
+    expect(text).toContain('src/core/a.ts:12');
+  });
+
+  it('collapses into per-chunk groups once a date carries more than ten findings', () => {
+    const findings = Array.from({ length: 11 }, (_, i) =>
+      finding({ file: `f${i}.ts`, chunk: i < 6 ? 'src/core' : 'src/app' }),
+    );
+    const tree = NightReportSection({
+      groups: [{ date: '2026-09-10', passCount: 1, costUsd: 0, findings }],
+      onOpen: () => {},
+      onDismiss: () => {},
+    });
+    const text = textOf(tree);
+    expect(text).toContain('src/core');
+    expect(text).toContain('6 findings');
+    expect(text).toContain('src/app');
+    expect(text).toContain('5 findings');
   });
 
   it('reports a clean night when a date has passes but no findings', () => {

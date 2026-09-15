@@ -4,7 +4,7 @@ import type { PlanEntry } from '@/types/index';
 import { Card } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
-import { PromoteNightFindingModal, PromoteSuggestionModal } from './modals';
+import { PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
   EntityDetail,
@@ -34,12 +34,11 @@ export const PlansPage = () => {
     findingId,
     openSuggestion,
     setOpenSuggestion,
-    openNightFinding,
-    setOpenNightFinding,
     handleBack,
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
+    handleOpenNightFinding,
     handleDismissSuggestion,
     handleDismissNightFinding,
   } = usePlansPage();
@@ -104,7 +103,7 @@ export const PlansPage = () => {
 
           <NightReportSection
             groups={nightReport}
-            onOpen={setOpenNightFinding}
+            onOpen={handleOpenNightFinding}
             onDismiss={handleDismissNightFinding}
           />
 
@@ -151,11 +150,6 @@ export const PlansPage = () => {
           <PromoteSuggestionModal
             suggestion={openSuggestion}
             onClose={() => setOpenSuggestion(null)}
-          />
-
-          <PromoteNightFindingModal
-            finding={openNightFinding}
-            onClose={() => setOpenNightFinding(null)}
           />
         </div>
       )}

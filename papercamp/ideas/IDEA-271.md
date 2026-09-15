@@ -2,7 +2,7 @@
 id: IDEA-271
 title: A page for a review finding
 type: feat
-status: idea
+status: review
 created: 2026-09-15
 tags:
   - app
@@ -62,6 +62,7 @@ Any change to how promote builds its idea.
       Launch an `issue-fix` task with the finding as its prompt, render its card on the
       page, and drop the line from `suggestions.md` when it lands green.
       run: 5m39s · 104 in · 28.6k out · sonnet-5 · sess:fb5e9cdf-d079-46e3-a601-71a98b919e7a
-- [ ] Rework the group's rows and drop the modal
+- [x] Rework the group's rows and drop the modal
       Rows open the page and show severity, check and `file:line`, sorted critical first
       then by file, collapsing per chunk past ten.
+      run: 5m37s · 124 in · 28k out · sonnet-5 · sess:6deb520a-7909-4226-9628-1e3a755ddaec

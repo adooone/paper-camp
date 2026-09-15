@@ -6,6 +6,7 @@ import {
   useOpenEntity,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
+import { nightFindingKey } from '@/core/night-findings';
 import type { ArchivableIdea, NightSuggestionEntry, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
@@ -67,7 +68,13 @@ export const usePlansPage = () => {
   };
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
-  const [openNightFinding, setOpenNightFinding] = useState<NightSuggestionEntry | null>(null);
+
+  const handleOpenNightFinding = (finding: NightSuggestionEntry) => {
+    navigate({
+      to: '/findings/$findingId',
+      params: { findingId: encodeURIComponent(nightFindingKey(finding)) },
+    });
+  };
 
   const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
     try {
@@ -108,12 +115,11 @@ export const usePlansPage = () => {
     findingId,
     openSuggestion,
     setOpenSuggestion,
-    openNightFinding,
-    setOpenNightFinding,
     handleBack,
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
+    handleOpenNightFinding,
     handleDismissSuggestion,
     handleDismissNightFinding,
   };
