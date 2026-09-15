@@ -1,14 +1,12 @@
-import { EmptyState, RowSkeleton } from '@/app/components';
+import { RowSkeleton } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
-import { Alert, Button, PlusIcon, Spinner } from '@dendelion/paper-ui';
+import { Alert, Button, Spinner } from '@dendelion/paper-ui';
 import { SettingGroup } from '../components/setting-group';
 import { SettingsHeader } from '../components/settings-header';
 import { useDeskSection } from '../hooks/use-desk-section';
-import { DeskCheckRow } from './desk-check-row';
-import { DeskCheckRowHeader } from './desk-check-row-header';
+import { DeskCheckTable } from './desk-check-table';
 import { DeskCiEditor } from './desk-ci-editor';
-import { DeskServiceRow } from './desk-service-row';
-import { DeskServiceRowHeader } from './desk-service-row-header';
+import { DeskServiceTable } from './desk-service-table';
 
 export const DeskSection = () => {
   const {
@@ -57,54 +55,22 @@ export const DeskSection = () => {
       )}
       {config && (
         <div className="flex flex-col gap-4">
-          <SettingGroup
-            label="Services"
-            action={
-              <Button size="small" icon={<PlusIcon size={16} />} onClick={addService}>
-                Add
-              </Button>
-            }
-          >
-            {services.length === 0 ? (
-              <EmptyState message="No services yet." />
-            ) : (
-              <>
-                <DeskServiceRowHeader />
-                {services.map((service) => (
-                  <DeskServiceRow
-                    key={service.id}
-                    service={service}
-                    onSave={(next) => updateService(service.id, next)}
-                    onRemove={() => removeService(service.id)}
-                  />
-                ))}
-              </>
-            )}
+          <SettingGroup label="Services">
+            <DeskServiceTable
+              services={services}
+              onAdd={addService}
+              onSave={updateService}
+              onRemove={removeService}
+            />
           </SettingGroup>
 
-          <SettingGroup
-            label="Checks"
-            action={
-              <Button size="small" icon={<PlusIcon size={16} />} onClick={addCheck}>
-                Add
-              </Button>
-            }
-          >
-            {checks.length === 0 ? (
-              <EmptyState message="No checks yet." />
-            ) : (
-              <>
-                <DeskCheckRowHeader />
-                {checks.map((check) => (
-                  <DeskCheckRow
-                    key={check.id}
-                    check={check}
-                    onSave={(next) => updateCheck(check.id, next)}
-                    onRemove={() => removeCheck(check.id)}
-                  />
-                ))}
-              </>
-            )}
+          <SettingGroup label="Checks">
+            <DeskCheckTable
+              checks={checks}
+              onAdd={addCheck}
+              onSave={updateCheck}
+              onRemove={removeCheck}
+            />
           </SettingGroup>
 
           <SettingGroup label="CI">

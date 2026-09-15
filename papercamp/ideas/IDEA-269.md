@@ -65,7 +65,8 @@ which are plain rows and stay that way.
       Agent-filtered models, the excluded author model, the free-text input, and
       the unknown-agent fallback.
       run: 35s · 16 in · 1.8k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
-- [ ] Turn the desk services and checks into tables
+- [x] Turn the desk services and checks into tables
       Editable name and command cells, row actions in a trailing column.
+      run: 2m48s · 44 in · 26.7k out · sonnet-5 · sess:06fa04bc-ffef-4e7e-868d-2ea953b19115
 - [ ] Delete the retired rows, headers, and grid constants
       Drop them from `views/index.ts` too.
