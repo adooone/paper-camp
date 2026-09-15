@@ -246,8 +246,7 @@ export async function runNightChunkPass(opts: {
   maxCostUsd: number;
   spawnAgent?: SpawnAgentFn;
   /** Re-checked before every check but the first, so a pass that becomes busy mid-flight
-   *  stops after the check in flight instead of finishing the chunk. Unset only when the
-   *  caller has no way to know the machine's busy state (no daemon running). */
+   *  stops after the check in flight instead of finishing the chunk. Unset only when the caller has no way to know the machine's busy state (no daemon running). */
   checkGate?: () => Promise<boolean>;
 }): Promise<NightChunkPassResult> {
   if (opts.agentConfig.agent !== 'claude-code') {
