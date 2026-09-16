@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cached, invalidateCorpusCache } from './corpus-cache';
+import { cached, corpusFingerprint, invalidateCorpusCache } from './corpus-cache';
 
 describe('corpus-cache', () => {
   it('serves the same promise for a repeat key without calling load again', async () => {
@@ -59,5 +59,38 @@ describe('corpus-cache', () => {
     expect(await cached('k5', load, () => true)).toBe(1);
     expect(await cached('k5', load, () => true)).toBe(1);
     expect(calls).toBe(1);
+  });
+});
+
+describe('corpus-cache fingerprint', () => {
+  it('reloads when the fingerprint changes between reads, and not otherwise', async () => {
+    invalidateCorpusCache();
+    let stamp = 'a';
+    let calls = 0;
+    const load = async () => ++calls;
+    const fingerprint = async () => stamp;
+    expect(await cached('fp', load, () => true, fingerprint)).toBe(1);
+    expect(await cached('fp', load, () => true, fingerprint)).toBe(1);
+    stamp = 'b';
+    expect(await cached('fp', load, () => true, fingerprint)).toBe(2);
+    expect(await cached('fp', load, () => true, fingerprint)).toBe(2);
+  });
+
+  it('fingerprints the ideas files, their archive and run-order.md', async () => {
+    const { mkdtemp, writeFile, mkdir, utimes } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const root = await mkdtemp(join(tmpdir(), 'corpus-fp-'));
+    const ideas = join(root, 'ideas');
+    await mkdir(join(ideas, 'archive'), { recursive: true });
+    await writeFile(join(ideas, 'IDEA-1.md'), 'one');
+    const before = await corpusFingerprint(ideas);
+    expect(await corpusFingerprint(ideas)).toBe(before);
+    await writeFile(join(ideas, 'IDEA-2.md'), 'two');
+    const added = await corpusFingerprint(ideas);
+    expect(added).not.toBe(before);
+    await writeFile(join(ideas, 'IDEA-2.md'), 'two, longer');
+    await utimes(join(ideas, 'IDEA-2.md'), new Date(), new Date(Date.now() + 5000));
+    expect(await corpusFingerprint(ideas)).not.toBe(added);
   });
 });

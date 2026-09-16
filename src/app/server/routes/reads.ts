@@ -15,7 +15,7 @@ import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/ro
 import { computeProjectStats } from '@/core/stats';
 import { resolveReleaseRanges } from '@/core/trail';
 import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
-import { cached } from '../corpus-cache';
+import { cached, corpusFingerprint } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
 import { readNotifications } from '../notification-log';
 import { listConfigFiles } from './system';
@@ -27,6 +27,7 @@ const cachedWorkEntries = (root: string) =>
     `work:${root}`,
     () => readWorkEntries(campFile(root, 'ideas')),
     (result) => result.resolved,
+    () => corpusFingerprint(campFile(root, 'ideas')),
   );
 
 export const readRoutes: ReadRoute[] = [
@@ -75,7 +76,12 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/ideas',
     handler: async (root) =>
-      cached(`notes:${root}`, () => readNoteEntries(campFile(root, 'ideas'))),
+      cached(
+        `notes:${root}`,
+        () => readNoteEntries(campFile(root, 'ideas')),
+        () => true,
+        () => corpusFingerprint(campFile(root, 'ideas')),
+      ),
   },
   {
     path: '/api/archivable-ideas',
@@ -84,6 +90,7 @@ export const readRoutes: ReadRoute[] = [
         `archivable:${root}`,
         () => findArchivableIdeas(campFile(root, 'ideas')),
         (result) => result.resolved,
+        () => corpusFingerprint(campFile(root, 'ideas')),
       );
       return entries;
     },
