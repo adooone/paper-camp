@@ -2,7 +2,7 @@
 id: IDEA-272
 title: A card per reviewed chunk
 type: feat
-status: idea
+status: review
 created: 2026-09-16
 tags:
   - app
@@ -70,6 +70,7 @@ task's agent does with the prompt.
       Head card with name, date, pass count and cost, then the chunk's findings as
       `renderFindingRow` sorted by severity then file, with *Fix all* on the bottom bar.
       run: 8m57s · 172 in · 33.7k out · sonnet-5 · sess:12fed03e-4c98-473b-8f60-379e98a5c292
-- [ ] Reflect a fix in flight on both surfaces
+- [x] Reflect a fix in flight on both surfaces
       The card and the head card show the *fixing* stamp and disable *Fix all* while the
       chunk's task is active.
+      run: 1m19s · 34 in · 3.2k out · sonnet-5 · sess:2f5b0ed6-bf24-4498-a388-0f80785250d5

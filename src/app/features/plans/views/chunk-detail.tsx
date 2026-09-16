@@ -37,7 +37,8 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
   const dismissNightFinding = useAppStore((s) => s.dismissNightFinding);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { launching, launchFix } = useFindingFixTask(chunk.findings);
+  const { activeTask, launching, launchFix } = useFindingFixTask(chunk.findings);
+  const fixing = launching || Boolean(activeTask);
 
   const facts: Fact[] = [
     { label: 'Date', value: chunk.date },
@@ -80,7 +81,14 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
     <div>
       <Card size="small" texture={surface.card} className="mb-4">
         <div className="flex flex-col gap-3">
-          <span className="font-mono text-base opacity-80">{chunk.chunk}</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-base opacity-80">{chunk.chunk}</span>
+            {fixing && (
+              <Stamp size="small" variant="warning">
+                fixing…
+              </Stamp>
+            )}
+          </div>
           <div className="flex flex-wrap gap-1">
             {severityCounts(chunk.findings).map(({ severity, count }) => (
               <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
@@ -99,8 +107,8 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
         )}
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-paper-950/[12%] pt-4">
-        <Button type="button" variant="primary" onClick={handleFixAll} disabled={launching}>
-          {launching ? 'Fixing…' : 'Fix all'}
+        <Button type="button" variant="primary" onClick={handleFixAll} disabled={fixing}>
+          {fixing ? 'Fixing…' : 'Fix all'}
         </Button>
       </div>
     </div>
