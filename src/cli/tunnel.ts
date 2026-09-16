@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -41,9 +41,11 @@ export function quickTunnelArgs(port: number, configPath: string): string[] {
  *  structured. Rejects if the binary is missing or exits before printing one. */
 export function startQuickTunnel(port: number): Promise<QuickTunnel> {
   return new Promise((resolve, reject) => {
-    const configPath = join(tmpdir(), 'paper-camp-quick-tunnel.yml');
+    let configPath: string;
     try {
-      writeFileSync(configPath, '');
+      const dir = mkdtempSync(join(tmpdir(), 'paper-camp-quick-tunnel-'));
+      configPath = join(dir, 'config.yml');
+      writeFileSync(configPath, '', { flag: 'wx' });
     } catch (error) {
       reject(error);
       return;
