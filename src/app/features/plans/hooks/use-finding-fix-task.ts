@@ -3,6 +3,7 @@ import { nightFindingKey, nightFindingTitle } from '@/core/night-findings';
 import type { AgentTaskState, NightSuggestionEntry, TaskLogEntry } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { sortedFindings } from '../views/night-report-section';
 
 const ACTIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
 
@@ -10,17 +11,33 @@ export function findingIssueId(finding: NightSuggestionEntry): string {
   return `night-finding:${nightFindingKey(finding)}`;
 }
 
-function findingFixReason(finding: NightSuggestionEntry): string {
+export function findingsIssueId(findings: NightSuggestionEntry[]): string {
+  if (findings.length === 1) return findingIssueId(findings[0]);
+  const [{ date, chunk }] = findings;
+  return `night-chunk:${date}:${chunk}`;
+}
+
+export function findingFixReason(finding: NightSuggestionEntry): string {
   const location = finding.line ? `${finding.file}:${finding.line}` : finding.file;
   return `${finding.message}\n\nFound by the night shift's \`${finding.check}\` check in \`${finding.chunk}\`, at ${location} (commit ${finding.commit.slice(0, 7)}, severity: ${finding.severity}).`;
 }
 
-/** Drives the finding page's "Fix it here" — launches the same `issue-fix` shape
- * the checks group uses, then watches for that task's own outcome so the page can
- * show it. A green landing removes the line the way a promoted finding's does,
- * the way `promoteNightFinding` removes it on the idea path (IDEA-271). */
-export const useFindingFixTask = (finding: NightSuggestionEntry) => {
-  const issueId = findingIssueId(finding);
+function findingsFixReason(findings: NightSuggestionEntry[]): string {
+  return sortedFindings(findings).map(findingFixReason).join('\n\n');
+}
+
+function findingsFixTitle(findings: NightSuggestionEntry[]): string {
+  if (findings.length === 1) return nightFindingTitle(findings[0]);
+  const [{ chunk }] = findings;
+  return `${chunk}: ${findings.length} findings`;
+}
+
+/** Drives "Fix it here" and "Fix all" alike — launches the same `issue-fix` shape
+ * the checks group uses, over one finding or a whole chunk's, then watches for that
+ * task's own outcome so the caller can show it. A `done` outcome removes every finding
+ * in the list the way `promoteNightFinding` removes one on the idea path (IDEA-271). */
+export const useFindingFixTask = (findings: NightSuggestionEntry[]) => {
+  const issueId = findingsIssueId(findings);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const taskLog = useAppStore((s) => s.taskLog);
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
@@ -47,16 +64,18 @@ export const useFindingFixTask = (finding: NightSuggestionEntry) => {
     if (outcome?.outcome !== 'done') return;
     if (handledEntryId.current === outcome.id) return;
     handledEntryId.current = outcome.id;
-    dismissNightFinding(finding).then(() => navigate({ to: '/' }));
-  }, [outcome, dismissNightFinding, finding, navigate]);
+    Promise.all(findings.map((finding) => dismissNightFinding(finding))).then(() => {
+      if (findings.length === 1) navigate({ to: '/' });
+    });
+  }, [outcome, dismissNightFinding, findings, navigate]);
 
   const launchFix = async () => {
     setLaunching(true);
     try {
       await launchIssueFix(
         issueId,
-        nightFindingTitle(finding),
-        findingFixReason(finding),
+        findingsFixTitle(findings),
+        findingsFixReason(findings),
         undefined,
       );
     } finally {

@@ -58,9 +58,10 @@ The pass, its checks, and the finding page's own layout. What the fix
 task's agent does with the prompt.
 
 ### Phases
-- [ ] Generalise the fix task to a list of findings
+- [x] Generalise the fix task to a list of findings
       `useFindingFixTask` takes many findings under one `night-chunk:<date>:<chunk>`
       issue id, joins their reasons critical first, and dismisses all of them on `done`.
+      run: 1m47s · 32 in · 5.8k out · sonnet-5 · sess:23a3ad32-f83f-4dbf-9ce4-ae2e71222eb1
 - [ ] Replace the chunk `<details>` with a grid of cards
       One kraft `Card` per chunk with its stamps, checks line and *Fix all*, at any
       finding count — `CHUNK_COLLAPSE_THRESHOLD` and the flat list go.

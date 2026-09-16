@@ -97,7 +97,7 @@ export const FindingDetail = ({ finding }: FindingDetailProps) => {
     outcome: fixOutcome,
     launching: fixing,
     launchFix,
-  } = useFindingFixTask(finding);
+  } = useFindingFixTask([finding]);
 
   useEffect(() => {
     setStale(null);
