@@ -109,62 +109,38 @@ function ChunkCard({
   findings: NightSuggestionEntry[];
   onOpen: (date: string, chunk: string) => void;
 }) {
-  const { activeTask, launching, launchFix } = useFindingFixTask(findings);
-  const { toast } = useToast();
+  const { activeTask, launching } = useFindingFixTask(findings);
   const fixing = launching || Boolean(activeTask);
-
-  const handleFixAll = async () => {
-    try {
-      await launchFix();
-    } catch (err) {
-      toast({
-        title: 'Failed to launch the fix agent',
-        description: oneLineErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-    }
-  };
 
   return (
     <Card size="small" texture="kraft">
-      <div className="flex flex-col gap-2">
-        {/* Raw <button>, not paper-ui's Button — this needs to read as the card's clickable body. */}
-        <button
-          type="button"
-          onClick={() => onOpen(date, chunk)}
-          className="flex flex-col gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm">
-              {chunk}
-            </span>
-            {fixing && (
-              <Stamp size="small" variant="warning">
-                fixing…
-              </Stamp>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {severityCounts(findings).map(({ severity, count }) => (
-              <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
-                {count} {severity}
-              </Stamp>
-            ))}
-          </div>
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-2xs opacity-60">
-            {checksLine(findings)}
+      {/* Raw <button>, not paper-ui's Button — this needs to read as the card's clickable body. */}
+      <button
+        type="button"
+        onClick={() => onOpen(date, chunk)}
+        className="flex w-full flex-col gap-1.5 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
+            {chunk}
           </span>
-        </button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          onClick={handleFixAll}
-          disabled={fixing}
-        >
-          {fixing ? 'Fixing…' : 'Fix all'}
-        </Button>
-      </div>
+          {fixing && (
+            <Stamp size="small" variant="warning">
+              fixing…
+            </Stamp>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {severityCounts(findings).map(({ severity, count }) => (
+            <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
+              {count} {severity}
+            </Stamp>
+          ))}
+        </div>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs opacity-70">
+          {checksLine(findings)}
+        </span>
+      </button>
     </Card>
   );
 }

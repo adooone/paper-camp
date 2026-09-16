@@ -4,6 +4,7 @@ title: A card per reviewed chunk
 type: feat
 status: review
 created: 2026-09-16
+updated: 2026-09-16
 tags:
   - app
   - ui
@@ -74,6 +75,7 @@ task's agent does with the prompt.
       The card and the head card show the *fixing* stamp and disable *Fix all* while the
       chunk's task is active.
       run: 1m19s · 34 in · 3.2k out · sonnet-5 · sess:2f5b0ed6-bf24-4498-a388-0f80785250d5
+- [x] [manual] Merge finding review into a per-chunk card
 
 ### Fixes
 - [x] Fold the finding page into the chunk view
@@ -97,14 +99,16 @@ task's agent does with the prompt.
       compact label-over-value pairs. The `FactsGrid`, its divider and the empty
       right half go; on a phone the facts wrap under the title.
       run: 46s · 16 in · 2.9k out · sonnet-5 · sess:3b936787-1091-4b41-8f34-ec7276bb0d6c
-- [ ] One review, not one per date
+- [x] One review, not one per date
       `buildNightReportGroups` returns a single group: every open finding, headed by
       the newest date among findings and passes, with that date's pass count and cost.
       Chunk cards and the chunk view merge findings across dates, so `nightChunkKey`,
       `chunkRouteParam` and the *Fix all* issue id `night-chunk:<chunk>` drop the
       date. Two headers with two rows of cards for the same chunks is what this
       replaces; [[IDEA-273]] keeps a second date from arising at all.
-- [ ] Handwritten where the app is handwritten
+      run: 8m18s · 70 in · 12.9k out · sonnet-5 · sess:f51f0ff1-9685-4b2b-a214-bba56b3bc385
+- [x] Handwritten where the app is handwritten
       The card's checks line and the header's date take `font-handwritten`, as every
       other secondary line and date on the Plans page does; the serif in both is
       the one place the section falls out of the sheet's voice.
+      run: 3m16s · 18 in · 1.6k out · sonnet-5 · sess:f51f0ff1-9685-4b2b-a214-bba56b3bc385
