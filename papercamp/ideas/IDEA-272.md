@@ -76,7 +76,7 @@ task's agent does with the prompt.
       run: 1m19s · 34 in · 3.2k out · sonnet-5 · sess:2f5b0ed6-bf24-4498-a388-0f80785250d5
 
 ### Fixes
-- [ ] Fold the finding page into the chunk view
+- [x] Fold the finding page into the chunk view
       A finding never opens its own page: `/findings/$findingId`, `finding-detail.tsx`,
       its route and `onOpen` go. The chunk view lists its findings as a paper-ui `Table`
       with `hideHeader`, two lines per row so nothing is cut: the first line is the
@@ -85,12 +85,26 @@ task's agent does with the prompt.
       as small ghost buttons — *Fix* launches `useFindingFixTask` for that one finding
       and shows *fixing…* in place of the button while it runs, *Promote* is the same
       idea-extend launch `finding-detail.tsx` made, *Dismiss* removes the row.
-- [ ] A breadcrumb for the chunk view
+      run: 7m31s · 142 in · 23.4k out · sonnet-5 · sess:affa66a6-c455-4913-8df4-7952fed50f5d
+- [x] A breadcrumb for the chunk view
       `PageBreadcrumb` derives one more trail: when the `chunk` route param is set,
       *Plans › src/core*, with *Plans* navigating to `/`. The view has no way back
       today except the browser's.
-- [ ] Facts beside the title, not under it
+      run: 1m · 20 in · 1.8k out · sonnet-5 · sess:affa66a6-c455-4913-8df4-7952fed50f5d
+- [x] Facts beside the title, not under it
       The head card is one line: the chunk in mono on the left with its severity
       stamps beside it, and Date, Passes and Cost right-aligned on the same line as
       compact label-over-value pairs. The `FactsGrid`, its divider and the empty
       right half go; on a phone the facts wrap under the title.
+      run: 46s · 16 in · 2.9k out · sonnet-5 · sess:3b936787-1091-4b41-8f34-ec7276bb0d6c
+- [ ] One review, not one per date
+      `buildNightReportGroups` returns a single group: every open finding, headed by
+      the newest date among findings and passes, with that date's pass count and cost.
+      Chunk cards and the chunk view merge findings across dates, so `nightChunkKey`,
+      `chunkRouteParam` and the *Fix all* issue id `night-chunk:<chunk>` drop the
+      date. Two headers with two rows of cards for the same chunks is what this
+      replaces; [[IDEA-273]] keeps a second date from arising at all.
+- [ ] Handwritten where the app is handwritten
+      The card's checks line and the header's date take `font-handwritten`, as every
+      other secondary line and date on the Plans page does; the serif in both is
+      the one place the section falls out of the sheet's voice.
