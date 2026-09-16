@@ -39,8 +39,9 @@ a finding.
 ### Phases
 - [x] Add `open-findings` to the gate reason type
       run: 1m38s · 24 in · 5.5k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
-- [ ] Block the gate on a non-zero `openFindings`
+- [x] Block the gate on a non-zero `openFindings`
       `NightGateInput` gains the count; `evaluateNightGate` pushes the reason above zero.
+      run: 36s · 16 in · 1.4k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
 - [ ] Count the project's open findings where the daemon evaluates the gate
       `daemon-server.ts` parses `suggestions.md` with `parseNightFindings` before each evaluation.
 - [ ] Label the reason in the CLI and the Settings night section

@@ -25,6 +25,7 @@ export interface NightGateInput {
   floor: number;
   window?: NightWindow;
   pausedUntil?: number | null;
+  openFindings: number;
 }
 
 export function evaluateNightGate(input: NightGateInput): NightGateStatus {
@@ -59,6 +60,8 @@ export function evaluateNightGate(input: NightGateInput): NightGateStatus {
   }
 
   if (!isWithinNightWindow(new Date(input.now), input.window)) reasons.push('outside-window');
+
+  if (input.openFindings > 0) reasons.push('open-findings');
 
   return {
     open: reasons.length === 0,
