@@ -42,7 +42,8 @@ a finding.
 - [x] Block the gate on a non-zero `openFindings`
       `NightGateInput` gains the count; `evaluateNightGate` pushes the reason above zero.
       run: 36s · 16 in · 1.4k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
-- [ ] Count the project's open findings where the daemon evaluates the gate
+- [x] Count the project's open findings where the daemon evaluates the gate
       `daemon-server.ts` parses `suggestions.md` with `parseNightFindings` before each evaluation.
+      run: 52s · 24 in · 2.9k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
 - [ ] Label the reason in the CLI and the Settings night section
 - [ ] Cover the new reason in `night-gate.test.ts`
