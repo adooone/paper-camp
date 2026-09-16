@@ -121,7 +121,7 @@ export async function applyMachineUpdate(
   return { outcome: 'installed' };
 }
 
-export type BootUpdateCheck =
+type BootUpdateCheck =
   | { newerFound: false }
   | { newerFound: true; version: string; result: MachineUpdateResponse };
 
