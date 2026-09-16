@@ -1,9 +1,8 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { nightFindingKey, nightFindingTitle } from '@/core/night-findings';
+import { nightFindingKey, nightFindingTitle, sortedFindings } from '@/core/night-findings';
 import type { AgentTaskState, NightSuggestionEntry, TaskLogEntry } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { sortedFindings } from '../views/night-report-section';
 
 const ACTIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
 

@@ -62,9 +62,10 @@ task's agent does with the prompt.
       `useFindingFixTask` takes many findings under one `night-chunk:<date>:<chunk>`
       issue id, joins their reasons critical first, and dismisses all of them on `done`.
       run: 1m47s · 32 in · 5.8k out · sonnet-5 · sess:23a3ad32-f83f-4dbf-9ce4-ae2e71222eb1
-- [ ] Replace the chunk `<details>` with a grid of cards
+- [x] Replace the chunk `<details>` with a grid of cards
       One kraft `Card` per chunk with its stamps, checks line and *Fix all*, at any
       finding count — `CHUNK_COLLAPSE_THRESHOLD` and the flat list go.
+      run: 7m5s · 84 in · 32.1k out · sonnet-5 · sess:23a3ad32-f83f-4dbf-9ce4-ae2e71222eb1
 - [ ] Add the `/findings/chunk/$chunk` route and view
       Head card with name, date, pass count and cost, then the chunk's findings as
       `renderFindingRow` sorted by severity then file, with *Fix all* on the bottom bar.

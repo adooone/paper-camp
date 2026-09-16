@@ -6,8 +6,7 @@ import {
   useOpenEntity,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { nightFindingKey } from '@/core/night-findings';
-import type { ArchivableIdea, NightSuggestionEntry, SuggestionEntry } from '@/types/index';
+import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -18,7 +17,6 @@ export const usePlansPage = () => {
   const ideaEntries = useAppStore((s) => s.ideaEntries);
   const suggestions = useAppStore((s) => s.suggestions);
   const nightReport = useAppStore((s) => s.nightReport);
-  const dismissNightFinding = useAppStore((s) => s.dismissNightFinding);
   const setDetailView = useAppStore((s) => s.setDetailView);
   const planFilters = useAppStore((s) => s.planFilters);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
@@ -69,31 +67,12 @@ export const usePlansPage = () => {
 
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
 
-  const handleOpenNightFinding = (finding: NightSuggestionEntry) => {
-    navigate({
-      to: '/findings/$findingId',
-      params: { findingId: encodeURIComponent(nightFindingKey(finding)) },
-    });
-  };
-
   const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
     try {
       await dismissSuggestion(suggestion);
     } catch (err) {
       toast({
         title: 'Failed to dismiss suggestion',
-        description: (err as Error).message,
-        variant: 'error',
-      });
-    }
-  };
-
-  const handleDismissNightFinding = async (finding: NightSuggestionEntry) => {
-    try {
-      await dismissNightFinding(finding);
-    } catch (err) {
-      toast({
-        title: 'Failed to dismiss finding',
         description: (err as Error).message,
         variant: 'error',
       });
@@ -119,8 +98,6 @@ export const usePlansPage = () => {
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
-    handleOpenNightFinding,
     handleDismissSuggestion,
-    handleDismissNightFinding,
   };
 };

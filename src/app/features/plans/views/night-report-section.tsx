@@ -1,17 +1,11 @@
-import { surface } from '@/app/styles/tokens';
-import { nightFindingKey } from '@/core/night-findings';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Card, IconButton, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Button, Card, Stamp, type StampVariant, useToast } from '@dendelion/paper-ui';
+import { useFindingFixTask } from '../hooks';
 
 interface NightReportSectionProps {
   groups: NightReportGroup[];
-  onOpen: (finding: NightSuggestionEntry) => void;
-  onDismiss: (finding: NightSuggestionEntry) => void;
-}
-
-interface FindingRowsProps {
-  onOpen: (finding: NightSuggestionEntry) => void;
-  onDismiss: (finding: NightSuggestionEntry) => void;
 }
 
 export const SEVERITY_STAMP_VARIANT: Record<NightFindingSeverity, StampVariant> = {
@@ -20,10 +14,7 @@ export const SEVERITY_STAMP_VARIANT: Record<NightFindingSeverity, StampVariant> 
   normal: 'info',
 };
 
-const SEVERITY_ORDER: NightFindingSeverity[] = ['critical', 'high', 'normal'];
-
-// Past this many findings in a date, a flat list stops being readable — group by chunk instead.
-const CHUNK_COLLAPSE_THRESHOLD = 10;
+export { sortedFindings };
 
 export function severityCounts(
   findings: NightSuggestionEntry[],
@@ -32,14 +23,6 @@ export function severityCounts(
     severity,
     count: findings.filter((f) => f.severity === severity).length,
   })).filter(({ count }) => count > 0);
-}
-
-export function sortedFindings(findings: NightSuggestionEntry[]): NightSuggestionEntry[] {
-  return [...findings].sort(
-    (a, b) =>
-      SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) ||
-      a.file.localeCompare(b.file),
-  );
 }
 
 export function groupByChunk(
@@ -57,91 +40,75 @@ export function groupByChunk(
   return order.map((chunk) => ({ chunk, findings: byChunk.get(chunk) ?? [] }));
 }
 
-// Plain render functions, not components: called inline so the returned JSX joins the
-// caller's own tree directly, rather than nesting as an opaque child component.
-function renderFindingRow(finding: NightSuggestionEntry, { onOpen, onDismiss }: FindingRowsProps) {
+function checksLine(findings: NightSuggestionEntry[]): string {
+  return Array.from(new Set(findings.map((f) => f.check))).join(', ');
+}
+
+function ChunkCard({ chunk, findings }: { chunk: string; findings: NightSuggestionEntry[] }) {
+  const { activeTask, launching, launchFix } = useFindingFixTask(findings);
+  const { toast } = useToast();
+  const fixing = launching || Boolean(activeTask);
+
+  const handleFixAll = async () => {
+    try {
+      await launchFix();
+    } catch (err) {
+      toast({
+        title: 'Failed to launch the fix agent',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    }
+  };
+
   return (
-    <div key={nightFindingKey(finding)} className="rounded-[10px]">
-      <Card
-        size="small"
-        texture={surface.card}
-        accent
-        accentColor="slate"
-        className="plan-row-card"
-      >
-        <div className="flex items-center gap-2">
-          {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
-          <button
-            type="button"
-            onClick={() => onOpen(finding)}
-            className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
-          >
-            <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
-              {finding.severity}
+    <Card size="small" texture="kraft">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm">
+            {chunk}
+          </span>
+          {fixing && (
+            <Stamp size="small" variant="warning">
+              fixing…
             </Stamp>
-            <Stamp size="small" variant="neutral">
-              {finding.check}
-            </Stamp>
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm opacity-80">
-              {finding.file}
-              {finding.line ? `:${finding.line}` : ''}
-            </span>
-          </button>
-          <IconButton
-            icon={<span>×</span>}
-            variant="ghost"
-            size="small"
-            label="Dismiss"
-            className="w-[28px] h-[28px]"
-            onClick={() => onDismiss(finding)}
-          />
+          )}
         </div>
-      </Card>
-    </div>
-  );
-}
-
-function renderChunkGroup(
-  chunk: string,
-  findings: NightSuggestionEntry[],
-  rowProps: FindingRowsProps,
-) {
-  return (
-    // Raw <details>/<summary> — paper-ui has no disclosure component, and this needs no
-    // state beyond the browser's own open/closed toggle.
-    <details key={chunk}>
-      <summary className="flex w-full cursor-pointer list-none items-center gap-2 py-1 opacity-70 [&::-webkit-details-marker]:hidden">
-        <span className="font-mono text-xs">{chunk}</span>
-        <span className="text-2xs opacity-60">
-          {findings.length} {findings.length === 1 ? 'finding' : 'findings'}
+        <div className="flex flex-wrap gap-1">
+          {severityCounts(findings).map(({ severity, count }) => (
+            <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
+              {count} {severity}
+            </Stamp>
+          ))}
+        </div>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-2xs opacity-60">
+          {checksLine(findings)}
         </span>
-      </summary>
-      <div className="flex flex-col gap-1 pl-5 pt-1">
-        {findings.map((finding) => renderFindingRow(finding, rowProps))}
+        <Button
+          type="button"
+          variant="secondary"
+          size="small"
+          onClick={handleFixAll}
+          disabled={fixing}
+        >
+          {fixing ? 'Fixing…' : 'Fix all'}
+        </Button>
       </div>
-    </details>
+    </Card>
   );
 }
 
-function renderFindingsList(findings: NightSuggestionEntry[], rowProps: FindingRowsProps) {
-  const sorted = sortedFindings(findings);
-  if (sorted.length <= CHUNK_COLLAPSE_THRESHOLD) {
-    return (
-      <div className="flex flex-col gap-1">
-        {sorted.map((finding) => renderFindingRow(finding, rowProps))}
-      </div>
-    );
-  }
+function renderChunkCards(findings: NightSuggestionEntry[]) {
   return (
-    <div className="flex flex-col gap-1">
-      {groupByChunk(sorted).map(({ chunk, findings: chunkFindings }) =>
-        renderChunkGroup(chunk, chunkFindings, rowProps),
-      )}
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      {groupByChunk(sortedFindings(findings)).map(({ chunk, findings: chunkFindings }) => (
+        <ChunkCard key={chunk} chunk={chunk} findings={chunkFindings} />
+      ))}
     </div>
   );
 }
 
-export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSectionProps) => {
+export const NightReportSection = ({ groups }: NightReportSectionProps) => {
   if (groups.length === 0) return null;
 
   return (
@@ -163,7 +130,7 @@ export const NightReportSection = ({ groups, onOpen, onDismiss }: NightReportSec
           {group.findings.length === 0 ? (
             <p className="m-0 opacity-50 text-2xs">Ran clean — no findings.</p>
           ) : (
-            renderFindingsList(group.findings, { onOpen, onDismiss })
+            renderChunkCards(group.findings)
           )}
         </div>
       ))}

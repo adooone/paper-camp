@@ -2,6 +2,8 @@ import type { NightFindingSeverity, NightRawFinding, NightSuggestionEntry } from
 
 const SEVERITIES: NightFindingSeverity[] = ['critical', 'high', 'normal'];
 
+export const SEVERITY_ORDER: NightFindingSeverity[] = ['critical', 'high', 'normal'];
+
 export function nightFindingKey(finding: NightSuggestionEntry): string {
   return `${finding.date}-${finding.check}-${finding.file}-${finding.line ?? 'null'}`;
 }
@@ -9,6 +11,14 @@ export function nightFindingKey(finding: NightSuggestionEntry): string {
 export function nightFindingTitle(finding: NightSuggestionEntry): string {
   const base = finding.file.split('/').pop() ?? finding.file;
   return `${finding.check}: ${base}`;
+}
+
+export function sortedFindings(findings: NightSuggestionEntry[]): NightSuggestionEntry[] {
+  return [...findings].sort(
+    (a, b) =>
+      SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity) ||
+      a.file.localeCompare(b.file),
+  );
 }
 
 export function parseNightCheckFindings(resultText: string): NightRawFinding[] | undefined {

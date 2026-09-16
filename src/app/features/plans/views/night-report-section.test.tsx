@@ -32,6 +32,20 @@ function textOf(node: ReactNode): string {
   return textOf(element.props.children as ReactNode);
 }
 
+// The chunk grid renders each chunk as a <ChunkCard>, a real component (it owns
+// per-chunk hook state for "Fix all"), so — unlike the plain render functions
+// elsewhere in this file — its own output isn't inlined into the tree these
+// tests inspect without a renderer. Read its chunk/findings props instead.
+function chunkCards(tree: ReactElement): { chunk: string; findings: NightSuggestionEntry[] }[] {
+  const groupDiv = tree.props.children[0] as ReactElement;
+  const grid = groupDiv.props.children[1] as ReactElement;
+  const cards = grid.props.children as ReactElement[];
+  return cards.map((card) => ({
+    chunk: card.props.chunk as string,
+    findings: card.props.findings as NightSuggestionEntry[],
+  }));
+}
+
 describe('severityCounts', () => {
   it('counts each severity present, in critical/high/normal order, skipping zero counts', () => {
     const findings = [
@@ -93,58 +107,48 @@ describe('nightFindingKey', () => {
 
 describe('NightReportSection', () => {
   it('renders nothing for an empty group list', () => {
-    const tree = NightReportSection({ groups: [], onOpen: () => {}, onDismiss: () => {} });
+    const tree = NightReportSection({ groups: [] });
     expect(tree).toBeNull();
   });
 
-  it('shows the date, pass/cost summary, severity counts, and each finding', () => {
+  it('shows the date, pass/cost summary and severity counts, with one card per chunk', () => {
+    const findings = [
+      finding({ chunk: 'src/core', file: 'a.ts', severity: 'critical' }),
+      finding({ chunk: 'src/core', file: 'b.ts', severity: 'high' }),
+      finding({ chunk: 'src/app', file: 'c.ts', severity: 'normal' }),
+    ];
     const tree = NightReportSection({
-      groups: [
-        {
-          date: '2026-09-10',
-          passCount: 3,
-          costUsd: 0.45,
-          findings: [
-            finding({ severity: 'critical', file: 'b.ts' }),
-            finding({ severity: 'high' }),
-          ],
-        },
-      ],
-      onOpen: () => {},
-      onDismiss: () => {},
-    });
+      groups: [{ date: '2026-09-10', passCount: 3, costUsd: 0.45, findings }],
+    }) as ReactElement;
     const text = textOf(tree);
     expect(text).toContain('Review findings — 2026-09-10');
     expect(text).toContain('3 passes');
     expect(text).toContain('$0.45');
     expect(text).toContain('1 critical');
     expect(text).toContain('1 high');
-    expect(text).toContain('bugs');
-    expect(text).toContain('b.ts');
-    expect(text).toContain('src/core/a.ts:12');
+    expect(text).toContain('1 normal');
+
+    const cards = chunkCards(tree);
+    expect(cards.map((c) => c.chunk)).toEqual(['src/core', 'src/app']);
+    expect(cards.find((c) => c.chunk === 'src/core')?.findings).toHaveLength(2);
+    expect(cards.find((c) => c.chunk === 'src/app')?.findings).toHaveLength(1);
   });
 
-  it('collapses into per-chunk groups once a date carries more than ten findings', () => {
+  it('renders a card per chunk at any finding count, with no collapse threshold', () => {
     const findings = Array.from({ length: 11 }, (_, i) =>
       finding({ file: `f${i}.ts`, chunk: i < 6 ? 'src/core' : 'src/app' }),
     );
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 1, costUsd: 0, findings }],
-      onOpen: () => {},
-      onDismiss: () => {},
-    });
-    const text = textOf(tree);
-    expect(text).toContain('src/core');
-    expect(text).toContain('6 findings');
-    expect(text).toContain('src/app');
-    expect(text).toContain('5 findings');
+    }) as ReactElement;
+    const cards = chunkCards(tree);
+    expect(cards.find((c) => c.chunk === 'src/core')?.findings).toHaveLength(6);
+    expect(cards.find((c) => c.chunk === 'src/app')?.findings).toHaveLength(5);
   });
 
   it('reports a clean night when a date has passes but no findings', () => {
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 2, costUsd: 0.1, findings: [] }],
-      onOpen: () => {},
-      onDismiss: () => {},
     });
     expect(textOf(tree)).toContain('Ran clean — no findings.');
   });

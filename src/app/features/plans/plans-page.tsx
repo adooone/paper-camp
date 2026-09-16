@@ -38,9 +38,7 @@ export const PlansPage = () => {
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
-    handleOpenNightFinding,
     handleDismissSuggestion,
-    handleDismissNightFinding,
   } = usePlansPage();
 
   if (plansError) {
@@ -100,11 +98,7 @@ export const PlansPage = () => {
         <div>
           <PlansHeader showGroupingToggle={plans.entries.length > 0} />
 
-          <NightReportSection
-            groups={nightReport}
-            onOpen={handleOpenNightFinding}
-            onDismiss={handleDismissNightFinding}
-          />
+          <NightReportSection groups={nightReport} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">
