@@ -2,8 +2,9 @@
 id: IDEA-270
 title: Review passes, not a night shift
 type: refactor
-status: review
+status: done
 created: 2026-09-15
+updated: 2026-09-16
 tags:
   - app
   - cli
