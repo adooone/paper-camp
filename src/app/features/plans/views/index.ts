@@ -4,7 +4,6 @@ export * from './clarifications-section';
 export * from './deliver-section';
 export * from './entity-detail';
 export * from './feedback-section';
-export * from './finding-detail';
 export * from './fixes-section';
 export * from './list-view';
 export * from './night-report-section';

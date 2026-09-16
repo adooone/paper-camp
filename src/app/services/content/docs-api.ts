@@ -95,19 +95,6 @@ export const promoteNightFinding = async (finding: NightSuggestionEntry) => {
   return res.json() as Promise<{ ok: boolean; id: string }>;
 };
 
-export const fetchNightFindingStaleness = async (finding: NightSuggestionEntry) => {
-  const res = await fetch(apiUrl('/api/night-findings/staleness'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ finding }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Failed to check file staleness' }));
-    throw new Error(err.error);
-  }
-  return res.json() as Promise<{ stale: boolean }>;
-};
-
 export const dismissNightFinding = async (finding: NightSuggestionEntry) => {
   const res = await fetch(apiUrl('/api/night-findings/dismiss'), {
     method: 'POST',

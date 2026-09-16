@@ -1,18 +1,11 @@
-import { surface } from '@/app/styles/tokens';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { SEVERITY_ORDER, nightFindingKey, sortedFindings } from '@/core/night-findings';
+import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Button, Card, IconButton, Stamp, type StampVariant, useToast } from '@dendelion/paper-ui';
+import { Card, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import { useFindingFixTask } from '../hooks';
 
 interface NightReportSectionProps {
   groups: NightReportGroup[];
-  onOpenChunk: (date: string, chunk: string) => void;
-}
-
-interface FindingRowsProps {
-  onOpen: (finding: NightSuggestionEntry) => void;
-  onDismiss: (finding: NightSuggestionEntry) => void;
+  onOpenChunk: (chunk: string) => void;
 }
 
 export const SEVERITY_STAMP_VARIANT: Record<NightFindingSeverity, StampVariant> = {
@@ -51,63 +44,14 @@ function checksLine(findings: NightSuggestionEntry[]): string {
   return Array.from(new Set(findings.map((f) => f.check))).join(', ');
 }
 
-// Plain render functions, not components: called inline so the returned JSX joins the
-// caller's own tree directly, rather than nesting as an opaque child component.
-export function renderFindingRow(
-  finding: NightSuggestionEntry,
-  { onOpen, onDismiss }: FindingRowsProps,
-) {
-  return (
-    <div key={nightFindingKey(finding)} className="rounded-[10px]">
-      <Card
-        size="small"
-        texture={surface.card}
-        accent
-        accentColor="slate"
-        className="plan-row-card"
-      >
-        <div className="flex items-center gap-2">
-          {/* Raw <button>, not paper-ui's Button — matches worklist-rows.tsx's titleButtonStyle. */}
-          <button
-            type="button"
-            onClick={() => onOpen(finding)}
-            className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
-          >
-            <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
-              {finding.severity}
-            </Stamp>
-            <Stamp size="small" variant="neutral">
-              {finding.check}
-            </Stamp>
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm opacity-80">
-              {finding.file}
-              {finding.line ? `:${finding.line}` : ''}
-            </span>
-          </button>
-          <IconButton
-            icon={<span>×</span>}
-            variant="ghost"
-            size="small"
-            label="Dismiss"
-            className="w-[28px] h-[28px]"
-            onClick={() => onDismiss(finding)}
-          />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 function ChunkCard({
-  date,
   chunk,
   findings,
   onOpen,
 }: {
-  date: string;
   chunk: string;
   findings: NightSuggestionEntry[];
-  onOpen: (date: string, chunk: string) => void;
+  onOpen: (chunk: string) => void;
 }) {
   const { activeTask, launching } = useFindingFixTask(findings);
   const fixing = launching || Boolean(activeTask);
@@ -117,7 +61,7 @@ function ChunkCard({
       {/* Raw <button>, not paper-ui's Button — this needs to read as the card's clickable body. */}
       <button
         type="button"
-        onClick={() => onOpen(date, chunk)}
+        onClick={() => onOpen(chunk)}
         className="flex w-full flex-col gap-1.5 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
       >
         <div className="flex items-center justify-between gap-2">
@@ -137,7 +81,7 @@ function ChunkCard({
             </Stamp>
           ))}
         </div>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs opacity-70">
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-xs opacity-70">
           {checksLine(findings)}
         </span>
       </button>
@@ -145,21 +89,11 @@ function ChunkCard({
   );
 }
 
-function renderChunkCards(
-  date: string,
-  findings: NightSuggestionEntry[],
-  onOpenChunk: (date: string, chunk: string) => void,
-) {
+function renderChunkCards(findings: NightSuggestionEntry[], onOpenChunk: (chunk: string) => void) {
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
       {groupByChunk(sortedFindings(findings)).map(({ chunk, findings: chunkFindings }) => (
-        <ChunkCard
-          key={chunk}
-          date={date}
-          chunk={chunk}
-          findings={chunkFindings}
-          onOpen={onOpenChunk}
-        />
+        <ChunkCard key={chunk} chunk={chunk} findings={chunkFindings} onOpen={onOpenChunk} />
       ))}
     </div>
   );
@@ -173,7 +107,9 @@ export const NightReportSection = ({ groups, onOpenChunk }: NightReportSectionPr
       {groups.map((group) => (
         <div key={group.date} className="mb-4">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h2 className="text-sm m-0 opacity-60">Review findings — {group.date}</h2>
+            <h2 className="text-sm m-0 opacity-60">
+              Review findings — <span className="font-handwritten">{group.date}</span>
+            </h2>
             <Stamp size="small" variant="neutral">
               {group.passCount} {group.passCount === 1 ? 'pass' : 'passes'} · $
               {group.costUsd.toFixed(2)}
@@ -187,7 +123,7 @@ export const NightReportSection = ({ groups, onOpenChunk }: NightReportSectionPr
           {group.findings.length === 0 ? (
             <p className="m-0 opacity-50 text-2xs">Ran clean — no findings.</p>
           ) : (
-            renderChunkCards(group.date, group.findings, onOpenChunk)
+            renderChunkCards(group.findings, onOpenChunk)
           )}
         </div>
       ))}

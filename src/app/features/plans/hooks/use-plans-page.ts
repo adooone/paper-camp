@@ -3,7 +3,6 @@ import {
   entityRouteParam,
   useActiveIdea,
   useActiveNightChunk,
-  useActiveNightFinding,
   useActivePlan,
   useOpenEntity,
 } from '@/app/hooks';
@@ -25,9 +24,8 @@ export const usePlansPage = () => {
   const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
-  const activeFinding = useActiveNightFinding();
   const activeChunk = useActiveNightChunk();
-  const { planId, ideaId, findingId, chunk } = useParams({ strict: false });
+  const { planId, ideaId, chunk } = useParams({ strict: false });
   const navigate = useNavigate();
   const openEntity = useOpenEntity();
   const { toast } = useToast();
@@ -39,7 +37,7 @@ export const usePlansPage = () => {
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
   // otherwise a reload would stomp the detailView restored from storage.
-  const entityKey = planId ?? ideaId ?? findingId ?? chunk;
+  const entityKey = planId ?? ideaId ?? chunk;
   const previousEntityKey = useRef(entityKey);
   useEffect(() => {
     if (previousEntityKey.current !== entityKey) {
@@ -68,10 +66,10 @@ export const usePlansPage = () => {
     openEntity(idea.id, idea.title);
   };
 
-  const handleOpenNightChunk = (date: string, chunkName: string) => {
+  const handleOpenNightChunk = (chunkName: string) => {
     navigate({
       to: '/findings/chunk/$chunk',
-      params: { chunk: chunkRouteParam(date, chunkName) },
+      params: { chunk: chunkRouteParam(chunkName) },
     });
   };
 
@@ -98,11 +96,9 @@ export const usePlansPage = () => {
     planFilters,
     activePlan,
     activeIdea,
-    activeFinding,
     activeChunk,
     planId,
     ideaId,
-    findingId,
     chunk,
     openSuggestion,
     setOpenSuggestion,

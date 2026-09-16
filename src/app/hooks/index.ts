@@ -7,7 +7,6 @@ export {
   entityRouteParam,
   useActiveIdea,
   useActiveNightChunk,
-  useActiveNightFinding,
   useActivePlan,
   useActiveSettingsSection,
   useResolvedDocSection,

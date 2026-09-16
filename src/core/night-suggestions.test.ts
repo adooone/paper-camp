@@ -172,7 +172,7 @@ describe('buildNightReportGroups', () => {
     };
   }
 
-  it('groups findings and passes by date, summing cost and counting passes', () => {
+  it('sums cost and counts passes for the newest date, keeping every open finding', () => {
     const groups = buildNightReportGroups(
       [entry({ date: '2026-09-10' })],
       [
@@ -203,12 +203,29 @@ describe('buildNightReportGroups', () => {
     expect(groups).toEqual([]);
   });
 
-  it('sorts groups by date, most recent first', () => {
+  it('merges findings across dates into one group headed by the newest date', () => {
     const groups = buildNightReportGroups(
       [entry({ date: '2026-09-08' }), entry({ date: '2026-09-10' })],
       [],
     );
-    expect(groups.map((g) => g.date)).toEqual(['2026-09-10', '2026-09-08']);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].date).toBe('2026-09-10');
+    expect(groups[0].findings.map((f) => f.date)).toEqual(['2026-09-08', '2026-09-10']);
+  });
+
+  it("uses the newest date's pass count and cost even when an older date has findings", () => {
+    const groups = buildNightReportGroups(
+      [entry({ date: '2026-09-08' })],
+      [nightReviewEntry({ startedAt: '2026-09-10T02:00:00.000Z' })],
+    );
+    expect(groups).toEqual([
+      {
+        date: '2026-09-10',
+        passCount: 1,
+        costUsd: 0.12,
+        findings: [entry({ date: '2026-09-08' })],
+      },
+    ]);
   });
 });
 

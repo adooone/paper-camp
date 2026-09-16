@@ -1,4 +1,10 @@
-import { entityLink, useActiveIdea, useActivePlan, useResolvedDocSection } from '@/app/hooks';
+import {
+  entityLink,
+  useActiveIdea,
+  useActiveNightChunk,
+  useActivePlan,
+  useResolvedDocSection,
+} from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb } from '@dendelion/paper-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
@@ -10,6 +16,7 @@ export const PageBreadcrumb = () => {
   const navigate = useNavigate();
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
+  const activeChunk = useActiveNightChunk();
   const plans = useAppStore((s) => s.plans);
   const activeDocSection = useResolvedDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
@@ -37,6 +44,12 @@ export const PageBreadcrumb = () => {
       return [
         { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
         { id: 'idea', label: activeIdea.title },
+      ];
+    }
+    if (activeChunk) {
+      return [
+        { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
+        { id: 'chunk', label: activeChunk.chunk },
       ];
     }
     const docLabel =

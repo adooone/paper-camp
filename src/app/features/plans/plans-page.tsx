@@ -9,7 +9,6 @@ import {
   ArchiveSection,
   ChunkDetail,
   EntityDetail,
-  FindingDetail,
   ListView,
   NightReportSection,
   NoteDetail,
@@ -29,11 +28,9 @@ export const PlansPage = () => {
     planFilters,
     activePlan,
     activeIdea,
-    activeFinding,
     activeChunk,
     planId,
     ideaId,
-    findingId,
     chunk,
     openSuggestion,
     setOpenSuggestion,
@@ -60,7 +57,7 @@ export const PlansPage = () => {
   if (!plans) {
     // A direct reload/deep-link into a plan, idea, finding, or chunk route lands here too —
     // the worklist skeleton would flash as the wrong page instead of the detail view's own state.
-    if (planId || ideaId || findingId || chunk) {
+    if (planId || ideaId || chunk) {
       return (
         <div>
           <RowSkeleton />
@@ -93,10 +90,6 @@ export const PlansPage = () => {
       ) : activeIdea ? (
         <div>
           <NoteDetail idea={activeIdea} />
-        </div>
-      ) : activeFinding ? (
-        <div>
-          <FindingDetail finding={activeFinding} />
         </div>
       ) : activeChunk ? (
         <div>

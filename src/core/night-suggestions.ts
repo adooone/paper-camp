@@ -120,24 +120,13 @@ export function buildNightReportGroups(
     passesByDate.set(date, bucket);
   }
 
-  const findingsByDate = new Map<string, NightSuggestionEntry[]>();
-  for (const finding of findings) {
-    const list = findingsByDate.get(finding.date) ?? [];
-    list.push(finding);
-    findingsByDate.set(finding.date, list);
-  }
+  const dates = new Set([...passesByDate.keys(), ...findings.map((finding) => finding.date)]);
+  if (dates.size === 0) return [];
 
-  const dates = new Set([...passesByDate.keys(), ...findingsByDate.keys()]);
-  const groups = [...dates].map(
-    (date): NightReportGroup => ({
-      date,
-      passCount: passesByDate.get(date)?.passCount ?? 0,
-      costUsd: passesByDate.get(date)?.costUsd ?? 0,
-      findings: findingsByDate.get(date) ?? [],
-    }),
-  );
+  const newestDate = [...dates].sort().at(-1) as string;
+  const bucket = passesByDate.get(newestDate) ?? { passCount: 0, costUsd: 0 };
 
-  return groups.sort((a, b) => b.date.localeCompare(a.date));
+  return [{ date: newestDate, passCount: bucket.passCount, costUsd: bucket.costUsd, findings }];
 }
 
 export async function readNightFindings(root: string): Promise<NightSuggestionEntry[]> {

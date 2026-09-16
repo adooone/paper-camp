@@ -12,8 +12,8 @@ export function findingIssueId(finding: NightSuggestionEntry): string {
 
 export function findingsIssueId(findings: NightSuggestionEntry[]): string {
   if (findings.length === 1) return findingIssueId(findings[0]);
-  const [{ date, chunk }] = findings;
-  return `night-chunk:${date}:${chunk}`;
+  const [{ chunk }] = findings;
+  return `night-chunk:${chunk}`;
 }
 
 export function findingFixReason(finding: NightSuggestionEntry): string {
