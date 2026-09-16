@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
 import { join } from 'node:path';
@@ -299,13 +300,19 @@ export function deriveUpdateEvent(
   return previous;
 }
 
+function isValidUpdateToken(bearer: string, updateToken: string): boolean {
+  const bearerBuffer = Buffer.from(bearer);
+  const tokenBuffer = Buffer.from(updateToken);
+  return bearerBuffer.length === tokenBuffer.length && timingSafeEqual(bearerBuffer, tokenBuffer);
+}
+
 export function createMachineUpdateHandler(
   updateToken: string,
   applyUpdate: (version: string) => Promise<MachineUpdateResponse>,
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const bearer = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
-    if (!bearer || bearer !== updateToken) {
+    if (!bearer || !isValidUpdateToken(bearer, updateToken)) {
       sendJson(res, 403, { error: 'Forbidden: invalid update token' });
       return;
     }
