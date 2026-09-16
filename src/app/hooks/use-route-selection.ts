@@ -1,4 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
+import { nightChunkKey, parseNightChunkKey } from '@/core/night-findings';
 import type { IdeaEntry, NightSuggestionEntry, PlanEntry } from '@/types/index';
 import { useParams } from '@tanstack/react-router';
 
@@ -101,6 +102,37 @@ export function useActiveNightFinding(): NightSuggestionEntry | null {
   const findNightFindingById = useAppStore((s) => s.findNightFindingById);
   if (typeof findingId !== 'string') return null;
   return findNightFindingById(decodeURIComponent(findingId)) ?? null;
+}
+
+export function chunkRouteParam(date: string, chunk: string): string {
+  return encodeURIComponent(nightChunkKey(date, chunk));
+}
+
+export interface ActiveNightChunk {
+  date: string;
+  chunk: string;
+  findings: NightSuggestionEntry[];
+  passCount: number;
+  costUsd: number;
+}
+
+export function useActiveNightChunk(): ActiveNightChunk | null {
+  const { chunk: chunkParam } = useParams({ strict: false });
+  const nightReport = useAppStore((s) => s.nightReport);
+  if (typeof chunkParam !== 'string') return null;
+  const parsed = parseNightChunkKey(decodeURIComponent(chunkParam));
+  if (!parsed) return null;
+  const group = nightReport.find((g) => g.date === parsed.date);
+  if (!group) return null;
+  const findings = group.findings.filter((f) => f.chunk === parsed.chunk);
+  if (findings.length === 0) return null;
+  return {
+    date: parsed.date,
+    chunk: parsed.chunk,
+    findings,
+    passCount: group.passCount,
+    costUsd: group.costUsd,
+  };
 }
 
 function useActiveDocSection(): DocSection | null {

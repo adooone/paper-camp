@@ -7,6 +7,7 @@ import { usePlansPage } from './hooks';
 import { PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
+  ChunkDetail,
   EntityDetail,
   FindingDetail,
   ListView,
@@ -29,15 +30,18 @@ export const PlansPage = () => {
     activePlan,
     activeIdea,
     activeFinding,
+    activeChunk,
     planId,
     ideaId,
     findingId,
+    chunk,
     openSuggestion,
     setOpenSuggestion,
     handleBack,
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
+    handleOpenNightChunk,
     handleDismissSuggestion,
   } = usePlansPage();
 
@@ -54,9 +58,9 @@ export const PlansPage = () => {
   }
 
   if (!plans) {
-    // A direct reload/deep-link into a plan, idea, or finding route lands here too — the
-    // worklist skeleton would flash as the wrong page instead of the detail view's own state.
-    if (planId || ideaId || findingId) {
+    // A direct reload/deep-link into a plan, idea, finding, or chunk route lands here too —
+    // the worklist skeleton would flash as the wrong page instead of the detail view's own state.
+    if (planId || ideaId || findingId || chunk) {
       return (
         <div>
           <RowSkeleton />
@@ -94,11 +98,15 @@ export const PlansPage = () => {
         <div>
           <FindingDetail finding={activeFinding} />
         </div>
+      ) : activeChunk ? (
+        <div>
+          <ChunkDetail chunk={activeChunk} />
+        </div>
       ) : (
         <div>
           <PlansHeader showGroupingToggle={plans.entries.length > 0} />
 
-          <NightReportSection groups={nightReport} />
+          <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
 
           {plans.warnings.length > 0 && (
             <Card size="small" accent accentColor="amber">

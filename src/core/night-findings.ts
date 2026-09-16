@@ -8,6 +8,17 @@ export function nightFindingKey(finding: NightSuggestionEntry): string {
   return `${finding.date}-${finding.check}-${finding.file}-${finding.line ?? 'null'}`;
 }
 
+// The date's fixed `YYYY-MM-DD` width lets a chunk path (which may itself contain colons)
+// come after the separator without ambiguity.
+export function nightChunkKey(date: string, chunk: string): string {
+  return `${date}:${chunk}`;
+}
+
+export function parseNightChunkKey(key: string): { date: string; chunk: string } | null {
+  if (key[10] !== ':') return null;
+  return { date: key.slice(0, 10), chunk: key.slice(11) };
+}
+
 export function nightFindingTitle(finding: NightSuggestionEntry): string {
   const base = finding.file.split('/').pop() ?? finding.file;
   return `${finding.check}: ${base}`;

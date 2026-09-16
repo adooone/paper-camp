@@ -107,7 +107,7 @@ describe('nightFindingKey', () => {
 
 describe('NightReportSection', () => {
   it('renders nothing for an empty group list', () => {
-    const tree = NightReportSection({ groups: [] });
+    const tree = NightReportSection({ groups: [], onOpenChunk: () => {} });
     expect(tree).toBeNull();
   });
 
@@ -119,6 +119,7 @@ describe('NightReportSection', () => {
     ];
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 3, costUsd: 0.45, findings }],
+      onOpenChunk: () => {},
     }) as ReactElement;
     const text = textOf(tree);
     expect(text).toContain('Review findings — 2026-09-10');
@@ -140,6 +141,7 @@ describe('NightReportSection', () => {
     );
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 1, costUsd: 0, findings }],
+      onOpenChunk: () => {},
     }) as ReactElement;
     const cards = chunkCards(tree);
     expect(cards.find((c) => c.chunk === 'src/core')?.findings).toHaveLength(6);
@@ -149,6 +151,7 @@ describe('NightReportSection', () => {
   it('reports a clean night when a date has passes but no findings', () => {
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 2, costUsd: 0.1, findings: [] }],
+      onOpenChunk: () => {},
     });
     expect(textOf(tree)).toContain('Ran clean — no findings.');
   });

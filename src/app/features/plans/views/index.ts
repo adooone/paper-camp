@@ -1,4 +1,5 @@
 export * from './archive-section';
+export * from './chunk-detail';
 export * from './clarifications-section';
 export * from './deliver-section';
 export * from './entity-detail';

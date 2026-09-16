@@ -66,9 +66,10 @@ task's agent does with the prompt.
       One kraft `Card` per chunk with its stamps, checks line and *Fix all*, at any
       finding count — `CHUNK_COLLAPSE_THRESHOLD` and the flat list go.
       run: 7m5s · 84 in · 32.1k out · sonnet-5 · sess:23a3ad32-f83f-4dbf-9ce4-ae2e71222eb1
-- [ ] Add the `/findings/chunk/$chunk` route and view
+- [x] Add the `/findings/chunk/$chunk` route and view
       Head card with name, date, pass count and cost, then the chunk's findings as
       `renderFindingRow` sorted by severity then file, with *Fix all* on the bottom bar.
+      run: 8m57s · 172 in · 33.7k out · sonnet-5 · sess:12fed03e-4c98-473b-8f60-379e98a5c292
 - [ ] Reflect a fix in flight on both surfaces
       The card and the head card show the *fixing* stamp and disable *Fix all* while the
       chunk's task is active.

@@ -1,6 +1,8 @@
 import {
+  chunkRouteParam,
   entityRouteParam,
   useActiveIdea,
+  useActiveNightChunk,
   useActiveNightFinding,
   useActivePlan,
   useOpenEntity,
@@ -24,7 +26,8 @@ export const usePlansPage = () => {
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
   const activeFinding = useActiveNightFinding();
-  const { planId, ideaId, findingId } = useParams({ strict: false });
+  const activeChunk = useActiveNightChunk();
+  const { planId, ideaId, findingId, chunk } = useParams({ strict: false });
   const navigate = useNavigate();
   const openEntity = useOpenEntity();
   const { toast } = useToast();
@@ -36,7 +39,7 @@ export const usePlansPage = () => {
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
   // otherwise a reload would stomp the detailView restored from storage.
-  const entityKey = planId ?? ideaId ?? findingId;
+  const entityKey = planId ?? ideaId ?? findingId ?? chunk;
   const previousEntityKey = useRef(entityKey);
   useEffect(() => {
     if (previousEntityKey.current !== entityKey) {
@@ -65,6 +68,13 @@ export const usePlansPage = () => {
     openEntity(idea.id, idea.title);
   };
 
+  const handleOpenNightChunk = (date: string, chunkName: string) => {
+    navigate({
+      to: '/findings/chunk/$chunk',
+      params: { chunk: chunkRouteParam(date, chunkName) },
+    });
+  };
+
   const [openSuggestion, setOpenSuggestion] = useState<SuggestionEntry | null>(null);
 
   const handleDismissSuggestion = async (suggestion: SuggestionEntry) => {
@@ -89,15 +99,18 @@ export const usePlansPage = () => {
     activePlan,
     activeIdea,
     activeFinding,
+    activeChunk,
     planId,
     ideaId,
     findingId,
+    chunk,
     openSuggestion,
     setOpenSuggestion,
     handleBack,
     handleOpenPlan,
     handleOpenIdea,
     handleOpenArchivable,
+    handleOpenNightChunk,
     handleDismissSuggestion,
   };
 };

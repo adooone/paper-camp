@@ -102,6 +102,12 @@ const findingDetailRoute = createRoute({
   component: PlansPage,
   staticData: { layer: 'corpus' },
 });
+const findingChunkDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/findings/chunk/$chunk',
+  component: PlansPage,
+  staticData: { layer: 'corpus' },
+});
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
@@ -227,6 +233,7 @@ const routeTree = rootRoute.addChildren([
   ideaDetailRoute,
   ticketDetailRoute,
   findingDetailRoute,
+  findingChunkDetailRoute,
   docsRoute,
   docsSectionRoute,
   settingsRoute,
