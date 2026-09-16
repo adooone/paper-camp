@@ -37,7 +37,8 @@ The report's own layout, which [[IDEA-272]]'s fixes cover. What counts as
 a finding.
 
 ### Phases
-- [ ] Add `open-findings` to the gate reason type
+- [x] Add `open-findings` to the gate reason type
+      run: 1m38s · 24 in · 5.5k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
 - [ ] Block the gate on a non-zero `openFindings`
       `NightGateInput` gains the count; `evaluateNightGate` pushes the reason above zero.
 - [ ] Count the project's open findings where the daemon evaluates the gate

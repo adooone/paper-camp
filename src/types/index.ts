@@ -874,7 +874,8 @@ export type NightGateBlockReason =
   | 'five-hour-ceiling'
   | 'seven-day-floor'
   | 'outside-window'
-  | 'paused';
+  | 'paused'
+  | 'open-findings';
 
 export interface NightGateStatus {
   open: boolean;
