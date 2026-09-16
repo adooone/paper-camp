@@ -35,3 +35,12 @@ review are still open*, beside the existing seven reasons.
 
 The report's own layout, which [[IDEA-272]]'s fixes cover. What counts as
 a finding.
+
+### Phases
+- [ ] Add `open-findings` to the gate reason type
+- [ ] Block the gate on a non-zero `openFindings`
+      `NightGateInput` gains the count; `evaluateNightGate` pushes the reason above zero.
+- [ ] Count the project's open findings where the daemon evaluates the gate
+      `daemon-server.ts` parses `suggestions.md` with `parseNightFindings` before each evaluation.
+- [ ] Label the reason in the CLI and the Settings night section
+- [ ] Cover the new reason in `night-gate.test.ts`

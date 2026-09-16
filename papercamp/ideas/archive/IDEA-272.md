@@ -2,7 +2,7 @@
 id: IDEA-272
 title: A card per reviewed chunk
 type: feat
-status: review
+status: done
 created: 2026-09-16
 updated: 2026-09-16
 tags:
