@@ -2,8 +2,9 @@
 id: IDEA-271
 title: A page for a review finding
 type: feat
-status: review
+status: done
 created: 2026-09-15
+updated: 2026-09-16
 tags:
   - app
   - ui
