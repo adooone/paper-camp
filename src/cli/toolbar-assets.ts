@@ -8,7 +8,7 @@ const ASSET_CONTENT_TYPES: Record<string, string> = {
   'toolbar.js.map': 'application/json; charset=utf-8',
 };
 
-export function toolbarDir(): string {
+function toolbarDir(): string {
   return join(dirname(fileURLToPath(import.meta.url)), '..', 'toolbar');
 }
 
