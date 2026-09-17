@@ -125,9 +125,13 @@ function papercampApi(): Plugin {
         pending = attempt;
         return attempt;
       };
-      const serverRoot = resolve(__dirname, 'src/app/server');
+      // The API's graph reaches into core and types, not only the server folder — a
+      // core edit that isn't swapped in leaves the dev API serving stale logic.
+      const apiRoots = ['src/app/server', 'src/core', 'src/types'].map((dir) =>
+        resolve(__dirname, dir),
+      );
       server.watcher.on('change', (file) => {
-        if (!file.startsWith(serverRoot)) return;
+        if (!apiRoots.some((root) => file.startsWith(root))) return;
         const mod = server.moduleGraph.getModuleById(file);
         if (mod) server.moduleGraph.invalidateModule(mod);
         if (g.__paperCampApi) {

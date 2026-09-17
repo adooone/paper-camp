@@ -103,6 +103,7 @@ const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
   'seven-day-floor': '7d floor exceeded',
   'outside-window': 'outside the configured window',
   paused: 'paused until the next reset',
+  'open-findings': 'findings from the last review are still open',
 };
 
 function formatGateLine(response: MachineNightGateResponse | null): string {
