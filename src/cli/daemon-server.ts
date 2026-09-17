@@ -36,7 +36,7 @@ import {
 import { evaluateNightGate } from '../core/night-gate';
 import { computeNightHealthMap } from '../core/night-health';
 import { startNightShift } from '../core/night-shift';
-import { parseNightFindings } from '../core/night-suggestions';
+import { readNightFindings } from '../core/night-suggestions';
 import { readTaskLog } from '../core/parse';
 import { latestCapacity } from '../core/rate-limit';
 import { checkLatestVersion } from '../core/registry-version';
@@ -146,11 +146,7 @@ export async function buildNightGateResponse(
     () => '',
   );
   const snapshot = latestCapacity(readTaskLog(taskLogRaw))?.snapshot ?? null;
-  const suggestionsRaw = await readFile(
-    join(project.path, 'papercamp', 'suggestions.md'),
-    'utf-8',
-  ).catch(() => '');
-  const openFindings = parseNightFindings(suggestionsRaw).length;
+  const openFindings = (await readNightFindings(project.path)).length;
 
   const gate = evaluateNightGate({
     now,
