@@ -88,11 +88,6 @@ export function formatPlanEntry(input: NewPlanInput): string {
   return sections.join('\n\n').trimEnd();
 }
 
-export function formatPlans(entries: NewPlanInput[]): string {
-  if (entries.length === 0) return '';
-  return `${entries.map((entry) => formatPlanEntry(entry)).join('\n\n')}\n`;
-}
-
 export function serializeFrontmatter(data: Record<string, unknown>): string {
   const yaml = stringifyYaml(data).trimEnd();
   return `---\n${yaml}\n---`;
