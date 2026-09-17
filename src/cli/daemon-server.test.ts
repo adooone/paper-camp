@@ -620,9 +620,15 @@ describe('createMachineUpdateHandler', () => {
       headers: { Authorization: 'Bearer nope' },
       body: JSON.stringify({ version: '0.29.1' }),
     });
+    const sameLengthWrong = await fetch(`http://127.0.0.1:${port}/`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer wrong!' },
+      body: JSON.stringify({ version: '0.29.1' }),
+    });
 
     expect(missing.status).toBe(403);
     expect(wrong.status).toBe(403);
+    expect(sameLengthWrong.status).toBe(403);
     expect(applyUpdate).not.toHaveBeenCalled();
   });
 
