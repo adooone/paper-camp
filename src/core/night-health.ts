@@ -259,18 +259,17 @@ export async function selectNightChunks(
   map: NightHealthMap,
   options: { threshold: number; maxChunks: number; exclude?: ReadonlySet<string> },
 ): Promise<ChunkHealth[]> {
-  const eligible = map.chunks.filter(
-    (chunk) => chunk.score > options.threshold && !options.exclude?.has(chunk.path),
-  );
-  const changed = await Promise.all(
-    eligible.map((chunk) =>
-      chunk.lastReviewedCommit
-        ? hasFileChangedSince(root, chunk.path, chunk.lastReviewedCommit)
-        : Promise.resolve(true),
-    ),
-  );
-  return eligible
-    .filter((_chunk, index) => changed[index])
-    .sort((a, b) => b.score - a.score)
-    .slice(0, options.maxChunks);
+  const eligible = map.chunks
+    .filter((chunk) => chunk.score > options.threshold && !options.exclude?.has(chunk.path))
+    .sort((a, b) => b.score - a.score);
+
+  const selected: ChunkHealth[] = [];
+  for (const chunk of eligible) {
+    if (selected.length >= options.maxChunks) break;
+    const changed = chunk.lastReviewedCommit
+      ? await hasFileChangedSince(root, chunk.path, chunk.lastReviewedCommit).catch(() => true)
+      : true;
+    if (changed) selected.push(chunk);
+  }
+  return selected;
 }
