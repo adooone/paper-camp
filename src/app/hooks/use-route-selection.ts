@@ -113,16 +113,20 @@ export function useActiveNightChunk(): ActiveNightChunk | null {
   const nightReport = useAppStore((s) => s.nightReport);
   if (typeof chunkParam !== 'string') return null;
   const chunkName = decodeURIComponent(chunkParam);
-  const group = nightReport.find((g) => g.findings.some((f) => f.chunk === chunkName));
-  if (!group) return null;
-  const findings = group.findings.filter((f) => f.chunk === chunkName);
-  if (findings.length === 0) return null;
+  // The route has no date, only a chunk name, and the same chunk can appear in more
+  // than one night's group — pick the most recent group that has findings for it
+  // instead of whichever comes first in the array.
+  const match = nightReport
+    .map((group) => ({ group, findings: group.findings.filter((f) => f.chunk === chunkName) }))
+    .filter(({ findings }) => findings.length > 0)
+    .sort((a, b) => (a.group.date < b.group.date ? 1 : -1))[0];
+  if (!match) return null;
   return {
-    date: group.date,
+    date: match.group.date,
     chunk: chunkName,
-    findings,
-    passCount: group.passCount,
-    costUsd: group.costUsd,
+    findings: match.findings,
+    passCount: match.group.passCount,
+    costUsd: match.group.costUsd,
   };
 }
 
