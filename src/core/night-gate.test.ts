@@ -18,6 +18,7 @@ const BASE = {
   taskRunning: false,
   ceiling: 50,
   floor: 70,
+  openFindings: 0,
 };
 
 describe('evaluateNightGate', () => {
@@ -75,6 +76,11 @@ describe('evaluateNightGate', () => {
   it('blocks when the seven-day floor is exceeded — the setting to tune first', () => {
     const gate = evaluateNightGate({ ...BASE, snapshot: snapshot(10, 71) });
     expect(gate.reasons).toEqual(['seven-day-floor']);
+  });
+
+  it('blocks when there are open findings', () => {
+    const gate = evaluateNightGate({ ...BASE, snapshot: snapshot(10, 10), openFindings: 1 });
+    expect(gate.reasons).toEqual(['open-findings']);
   });
 
   it('reports every blocking reason at once', () => {
