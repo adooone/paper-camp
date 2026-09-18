@@ -1,6 +1,9 @@
+import { parseMachineProjectRuntimeUrl } from '@/app/services/hub-machines';
+import { runtimeConnection } from '@/app/services/runtime-connection';
 import type { NightStatus } from '@/app/services/system';
 import {
   fetchConfig,
+  fetchMachineNightGate,
   fetchNightStatus,
   pauseNightShift,
   runNightPassNow,
@@ -9,10 +12,12 @@ import {
 } from '@/app/services/system';
 import { randomId } from '@/app/utils/random-id';
 import { NIGHT_BUILTIN_CHECKS } from '@/core/night-checks';
+import { GATE_REASON_LABEL } from '@/core/night-gate';
 import {
   DEFAULT_NIGHT_CONFIG,
   type NightCheckId,
   type NightCustomCheck,
+  type NightGateStatus,
   type PaperCampConfig,
 } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
@@ -49,13 +54,25 @@ function reconcileRows(
   return [...merged, ...pending];
 }
 
+function gateLine(gate: NightGateStatus): string {
+  if (gate.open) return 'Gate open';
+  return `Blocked: ${gate.reasons.map((reason) => GATE_REASON_LABEL[reason]).join(', ')}`;
+}
+
 export const useNightSection = () => {
   const [config, setConfig] = useState<PaperCampConfig | null | undefined>(undefined);
   const [status, setStatus] = useState<NightStatus | null | undefined>(undefined);
   const [customChecks, setCustomChecks] = useState<KeyedNightCustomCheck[]>([]);
   const [running, setRunning] = useState(false);
   const [thresholdInput, setThresholdInput] = useState('');
+  const [gate, setGate] = useState<NightGateStatus | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const machineUrl = parseMachineProjectRuntimeUrl(runtimeConnection.runtimeUrl)?.machineUrl;
+    if (!machineUrl) return;
+    fetchMachineNightGate(machineUrl).then((response) => setGate(response?.gate ?? null));
+  }, []);
 
   const reloadFromConfig = useCallback((c: PaperCampConfig | null) => {
     setConfig(c);
@@ -174,6 +191,7 @@ export const useNightSection = () => {
   return {
     config,
     status,
+    gateLine: gate ? gateLine(gate) : null,
     customChecks,
     running,
     thresholdInput,

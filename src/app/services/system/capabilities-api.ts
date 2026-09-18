@@ -3,7 +3,9 @@ import {
   type AgentTaskState,
   type CapabilityResult,
   type ConnectionResult,
+  MACHINE_NIGHT_PATH,
   MACHINE_PROJECTS_PATH,
+  type MachineNightGateResponse,
   type MachineProjectsResponse,
   type TailnetPeerRuntime,
 } from '@/types/index';
@@ -105,6 +107,23 @@ export const fetchMachineProjects = async (
       projects: body.projects ?? [],
       pendingUpdateVersion: body.pendingUpdateVersion ?? null,
     };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * The registry holds machines this client is not currently pointed at, so the
+ * base URL is explicit rather than taken from `apiUrl` — same shape as
+ * `fetchMachineProjects` above, one endpoint over for the night-shift gate.
+ */
+export const fetchMachineNightGate = async (
+  machineUrl: string,
+): Promise<MachineNightGateResponse | null> => {
+  try {
+    const response = await fetch(`${machineUrl}${MACHINE_NIGHT_PATH}`);
+    if (!response.ok) return null;
+    return (await response.json()) as MachineNightGateResponse;
   } catch {
     return null;
   }

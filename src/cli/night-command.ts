@@ -19,6 +19,7 @@ import {
   setNightProject,
 } from '../core/machine-registry';
 import { resolveNightChecks } from '../core/night-checks';
+import { GATE_REASON_LABEL } from '../core/night-gate';
 import { markChunkReviewed, selectNightChunks } from '../core/night-health';
 import {
   appendNightFindings,
@@ -38,7 +39,6 @@ import {
   type NightConfig,
   type NightFinding,
   type NightFindingSeverity,
-  type NightGateBlockReason,
   type NightHealthMap,
   type NightReportGroup,
   type NightSuggestionEntry,
@@ -94,17 +94,6 @@ function formatNightSettings(resolved: ResolvedNightConfig): string {
   ];
   return lines.join('\n');
 }
-
-const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
-  'dashboard-active': 'dashboard active in the last 30m',
-  'task-running': 'an agent task is running',
-  'no-capacity-snapshot': 'no capacity snapshot yet',
-  'five-hour-ceiling': '5h ceiling exceeded',
-  'seven-day-floor': '7d floor exceeded',
-  'outside-window': 'outside the configured window',
-  paused: 'paused until the next reset',
-  'open-findings': 'findings from the last review are still open',
-};
 
 function formatGateLine(response: MachineNightGateResponse | null): string {
   if (!response) {

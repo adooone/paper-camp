@@ -53,9 +53,10 @@ a finding.
 - [x] Count the project's open findings where the daemon evaluates the gate
       `daemon-server.ts` parses `suggestions.md` with `parseNightFindings` before each evaluation.
       run: 52s · 24 in · 2.9k out · sonnet-5 · sess:018d457e-c325-426c-b1d5-0bd141e29398
-- [ ] Label the reason in the CLI and add a gate line to Settings
+- [x] Label the reason in the CLI and add a gate line to Settings
       Move `GATE_REASON_LABEL` to `night-gate.ts`; the Settings section fetches
       `MACHINE_NIGHT_PATH` on mount and renders *Gate open* or *Blocked: <reasons>*.
+      run: 2m28s · 90 in · 17k out · sonnet-5 · sess:01fa8343-f89e-4409-84f8-a40d331446f1
 - [ ] Cover the new reason in `night-gate.test.ts`
 
 ### Thread

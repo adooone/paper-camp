@@ -1,6 +1,22 @@
-import type { NightGateStatus, NightWindow, RateLimitSnapshot } from '../types/index';
+import type {
+  NightGateBlockReason,
+  NightGateStatus,
+  NightWindow,
+  RateLimitSnapshot,
+} from '../types/index';
 
 const IDLE_DESK_MS = 30 * 60 * 1000;
+
+export const GATE_REASON_LABEL: Record<NightGateBlockReason, string> = {
+  'dashboard-active': 'dashboard active in the last 30m',
+  'task-running': 'an agent task is running',
+  'no-capacity-snapshot': 'no capacity snapshot yet',
+  'five-hour-ceiling': '5h ceiling exceeded',
+  'seven-day-floor': '7d floor exceeded',
+  'outside-window': 'outside the configured window',
+  paused: 'paused until the next reset',
+  'open-findings': 'findings from the last review are still open',
+};
 
 function parseMinutesSinceMidnight(hhmm: string): number {
   const [hours, minutes] = hhmm.split(':').map(Number);

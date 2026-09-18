@@ -7,6 +7,7 @@ export const NightSection = () => {
   const {
     config,
     status,
+    gateLine,
     customChecks,
     running,
     thresholdInput,
@@ -50,6 +51,7 @@ export const NightSection = () => {
             </div>
             <Switch checked={enabled} onChange={handleToggleEnabled} />
           </div>
+          {gateLine && <p className="opacity-[0.45] text-sm mt-0 mx-0 mb-3">{gateLine}</p>}
           <Divider />
 
           <div className="flex items-center justify-between gap-3 pb-3 pt-3">
