@@ -89,12 +89,14 @@ describe('evaluateNightGate', () => {
       snapshot: snapshot(90, 90),
       taskRunning: true,
       lastDashboardRequestAt: BASE.now,
+      openFindings: 1,
     });
     expect(gate.reasons).toEqual([
       'dashboard-active',
       'task-running',
       'five-hour-ceiling',
       'seven-day-floor',
+      'open-findings',
     ]);
   });
 

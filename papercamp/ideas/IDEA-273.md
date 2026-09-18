@@ -3,7 +3,7 @@ id: IDEA-273
 title: No pass while findings are open
 type: fix
 kind: fix
-status: in-progress
+status: review
 idea: IDEA-270
 created: 2026-09-16
 updated: 2026-09-18
@@ -57,7 +57,8 @@ a finding.
       Move `GATE_REASON_LABEL` to `night-gate.ts`; the Settings section fetches
       `MACHINE_NIGHT_PATH` on mount and renders *Gate open* or *Blocked: <reasons>*.
       run: 2m28s · 90 in · 17k out · sonnet-5 · sess:01fa8343-f89e-4409-84f8-a40d331446f1
-- [ ] Cover the new reason in `night-gate.test.ts`
+- [x] Cover the new reason in `night-gate.test.ts`
+      run: 1m3s · 22 in · 2.8k out · sonnet-5 · sess:01fa8343-f89e-4409-84f8-a40d331446f1
 
 ### Thread
 - [x] 2026-09-16 [question] [agent] Run-all parked on phase 4 ("Label the reason in the CLI and the Settings night section") — the agent needs a decision: Phase 4 says to add the `open-findings` label to "the Settings section's gate line," but I can't find any gate-reason display in the Settings UI — `NightSection`/`useNightSection` only shows enabled/paused/run-now/threshold, and nothing in `src/app` consumes `MachineNightGateResponse`/`gate.reasons` at all (only the CLI's `GATE_REASON_LABEL`, which I've already updated). Should I add a new gate-reasons line to the Settings night section (a small UI addition), or was this bullet describing a surface that doesn't actually exist yet and should be dropped from this phase?
