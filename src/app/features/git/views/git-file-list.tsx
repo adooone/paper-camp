@@ -40,12 +40,14 @@ export const GitFileList = () => {
   if (!files) return <SidebarSkeleton />;
   if (files.length === 0) {
     return (
-      <div className="flex flex-col">
-        <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
-          <span>Changed files</span>
+      <SidebarCard>
+        <div className="flex flex-col">
+          <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
+            <span>Changed files</span>
+          </div>
+          <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
         </div>
-        <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
-      </div>
+      </SidebarCard>
     );
   }
 

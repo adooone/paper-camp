@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { closeSync, mkdirSync, openSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { open, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import {
   type DaemonState,
@@ -386,15 +386,23 @@ export async function runLogs(opts: LogsOptions): Promise<void> {
   // that itself, so the startup-time `process.ppid` is probed with a zero signal.
   const parentPid = process.ppid;
   process.stdout.on('error', () => process.exit(0));
-  let printedLength = content.length;
-  for (;;) {
-    await sleep(LOGS_POLL_INTERVAL_MS);
-    if (!isProcessAlive(parentPid) || process.stdout.destroyed) return;
-    const latest = await readFile(logPath, 'utf-8').catch(() => '');
-    if (latest.length < printedLength) printedLength = 0;
-    if (latest.length > printedLength) {
-      process.stdout.write(latest.slice(printedLength));
-      printedLength = latest.length;
+  let printedLength = Buffer.byteLength(content, 'utf-8');
+  const handle = await open(logPath, 'r').catch(() => null);
+  if (!handle) return;
+  try {
+    for (;;) {
+      await sleep(LOGS_POLL_INTERVAL_MS);
+      if (!isProcessAlive(parentPid) || process.stdout.destroyed) return;
+      const { size } = await handle.stat();
+      if (size < printedLength) printedLength = 0;
+      if (size > printedLength) {
+        const buffer = Buffer.alloc(size - printedLength);
+        await handle.read(buffer, 0, buffer.length, printedLength);
+        process.stdout.write(buffer.toString('utf-8'));
+        printedLength = size;
+      }
     }
+  } finally {
+    await handle.close();
   }
 }

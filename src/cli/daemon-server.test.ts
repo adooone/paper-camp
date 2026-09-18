@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -12,6 +13,7 @@ import {
   saveRegistry,
   setNightProject,
 } from '../core/machine-registry';
+import { appendNightFindings } from '../core/night-suggestions';
 import {
   buildNightGateResponse,
   createDaemonRequestHandler,
@@ -342,6 +344,24 @@ describe('buildNightGateResponse', () => {
       getLastRequestAt: () => lastRequestAt,
     }) as unknown as ApiMiddleware;
 
+  function git(cwd: string, ...args: string[]): string {
+    const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
+    if (result.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
+    return result.stdout.trim();
+  }
+
+  async function commitProjectFile(projectPath: string, file: string): Promise<string> {
+    git(projectPath, 'init', '-b', 'main');
+    git(projectPath, 'config', 'user.email', 'test@example.com');
+    git(projectPath, 'config', 'user.name', 'Test User');
+    git(projectPath, 'config', 'commit.gpgsign', 'false');
+    await mkdir(join(projectPath, 'src'), { recursive: true });
+    await writeFile(join(projectPath, file), 'export const a = 1;\n', 'utf-8');
+    git(projectPath, 'add', '.');
+    git(projectPath, 'commit', '-m', 'seed');
+    return git(projectPath, 'rev-parse', 'HEAD');
+  }
+
   it('is off with no gate when no project is selected', async () => {
     const registryPath = await makeRegistryFile({ version: 1, projects: [] });
 
@@ -428,6 +448,35 @@ describe('buildNightGateResponse', () => {
 
     const response = await buildNightGateResponse(registryPath, new Map());
     expect(response.gate?.reasons).toEqual(['five-hour-ceiling', 'seven-day-floor']);
+  });
+
+  it('blocks with open-findings when suggestions.md has a still-fresh finding', async () => {
+    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const commit = await commitProjectFile(projectPath, join('src', 'a.ts'));
+    await writeFile(
+      join(projectPath, 'papercamp', 'suggestions.md'),
+      appendNightFindings('', [
+        {
+          date: '2026-09-10',
+          check: 'bugs',
+          chunk: 'src',
+          file: 'src/a.ts',
+          line: 12,
+          commit,
+          severity: 'high',
+          message: 'Off-by-one in the turn counter.',
+        },
+      ]),
+      'utf-8',
+    );
+    const registry = setNightProject(
+      addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
+      'demo',
+    ).registry;
+    const registryPath = await makeRegistryFile(registry);
+
+    const response = await buildNightGateResponse(registryPath, new Map());
+    expect(response.gate?.reasons).toEqual(['open-findings']);
   });
 });
 
