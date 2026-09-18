@@ -83,7 +83,6 @@ export function useStatusBarOverflow(candidates: { key: string; priority: number
       if (prev.size === next.size && [...prev].every((k) => next.has(k))) return prev;
       return next;
     });
-    // biome-ignore lint/correctness/useExhaustiveDependencies: candidatesKey stands in for the array, which callers rebuild every render.
   }, [candidatesKey]);
 
   useLayoutEffect(() => {
