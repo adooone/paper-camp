@@ -3,7 +3,7 @@ id: IDEA-273
 title: No pass while findings are open
 type: fix
 kind: fix
-status: review
+status: done
 idea: IDEA-270
 created: 2026-09-16
 updated: 2026-09-18
