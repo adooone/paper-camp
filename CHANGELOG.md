@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.35.1](https://github.com/adooone/paper-camp/compare/v0.35.0...v0.35.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* **app:** Add unit tests for coerceAgentConfig and agentConfigsEqual ([8880623](https://github.com/adooone/paper-camp/commit/8880623ef16ccc48bddb975bf13338b28cc9a3db))
+* **app:** Add unit tests for use-finding-fix-task helpers ([360efbf](https://github.com/adooone/paper-camp/commit/360efbf87cfc18a861bb11724615807b97eb7894))
+* **cli:** Read tail of log file by byte offset, not string length ([372298d](https://github.com/adooone/paper-camp/commit/372298d3f82fbb70cc8915787bdc48d049e2fd21))
+
 ## [0.35.0](https://github.com/adooone/paper-camp/compare/v0.34.0...v0.35.0) (2026-09-18)
 
 
