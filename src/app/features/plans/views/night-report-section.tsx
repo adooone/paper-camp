@@ -64,22 +64,22 @@ function ChunkCard({
         onClick={() => onOpen(chunk)}
         className="flex w-full flex-col gap-1.5 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
-            {chunk}
-          </span>
-          {fixing && (
-            <Stamp size="small" variant="warning">
-              fixing…
-            </Stamp>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
+          {chunk}
+        </span>
+        {/* The fixing stamp rides the stamps row: beside the title it is taller than the
+            text line and shifts everything under it. */}
+        <div className="flex flex-wrap items-center gap-1">
           {severityCounts(findings).map(({ severity, count }) => (
             <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
               {count} {severity}
             </Stamp>
           ))}
+          {fixing && (
+            <Stamp size="small" variant="warning" className="ml-auto">
+              fixing…
+            </Stamp>
+          )}
         </div>
         <span className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-xs opacity-70">
           {checksLine(findings)}

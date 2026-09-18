@@ -65,21 +65,24 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
           {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
           {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
           <pre className="m-0 min-w-0 max-w-full overflow-x-auto font-mono text-2xs leading-normal">
-            {hunk.lines.map((line, j) => (
-              <span key={`${line.type}-${j}`} className={`flex ${LINE_CLASS[line.type]}`}>
-                <span
-                  className="inline-flex shrink-0 select-none gap-2 pr-2 opacity-40"
-                  aria-hidden="true"
-                >
-                  <span className="w-8 text-right">{line.oldLine ?? ''}</span>
-                  <span className="w-8 text-right">{line.newLine ?? ''}</span>
+            {/* As wide as the longest line, so every line's tint spans the full scroll width. */}
+            <span className="block w-max min-w-full">
+              {hunk.lines.map((line, j) => (
+                <span key={`${line.type}-${j}`} className={`flex ${LINE_CLASS[line.type]}`}>
+                  <span
+                    className="inline-flex shrink-0 select-none gap-2 pr-2 opacity-40"
+                    aria-hidden="true"
+                  >
+                    <span className="w-8 text-right">{line.oldLine ?? ''}</span>
+                    <span className="w-8 text-right">{line.newLine ?? ''}</span>
+                  </span>
+                  <span>
+                    {LINE_PREFIX[line.type]}
+                    {line.text}
+                  </span>
                 </span>
-                <span>
-                  {LINE_PREFIX[line.type]}
-                  {line.text}
-                </span>
-              </span>
-            ))}
+              ))}
+            </span>
           </pre>
         </div>
       ))}

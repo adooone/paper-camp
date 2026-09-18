@@ -184,7 +184,7 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
             key: 'finding',
             header: '',
             cell: (finding: NightSuggestionEntry) => (
-              <div className="flex flex-col gap-1 py-1">
+              <div className="flex flex-col gap-1.5 py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
                     {finding.severity}
@@ -205,7 +205,7 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
             key: 'actions',
             header: '',
             align: 'end',
-            width: 6,
+            width: 10,
             cell: (finding: NightSuggestionEntry) => <FindingActionsCell finding={finding} />,
           },
         ]}
