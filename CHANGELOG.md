@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.35.0](https://github.com/adooone/paper-camp/compare/v0.34.0...v0.35.0) (2026-09-18)
+
+
+### Features
+
+* **app:** Add the `/findings/chunk/$chunk` route and view ([504b048](https://github.com/adooone/paper-camp/commit/504b0482473f581a91e1836746bfec357353ec2a))
+* **app:** Generalise the fix task to a list of findings ([0faee61](https://github.com/adooone/paper-camp/commit/0faee619a34199644c7493d698f1d088cb846948))
+* **app:** Reflect a fix in flight on both surfaces ([cb73cd1](https://github.com/adooone/paper-camp/commit/cb73cd1ec0cd7b9c53b0f70d057b0ee93cadf628))
+* **app:** Replace the chunk `<details>` with a grid of cards ([46d3035](https://github.com/adooone/paper-camp/commit/46d30352f993a98ab5b29f244a457c5498ee1333))
+* **plans:** Merge finding actions into the chunk detail table ([41f5a5d](https://github.com/adooone/paper-camp/commit/41f5a5d0b39776552f776102b69c6c48af1dd56b))
+* **plans:** Merge finding review into a per-chunk card ([b1e4c9c](https://github.com/adooone/paper-camp/commit/b1e4c9c3a293f3fd059e33eb01e1cca069f31c7a))
+* **server:** Invalidate ideas corpus cache by file fingerprint ([24d260b](https://github.com/adooone/paper-camp/commit/24d260b4edbed6efcf234724c7e27795bf88b0e3))
+
+
+### Bug Fixes
+
+* **app:** Remove stale suppression and trim over-cap comment ([9483249](https://github.com/adooone/paper-camp/commit/9483249e17bfa7a75aed0ef2cdac487ad2659cb0))
+* **app:** Resolve night chunk findings and issue ids by date ([62fcdbe](https://github.com/adooone/paper-camp/commit/62fcdbebbc528c2e31020847ee73cf2bcc353fa0))
+* **cli:** Add `open-findings` to the gate reason type ([94bf050](https://github.com/adooone/paper-camp/commit/94bf0506fced576cc36f9c7e6005c695c8778ead))
+* **cli:** Block the gate on a non-zero `openFindings` ([9470a30](https://github.com/adooone/paper-camp/commit/9470a30ffa8917b7396822d28f62a6cfab3d343a))
+* **cli:** compare machine-update bearer token in constant time ([651e38c](https://github.com/adooone/paper-camp/commit/651e38c3b85e35b4b98dd84748d23ca4e49a488b))
+* **cli:** Count the project's open findings where the daemon evaluates the gate ([2ff75eb](https://github.com/adooone/paper-camp/commit/2ff75eba1d9b6291029a1d9cbe0cbabd1afc9959))
+* **cli:** Cover the new reason in `night-gate.test.ts` ([db25053](https://github.com/adooone/paper-camp/commit/db2505352d77a2a9d1e2594f7be6b7c118013dc8))
+* **cli:** Cover the timingSafeEqual branch in isValidUpdateToken tests ([ae208d8](https://github.com/adooone/paper-camp/commit/ae208d8ea0a4c313341929f0c20c8434a9274305))
+* **cli:** create quick-tunnel config in a private temp dir ([5b1bca5](https://github.com/adooone/paper-camp/commit/5b1bca5a567801221a387e6407839e3549c83749))
+* **cli:** drop dead export on BootUpdateCheck ([0565797](https://github.com/adooone/paper-camp/commit/056579741254b6bbfd3eda35b0555cb9fa8f6cf5))
+* **cli:** Label the reason in the CLI and add a gate line to Settings ([c760d7e](https://github.com/adooone/paper-camp/commit/c760d7eba0acc92c24eb9a1888b5d2ec608765a6))
+* **cli:** Reuse readNightFindings in buildNightGateResponse ([e475168](https://github.com/adooone/paper-camp/commit/e475168f67ec073ca73da96c2edb8ab3bcbf2355))
+* **cli:** Stop exporting toolbarDir ([fff2bad](https://github.com/adooone/paper-camp/commit/fff2bad8374cc52f430d3caa8ea49c050edf461b))
+* **core:** Pass openFindings in night-gate tests ([2e8d61a](https://github.com/adooone/paper-camp/commit/2e8d61a92089613d212f606cba74cb03923899b7))
+* **core:** Remove unused formatPlans ([204c257](https://github.com/adooone/paper-camp/commit/204c257564e62b7672aeee3e0e28ad917921e1e1))
+* **core:** Stop selectNightChunks from failing an entire tick on a stale commit ([14d7238](https://github.com/adooone/paper-camp/commit/14d7238d750aaa7520bdafbd548d790e98fc0227))
+
 ## [0.34.0](https://github.com/adooone/paper-camp/compare/v0.33.1...v0.34.0) (2026-09-15)
 
 
