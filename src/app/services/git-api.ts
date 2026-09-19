@@ -1,4 +1,4 @@
-import type { FileDiffEntry, GitStatusResponse } from '@/types/index';
+import type { FileDiffEntry, GitLogResponse, GitStatusResponse } from '@/types/index';
 import { apiFetch, apiUrl } from './api-base';
 
 // Above the server's 30s cap so a stall surfaces the server's own timeout
@@ -26,6 +26,14 @@ export const fetchFileDiffs = async (): Promise<FileDiffEntry[]> => {
   await throwIfNotOk(response, 'Failed to load diff');
   const data = await response.json();
   return data.files;
+};
+
+export const fetchGitLog = async (skip = 0): Promise<GitLogResponse> => {
+  const response = await apiFetch(apiUrl(`/api/git/log?skip=${skip}`), {
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Failed to load commit history');
+  return response.json();
 };
 
 export const fetchStashDiff = async (index: number): Promise<string> => {

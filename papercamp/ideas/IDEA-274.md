@@ -67,9 +67,10 @@ beyond the one rail. Acting on a commit — revert, reset, cherry-pick.
       Extend `src/core/git-log.ts` with the `%x1f` format, decoration and prefix
       splitting, and `pushed` from `rev-list`, covered by `git-log.test.ts`.
       run: 2m19s · 22 in · 11.9k out · sonnet-5 · sess:238d7a7e-3917-4545-822b-6dce383de951
-- [ ] Serve `GET /api/git/log?skip=<n>`
+- [x] Serve `GET /api/git/log?skip=<n>`
       Add the route to `src/app/server/routes/git.ts` returning
       `{ commits, upstream, hasMore }`, and the fetcher in `git-api.ts`.
+      run: 1m1s · 30 in · 3.3k out · sonnet-5 · sess:238d7a7e-3917-4545-822b-6dce383de951
 - [ ] Draw the rail and commit rows
       A `CommitHistory` view with `roughGenerator` rail, dots, dashed unpushed
       segments, and the subject / meta / `Stamp` row.

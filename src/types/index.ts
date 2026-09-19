@@ -1117,6 +1117,23 @@ export interface GitLiveState {
   dirtyCount: number;
 }
 
+export interface GitLogCommit {
+  hash: string;
+  subject: string;
+  prefix: string;
+  date: string;
+  tags: string[];
+  isUpstreamHead: boolean;
+  pushed: boolean;
+  ideaId: string | null;
+}
+
+export interface GitLogResponse {
+  commits: GitLogCommit[];
+  upstream: string | null;
+  hasMore: boolean;
+}
+
 // null means the entity file doesn't exist at that ref (never drafted there yet, or archived).
 export type PhaseState = { done: number; total: number } | null;
 

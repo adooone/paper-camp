@@ -1,5 +1,6 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
 import { readCommitConvention } from '@/core/commit-convention';
+import { readFirstParentLog } from '@/core/git-log';
 import { squashMergePr } from '@/core/git-pr';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
@@ -334,6 +335,16 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
         }
+      },
+    },
+
+    {
+      method: 'GET',
+      path: '/api/git/log',
+      handle: async (req, res) => {
+        const skip = Number.parseInt(requestUrl(req).searchParams.get('skip') ?? '0', 10);
+        const page = await readFirstParentLog(root, Number.isNaN(skip) ? 0 : skip);
+        sendJson(res, 200, page);
       },
     },
 
