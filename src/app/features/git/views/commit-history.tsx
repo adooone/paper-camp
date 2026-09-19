@@ -1,12 +1,11 @@
 import { roughGenerator } from '@/app/components/charts/rough-generator';
 import { useOpenEntity } from '@/app/hooks';
-import { color, surface } from '@/app/styles/tokens';
+import { color } from '@/app/styles/tokens';
 import type { GitLogCommit } from '@/types/index';
-import { Card, Divider, Stamp } from '@dendelion/paper-ui';
-import { Fragment, useMemo } from 'react';
+import { Divider, Stamp } from '@dendelion/paper-ui';
+import { type CSSProperties, useMemo } from 'react';
 
 const RAIL_WIDTH = 20;
-const RAIL_HEIGHT = 56;
 const DOT_RADIUS = 5;
 const DASH: [number, number] = [3, 3];
 
@@ -25,6 +24,56 @@ function formatRelativeTime(iso: string): string {
   return diffYear === 1 ? '1 year ago' : `${diffYear} years ago`;
 }
 
+const DOT_BOX = 14;
+const DOT_GAP = DOT_BOX / 2 + 1;
+const LINE_VIEW_HEIGHT = 40;
+
+interface RailLineProps {
+  pushed: boolean;
+  seed: number;
+  className: string;
+}
+
+// Only the line stretches to the row's height; the dot is its own unstretched drawing,
+// so a tall row lengthens the rail without squashing the commit mark.
+const RailLine = ({ pushed, seed, className }: RailLineProps) => {
+  const stroke = pushed ? color.textSecondary : color.accentAmberDark;
+  const paths = useMemo(
+    () =>
+      roughGenerator.toPaths(
+        roughGenerator.line(RAIL_WIDTH / 2, 0, RAIL_WIDTH / 2, LINE_VIEW_HEIGHT, {
+          seed,
+          roughness: 0.6,
+          bowing: 0.4,
+          disableMultiStroke: true,
+          stroke,
+          strokeWidth: 1.5,
+          ...(pushed ? {} : { strokeLineDash: DASH }),
+        }),
+      ),
+    [pushed, seed, stroke],
+  );
+  return (
+    <svg
+      viewBox={`0 0 ${RAIL_WIDTH} ${LINE_VIEW_HEIGHT}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className={`absolute left-0 w-full ${className}`}
+    >
+      {paths.map((path) => (
+        <path
+          key={path.d}
+          d={path.d}
+          stroke={path.stroke}
+          strokeWidth={path.strokeWidth}
+          fill="none"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </svg>
+  );
+};
+
 interface RailSegmentProps {
   pushed: boolean;
   isFirst: boolean;
@@ -32,68 +81,52 @@ interface RailSegmentProps {
   seed: number;
 }
 
-// A per-row segment stretches to the row's real (text-driven) height via
-// preserveAspectRatio="none" and abuts the next row's segment to read as one rail.
 const RailSegment = ({ pushed, isFirst, isLast, seed }: RailSegmentProps) => {
-  const strokeColor = pushed ? color.textSecondary : color.accentAmberDark;
-  const cx = RAIL_WIDTH / 2;
-  const cy = RAIL_HEIGHT / 2;
-
-  const paths = useMemo(() => {
-    const drawables = [];
-    if (!isFirst) {
-      drawables.push(
-        roughGenerator.line(cx, 0, cx, cy - DOT_RADIUS, {
-          seed,
-          roughness: 1.2,
-          stroke: strokeColor,
+  const stroke = pushed ? color.textSecondary : color.accentAmberDark;
+  const dot = useMemo(
+    () =>
+      roughGenerator.toPaths(
+        roughGenerator.circle(DOT_BOX / 2, DOT_BOX / 2, DOT_RADIUS * 2, {
+          seed: seed + 2,
+          roughness: 0.8,
+          stroke,
           strokeWidth: 1.5,
-          ...(pushed ? {} : { strokeLineDash: DASH }),
+          ...(pushed ? { fill: stroke, fillStyle: 'solid' } : {}),
         }),
-      );
-    }
-    if (!isLast) {
-      drawables.push(
-        roughGenerator.line(cx, cy + DOT_RADIUS, cx, RAIL_HEIGHT, {
-          seed: seed + 1,
-          roughness: 1.2,
-          stroke: strokeColor,
-          strokeWidth: 1.5,
-          ...(pushed ? {} : { strokeLineDash: DASH }),
-        }),
-      );
-    }
-    drawables.push(
-      roughGenerator.circle(cx, cy, DOT_RADIUS * 2, {
-        seed: seed + 2,
-        roughness: 1.4,
-        stroke: strokeColor,
-        strokeWidth: 1.5,
-        ...(pushed ? { fill: strokeColor, fillStyle: 'solid' } : {}),
-      }),
-    );
-    return drawables.flatMap((d) => roughGenerator.toPaths(d));
-  }, [isFirst, isLast, pushed, seed, strokeColor, cx, cy]);
+      ),
+    [pushed, seed, stroke],
+  );
 
   return (
-    <svg
-      viewBox={`0 0 ${RAIL_WIDTH} ${RAIL_HEIGHT}`}
-      width={RAIL_WIDTH}
-      height="100%"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      {paths.map((p) => (
-        <path
-          key={p.d}
-          d={p.d}
-          stroke={p.stroke}
-          strokeWidth={p.strokeWidth}
-          fill={p.fill ?? 'none'}
+    <div className="relative shrink-0 self-stretch" style={{ width: RAIL_WIDTH }}>
+      {!isFirst && (
+        <RailLine pushed={pushed} seed={seed} className="top-0 h-[calc(50%-var(--rail-gap))]" />
+      )}
+      {!isLast && (
+        <RailLine
+          pushed={pushed}
+          seed={seed + 1}
+          className="bottom-0 h-[calc(50%-var(--rail-gap))]"
         />
-      ))}
-    </svg>
+      )}
+      <svg
+        viewBox={`0 0 ${DOT_BOX} ${DOT_BOX}`}
+        width={DOT_BOX}
+        height={DOT_BOX}
+        aria-hidden="true"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      >
+        {dot.map((path) => (
+          <path
+            key={path.d}
+            d={path.d}
+            stroke={path.stroke}
+            strokeWidth={path.strokeWidth}
+            fill={path.fill ?? 'none'}
+          />
+        ))}
+      </svg>
+    </div>
   );
 };
 
@@ -109,44 +142,53 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
   const openEntity = useOpenEntity();
 
   return (
-    <div className="flex min-w-0 items-stretch gap-3 py-3">
+    <div
+      className="flex min-w-0 items-stretch gap-3"
+      style={{ '--rail-gap': `${DOT_GAP}px` } as CSSProperties}
+    >
       <RailSegment pushed={commit.pushed} isFirst={isFirst} isLast={isLast} seed={seed} />
-      <div className="min-w-0 flex-1">
-        <div className="truncate">{commit.subject}</div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-handwritten text-2xs opacity-60">
-          <span className="font-mono">{commit.hash.slice(0, 8)}</span>
-          {commit.prefix && <span>· {commit.prefix}</span>}
-          <span>· {formatRelativeTime(commit.date)}</span>
+      {/* The divider lives beside the rail, not between rows, so the rail never breaks. */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {!isFirst && <Divider sketch />}
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="min-w-0 flex-1 py-3">
+            <div className="truncate">{commit.subject}</div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-handwritten text-2xs opacity-60">
+              <span className="font-mono">{commit.hash.slice(0, 8)}</span>
+              {commit.prefix && <span>· {commit.prefix}</span>}
+              <span>· {formatRelativeTime(commit.date)}</span>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 py-3">
+            {commit.tags.map((tag) => (
+              <Stamp key={tag} size="small" variant="success">
+                {tag}
+              </Stamp>
+            ))}
+            {commit.isUpstreamHead && upstream && (
+              <Stamp size="small" variant="neutral">
+                {upstream}
+              </Stamp>
+            )}
+            {commit.ideaId && (
+              // Raw <button>: a chromeless click target wrapping a stamp, not a paper-ui Button.
+              <button
+                type="button"
+                onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
+                className="bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit"
+              >
+                <Stamp size="small" variant="info">
+                  {commit.ideaId}
+                </Stamp>
+              </button>
+            )}
+            {!commit.pushed && (
+              <Stamp size="small" variant="warning">
+                not pushed
+              </Stamp>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-        {commit.tags.map((tag) => (
-          <Stamp key={tag} size="small" variant="success">
-            {tag}
-          </Stamp>
-        ))}
-        {commit.isUpstreamHead && upstream && (
-          <Stamp size="small" variant="neutral">
-            {upstream}
-          </Stamp>
-        )}
-        {commit.ideaId && (
-          // Raw <button>: a chromeless click target wrapping a stamp, not a paper-ui Button.
-          <button
-            type="button"
-            onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
-            className="bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit"
-          >
-            <Stamp size="small" variant="info">
-              {commit.ideaId}
-            </Stamp>
-          </button>
-        )}
-        {!commit.pushed && (
-          <Stamp size="small" variant="warning">
-            not pushed
-          </Stamp>
-        )}
       </div>
     </div>
   );
@@ -158,18 +200,16 @@ export interface CommitHistoryProps {
 }
 
 export const CommitHistory = ({ commits, upstream }: CommitHistoryProps) => (
-  <Card size="small" texture={surface.card}>
+  <div className="flex flex-col">
     {commits.map((commit, idx) => (
-      <Fragment key={commit.hash}>
-        {idx > 0 && <Divider sketch />}
-        <CommitRow
-          commit={commit}
-          upstream={upstream}
-          isFirst={idx === 0}
-          isLast={idx === commits.length - 1}
-          seed={idx * 7 + 1}
-        />
-      </Fragment>
+      <CommitRow
+        key={commit.hash}
+        commit={commit}
+        upstream={upstream}
+        isFirst={idx === 0}
+        isLast={idx === commits.length - 1}
+        seed={idx * 7 + 1}
+      />
     ))}
-  </Card>
+  </div>
 );
