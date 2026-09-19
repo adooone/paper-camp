@@ -32,18 +32,20 @@ function textOf(node: ReactNode): string {
   return textOf(element.props.children as ReactNode);
 }
 
-// The chunk grid renders each chunk as a <ChunkCard>, a real component (it owns
-// per-chunk hook state for "Fix all"), so — unlike the plain render functions
-// elsewhere in this file — its own output isn't inlined into the tree these
-// tests inspect without a renderer. Read its chunk/findings props instead.
-function chunkCards(tree: ReactElement): { chunk: string; findings: NightSuggestionEntry[] }[] {
-  const groupDiv = tree.props.children[0] as ReactElement;
-  const grid = groupDiv.props.children[1] as ReactElement;
-  const cards = grid.props.children as ReactElement[];
-  return cards.map((card) => ({
-    chunk: card.props.chunk as string,
-    findings: card.props.findings as NightSuggestionEntry[],
-  }));
+// Each chunk is a <ChunkRow>, a real component (it owns a hook), so the tree holds it
+// unrendered — found by its props wherever the layout puts it.
+function chunkCards(node: ReactNode): { chunk: string; findings: NightSuggestionEntry[] }[] {
+  if (Array.isArray(node)) return node.flatMap(chunkCards);
+  if (!node || typeof node !== 'object' || !('props' in node)) return [];
+  const props = (node as ReactElement).props as {
+    chunk?: string;
+    findings?: NightSuggestionEntry[];
+    children?: ReactNode;
+  };
+  if (typeof props.chunk === 'string' && props.findings) {
+    return [{ chunk: props.chunk, findings: props.findings }];
+  }
+  return chunkCards(props.children);
 }
 
 describe('severityCounts', () => {
@@ -111,7 +113,7 @@ describe('NightReportSection', () => {
     expect(tree).toBeNull();
   });
 
-  it('shows the date, pass/cost summary and severity counts, with one card per chunk', () => {
+  it('shows the title, date and pass/cost summary, with one row per chunk', () => {
     const findings = [
       finding({ chunk: 'src/core', file: 'a.ts', severity: 'critical' }),
       finding({ chunk: 'src/core', file: 'b.ts', severity: 'high' }),
@@ -122,12 +124,10 @@ describe('NightReportSection', () => {
       onOpenChunk: () => {},
     }) as ReactElement;
     const text = textOf(tree);
-    expect(text).toContain('Review findings — 2026-09-10');
+    expect(text).toContain('Review findings');
+    expect(text).toContain('2026-09-10');
     expect(text).toContain('3 passes');
     expect(text).toContain('$0.45');
-    expect(text).toContain('1 critical');
-    expect(text).toContain('1 high');
-    expect(text).toContain('1 normal');
 
     const cards = chunkCards(tree);
     expect(cards.map((c) => c.chunk)).toEqual(['src/core', 'src/app']);
@@ -148,11 +148,11 @@ describe('NightReportSection', () => {
     expect(cards.find((c) => c.chunk === 'src/app')?.findings).toHaveLength(5);
   });
 
-  it('reports a clean night when a date has passes but no findings', () => {
+  it('renders nothing once no finding is open, even when passes ran', () => {
     const tree = NightReportSection({
       groups: [{ date: '2026-09-10', passCount: 2, costUsd: 0.1, findings: [] }],
       onOpenChunk: () => {},
     });
-    expect(textOf(tree)).toContain('Ran clean — no findings.');
+    expect(tree).toBeNull();
   });
 });

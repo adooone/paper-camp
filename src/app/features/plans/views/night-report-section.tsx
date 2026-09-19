@@ -1,6 +1,7 @@
 import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Card, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Card, Divider, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Fragment } from 'react';
 import { useFindingFixTask } from '../hooks';
 
 interface NightReportSectionProps {
@@ -44,7 +45,7 @@ function checksLine(findings: NightSuggestionEntry[]): string {
   return Array.from(new Set(findings.map((f) => f.check))).join(', ');
 }
 
-function ChunkCard({
+function ChunkRow({
   chunk,
   findings,
   onOpen,
@@ -57,76 +58,56 @@ function ChunkCard({
   const fixing = launching || Boolean(activeTask);
 
   return (
-    <Card size="small" texture="kraft">
-      {/* Raw <button>, not paper-ui's Button — this needs to read as the card's clickable body. */}
-      <button
-        type="button"
-        onClick={() => onOpen(chunk)}
-        className="flex w-full flex-col gap-1.5 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
-      >
-        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
-          {chunk}
-        </span>
-        {/* The fixing stamp rides the stamps row: beside the title it is taller than the
-            text line and shifts everything under it. */}
-        <div className="flex flex-wrap items-center gap-1">
-          {severityCounts(findings).map(({ severity, count }) => (
-            <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
-              {count} {severity}
-            </Stamp>
-          ))}
-          {fixing && (
-            <Stamp size="small" variant="warning" className="ml-auto">
-              fixing…
-            </Stamp>
-          )}
-        </div>
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-xs opacity-70">
-          {checksLine(findings)}
-        </span>
-      </button>
-    </Card>
-  );
-}
-
-function renderChunkCards(findings: NightSuggestionEntry[], onOpenChunk: (chunk: string) => void) {
-  return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-      {groupByChunk(sortedFindings(findings)).map(({ chunk, findings: chunkFindings }) => (
-        <ChunkCard key={chunk} chunk={chunk} findings={chunkFindings} onOpen={onOpenChunk} />
-      ))}
-    </div>
+    // Raw <button>, not paper-ui's Button — the whole row is the way into the chunk view.
+    <button
+      type="button"
+      onClick={() => onOpen(chunk)}
+      className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-none bg-transparent bg-none px-0 py-2 text-left text-inherit [font:inherit] sm:grid-cols-[7rem_10rem_minmax(0,1fr)_4.5rem]"
+    >
+      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
+        {chunk}
+      </span>
+      <span className="flex flex-wrap items-center gap-1">
+        {severityCounts(findings).map(({ severity, count }) => (
+          <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
+            {count} {severity}
+          </Stamp>
+        ))}
+      </span>
+      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-sm opacity-70">
+        {checksLine(findings)}
+      </span>
+      {/* Its own fixed column, so a fix in flight never shifts the row beside it. */}
+      <span className="flex justify-end">
+        {fixing && (
+          <Stamp size="small" variant="warning">
+            fixing…
+          </Stamp>
+        )}
+      </span>
+    </button>
   );
 }
 
 export const NightReportSection = ({ groups, onOpenChunk }: NightReportSectionProps) => {
-  if (groups.length === 0) return null;
+  const group = groups[0];
+  if (!group || group.findings.length === 0) return null;
 
   return (
-    <div className="mb-5">
-      {groups.map((group) => (
-        <div key={group.date} className="mb-4">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h2 className="text-sm m-0 opacity-60">
-              Review findings — <span className="font-handwritten">{group.date}</span>
-            </h2>
-            <Stamp size="small" variant="neutral">
-              {group.passCount} {group.passCount === 1 ? 'pass' : 'passes'} · $
-              {group.costUsd.toFixed(2)}
-            </Stamp>
-            {severityCounts(group.findings).map(({ severity, count }) => (
-              <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
-                {count} {severity}
-              </Stamp>
-            ))}
-          </div>
-          {group.findings.length === 0 ? (
-            <p className="m-0 opacity-50 text-2xs">Ran clean — no findings.</p>
-          ) : (
-            renderChunkCards(group.findings, onOpenChunk)
-          )}
-        </div>
+    <Card size="small" texture="kraft" className="mb-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 pb-1">
+        <h2 className="m-0 font-handwritten text-base font-semibold">Review findings</h2>
+        <span className="font-handwritten text-sm opacity-60">
+          {group.date} · {group.passCount} {group.passCount === 1 ? 'pass' : 'passes'} · $
+          {group.costUsd.toFixed(2)}
+        </span>
+      </div>
+      {groupByChunk(sortedFindings(group.findings)).map(({ chunk, findings }) => (
+        <Fragment key={chunk}>
+          <Divider sketch />
+          <ChunkRow chunk={chunk} findings={findings} onOpen={onOpenChunk} />
+        </Fragment>
       ))}
-    </div>
+    </Card>
   );
 };

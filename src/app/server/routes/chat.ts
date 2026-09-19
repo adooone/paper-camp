@@ -1,3 +1,4 @@
+import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { readTaskLog } from '@/core/parse';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
@@ -21,8 +22,11 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
       method: 'GET',
       path: '/api/chat',
       handle: async (_req, res) => {
-        const thread = await readChatFile(root);
-        sendJson(res, 200, { thread });
+        const [thread, { entries }] = await Promise.all([
+          readChatFile(root),
+          readEntities(campFile(root, 'ideas')),
+        ]);
+        sendJson(res, 200, { thread: resolveClosedIdeaQuestions(thread, entries) });
       },
     },
 

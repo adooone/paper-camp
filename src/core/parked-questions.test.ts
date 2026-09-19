@@ -4,7 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { EntityEntry, ThreadMessage } from '../types/index';
-import { collectParkedQuestions, readParkedQuestions } from './parked-questions';
+import {
+  collectParkedQuestions,
+  readParkedQuestions,
+  resolveClosedIdeaQuestions,
+} from './parked-questions';
 import { formatEntityFile } from './serialize/entity-file';
 
 const entity = (overrides: Partial<EntityEntry>): EntityEntry => ({
@@ -153,5 +157,31 @@ describe('readParkedQuestions', () => {
       created: '2026-01-01',
     });
     expect(await readParkedQuestions(dir)).toEqual([]);
+  });
+});
+
+describe('closed ideas', () => {
+  it('collects no parked question from a done, dropped or archived entity', () => {
+    const entities = [
+      entity({ id: 'IDEA-1', status: 'done', thread: [question({})] }),
+      entity({ id: 'IDEA-2', status: 'dropped', thread: [question({})] }),
+      entity({ id: 'IDEA-3', status: 'review', archived: true, thread: [question({})] }),
+      entity({ id: 'IDEA-4', status: 'in-progress', thread: [question({})] }),
+    ];
+    expect(collectParkedQuestions(entities).map((q) => q.entityId)).toEqual(['IDEA-4']);
+  });
+
+  it('resolves a chat question whose [[idea]] has closed and leaves the rest open', () => {
+    const entities = [entity({ id: 'IDEA-1', status: 'done' }), entity({ id: 'IDEA-4' })];
+    const thread = [
+      question({ text: '[[IDEA-1]] Run-all parked' }),
+      question({ text: '[[IDEA-4]] Run-all parked' }),
+      question({ text: 'No idea named' }),
+    ];
+    expect(resolveClosedIdeaQuestions(thread, entities).map((m) => m.state)).toEqual([
+      'resolved',
+      'open',
+      'open',
+    ]);
   });
 });
