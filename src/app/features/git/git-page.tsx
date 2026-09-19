@@ -17,6 +17,9 @@ export const GitPage = () => {
     commitForm,
     gitLogCommits,
     gitLogUpstream,
+    gitLogHasMore,
+    gitLogLoadingMore,
+    loadMoreGitLog,
     gitBranch,
     gitAhead,
   } = useGitPage();
@@ -68,11 +71,24 @@ export const GitPage = () => {
     <div>
       {header}
       {files.length === 0 ? (
-        <div className={contentClass}>
+        <div className={`${contentClass} flex flex-col gap-3`}>
           {gitLogCommits === null ? (
             <Spinner label="Loading commit history…" />
           ) : (
-            <CommitHistory commits={gitLogCommits} upstream={gitLogUpstream} />
+            <>
+              <CommitHistory commits={gitLogCommits} upstream={gitLogUpstream} />
+              {gitLogHasMore && (
+                <Button
+                  className="self-start"
+                  variant="secondary"
+                  size="small"
+                  onClick={loadMoreGitLog}
+                  disabled={gitLogLoadingMore}
+                >
+                  {gitLogLoadingMore ? 'Loading…' : 'Show older'}
+                </Button>
+              )}
+            </>
           )}
         </div>
       ) : (

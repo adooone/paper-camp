@@ -20,11 +20,13 @@ export type DiffSlice = {
   setDiffCollapsed: (path: string, collapsed: boolean) => void;
   expandDiffPath: (path: string) => void;
 
-  // The clean-tree history view's first page — replaced wholesale on reload.
+  // The clean-tree history view's pages — replaced wholesale on reload, appended by loadMoreGitLog.
   gitLogCommits: GitLogCommit[] | null;
   gitLogUpstream: string | null;
   gitLogHasMore: boolean;
+  gitLogLoadingMore: boolean;
   loadGitLog: () => Promise<void>;
+  loadMoreGitLog: () => Promise<void>;
 };
 
 export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
@@ -65,6 +67,7 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
     gitLogCommits: null,
     gitLogUpstream: null,
     gitLogHasMore: false,
+    gitLogLoadingMore: false,
     loadGitLog: loadSlice(
       set,
       () => fetchGitLog(0),
@@ -74,5 +77,20 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
         gitLogHasMore: page.hasMore,
       }),
     ),
+    loadMoreGitLog: async () => {
+      const { gitLogCommits, gitLogHasMore, gitLogLoadingMore } = get();
+      if (!gitLogCommits || !gitLogHasMore || gitLogLoadingMore) return;
+      set({ gitLogLoadingMore: true });
+      try {
+        const page = await fetchGitLog(gitLogCommits.length);
+        set((s) => ({
+          gitLogCommits: [...(s.gitLogCommits ?? []), ...page.commits],
+          gitLogUpstream: page.upstream,
+          gitLogHasMore: page.hasMore,
+        }));
+      } finally {
+        set({ gitLogLoadingMore: false });
+      }
+    },
   };
 }

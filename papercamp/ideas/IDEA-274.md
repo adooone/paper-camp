@@ -2,7 +2,7 @@
 id: IDEA-274
 title: Commit history on a clean tree
 type: feat
-status: idea
+status: review
 created: 2026-09-19
 tags:
   - app
@@ -79,5 +79,6 @@ beyond the one rail. Acting on a commit — revert, reset, cherry-pick.
       Swap the `EmptyState` in `git-page.tsx`, add the branch and ahead line to
       the header, reload after commit, push, pull and sync.
       run: 3m55s · 92 in · 13.3k out · sonnet-5 · sess:fdc58dce-e279-4cce-82c4-8024705653eb
-- [ ] Append older commits
+- [x] Append older commits
       Wire *Show older* to the next `skip` page while `hasMore` holds.
+      run: 2m14s · 46 in · 6.2k out · sonnet-5 · sess:fdc58dce-e279-4cce-82c4-8024705653eb

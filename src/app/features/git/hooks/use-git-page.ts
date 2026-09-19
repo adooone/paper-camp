@@ -10,7 +10,10 @@ export const useGitPage = () => {
   const setActiveDiffPath = useAppStore((s) => s.setActiveDiffPath);
   const gitLogCommits = useAppStore((s) => s.gitLogCommits);
   const gitLogUpstream = useAppStore((s) => s.gitLogUpstream);
+  const gitLogHasMore = useAppStore((s) => s.gitLogHasMore);
+  const gitLogLoadingMore = useAppStore((s) => s.gitLogLoadingMore);
   const loadGitLog = useAppStore((s) => s.loadGitLog);
+  const loadMoreGitLog = useAppStore((s) => s.loadMoreGitLog);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitAhead = useAppStore((s) => s.gitAhead);
   const sectionsRef = useRef<HTMLDivElement>(null);
@@ -71,6 +74,9 @@ export const useGitPage = () => {
     commitForm,
     gitLogCommits,
     gitLogUpstream,
+    gitLogHasMore,
+    gitLogLoadingMore,
+    loadMoreGitLog,
     gitBranch,
     gitAhead,
   };
