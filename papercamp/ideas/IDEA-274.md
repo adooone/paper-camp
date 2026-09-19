@@ -71,9 +71,10 @@ beyond the one rail. Acting on a commit — revert, reset, cherry-pick.
       Add the route to `src/app/server/routes/git.ts` returning
       `{ commits, upstream, hasMore }`, and the fetcher in `git-api.ts`.
       run: 1m1s · 30 in · 3.3k out · sonnet-5 · sess:238d7a7e-3917-4545-822b-6dce383de951
-- [ ] Draw the rail and commit rows
+- [x] Draw the rail and commit rows
       A `CommitHistory` view with `roughGenerator` rail, dots, dashed unpushed
       segments, and the subject / meta / `Stamp` row.
+      run: 5m30s · 78 in · 16.7k out · sonnet-5 · sess:238d7a7e-3917-4545-822b-6dce383de951
 - [ ] Show history on a clean tree
       Swap the `EmptyState` in `git-page.tsx`, add the branch and ahead line to
       the header, reload after commit, push, pull and sync.
