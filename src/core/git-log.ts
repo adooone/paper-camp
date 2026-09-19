@@ -55,3 +55,117 @@ export async function resolveIdsWithMainActivity(root: string): Promise<Set<stri
   }
   return ids;
 }
+
+export interface GitLogCommit {
+  hash: string;
+  subject: string;
+  prefix: string;
+  date: string;
+  tags: string[];
+  isUpstreamHead: boolean;
+  pushed: boolean;
+  ideaId: string | null;
+}
+
+export interface GitLogPage {
+  commits: GitLogCommit[];
+  upstream: string | null;
+  hasMore: boolean;
+}
+
+const RECORD_SEP = '\x1e';
+const FIELD_SEP = '\x1f';
+const LOG_FORMAT = `${RECORD_SEP}%H${FIELD_SEP}%s${FIELD_SEP}%cI${FIELD_SEP}%D${FIELD_SEP}%(trailers:key=Refs,valueonly)`;
+
+const CONVENTIONAL_PREFIX_RE = /^([a-z]+(?:\([^)]*\))?):\s*(.+)$/i;
+
+function splitPrefix(subject: string): { prefix: string; subject: string } {
+  const match = subject.match(CONVENTIONAL_PREFIX_RE);
+  return match ? { prefix: match[1], subject: match[2] } : { prefix: '', subject };
+}
+
+function parseDecoration(
+  decoration: string,
+  upstream: string | null,
+): { tags: string[]; isUpstreamHead: boolean } {
+  const tags: string[] = [];
+  let isUpstreamHead = false;
+  for (const raw of decoration.split(',')) {
+    const part = raw.trim().replace(/^HEAD -> /, '');
+    if (!part) continue;
+    if (part.startsWith('tag: ')) {
+      tags.push(part.slice('tag: '.length));
+    } else if (upstream && part === upstream) {
+      isUpstreamHead = true;
+    }
+  }
+  return { tags, isUpstreamHead };
+}
+
+function parseIdeaId(refsTrailer: string): string | null {
+  const trimmed = refsTrailer.trim();
+  return /^[A-Za-z]+-\d+$/.test(trimmed) ? trimmed.toUpperCase() : null;
+}
+
+/** Exported for direct testing against `git log`'s %x1f/%x1e-separated output
+ * without needing a full repo fixture for every case. */
+export function parseGitLogOutput(
+  output: string,
+  upstream: string | null,
+  unpushed: Set<string>,
+): GitLogCommit[] {
+  return output
+    .split(RECORD_SEP)
+    .map((record) => record.trim())
+    .filter(Boolean)
+    .map((record) => {
+      const [hash, rawSubject = '', date = '', decoration = '', refsTrailer = ''] =
+        record.split(FIELD_SEP);
+      const { prefix, subject } = splitPrefix(rawSubject);
+      const { tags, isUpstreamHead } = parseDecoration(decoration, upstream);
+      return {
+        hash,
+        subject,
+        prefix,
+        date,
+        tags,
+        isUpstreamHead,
+        pushed: upstream !== null && !unpushed.has(hash),
+        ideaId: parseIdeaId(refsTrailer),
+      };
+    });
+}
+
+export async function resolveUpstream(root: string): Promise<string | null> {
+  const output = await runGit(root, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+  const trimmed = output.trim();
+  return trimmed || null;
+}
+
+export async function readFirstParentLog(
+  root: string,
+  skip: number,
+  pageSize = 30,
+): Promise<GitLogPage> {
+  const upstream = await resolveUpstream(root);
+  const output = await runGit(root, [
+    'log',
+    '--first-parent',
+    `--max-count=${pageSize + 1}`,
+    `--skip=${skip}`,
+    `--format=${LOG_FORMAT}`,
+  ]);
+
+  const unpushed = new Set<string>();
+  if (upstream) {
+    const revList = await runGit(root, ['rev-list', `${upstream}..HEAD`]);
+    for (const line of revList.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed) unpushed.add(trimmed);
+    }
+  }
+
+  const allCommits = parseGitLogOutput(output, upstream, unpushed);
+  const hasMore = allCommits.length > pageSize;
+  return { commits: allCommits.slice(0, pageSize), upstream, hasMore };
+}
