@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.35.2](https://github.com/adooone/paper-camp/compare/v0.35.1...v0.35.2) (2026-09-19)
+
+
+### Bug Fixes
+
+* **app:** Redesign night report as row list, auto-close parked questions ([b11bf12](https://github.com/adooone/paper-camp/commit/b11bf1210efa3450d31c63a77996254e3b56e38a))
+
 ## [0.35.1](https://github.com/adooone/paper-camp/compare/v0.35.0...v0.35.1) (2026-09-18)
 
 
