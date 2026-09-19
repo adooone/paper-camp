@@ -150,16 +150,24 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
       {/* The divider lives beside the rail, not between rows, so the rail never breaks. */}
       <div className="flex min-w-0 flex-1 flex-col">
         {!isFirst && <Divider sketch />}
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="min-w-0 flex-1 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {/* Fixed column, stamp hugging the title: titles line up and the gap stays constant. */}
+          <div className="hidden w-24 shrink-0 justify-end sm:flex">
+            {commit.prefix && (
+              <Stamp size="small" variant="neutral">
+                {commit.prefix}
+              </Stamp>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 py-1.5">
             <div className="truncate">{commit.subject}</div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 font-handwritten text-2xs opacity-60">
-              <span className="font-mono">{commit.hash.slice(0, 8)}</span>
-              {commit.prefix && <span>· {commit.prefix}</span>}
+            <div className="flex flex-wrap items-baseline gap-x-1.5 font-handwritten text-sm leading-tight opacity-60">
+              <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
+              {commit.prefix && <span className="sm:hidden">· {commit.prefix}</span>}
               <span>· {formatRelativeTime(commit.date)}</span>
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 py-3">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 py-1.5">
             {commit.tags.map((tag) => (
               <Stamp key={tag} size="small" variant="success">
                 {tag}
