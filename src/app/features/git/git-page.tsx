@@ -1,22 +1,38 @@
-import { CommitMessageFields, EmptyState, GitStashSurface, GitSyncActions } from '@/app/components';
+import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
-import { FileDiffSection } from '@/app/features/git/views';
+import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
 import { DeliverChecksRow } from '@/app/features/plans/components';
 import { surface } from '@/app/styles/tokens';
 import { Button, Divider, Spinner, getSurfaceStyles } from '@dendelion/paper-ui';
 import { Fragment } from 'react';
 
 export const GitPage = () => {
-  const { files, loadFailed, loadDiffFiles, sectionsRef, commitForm } = useGitPage();
+  const {
+    files,
+    loadFailed,
+    loadDiffFiles,
+    sectionsRef,
+    commitForm,
+    gitLogCommits,
+    gitLogUpstream,
+    gitBranch,
+    gitAhead,
+  } = useGitPage();
 
   const contentClass = 'min-h-page';
 
   const header = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <PageTitle className="!mb-0">Git</PageTitle>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        {gitBranch && (
+          <span className="font-handwritten text-2xs opacity-60">
+            <span className="font-mono">{gitBranch}</span>
+            {gitAhead > 0 && ` · ${gitAhead} ahead of origin`}
+          </span>
+        )}
         <GitSyncActions />
         <GitStashSurface />
       </div>
@@ -53,7 +69,11 @@ export const GitPage = () => {
       {header}
       {files.length === 0 ? (
         <div className={contentClass}>
-          <EmptyState illustration="clean-sheet" message="No changed files." />
+          {gitLogCommits === null ? (
+            <Spinner label="Loading commit history…" />
+          ) : (
+            <CommitHistory commits={gitLogCommits} upstream={gitLogUpstream} />
+          )}
         </div>
       ) : (
         <>

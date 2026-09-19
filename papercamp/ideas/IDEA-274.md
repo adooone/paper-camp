@@ -75,8 +75,9 @@ beyond the one rail. Acting on a commit — revert, reset, cherry-pick.
       A `CommitHistory` view with `roughGenerator` rail, dots, dashed unpushed
       segments, and the subject / meta / `Stamp` row.
       run: 5m30s · 78 in · 16.7k out · sonnet-5 · sess:238d7a7e-3917-4545-822b-6dce383de951
-- [ ] Show history on a clean tree
+- [x] Show history on a clean tree
       Swap the `EmptyState` in `git-page.tsx`, add the branch and ahead line to
       the header, reload after commit, push, pull and sync.
+      run: 3m55s · 92 in · 13.3k out · sonnet-5 · sess:fdc58dce-e279-4cce-82c4-8024705653eb
 - [ ] Append older commits
       Wire *Show older* to the next `skip` page while `hasMore` holds.

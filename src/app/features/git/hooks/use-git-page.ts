@@ -8,6 +8,11 @@ export const useGitPage = () => {
   const loadFailed = useAppStore((s) => s.diffLoadFailed);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const setActiveDiffPath = useAppStore((s) => s.setActiveDiffPath);
+  const gitLogCommits = useAppStore((s) => s.gitLogCommits);
+  const gitLogUpstream = useAppStore((s) => s.gitLogUpstream);
+  const loadGitLog = useAppStore((s) => s.loadGitLog);
+  const gitBranch = useAppStore((s) => s.gitBranch);
+  const gitAhead = useAppStore((s) => s.gitAhead);
   const sectionsRef = useRef<HTMLDivElement>(null);
   const commitFiles = useMemo(
     () => files?.map((entry) => ({ path: entry.path, staged: entry.staged })) ?? [],
@@ -17,7 +22,8 @@ export const useGitPage = () => {
 
   useEffect(() => {
     loadDiffFiles();
-  }, [loadDiffFiles]);
+    loadGitLog();
+  }, [loadDiffFiles, loadGitLog]);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -63,6 +69,10 @@ export const useGitPage = () => {
     loadDiffFiles,
     sectionsRef,
     commitForm,
+    gitLogCommits,
+    gitLogUpstream,
+    gitBranch,
+    gitAhead,
   };
 };
 

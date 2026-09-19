@@ -45,6 +45,7 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
   // A commit leaves the changed-files list stale; nothing else refreshes it in-app —
   // the activity stream only watches the corpus, and window focus never fires here.
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
+  const loadGitLog = useAppStore((s) => s.loadGitLog);
   const commitInFlight = useAppStore((s) => s.commitInFlight);
   const setCommitInFlight = useAppStore((s) => s.setCommitInFlight);
   const { toast } = useToast();
@@ -117,7 +118,7 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
       setCommitMessage('');
       lastClearedAt.set(formKey, Date.now());
       removeLocalDraft(draftKey);
-      await Promise.all([loadGitStatus(), loadDiffFiles()]);
+      await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog()]);
     } catch (err) {
       if (onFailure) await onFailure();
       toast({
@@ -125,7 +126,7 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
         description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
-      await Promise.all([loadGitStatus(), loadDiffFiles()]);
+      await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog()]);
     } finally {
       setCommitting(false);
       setCommitInFlight(false);
@@ -137,6 +138,7 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
     stagedCount,
     loadGitStatus,
     loadDiffFiles,
+    loadGitLog,
     commitInFlight,
     setCommitInFlight,
     toast,

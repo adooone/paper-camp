@@ -1,5 +1,5 @@
-import { fetchFileDiffs } from '@/app/services/git-api';
-import type { FileDiffEntry } from '@/types/index';
+import { fetchFileDiffs, fetchGitLog } from '@/app/services/git-api';
+import type { FileDiffEntry, GitLogCommit } from '@/types/index';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
@@ -19,6 +19,12 @@ export type DiffSlice = {
   manuallyCollapsedDiffPaths: Set<string>;
   setDiffCollapsed: (path: string, collapsed: boolean) => void;
   expandDiffPath: (path: string) => void;
+
+  // The clean-tree history view's first page — replaced wholesale on reload.
+  gitLogCommits: GitLogCommit[] | null;
+  gitLogUpstream: string | null;
+  gitLogHasMore: boolean;
+  loadGitLog: () => Promise<void>;
 };
 
 export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
@@ -55,5 +61,18 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
       });
     },
     expandDiffPath: (path) => get().setDiffCollapsed(path, false),
+
+    gitLogCommits: null,
+    gitLogUpstream: null,
+    gitLogHasMore: false,
+    loadGitLog: loadSlice(
+      set,
+      () => fetchGitLog(0),
+      (page) => ({
+        gitLogCommits: page.commits,
+        gitLogUpstream: page.upstream,
+        gitLogHasMore: page.hasMore,
+      }),
+    ),
   };
 }
