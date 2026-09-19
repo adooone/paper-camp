@@ -2,8 +2,9 @@
 id: IDEA-274
 title: Commit history on a clean tree
 type: feat
-status: review
+status: done
 created: 2026-09-19
+updated: 2026-09-19
 tags:
   - app
   - server
