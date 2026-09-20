@@ -174,8 +174,8 @@ describe('closed ideas', () => {
   it('resolves a chat question whose [[idea]] has closed and leaves the rest open', () => {
     const entities = [entity({ id: 'IDEA-1', status: 'done' }), entity({ id: 'IDEA-4' })];
     const thread = [
-      question({ text: '[[IDEA-1]] Run-all parked' }),
-      question({ text: '[[IDEA-4]] Run-all parked' }),
+      question({ text: 'Run-all parked', entityId: 'IDEA-1' }),
+      question({ text: 'Run-all parked', entityId: 'IDEA-4' }),
       question({ text: 'No idea named' }),
     ];
     expect(resolveClosedIdeaQuestions(thread, entities).map((m) => m.state)).toEqual([

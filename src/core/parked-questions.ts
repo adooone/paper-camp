@@ -36,10 +36,9 @@ export async function readParkedQuestions(ideasDir: string): Promise<ParkedQuest
   return collectParkedQuestions(entries);
 }
 
-const IDEA_REF = /\[\[([A-Z]+-\d+)\]\]/;
-
-/** Chat mirrors a parked question with its idea as a `[[ID]]` prefix; once that idea
- * closes, the mirror reads as resolved rather than counting as unanswered forever. */
+/** Chat mirrors a parked question with its idea as a `[[ID]]` prefix, parsed into
+ * `entityId`; once that idea closes, the mirror reads as resolved rather than
+ * counting as unanswered forever. */
 export function resolveClosedIdeaQuestions(
   thread: ThreadMessage[],
   entities: EntityEntry[],
@@ -47,7 +46,8 @@ export function resolveClosedIdeaQuestions(
   const closed = new Set(entities.filter(isClosedEntity).map((entity) => entity.id));
   return thread.map((message) => {
     if (!isOpenQuestion(message.kind, message.state)) return message;
-    const id = message.text.match(IDEA_REF)?.[1];
-    return id && closed.has(id) ? { ...message, state: 'resolved' as const } : message;
+    return message.entityId && closed.has(message.entityId)
+      ? { ...message, state: 'resolved' as const }
+      : message;
   });
 }

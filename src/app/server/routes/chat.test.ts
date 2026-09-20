@@ -104,6 +104,45 @@ describe('GET /api/chat', () => {
     expect(status()).toBe(200);
     expect(json()).toEqual({ thread: [{ kind: 'chat', date: '2026-09-11', text: 'Hello' }] });
   });
+
+  it('resolves a parked question whose idea has since closed', async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-1.md'),
+      [
+        '---',
+        'id: IDEA-1',
+        'title: Done idea',
+        'type: feat',
+        'status: done',
+        'created: 2026-01-01',
+        '---',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+    await writeFile(
+      join(root, 'papercamp', 'chat.md'),
+      '### Thread\n- [ ] 2026-09-11 [question] [agent] [[IDEA-1]] Which auth flow?\n',
+      'utf-8',
+    );
+    const { res, status, json } = fakeRes();
+    await route(root, 'GET').handle(fakeReq(), res);
+    expect(status()).toBe(200);
+    expect(json()).toEqual({
+      thread: [
+        {
+          kind: 'question',
+          date: '2026-09-11',
+          text: 'Which auth flow?',
+          from: 'agent',
+          state: 'resolved',
+          entityId: 'IDEA-1',
+        },
+      ],
+    });
+  });
 });
 
 describe('POST /api/chat', () => {
