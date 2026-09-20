@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.36.0](https://github.com/adooone/paper-camp/compare/v0.35.1...v0.36.0) (2026-09-20)
+
+
+### Features
+
+* **app:** Append older commits ([93f5806](https://github.com/adooone/paper-camp/commit/93f58065e35ba9a4161baf7b414efe418fe60bcc))
+* **app:** Draw the rail and commit rows ([882ea40](https://github.com/adooone/paper-camp/commit/882ea40c48feab87644057285b69d9a02ae3b1e6))
+* **app:** Parse the first-parent log in core ([f883de9](https://github.com/adooone/paper-camp/commit/f883de9365ad89af33a7bf2c1022604c4399ebe4))
+* **app:** Serve `GET /api/git/log?skip=<n>` ([30b33ab](https://github.com/adooone/paper-camp/commit/30b33abdd2900b616050d80ed29e9ccb098d1eae))
+* **app:** Show history on a clean tree ([b459f37](https://github.com/adooone/paper-camp/commit/b459f3773cf47f02509cf27c8ec3a1dfb3730ccc))
+
+
+### Bug Fixes
+
+* **app:** Align commit prefix stamp with title on wide screens ([b27b8b5](https://github.com/adooone/paper-camp/commit/b27b8b50707a9892f6e724d7d06e383c6fe8cdf2))
+* **app:** Fix rail sizing and row layout in commit history ([a652af8](https://github.com/adooone/paper-camp/commit/a652af8f0debb76357abc7c8ecc508585107411d))
+* **app:** Redesign night report as row list, auto-close parked questions ([b11bf12](https://github.com/adooone/paper-camp/commit/b11bf1210efa3450d31c63a77996254e3b56e38a))
+* **app:** Replace inline styles in commit-history rail with Tailwind classes ([e801fcb](https://github.com/adooone/paper-camp/commit/e801fcb9a19b6242bd4321e014327c1a0f0b0039))
+
 ## [0.35.1](https://github.com/adooone/paper-camp/compare/v0.35.0...v0.35.1) (2026-09-18)
 
 
