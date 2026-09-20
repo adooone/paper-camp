@@ -3,7 +3,7 @@ import { useOpenEntity } from '@/app/hooks';
 import { color } from '@/app/styles/tokens';
 import type { GitLogCommit } from '@/types/index';
 import { Divider, Stamp } from '@dendelion/paper-ui';
-import { type CSSProperties, useMemo } from 'react';
+import { useMemo } from 'react';
 
 const RAIL_WIDTH = 20;
 const DOT_RADIUS = 5;
@@ -25,7 +25,6 @@ function formatRelativeTime(iso: string): string {
 }
 
 const DOT_BOX = 14;
-const DOT_GAP = DOT_BOX / 2 + 1;
 const LINE_VIEW_HEIGHT = 40;
 
 interface RailLineProps {
@@ -98,16 +97,10 @@ const RailSegment = ({ pushed, isFirst, isLast, seed }: RailSegmentProps) => {
   );
 
   return (
-    <div className="relative shrink-0 self-stretch" style={{ width: RAIL_WIDTH }}>
-      {!isFirst && (
-        <RailLine pushed={pushed} seed={seed} className="top-0 h-[calc(50%-var(--rail-gap))]" />
-      )}
+    <div className="relative w-5 shrink-0 self-stretch">
+      {!isFirst && <RailLine pushed={pushed} seed={seed} className="top-0 h-[calc(50%-8px)]" />}
       {!isLast && (
-        <RailLine
-          pushed={pushed}
-          seed={seed + 1}
-          className="bottom-0 h-[calc(50%-var(--rail-gap))]"
-        />
+        <RailLine pushed={pushed} seed={seed + 1} className="bottom-0 h-[calc(50%-8px)]" />
       )}
       <svg
         viewBox={`0 0 ${DOT_BOX} ${DOT_BOX}`}
@@ -142,10 +135,7 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
   const openEntity = useOpenEntity();
 
   return (
-    <div
-      className="flex min-w-0 items-stretch gap-3"
-      style={{ '--rail-gap': `${DOT_GAP}px` } as CSSProperties}
-    >
+    <div className="flex min-w-0 items-stretch gap-3">
       <RailSegment pushed={commit.pushed} isFirst={isFirst} isLast={isLast} seed={seed} />
       {/* The divider lives beside the rail, not between rows, so the rail never breaks. */}
       <div className="flex min-w-0 flex-1 flex-col">
