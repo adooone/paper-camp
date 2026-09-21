@@ -20,7 +20,6 @@ export const RoadmapPage = () => {
     containerRef,
     promoting,
     setPromoting,
-    graduatedByItem,
     handleAddCandidate,
     handlePromote,
     onOpenGraduated,
@@ -96,7 +95,6 @@ export const RoadmapPage = () => {
                 key={horizon.title}
                 horizon={horizon}
                 highlightedItem={highlightedItem}
-                graduatedByItem={graduatedByItem}
                 onPromote={(item, candidateName) =>
                   handlePromote(horizon.title, item, candidateName)
                 }

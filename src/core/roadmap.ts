@@ -7,7 +7,6 @@ import type {
   RoadmapItem,
   RoadmapItemState,
   RoadmapRollup,
-  TaskLogEntry,
 } from '../types/index';
 import { findReleaseLineForId } from './trail';
 
@@ -301,45 +300,23 @@ function resolveItem(
   item: RoadmapItem,
   entities: PlanEntry[],
   entityById: Map<string, PlanEntry>,
-  taskRunsById: Map<string, number>,
   changelog: string,
 ): ResolvedRoadmapItem {
-  const links = item.linked.flatMap((id) => {
-    const entity = entityById.get(id);
-    if (!entity?.status) return [];
-    return [
-      {
-        id,
-        status: entity.status,
-        taskRuns: taskRunsById.get(id) ?? 0,
-        pr: entity.pr,
-        released: findReleaseLineForId(changelog, id) !== undefined,
-      },
-    ];
-  });
   const ideas = resolveIdeas(item, entities, entityById, changelog);
   const rollup = rollupIdeas(ideas);
   const { state, readyToShip } = deriveItemState(item, rollup);
-  return { ...item, links, ideas, rollup, state, readyToShip };
+  return { ...item, ideas, rollup, state, readyToShip };
 }
 
 export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],
-  taskLog: TaskLogEntry[] = [],
   changelog = '',
 ): ResolvedRoadmap {
   const entityById = new Map(entities.filter((e) => e.id).map((e) => [e.id as string, e]));
-  const taskRunsById = new Map<string, number>();
-  for (const task of taskLog) {
-    if (!task.planId) continue;
-    taskRunsById.set(task.planId, (taskRunsById.get(task.planId) ?? 0) + 1);
-  }
 
   const horizons = roadmap.horizons.map((horizon) => {
-    const items = horizon.items.map((item) =>
-      resolveItem(item, entities, entityById, taskRunsById, changelog),
-    );
+    const items = horizon.items.map((item) => resolveItem(item, entities, entityById, changelog));
     const rollup = items.reduce(
       (acc, item) => ({
         total: acc.total + item.rollup.total,
@@ -352,7 +329,7 @@ export function resolveRoadmap(
   });
 
   const standingConcerns = roadmap.standingConcerns.map((item) =>
-    resolveItem(item, entities, entityById, taskRunsById, changelog),
+    resolveItem(item, entities, entityById, changelog),
   );
 
   const subjectVocabulary = new Set(deriveSubjectVocabulary(roadmap));

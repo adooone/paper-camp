@@ -527,14 +527,6 @@ export interface Roadmap {
   standingConcerns: RoadmapItem[];
 }
 
-export interface RoadmapLink {
-  id: string;
-  status: PlanStatus;
-  taskRuns: number;
-  pr?: PrInfo;
-  released: boolean;
-}
-
 export interface RoadmapRollup {
   total: number;
   done: number;
@@ -554,7 +546,6 @@ export interface ResolvedIdea {
 export type RoadmapItemState = 'not-started' | 'in-progress' | 'shipped';
 
 export interface ResolvedRoadmapItem extends RoadmapItem {
-  links: RoadmapLink[];
   /** The item's ideas: subject matches joined with linked ids, deduplicated by id.
    * Dropped entities stay in the list and out of `rollup`. */
   ideas: ResolvedIdea[];

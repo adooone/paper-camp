@@ -72,6 +72,7 @@ which is [[IDEA-277]]. Assigning the 73 unfiled ideas a subject.
 - [x] Delete the unused roadmap events
       Drop `deriveRoadmapEvents`, `RoadmapEvent`, the `events` field and their tests.
       run: 1m31s · 50 in · 5.7k out · sonnet-5 · sess:9d88bc89-7be4-41bc-bd10-82f5d1987553
-- [ ] Read `ideas` in bar, stamps and filters
+- [x] Read `ideas` in bar, stamps and filters
       Replace `links` and the page's `graduatedByItem` filter with the resolved list.
+      run: 4m18s · 140 in · 23.4k out · sonnet-5 · sess:9d88bc89-7be4-41bc-bd10-82f5d1987553
 - [ ] Default a promoted idea's subject to its item

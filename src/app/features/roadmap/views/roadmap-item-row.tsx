@@ -1,16 +1,16 @@
 import { STATUS_STAMP } from '@/app/features/plans/constants';
-import type { PlanEntry, ResolvedRoadmapItem } from '@/types/index';
+import type { ResolvedIdea, ResolvedRoadmapItem } from '@/types/index';
 import { Button, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { CANDIDATE_STAMP, HIGHLIGHT_OUTLINE_CLASS } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
-import { IdeaRow, mergeIdeas } from './idea-row';
+import { IdeaRow } from './idea-row';
 import { ProgressBar } from './progress-bar';
 
-const graduationCounts = (graduated: PlanEntry[]) => ({
-  shipped: graduated.filter((p) => p.status === 'done').length,
-  queued: graduated.filter((p) => p.status !== 'done' && p.status !== 'dropped').length,
+const ideaCounts = (ideas: ResolvedIdea[]) => ({
+  shipped: ideas.filter((idea) => idea.status === 'done').length,
+  queued: ideas.filter((idea) => idea.status !== 'done' && idea.status !== 'dropped').length,
 });
 
 const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
@@ -31,7 +31,6 @@ const ChevronRightIcon = ({ size = 14 }: { size?: number }) => (
 
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
-  graduated: PlanEntry[];
   highlighted: boolean;
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
@@ -41,7 +40,6 @@ interface RoadmapItemRowProps {
 
 export const RoadmapItemRow = ({
   item,
-  graduated,
   highlighted,
   onPromote,
   onPromoteCandidate,
@@ -49,9 +47,8 @@ export const RoadmapItemRow = ({
   onOpenGraduated,
 }: RoadmapItemRowProps) => {
   const [expanded, setExpanded] = useState(highlighted);
-  const { shipped, queued } = graduationCounts(graduated);
+  const { shipped, queued } = ideaCounts(item.ideas);
   const candidates = item.candidates.length;
-  const ideas = mergeIdeas(item.links, graduated);
 
   useEffect(() => {
     if (highlighted) setExpanded(true);
@@ -97,15 +94,11 @@ export const RoadmapItemRow = ({
       {expanded && (
         <div className="flex flex-col gap-1 pl-6 pb-4">
           <span className="text-sm opacity-70">{item.description}</span>
-          {ideas.map((idea) => (
+          {item.ideas.map((idea) => (
             <IdeaRow
-              key={idea.key}
+              key={idea.id}
               idea={idea}
-              onOpen={
-                idea.planTitle
-                  ? () => onOpenGraduated(idea.planId, idea.planTitle as string)
-                  : undefined
-              }
+              onOpen={() => onOpenGraduated(idea.id, idea.title)}
             />
           ))}
           {item.candidates.map((candidateName) => (

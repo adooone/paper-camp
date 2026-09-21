@@ -1,4 +1,4 @@
-import type { PlanEntry, TaskLogEntry } from '@/types/index';
+import type { PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   addRoadmapCandidate,
@@ -463,59 +463,19 @@ describe('resolveRoadmap', () => {
 
     expect(resolved.horizons[0].items[1]).toMatchObject({
       name: 'Packaging',
-      links: [{ id: 'IDEA-1', status: 'done' }],
+      ideas: [{ id: 'IDEA-1', status: 'done' }],
       rollup: { total: 1, done: 1 },
     });
     expect(resolved.horizons[0].items[2]).toMatchObject({
       name: 'Mobile control desk',
-      links: [{ id: 'IDEA-2', status: 'in-progress' }],
+      ideas: [{ id: 'IDEA-2', status: 'in-progress' }],
       rollup: { total: 1, done: 0 },
     });
     expect(resolved.horizons[0].rollup).toEqual({ total: 2, done: 1, open: 1 });
     expect(resolved.horizons[1].rollup).toEqual({ total: 0, done: 0, open: 0 });
   });
 
-  it('carries task run count, PR, and release reach on each link', () => {
-    const linked = linkRoadmapItem(
-      SAMPLE,
-      'Horizon 1 — Ready for daily use',
-      'Packaging',
-      'IDEA-1',
-    );
-    const roadmap = parseRoadmap(linked);
-    const pr = { number: 12, url: 'https://github.com/x/y/pull/12', state: 'merged' as const };
-    const entities = [plan({ id: 'IDEA-1', status: 'done', pr })];
-    const taskLog = [
-      task({ planId: 'IDEA-1', startedAt: '2026-01-02T00:00:00.000Z' }),
-      task({ planId: 'IDEA-1', startedAt: '2026-01-03T00:00:00.000Z' }),
-    ];
-    const changelog =
-      '* **core:** Packaging (IDEA-1) ([abc123](https://example.com/commit/abc123))';
-
-    const resolved = resolveRoadmap(roadmap, entities, taskLog, changelog);
-
-    expect(resolved.horizons[0].items[1].links).toEqual([
-      { id: 'IDEA-1', status: 'done', taskRuns: 2, pr, released: true },
-    ]);
-  });
-
-  it('reports zero task runs and no release when neither has happened yet', () => {
-    const linked = linkRoadmapItem(
-      SAMPLE,
-      'Horizon 1 — Ready for daily use',
-      'Packaging',
-      'IDEA-1',
-    );
-    const resolved = resolveRoadmap(parseRoadmap(linked), [
-      plan({ id: 'IDEA-1', status: 'planned' }),
-    ]);
-
-    expect(resolved.horizons[0].items[1].links).toEqual([
-      { id: 'IDEA-1', status: 'planned', taskRuns: 0, pr: undefined, released: false },
-    ]);
-  });
-
-  it('drops links whose entity no longer exists', () => {
+  it('drops a linked id whose entity no longer exists', () => {
     const linked = linkRoadmapItem(
       SAMPLE,
       'Horizon 1 — Ready for daily use',
@@ -525,7 +485,7 @@ describe('resolveRoadmap', () => {
     const resolved = resolveRoadmap(parseRoadmap(linked), []);
 
     expect(resolved.horizons[0].items[1]).toMatchObject({
-      links: [],
+      ideas: [],
       rollup: { total: 0, done: 0, open: 0 },
     });
   });
@@ -558,7 +518,7 @@ describe('resolveRoadmap', () => {
     const changelog =
       '* **core:** Packaging (IDEA-1) ([abc123](https://example.com/commit/abc123))';
 
-    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities, [], changelog);
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities, changelog);
 
     expect(resolved.horizons[0].items[1].ideas).toEqual([
       { id: 'IDEA-1', title: 'Packaging plan', status: 'done', pr, released: true },
@@ -670,15 +630,4 @@ describe('resolveRoadmap', () => {
     const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
     expect(resolved.unfiled).toEqual([]);
   });
-});
-
-const task = (overrides: Partial<TaskLogEntry>): TaskLogEntry => ({
-  id: 'task-1',
-  taskKind: 'run-all',
-  planTitle: 'Untitled',
-  agentId: 'claude-code',
-  startedAt: '2026-01-02T00:00:00.000Z',
-  endedAt: '2026-01-02T00:01:00.000Z',
-  outcome: 'done',
-  ...overrides,
 });

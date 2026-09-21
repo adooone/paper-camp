@@ -1,4 +1,4 @@
-import type { PlanEntry, ResolvedRoadmapHorizon, ResolvedRoadmapItem } from '@/types/index';
+import type { ResolvedRoadmapHorizon, ResolvedRoadmapItem } from '@/types/index';
 import { RoadmapItemRow } from './roadmap-item-row';
 
 const HORIZON_HEADER_CLASSES =
@@ -7,7 +7,6 @@ const HORIZON_HEADER_CLASSES =
 interface HorizonSectionProps {
   horizon: ResolvedRoadmapHorizon;
   highlightedItem: string | undefined;
-  graduatedByItem: (item: ResolvedRoadmapItem) => PlanEntry[];
   onPromote: (item: ResolvedRoadmapItem, candidateName?: string) => void;
   onAddCandidate: (itemName: string, name: string) => Promise<void>;
   onOpenGraduated: (id: string | undefined, title: string) => void;
@@ -16,7 +15,6 @@ interface HorizonSectionProps {
 export const HorizonSection = ({
   horizon,
   highlightedItem,
-  graduatedByItem,
   onPromote,
   onAddCandidate,
   onOpenGraduated,
@@ -28,7 +26,6 @@ export const HorizonSection = ({
         <RoadmapItemRow
           key={item.name}
           item={item}
-          graduated={graduatedByItem(item)}
           highlighted={item.name === highlightedItem}
           onPromote={() => onPromote(item)}
           onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}

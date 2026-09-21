@@ -14,11 +14,11 @@ export interface RoadmapFilters {
 export const DEFAULT_ROADMAP_FILTERS: RoadmapFilters = { horizons: [], statuses: [], search: '' };
 
 export const itemStatuses = (item: ResolvedRoadmapItem): PlanStatus[] => [
-  ...new Set(item.links.map((link) => link.status)),
+  ...new Set(item.ideas.map((idea) => idea.status)),
 ];
 
 const matchesStatusFilter = (item: ResolvedRoadmapItem, statuses: PlanStatus[]): boolean =>
-  statuses.length === 0 || item.links.some((link) => statuses.includes(link.status));
+  statuses.length === 0 || item.ideas.some((idea) => statuses.includes(idea.status));
 
 const inHorizonFilter = (title: string, horizons: string[]): boolean =>
   horizons.length === 0 || horizons.includes(title);
