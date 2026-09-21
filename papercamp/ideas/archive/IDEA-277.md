@@ -2,8 +2,9 @@
 id: IDEA-277
 title: Managing roadmap items
 type: feat
-status: review
+status: done
 created: 2026-09-21
+updated: 2026-09-21
 tags:
   - app
   - core
