@@ -512,10 +512,12 @@ export interface RoadmapItem {
   description: string;
   candidates: string[];
   linked: string[];
+  shippedOn?: string;
 }
 
 export interface RoadmapHorizon {
   title: string;
+  intro: string;
   items: RoadmapItem[];
 }
 

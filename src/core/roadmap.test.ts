@@ -125,6 +125,39 @@ describe('parseRoadmap', () => {
     });
   });
 
+  it('resolves a link to its leading id token, dropping a trailing note', () => {
+    const withNote = SAMPLE.replace(
+      '  - Push notifications for task/check events\n',
+      '  - Push notifications for task/check events\n  - → IDEA-118 (the pull side: a parked-decisions inbox)\n',
+    );
+    const { horizons } = parseRoadmap(withNote);
+    expect(horizons[0].items[2].linked).toEqual(['IDEA-118']);
+  });
+
+  it('parses a `✓ shipped` bullet into shippedOn', () => {
+    const withShipped = SAMPLE.replace(
+      '- **Packaging** — one command in any repo.\n',
+      '- **Packaging** — one command in any repo.\n  - ✓ shipped 2026-08-01\n',
+    );
+    const { horizons } = parseRoadmap(withShipped);
+    expect(horizons[0].items[1].shippedOn).toBe('2026-08-01');
+  });
+
+  it('leaves shippedOn undefined when no shipped bullet is present', () => {
+    const { horizons } = parseRoadmap(SAMPLE);
+    expect(horizons[0].items[1].shippedOn).toBeUndefined();
+  });
+
+  it("keeps a horizon's leading prose as intro", () => {
+    const { horizons } = parseRoadmap(SAMPLE);
+    expect(horizons[0].intro).toBe('Some horizon prose.');
+  });
+
+  it('reports an empty intro when a horizon has no leading prose', () => {
+    const { horizons } = parseRoadmap(SAMPLE);
+    expect(horizons[1].intro).toBe('');
+  });
+
   it('still treats indented prose without a bullet marker as description continuation', () => {
     const withContinuation = SAMPLE.replace(
       '- **Mobile control desk** — direct the flow from a phone.\n',
