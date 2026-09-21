@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.37.0](https://github.com/adooone/paper-camp/compare/v0.36.0...v0.37.0) (2026-09-21)
+
+
+### Features
+
+* **app:** Add the three item mutators to core ([1a9f377](https://github.com/adooone/paper-camp/commit/1a9f377c462535d4aa0112ad7c2ed41667aa4b07))
+* **app:** Carry a rename into every idea's subject ([1121740](https://github.com/adooone/paper-camp/commit/11217408a7400cef68bf5272edfab8d0268b6f67))
+* **app:** Put the four verbs on the action row ([67e3dfa](https://github.com/adooone/paper-camp/commit/67e3dfa32b6aec635b812a4e9217e17ad0ca81d3))
+* **app:** Rewrite *How this file works* in `ROADMAP.md` ([033c23c](https://github.com/adooone/paper-camp/commit/033c23cbead2a4e336fd262699a6cb3ee1bb16e5))
+* **app:** Wire the PATCH and DELETE routes ([e7c7037](https://github.com/adooone/paper-camp/commit/e7c7037869a035bf75180be637d978205ac6be01))
+
+
+### Bug Fixes
+
+* **app:** Match parked-question resolution on entityId, not text ([622d2a1](https://github.com/adooone/paper-camp/commit/622d2a1ea1790fcea4d7b15ca6e18ed515c08487))
+* **core:** Default a promoted idea's subject to its item ([99837ba](https://github.com/adooone/paper-camp/commit/99837ba18130f572c9c4fe29f7edcb4d45a37913))
+* **core:** Delete the unused roadmap events ([406ceb9](https://github.com/adooone/paper-camp/commit/406ceb9ae0012551a14396746cea5255e6e7d9aa))
+* **core:** lint ([bcc39b4](https://github.com/adooone/paper-camp/commit/bcc39b4a64a23b361f91942247a3a0f8d2d1280b))
+* **core:** Parse links, shipped markers and horizon intros ([07bfab2](https://github.com/adooone/paper-camp/commit/07bfab2fbae956efab2ea9a396458d3ad1525382))
+* **core:** Read `ideas` in bar, stamps and filters ([b3e1e7b](https://github.com/adooone/paper-camp/commit/b3e1e7b3764f0ca82e5145c7626cf5e0085bd088))
+* **core:** Resolve each item to one deduplicated idea set ([6578017](https://github.com/adooone/paper-camp/commit/6578017412efd0042c34adb1460c46f2f59c630d))
+* **core:** Resolve standing concerns and the unfiled ([928a1a4](https://github.com/adooone/paper-camp/commit/928a1a4b0e458668abd40e1aef05dca8f1a49df7))
+
 ## [0.36.0](https://github.com/adooone/paper-camp/compare/v0.35.1...v0.36.0) (2026-09-20)
 
 
