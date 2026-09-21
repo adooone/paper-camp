@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.37.1](https://github.com/adooone/paper-camp/compare/v0.37.0...v0.37.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **app:** Improve roadmap and header layout on narrow screens ([a3ff38b](https://github.com/adooone/paper-camp/commit/a3ff38be50ba9b8400eecb36171a335907c7a701))
+* **app:** Surface git log load failures and cover them with tests ([2cb4ede](https://github.com/adooone/paper-camp/commit/2cb4edea663b340246add7eccccbed99e8da69ac))
+
 ## [0.37.0](https://github.com/adooone/paper-camp/compare/v0.36.0...v0.37.0) (2026-09-21)
 
 
