@@ -7,8 +7,11 @@ import {
   addRoadmapCandidate,
   addRoadmapItem,
   linkRoadmapItem,
+  moveRoadmapItem,
   parseRoadmap,
   removeRoadmapItem,
+  setRoadmapItemShipped,
+  updateRoadmapItem,
 } from '@/core/roadmap';
 import {
   assignEntityId,
@@ -273,6 +276,143 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         }
         await writeFile(roadmapPath, updated, 'utf-8');
         sendJson(res, 201, { ok: true });
+      },
+    },
+
+    // Applies rename/redescribe, move and shipped toggle in one pass so a rename that
+    // also moves an item doesn't chase a stale name/horizon across the three mutators.
+    {
+      method: 'PATCH',
+      path: '/api/roadmap/items',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, itemName, name, description, toHorizon, shipped } = JSON.parse(
+          reqBody,
+        ) as {
+          horizonTitle?: string;
+          itemName?: string;
+          name?: string;
+          description?: string;
+          toHorizon?: string;
+          shipped?: boolean;
+        };
+        if (!horizonTitle || !itemName) {
+          sendJson(res, 400, { error: 'horizonTitle and itemName are required' });
+          return;
+        }
+        if (
+          name === undefined &&
+          description === undefined &&
+          toHorizon === undefined &&
+          shipped === undefined
+        ) {
+          sendJson(res, 400, {
+            error: 'at least one of name, description, toHorizon, shipped is required',
+          });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+
+        let updated = raw;
+        let currentHorizon = horizonTitle;
+        let currentItemName = itemName;
+
+        if (name !== undefined || description !== undefined) {
+          updated = updateRoadmapItem(updated, currentHorizon, currentItemName, {
+            ...(name !== undefined ? { name: name.trim() } : {}),
+            ...(description !== undefined ? { description: description.trim() } : {}),
+          });
+          if (name !== undefined) currentItemName = name.trim();
+        }
+        if (toHorizon !== undefined) {
+          updated = moveRoadmapItem(updated, currentHorizon, currentItemName, toHorizon);
+          currentHorizon = toHorizon;
+        }
+        if (shipped !== undefined) {
+          updated = setRoadmapItemShipped(
+            updated,
+            currentHorizon,
+            currentItemName,
+            shipped ? todayDateString() : undefined,
+          );
+        }
+
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'horizon or item not found' });
+          return;
+        }
+        await writeFile(roadmapPath, updated, 'utf-8');
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Removing an item drops its bullet, continuations, candidates and links as one
+    // block; its ideas keep their subject since removeRoadmapItem never touches them.
+    {
+      method: 'DELETE',
+      path: '/api/roadmap/items',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, itemName } = JSON.parse(reqBody) as {
+          horizonTitle?: string;
+          itemName?: string;
+        };
+        if (!horizonTitle || !itemName) {
+          sendJson(res, 400, { error: 'horizonTitle and itemName are required' });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+        const updated = removeRoadmapItem(raw, horizonTitle, itemName);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'horizon or item not found' });
+          return;
+        }
+        await writeFile(roadmapPath, updated, 'utf-8');
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    // Same removeRoadmapItem grammar, given a candidateName, leaves the item itself in place.
+    {
+      method: 'DELETE',
+      path: '/api/roadmap/candidates',
+      handle: async (req, res) => {
+        const reqBody = await readBody(req);
+        const { horizonTitle, itemName, candidateName } = JSON.parse(reqBody) as {
+          horizonTitle?: string;
+          itemName?: string;
+          candidateName?: string;
+        };
+        if (!horizonTitle || !itemName || !candidateName) {
+          sendJson(res, 400, { error: 'horizonTitle, itemName and candidateName are required' });
+          return;
+        }
+        const roadmapPath = join(root, 'ROADMAP.md');
+        const raw = await readMaybe(roadmapPath);
+        if (!raw) {
+          sendJson(res, 404, { error: 'ROADMAP.md not found' });
+          return;
+        }
+        const updated = removeRoadmapItem(raw, horizonTitle, itemName, candidateName);
+        if (updated === raw) {
+          sendJson(res, 404, { error: 'horizon, item or candidate not found' });
+          return;
+        }
+        await writeFile(roadmapPath, updated, 'utf-8');
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
       },
     },
 
