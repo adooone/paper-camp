@@ -11,15 +11,16 @@ export const ProjectSwitcher = () => {
   if (mountPrefix !== '') return <ProjectIdentityHeader size="sm" />;
 
   return (
-    <div className="flex items-center gap-3 min-w-0">
+    <div className="flex shrink-0 items-center gap-3">
       <ProjectIdentityHeader size="sm" />
       <Button
         variant="ghost"
         size="small"
-        className="font-handwritten !text-sm opacity-70"
+        className="whitespace-nowrap font-handwritten !text-sm opacity-70"
         onClick={() => navigate({ to: '/projects' })}
       >
-        Back to projects
+        <span className="sm:hidden">Projects</span>
+        <span className="hidden sm:inline">Back to projects</span>
       </Button>
     </div>
   );

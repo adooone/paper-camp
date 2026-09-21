@@ -56,9 +56,6 @@ export const RoadmapSidebar = () => {
 
         <SidebarLabel>Status</SidebarLabel>
         <div className="flex flex-col">
-          {visibleStatuses.length === 0 && (
-            <span className="opacity-50 text-2xs">No linked ideas</span>
-          )}
           {visibleStatuses.map((status) => (
             <ListItem
               key={status}
@@ -68,9 +65,12 @@ export const RoadmapSidebar = () => {
               className="pc-row text-xs"
               action={<span className="text-2xs text-ink-500">{statusCounts[status] ?? 0}</span>}
             >
-              <Stamp size="small" variant={ITEM_STATE_STAMP[status].variant}>
-                {ITEM_STATE_STAMP[status].label}
-              </Stamp>
+              {/* Negative margin: a stamp is taller than the row's text line and drops the count. */}
+              <span className="-my-1 inline-flex items-center">
+                <Stamp size="small" variant={ITEM_STATE_STAMP[status].variant}>
+                  {ITEM_STATE_STAMP[status].label}
+                </Stamp>
+              </span>
             </ListItem>
           ))}
         </div>

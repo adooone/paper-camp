@@ -344,3 +344,11 @@ a,
     padding-bottom: 0.75rem;
   }
 }
+
+/*
+ * paper-ui's Accordion rotates the chevron of any accordion nested in an expanded one;
+ * fixed upstream, this pins a collapsed nested fold until that release is adopted.
+ */
+.pc-nested-fold button[aria-expanded="false"] svg {
+  transform: none !important;
+}

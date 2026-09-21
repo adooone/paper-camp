@@ -17,9 +17,7 @@ export const useRoadmapSidebar = () => {
   const statusCounts = roadmap ? statusItemCounts(roadmap, filters) : {};
   const activeHorizons = new Set(filters.horizons);
   const activeStatuses = new Set(filters.statuses);
-  const visibleStatuses = STATUS_CHIP_ORDER.filter(
-    (status) => (statusCounts[status] ?? 0) > 0 || activeStatuses.has(status),
-  );
+  const visibleStatuses = STATUS_CHIP_ORDER;
   const hasActiveFilters =
     filters.horizons.length > 0 || filters.statuses.length > 0 || filters.search !== '';
 

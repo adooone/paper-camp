@@ -8,7 +8,9 @@ import { IdeaRow } from './idea-row';
 import { RoughProgressBar } from './rough-progress-bar';
 import { ShippedIdeasFold } from './shipped-ideas-fold';
 
-const GRID_CLASS = 'grid flex-1 min-w-0 items-center gap-3 grid-cols-[minmax(0,1fr)_6rem_8rem]';
+// Phone: name and description take the full width, state and progress share the row under them.
+const GRID_CLASS =
+  'grid flex-1 min-w-0 items-center gap-x-3 gap-y-1 grid-cols-[6rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_6rem_8rem]';
 
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
@@ -61,25 +63,25 @@ export const RoadmapItemRow = ({
         onToggle={() => setExpanded((v) => !v)}
         title={
           <div className={GRID_CLASS}>
-            <div className="min-w-0">
+            <div className="col-span-2 min-w-0 sm:col-span-1">
               <div className="truncate">{item.name}</div>
-              <div className="truncate text-sm opacity-70">{item.description}</div>
+              <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
+                {item.description}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div>
               <Stamp size="small" variant={stateStamp.variant}>
                 {stateStamp.label}
               </Stamp>
-              {item.state === 'in-progress' && item.readyToShip && (
-                <span className="font-handwritten text-2xs opacity-60 whitespace-nowrap">
-                  ready to ship
-                </span>
-              )}
             </div>
             <div className="min-w-0">
               {item.rollup.total > 0 ? (
                 <>
                   <div className="font-handwritten text-2xs opacity-70 whitespace-nowrap">
-                    {item.rollup.done} of {item.rollup.total} · {item.rollup.open} open
+                    {item.rollup.done} of {item.rollup.total} ·{' '}
+                    {item.state === 'in-progress' && item.readyToShip
+                      ? 'ready to ship'
+                      : `${item.rollup.open} open`}
                   </div>
                   <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
                 </>
