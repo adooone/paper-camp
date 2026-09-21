@@ -6,6 +6,7 @@ import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow } from './idea-row';
 import { RoughProgressBar } from './rough-progress-bar';
+import { ShippedIdeasFold } from './shipped-ideas-fold';
 
 const ITEM_STATE_STAMP: Record<
   ResolvedRoadmapItem['state'],
@@ -37,6 +38,12 @@ export const RoadmapItemRow = ({
 }: RoadmapItemRowProps) => {
   const [expanded, setExpanded] = useState(highlighted);
   const stateStamp = ITEM_STATE_STAMP[item.state];
+  const openIdeas = item.ideas.filter(
+    (idea) => idea.status !== 'done' && idea.status !== 'dropped',
+  );
+  const shippedIdeas = item.ideas.filter(
+    (idea) => idea.status === 'done' || idea.status === 'dropped',
+  );
 
   useEffect(() => {
     if (highlighted) setExpanded(true);
@@ -81,7 +88,7 @@ export const RoadmapItemRow = ({
         }
       >
         <div className="flex flex-col gap-1 pb-2">
-          {item.ideas.map((idea) => (
+          {openIdeas.map((idea) => (
             <IdeaRow
               key={idea.id}
               idea={idea}
@@ -95,16 +102,15 @@ export const RoadmapItemRow = ({
               onPromote={() => onPromoteCandidate(candidateName)}
             />
           ))}
-          <AddCandidateForm onAdd={onAddCandidate} />
-          <Button
-            type="button"
-            variant="ghost"
-            size="small"
-            onClick={onPromote}
-            className="self-start"
-          >
-            Promote to idea
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="min-w-48 flex-1">
+              <AddCandidateForm onAdd={onAddCandidate} />
+            </div>
+            <Button type="button" variant="ghost" size="small" onClick={onPromote}>
+              Promote to idea
+            </Button>
+          </div>
+          <ShippedIdeasFold ideas={shippedIdeas} onOpen={onOpenGraduated} />
         </div>
       </Accordion>
     </div>

@@ -9,7 +9,7 @@ interface IdeaRowProps {
 }
 
 export const IdeaRow = ({ idea, onOpen }: IdeaRowProps) => (
-  <div className="flex items-center gap-3 border-b border-black/10 py-1.5 last:border-b-0">
+  <div className="flex flex-col items-start gap-1.5 border-b border-black/10 py-1.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-3">
     <button
       type="button"
       onClick={onOpen}
@@ -17,13 +17,15 @@ export const IdeaRow = ({ idea, onOpen }: IdeaRowProps) => (
     >
       {idea.title}
     </button>
-    {idea.pr && <PrBadge pr={idea.pr} />}
-    <Stamp
-      size="small"
-      fillColor={STATUS_STAMP[idea.status].fill}
-      textColor={STATUS_STAMP[idea.status].text}
-    >
-      {STATUS_LABEL[idea.status]}
-    </Stamp>
+    <div className="flex shrink-0 items-center gap-1.5">
+      {idea.pr && <PrBadge pr={idea.pr} />}
+      <Stamp
+        size="small"
+        fillColor={STATUS_STAMP[idea.status].fill}
+        textColor={STATUS_STAMP[idea.status].text}
+      >
+        {STATUS_LABEL[idea.status]}
+      </Stamp>
+    </div>
   </div>
 );

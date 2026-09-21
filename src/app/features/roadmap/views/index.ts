@@ -6,3 +6,4 @@ export * from './idea-row';
 export * from './roadmap-item-row';
 export * from './rough-progress-bar';
 export * from './shipped-fold';
+export * from './shipped-ideas-fold';

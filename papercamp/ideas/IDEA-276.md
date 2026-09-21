@@ -81,8 +81,9 @@ lays out. A timeline or dated view.
 - [x] Give a horizon a header, a rollup and a shipped fold
       Drop the item cards and separate horizons with the sketch `Divider`.
       run: 3m · 62 in · 16.1k out · sonnet-5 · sess:58772d92-b947-4225-b5e8-02b26c99df3e
-- [ ] Reorder the expanded item around what is open
+- [x] Reorder the expanded item around what is open
       Open ideas, candidates, the action row, a shipped fold, the phone stacking, and the candidate/promote wording.
+      run: 3m3s · 58 in · 10.2k out · sonnet-5 · sess:8bf0e29f-025f-4d4e-87be-9006eb7e5181
 - [ ] Close the page with standing concerns and the unfiled
 - [ ] Reduce the goal to one line and retune the sidebar
       `GoalBanner` goes; horizon entries lose the prefix, the status filter becomes the three item states, and a filtered-out horizon keeps its header.
