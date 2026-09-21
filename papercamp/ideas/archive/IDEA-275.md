@@ -2,8 +2,9 @@
 id: IDEA-275
 title: Truthful roadmap progress
 type: fix
-status: review
+status: done
 created: 2026-09-21
+updated: 2026-09-21
 tags:
   - core
   - server
