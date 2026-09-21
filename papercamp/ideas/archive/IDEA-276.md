@@ -2,8 +2,9 @@
 id: IDEA-276
 title: A roadmap you can read
 type: refactor
-status: review
+status: done
 created: 2026-09-21
+updated: 2026-09-21
 tags:
   - app
   - ui
