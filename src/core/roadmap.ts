@@ -191,6 +191,98 @@ export function removeRoadmapItem(
 }
 
 /**
+ * Rewrites an item's head bullet (name and/or description), leaving its candidates,
+ * links and shipped marker untouched. A new description replaces any wrapped
+ * continuation lines, collapsing it onto the head line like addRoadmapItem does.
+ */
+export function updateRoadmapItem(
+  markdown: string,
+  horizonTitle: string,
+  itemName: string,
+  updates: { name?: string; description?: string },
+): string {
+  const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
+
+  const headMatch = lines[item.start].match(ITEM_RE);
+  if (!headMatch) return markdown;
+
+  const name = updates.name?.trim() ?? headMatch[1].trim();
+  const description = updates.description?.trim() ?? headMatch[2].trim();
+  lines[item.start] = `- **${name}** — ${description}`;
+
+  if (updates.description !== undefined) {
+    for (let k = item.end - 1; k > item.start; k--) {
+      if (ITEM_CONTINUATION_RE.test(lines[k]) && !ITEM_CANDIDATE_RE.test(lines[k])) {
+        lines.splice(k, 1);
+      }
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Moves an item's whole block — head, continuations, candidates, links and shipped
+ * marker — to the end of another horizon's item list. No-op if either horizon or the
+ * item doesn't exist, or the destination is the item's current horizon.
+ */
+export function moveRoadmapItem(
+  markdown: string,
+  horizonTitle: string,
+  itemName: string,
+  toHorizonTitle: string,
+): string {
+  if (horizonTitle === toHorizonTitle) return markdown;
+
+  const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
+  if (!locateHorizon(lines, toHorizonTitle)) return markdown;
+
+  const block = lines.splice(item.start, item.end - item.start);
+
+  const destHorizon = locateHorizon(lines, toHorizonTitle);
+  if (!destHorizon) return markdown;
+  let end = destHorizon.end;
+  while (end > destHorizon.start && lines[end - 1].trim() === '') end--;
+  lines.splice(end, 0, ...block);
+
+  return lines.join('\n');
+}
+
+/**
+ * Sets or clears an item's `✓ shipped <date>` marker, replacing any existing one.
+ * `shippedOn` undefined reopens the item by removing the marker.
+ */
+export function setRoadmapItemShipped(
+  markdown: string,
+  horizonTitle: string,
+  itemName: string,
+  shippedOn: string | undefined,
+): string {
+  const lines = markdown.split('\n');
+  const item = locateItem(lines, horizonTitle, itemName);
+  if (!item) return markdown;
+
+  let end = item.end;
+  for (let k = item.start + 1; k < end; k++) {
+    if (ITEM_SHIPPED_RE.test(lines[k])) {
+      lines.splice(k, 1);
+      end--;
+      break;
+    }
+  }
+
+  if (shippedOn !== undefined) {
+    lines.splice(end, 0, `  - ✓ shipped ${shippedOn}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Appends a new item bullet (`- **name** — description`) at the end of a horizon's
  * item list, in the shape parseItems expects. No-op if the horizon doesn't exist.
  */

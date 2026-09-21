@@ -56,8 +56,9 @@ Reordering items within a horizon. Adding, renaming or removing horizons
 and standing concerns. Undo beyond git.
 
 ### Phases
-- [ ] Add the three item mutators to core
+- [x] Add the three item mutators to core
       `updateRoadmapItem`, `moveRoadmapItem` and `setRoadmapItemShipped` beside `removeRoadmapItem`, each moving the bullet with its continuations, candidates, links and shipped marker as one block, each with tests.
+      run: 2m15s · 28 in · 12.9k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
 - [ ] Wire the PATCH and DELETE routes
       `PATCH /api/roadmap/items` for name, description, `toHorizon` and `shipped`; `DELETE` for an item and for a candidate; each calls `activity.notifyChanged()`.
 - [ ] Carry a rename into every idea's subject

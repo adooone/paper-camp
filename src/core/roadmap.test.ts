@@ -5,9 +5,12 @@ import {
   addRoadmapItem,
   deriveSubjectVocabulary,
   linkRoadmapItem,
+  moveRoadmapItem,
   parseRoadmap,
   removeRoadmapItem,
   resolveRoadmap,
+  setRoadmapItemShipped,
+  updateRoadmapItem,
 } from './roadmap';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
@@ -309,6 +312,269 @@ describe('removeRoadmapItem', () => {
       'Mobile control desk',
     ]);
     expect(horizons[1].items.map((i) => i.name)).toEqual(['Goal & roadmap in the app']);
+  });
+});
+
+describe('updateRoadmapItem', () => {
+  it('renames an item, leaving its description and candidates in place', () => {
+    const result = updateRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', {
+      name: 'Ship in one command',
+    });
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Ship in one command',
+      description: 'one command in any repo.',
+      candidates: [],
+      linked: [],
+    });
+  });
+
+  it('rewrites the description, leaving the name and candidates in place', () => {
+    const result = updateRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      {
+        description: 'a phone-shaped remote control.',
+      },
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'a phone-shaped remote control.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: [],
+    });
+  });
+
+  it('collapses a wrapped description onto the head line when replaced', () => {
+    const result = updateRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'First-run experience',
+      {
+        description: 'a shorter pitch.',
+      },
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[0]).toEqual({
+      name: 'First-run experience',
+      description: 'a shorter pitch.',
+      candidates: [],
+      linked: [],
+    });
+    expect(result).not.toContain('seeded');
+  });
+
+  it('updates both name and description together', () => {
+    const result = updateRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', {
+      name: 'Ship in one command',
+      description: 'a single install step.',
+    });
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1]).toEqual({
+      name: 'Ship in one command',
+      description: 'a single install step.',
+      candidates: [],
+      linked: [],
+    });
+  });
+
+  it('leaves later items and horizons untouched', () => {
+    const result = updateRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', {
+      name: 'Ship in one command',
+    });
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items.map((i) => i.name)).toEqual([
+      'First-run experience',
+      'Ship in one command',
+      'Mobile control desk',
+    ]);
+    expect(horizons[1].items.map((i) => i.name)).toEqual(['Goal & roadmap in the app']);
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(updateRoadmapItem(SAMPLE, 'Horizon 9 — Nope', 'Packaging', { name: 'x' })).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      updateRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'No such item', { name: 'x' }),
+    ).toBe(SAMPLE);
+  });
+});
+
+describe('moveRoadmapItem', () => {
+  it('moves an item to the end of another horizon, round-tripping through parseRoadmap', () => {
+    const result = moveRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'Horizon 2 — A deeper desk',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items.map((i) => i.name)).toEqual([
+      'First-run experience',
+      'Mobile control desk',
+    ]);
+    expect(horizons[1].items.map((i) => i.name)).toEqual([
+      'Goal & roadmap in the app',
+      'Packaging',
+    ]);
+    expect(horizons[1].items[1]).toEqual({
+      name: 'Packaging',
+      description: 'one command in any repo.',
+      candidates: [],
+      linked: [],
+    });
+  });
+
+  it('carries continuation lines, candidates and links with the moved item', () => {
+    const withLink = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'IDEA-42',
+    );
+    const result = moveRoadmapItem(
+      withLink,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      'Horizon 2 — A deeper desk',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items.map((i) => i.name)).toEqual(['First-run experience', 'Packaging']);
+    expect(horizons[1].items[1]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: ['IDEA-42'],
+    });
+  });
+
+  it('is a no-op when the source and destination horizon are the same', () => {
+    expect(
+      moveRoadmapItem(
+        SAMPLE,
+        'Horizon 1 — Ready for daily use',
+        'Packaging',
+        'Horizon 1 — Ready for daily use',
+      ),
+    ).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the source horizon does not exist', () => {
+    expect(
+      moveRoadmapItem(SAMPLE, 'Horizon 9 — Nope', 'Packaging', 'Horizon 2 — A deeper desk'),
+    ).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the destination horizon does not exist', () => {
+    expect(
+      moveRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', 'Horizon 9 — Nope'),
+    ).toBe(SAMPLE);
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      moveRoadmapItem(
+        SAMPLE,
+        'Horizon 1 — Ready for daily use',
+        'No such item',
+        'Horizon 2 — A deeper desk',
+      ),
+    ).toBe(SAMPLE);
+  });
+});
+
+describe('setRoadmapItemShipped', () => {
+  it('appends a shipped marker under the item', () => {
+    const result = setRoadmapItemShipped(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      '2026-09-21',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1].shippedOn).toBe('2026-09-21');
+  });
+
+  it('replaces an existing shipped marker with a new date', () => {
+    const alreadyShipped = SAMPLE.replace(
+      '- **Packaging** — one command in any repo.\n',
+      '- **Packaging** — one command in any repo.\n  - ✓ shipped 2026-08-01\n',
+    );
+    const result = setRoadmapItemShipped(
+      alreadyShipped,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      '2026-09-21',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1].shippedOn).toBe('2026-09-21');
+    expect(result.match(/✓ shipped/g)).toHaveLength(1);
+  });
+
+  it('reopens a shipped item by removing the marker when shippedOn is undefined', () => {
+    const alreadyShipped = SAMPLE.replace(
+      '- **Packaging** — one command in any repo.\n',
+      '- **Packaging** — one command in any repo.\n  - ✓ shipped 2026-08-01\n',
+    );
+    const result = setRoadmapItemShipped(
+      alreadyShipped,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      undefined,
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[1].shippedOn).toBeUndefined();
+    expect(result).not.toContain('✓ shipped');
+  });
+
+  it('keeps candidates and links intact when marking shipped', () => {
+    const result = setRoadmapItemShipped(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Mobile control desk',
+      '2026-09-21',
+    );
+    const { horizons } = parseRoadmap(result);
+    expect(horizons[0].items[2]).toEqual({
+      name: 'Mobile control desk',
+      description: 'direct the flow from a phone.',
+      candidates: [
+        'Responsive polish for phone widths',
+        'PWA manifest + install to home screen',
+        'Push notifications for task/check events',
+      ],
+      linked: [],
+      shippedOn: '2026-09-21',
+    });
+  });
+
+  it('is a no-op when the horizon does not exist', () => {
+    expect(setRoadmapItemShipped(SAMPLE, 'Horizon 9 — Nope', 'Packaging', '2026-09-21')).toBe(
+      SAMPLE,
+    );
+  });
+
+  it('is a no-op when the item does not exist', () => {
+    expect(
+      setRoadmapItemShipped(
+        SAMPLE,
+        'Horizon 1 — Ready for daily use',
+        'No such item',
+        '2026-09-21',
+      ),
+    ).toBe(SAMPLE);
   });
 });
 
