@@ -538,11 +538,29 @@ export interface RoadmapLink {
 export interface RoadmapRollup {
   total: number;
   done: number;
+  open: number;
 }
+
+export interface ResolvedIdea {
+  id: string;
+  title: string;
+  status: PlanStatus;
+  pr?: PrInfo;
+  released: boolean;
+}
+
+/** `shipped` only once the item carries the shipped marker a human writes (see IDEA-277);
+ * an item whose every idea is done otherwise stays `in-progress` with `readyToShip`. */
+export type RoadmapItemState = 'not-started' | 'in-progress' | 'shipped';
 
 export interface ResolvedRoadmapItem extends RoadmapItem {
   links: RoadmapLink[];
+  /** The item's ideas: subject matches joined with linked ids, deduplicated by id.
+   * Dropped entities stay in the list and out of `rollup`. */
+  ideas: ResolvedIdea[];
   rollup: RoadmapRollup;
+  state: RoadmapItemState;
+  readyToShip: boolean;
 }
 
 export interface ResolvedRoadmapHorizon {

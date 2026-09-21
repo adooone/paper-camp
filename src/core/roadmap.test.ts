@@ -472,8 +472,8 @@ describe('resolveRoadmap', () => {
       links: [{ id: 'IDEA-2', status: 'in-progress' }],
       rollup: { total: 1, done: 0 },
     });
-    expect(resolved.horizons[0].rollup).toEqual({ total: 2, done: 1 });
-    expect(resolved.horizons[1].rollup).toEqual({ total: 0, done: 0 });
+    expect(resolved.horizons[0].rollup).toEqual({ total: 2, done: 1, open: 1 });
+    expect(resolved.horizons[1].rollup).toEqual({ total: 0, done: 0, open: 0 });
   });
 
   it('carries task run count, PR, and release reach on each link', () => {
@@ -527,7 +527,107 @@ describe('resolveRoadmap', () => {
 
     expect(resolved.horizons[0].items[1]).toMatchObject({
       links: [],
-      rollup: { total: 0, done: 0 },
+      rollup: { total: 0, done: 0, open: 0 },
+    });
+  });
+
+  it('resolves ideas from a subject match, a linked id, or both, deduplicated by id', () => {
+    const linked = linkRoadmapItem(
+      SAMPLE,
+      'Horizon 1 — Ready for daily use',
+      'Packaging',
+      'IDEA-1',
+    );
+    const entities = [
+      plan({ id: 'IDEA-1', title: 'Linked and subject-matched', subject: 'Packaging' }),
+      plan({ id: 'IDEA-2', title: 'Subject match only', subject: 'Packaging' }),
+    ];
+
+    const resolved = resolveRoadmap(parseRoadmap(linked), entities);
+
+    expect(resolved.horizons[0].items[1].ideas.map((idea) => idea.id)).toEqual([
+      'IDEA-1',
+      'IDEA-2',
+    ]);
+  });
+
+  it('carries id, title, status, pr and released on each idea', () => {
+    const pr = { number: 12, url: 'https://github.com/x/y/pull/12', state: 'merged' as const };
+    const entities = [
+      plan({ id: 'IDEA-1', title: 'Packaging plan', subject: 'Packaging', status: 'done', pr }),
+    ];
+    const changelog =
+      '* **core:** Packaging (IDEA-1) ([abc123](https://example.com/commit/abc123))';
+
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities, [], changelog);
+
+    expect(resolved.horizons[0].items[1].ideas).toEqual([
+      { id: 'IDEA-1', title: 'Packaging plan', status: 'done', pr, released: true },
+    ]);
+  });
+
+  it('keeps a dropped idea in the list but out of the rollup arithmetic', () => {
+    const entities = [
+      plan({ id: 'IDEA-1', subject: 'Packaging', status: 'done' }),
+      plan({ id: 'IDEA-2', subject: 'Packaging', status: 'dropped' }),
+    ];
+
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+
+    expect(resolved.horizons[0].items[1].ideas.map((idea) => idea.id)).toEqual([
+      'IDEA-1',
+      'IDEA-2',
+    ]);
+    expect(resolved.horizons[0].items[1].rollup).toEqual({ total: 1, done: 1, open: 0 });
+  });
+
+  it('reports open as the non-dropped ideas that are not yet done', () => {
+    const entities = [
+      plan({ id: 'IDEA-1', subject: 'Packaging', status: 'done' }),
+      plan({ id: 'IDEA-2', subject: 'Packaging', status: 'in-progress' }),
+    ];
+
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+
+    expect(resolved.horizons[0].items[1].rollup).toEqual({ total: 2, done: 1, open: 1 });
+  });
+
+  it('resolves state "not-started" for an item with no non-dropped idea', () => {
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), []);
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      state: 'not-started',
+      readyToShip: false,
+    });
+  });
+
+  it('resolves state "in-progress" while any non-dropped idea is open', () => {
+    const entities = [plan({ id: 'IDEA-1', subject: 'Packaging', status: 'in-progress' })];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      state: 'in-progress',
+      readyToShip: false,
+    });
+  });
+
+  it('resolves state "in-progress" with readyToShip when every idea is done but the item is unmarked', () => {
+    const entities = [plan({ id: 'IDEA-1', subject: 'Packaging', status: 'done' })];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      state: 'in-progress',
+      readyToShip: true,
+    });
+  });
+
+  it('resolves state "shipped" from the shipped marker regardless of idea status', () => {
+    const withShipped = SAMPLE.replace(
+      '- **Packaging** — one command in any repo.\n',
+      '- **Packaging** — one command in any repo.\n  - ✓ shipped 2026-08-01\n',
+    );
+    const entities = [plan({ id: 'IDEA-1', subject: 'Packaging', status: 'in-progress' })];
+    const resolved = resolveRoadmap(parseRoadmap(withShipped), entities);
+    expect(resolved.horizons[0].items[1]).toMatchObject({
+      state: 'shipped',
+      readyToShip: false,
     });
   });
 });

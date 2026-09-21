@@ -1,9 +1,12 @@
 import type {
   PlanEntry,
+  ResolvedIdea,
   ResolvedRoadmap,
   Roadmap,
   RoadmapEvent,
   RoadmapItem,
+  RoadmapItemState,
+  RoadmapRollup,
   TaskLogEntry,
 } from '../types/index';
 import { findReleaseLineForId } from './trail';
@@ -251,6 +254,49 @@ export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
   ];
 }
 
+// An item's ideas: entities whose subject names it, joined with its linked ids,
+// deduplicated by id — the linked join catches an idea whose subject drifted or was
+// never set, the subject join catches one a human forgot to link by hand.
+function resolveIdeas(
+  item: RoadmapItem,
+  entities: PlanEntry[],
+  entityById: Map<string, PlanEntry>,
+  changelog: string,
+): ResolvedIdea[] {
+  const byId = new Map<string, PlanEntry>();
+  for (const entity of entities) {
+    if (entity.id && entity.subject === item.name) byId.set(entity.id, entity);
+  }
+  for (const id of item.linked) {
+    const entity = entityById.get(id);
+    if (entity) byId.set(id, entity);
+  }
+  return [...byId.entries()].map(([id, entity]) => ({
+    id,
+    title: entity.title,
+    status: entity.status,
+    pr: entity.pr,
+    released: findReleaseLineForId(changelog, id) !== undefined,
+  }));
+}
+
+function rollupIdeas(ideas: ResolvedIdea[]): RoadmapRollup {
+  const nonDropped = ideas.filter((idea) => idea.status !== 'dropped');
+  const done = nonDropped.filter((idea) => idea.status === 'done').length;
+  return { total: nonDropped.length, done, open: nonDropped.length - done };
+}
+
+// A subject can always take one more idea, so "every idea is done" only offers
+// readyToShip — only a person marking the item shipped (IDEA-277) makes it final.
+function deriveItemState(
+  item: RoadmapItem,
+  rollup: RoadmapRollup,
+): { state: RoadmapItemState; readyToShip: boolean } {
+  if (item.shippedOn !== undefined) return { state: 'shipped', readyToShip: false };
+  if (rollup.total === 0) return { state: 'not-started', readyToShip: false };
+  return { state: 'in-progress', readyToShip: rollup.done === rollup.total };
+}
+
 export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],
@@ -279,15 +325,18 @@ export function resolveRoadmap(
           },
         ];
       });
-      const rollup = { total: links.length, done: links.filter((l) => l.status === 'done').length };
-      return { ...item, links, rollup };
+      const ideas = resolveIdeas(item, entities, entityById, changelog);
+      const rollup = rollupIdeas(ideas);
+      const { state, readyToShip } = deriveItemState(item, rollup);
+      return { ...item, links, ideas, rollup, state, readyToShip };
     });
     const rollup = items.reduce(
       (acc, item) => ({
         total: acc.total + item.rollup.total,
         done: acc.done + item.rollup.done,
+        open: acc.open + item.rollup.open,
       }),
-      { total: 0, done: 0 },
+      { total: 0, done: 0, open: 0 },
     );
     return { title: horizon.title, items, rollup };
   });

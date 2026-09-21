@@ -64,8 +64,9 @@ which is [[IDEA-277]]. Assigning the 73 unfiled ideas a subject.
 - [x] Parse links, shipped markers and horizon intros
       Take a link's leading id token, read the `✓ shipped` bullet into `shippedOn`, and keep each horizon's leading prose as `intro`.
       run: 2m9s · 48 in · 9.3k out · sonnet-5 · sess:de9a5b6b-92ac-475e-a92e-7fcdbeded982
-- [ ] Resolve each item to one deduplicated idea set
+- [x] Resolve each item to one deduplicated idea set
       Join subject matches with linked ids, derive `rollup` from the non-dropped, and add the item state with `readyToShip`.
+      run: 3m30s · 42 in · 16.2k out · sonnet-5 · sess:de9a5b6b-92ac-475e-a92e-7fcdbeded982
 - [ ] Resolve standing concerns and the unfiled
 - [ ] Delete the unused roadmap events
       Drop `deriveRoadmapEvents`, `RoadmapEvent`, the `events` field and their tests.
