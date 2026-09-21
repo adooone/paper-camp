@@ -189,7 +189,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 500, { error: 'could not assign entity ID' });
           return;
         }
-        const resolvedSubject = subject?.trim() || (candidateName ? item.name : undefined);
+        const resolvedSubject = subject?.trim() || item.name;
         const ideasDir = campFile(root, 'ideas');
         await mkdir(ideasDir, { recursive: true });
         const entityContent = formatEntityFile({

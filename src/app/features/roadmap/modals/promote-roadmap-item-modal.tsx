@@ -33,13 +33,13 @@ export const PromoteRoadmapItemModal = ({
 
   useEffect(() => {
     if (item) {
-      // A candidate defaults to its parent item's name — the "big bet becomes a
-      // Subject" rule — but the picker still lets the user override it.
-      setSubject(candidateName ? item.name : NO_SUBJECT);
+      // Defaults to the item's own name — the "big bet becomes a Subject" rule —
+      // but the picker still lets the user override it.
+      setSubject(item.name);
       setLoading(false);
       setError(null);
     }
-  }, [item, candidateName]);
+  }, [item]);
 
   const handlePromote = async () => {
     if (!item || !horizonTitle) return;

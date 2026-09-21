@@ -2,7 +2,7 @@
 id: IDEA-275
 title: Truthful roadmap progress
 type: fix
-status: idea
+status: review
 created: 2026-09-21
 tags:
   - core
@@ -75,4 +75,5 @@ which is [[IDEA-277]]. Assigning the 73 unfiled ideas a subject.
 - [x] Read `ideas` in bar, stamps and filters
       Replace `links` and the page's `graduatedByItem` filter with the resolved list.
       run: 4m18s · 140 in · 23.4k out · sonnet-5 · sess:9d88bc89-7be4-41bc-bd10-82f5d1987553
-- [ ] Default a promoted idea's subject to its item
+- [x] Default a promoted idea's subject to its item
+      run: 1m8s · 32 in · 4k out · sonnet-5 · sess:9d88bc89-7be4-41bc-bd10-82f5d1987553
