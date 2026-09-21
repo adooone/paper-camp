@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   addRoadmapCandidate,
   addRoadmapItem,
-  deriveRoadmapEvents,
   deriveSubjectVocabulary,
   linkRoadmapItem,
   parseRoadmap,
@@ -682,59 +681,4 @@ const task = (overrides: Partial<TaskLogEntry>): TaskLogEntry => ({
   endedAt: '2026-01-02T00:01:00.000Z',
   outcome: 'done',
   ...overrides,
-});
-
-describe('deriveRoadmapEvents', () => {
-  const linked = linkRoadmapItem(SAMPLE, 'Horizon 1 — Ready for daily use', 'Packaging', 'IDEA-1');
-  const roadmap = parseRoadmap(linked);
-
-  it('emits a created event for a linked entity, keyed to its horizon and item', () => {
-    const entities = [plan({ id: 'IDEA-1', title: 'Packaging plan', created: '2026-01-01' })];
-    const events = deriveRoadmapEvents(roadmap, entities, []);
-    expect(events).toEqual([
-      {
-        date: '2026-01-01',
-        kind: 'created',
-        entityId: 'IDEA-1',
-        horizonTitle: 'Horizon 1 — Ready for daily use',
-        itemName: 'Packaging',
-        label: 'Packaging plan created',
-      },
-    ]);
-  });
-
-  it('emits a task-run event from a tasks.log row keyed by planId', () => {
-    const events = deriveRoadmapEvents(
-      roadmap,
-      [],
-      [task({ planId: 'IDEA-1', taskKind: 'reconcile', startedAt: '2026-01-03T00:00:00.000Z' })],
-    );
-    expect(events).toEqual([
-      {
-        date: '2026-01-03T00:00:00.000Z',
-        kind: 'task-run',
-        entityId: 'IDEA-1',
-        horizonTitle: 'Horizon 1 — Ready for daily use',
-        itemName: 'Packaging',
-        label: 'reconcile run (done)',
-      },
-    ]);
-  });
-
-  it('sorts the combined stream chronologically', () => {
-    const entities = [plan({ id: 'IDEA-1', created: '2026-01-05' })];
-    const taskLog = [task({ planId: 'IDEA-1', startedAt: '2026-01-02T00:00:00.000Z' })];
-    const events = deriveRoadmapEvents(roadmap, entities, taskLog);
-    expect(events.map((e) => e.kind)).toEqual(['task-run', 'created']);
-  });
-
-  it('ignores an entity or task run not linked to any roadmap item', () => {
-    const entities = [plan({ id: 'IDEA-999', created: '2026-01-01' })];
-    const taskLog = [task({ planId: 'IDEA-999' })];
-    expect(deriveRoadmapEvents(roadmap, entities, taskLog)).toEqual([]);
-  });
-
-  it('ignores a tasks.log row with no planId', () => {
-    expect(deriveRoadmapEvents(roadmap, [], [task({})])).toEqual([]);
-  });
 });

@@ -4,7 +4,6 @@ import type {
   ResolvedRoadmap,
   ResolvedRoadmapItem,
   Roadmap,
-  RoadmapEvent,
   RoadmapItem,
   RoadmapItemState,
   RoadmapRollup,
@@ -361,58 +360,5 @@ export function resolveRoadmap(
     (entity) => !entity.subject || !subjectVocabulary.has(entity.subject),
   );
 
-  const events = deriveRoadmapEvents(roadmap, entities, taskLog);
-  return { goal: roadmap.goal, horizons, standingConcerns, unfiled, events };
-}
-
-/**
- * One chronological model over two append-only sources, keyed back to the roadmap item
- * via its `linked` entity ids. `updated` is deliberately excluded (see IDEA-92's Timeline
- * phase) since a last-touched timestamp can't stand in for history.
- */
-export function deriveRoadmapEvents(
-  roadmap: Roadmap,
-  entities: PlanEntry[],
-  taskLog: TaskLogEntry[],
-): RoadmapEvent[] {
-  const itemByEntityId = new Map<string, { horizonTitle: string; itemName: string }>();
-  for (const horizon of roadmap.horizons) {
-    for (const item of horizon.items) {
-      for (const id of item.linked) {
-        itemByEntityId.set(id, { horizonTitle: horizon.title, itemName: item.name });
-      }
-    }
-  }
-
-  const events: RoadmapEvent[] = [];
-
-  for (const entity of entities) {
-    if (!entity.id) continue;
-    const item = itemByEntityId.get(entity.id);
-    if (!item) continue;
-    events.push({
-      date: entity.created,
-      kind: 'created',
-      entityId: entity.id,
-      horizonTitle: item.horizonTitle,
-      itemName: item.itemName,
-      label: `${entity.title} created`,
-    });
-  }
-
-  for (const task of taskLog) {
-    if (!task.planId) continue;
-    const item = itemByEntityId.get(task.planId);
-    if (!item) continue;
-    events.push({
-      date: task.startedAt,
-      kind: 'task-run',
-      entityId: task.planId,
-      horizonTitle: item.horizonTitle,
-      itemName: item.itemName,
-      label: `${task.taskKind} run (${task.outcome})`,
-    });
-  }
-
-  return events.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  return { goal: roadmap.goal, horizons, standingConcerns, unfiled };
 }

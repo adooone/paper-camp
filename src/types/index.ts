@@ -575,18 +575,6 @@ export interface ResolvedRoadmap {
   standingConcerns: ResolvedRoadmapItem[];
   /** Every entity whose subject is missing or names nothing on the map. */
   unfiled: PlanEntry[];
-  events: RoadmapEvent[];
-}
-
-export type RoadmapEventKind = 'created' | 'task-run';
-
-export interface RoadmapEvent {
-  date: string;
-  kind: RoadmapEventKind;
-  entityId: string;
-  horizonTitle: string;
-  itemName: string;
-  label: string;
 }
 
 export interface EnvEntry {
