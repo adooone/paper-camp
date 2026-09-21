@@ -65,7 +65,8 @@ and standing concerns. Undo beyond git.
 - [x] Carry a rename into every idea's subject
       A changed name rewrites `subject:` in each entity filed under the item, archive included, in the same request.
       run: 1m2s · 18 in · 5.4k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
-- [ ] Put the four verbs on the action row
+- [x] Put the four verbs on the action row
       Edit through the prefilled add-item modal, Move as a horizon `Menu`, Mark shipped / Reopen, Remove behind a confirm that names the item and counts the ideas it renames; Remove beside Promote on a candidate.
+      run: 6m30s · 120 in · 41.1k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
 - [ ] Rewrite *How this file works* in `ROADMAP.md`
       Say shipped items stay in the file with their marker, replacing the pruning line.

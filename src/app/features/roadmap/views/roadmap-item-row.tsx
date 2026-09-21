@@ -1,5 +1,5 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, Button, Stamp } from '@dendelion/paper-ui';
+import { Accordion, Button, Menu, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { HIGHLIGHT_OUTLINE_CLASS, ITEM_STATE_STAMP } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
@@ -13,19 +13,31 @@ const GRID_CLASS = 'grid flex-1 min-w-0 items-center gap-3 grid-cols-[minmax(0,1
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
   highlighted: boolean;
+  otherHorizonTitles: string[];
   onPromote: () => void;
   onPromoteCandidate: (candidateName: string) => void;
   onAddCandidate: (name: string) => Promise<void>;
   onOpenGraduated: (id: string | undefined, title: string) => void;
+  onEdit: () => void;
+  onMove: (toHorizon: string) => void;
+  onToggleShipped: () => void;
+  onRemove: () => void;
+  onRemoveCandidate: (candidateName: string) => void;
 }
 
 export const RoadmapItemRow = ({
   item,
   highlighted,
+  otherHorizonTitles,
   onPromote,
   onPromoteCandidate,
   onAddCandidate,
   onOpenGraduated,
+  onEdit,
+  onMove,
+  onToggleShipped,
+  onRemove,
+  onRemoveCandidate,
 }: RoadmapItemRowProps) => {
   const [expanded, setExpanded] = useState(highlighted);
   const stateStamp = ITEM_STATE_STAMP[item.state];
@@ -79,6 +91,35 @@ export const RoadmapItemRow = ({
         }
       >
         <div className="flex flex-col gap-1 pb-2">
+          <div className="flex flex-wrap items-center gap-2 border-black/10 border-b pb-2">
+            <Button type="button" variant="ghost" size="small" onClick={onEdit}>
+              Edit
+            </Button>
+            {otherHorizonTitles.length > 0 ? (
+              <Menu
+                trigger={
+                  <Button type="button" variant="ghost" size="small">
+                    Move
+                  </Button>
+                }
+                items={otherHorizonTitles.map((title) => ({
+                  id: title,
+                  label: title,
+                  onSelect: () => onMove(title),
+                }))}
+              />
+            ) : (
+              <Button type="button" variant="ghost" size="small" disabled>
+                Move
+              </Button>
+            )}
+            <Button type="button" variant="ghost" size="small" onClick={onToggleShipped}>
+              {item.shippedOn !== undefined ? 'Reopen' : 'Mark shipped'}
+            </Button>
+            <Button type="button" variant="danger" size="small" onClick={onRemove}>
+              Remove
+            </Button>
+          </div>
           {openIdeas.map((idea) => (
             <IdeaRow
               key={idea.id}
@@ -91,6 +132,7 @@ export const RoadmapItemRow = ({
               key={candidateName}
               name={candidateName}
               onPromote={() => onPromoteCandidate(candidateName)}
+              onRemove={() => onRemoveCandidate(candidateName)}
             />
           ))}
           <div className="flex flex-wrap items-center gap-2 pt-1">

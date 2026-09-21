@@ -3,7 +3,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { Button, Divider } from '@dendelion/paper-ui';
 import { firstSentence } from './helpers';
 import { useRoadmapPage } from './hooks';
-import { AddRoadmapItemModal, PromoteRoadmapItemModal } from './modals';
+import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';
 import { HorizonSection, StandingConcernsSection, UnfiledSection } from './views';
 
 export const RoadmapPage = () => {
@@ -21,8 +21,17 @@ export const RoadmapPage = () => {
     containerRef,
     promoting,
     setPromoting,
+    editing,
+    setEditing,
+    removing,
+    setRemoving,
     handleAddCandidate,
     handlePromote,
+    handleEdit,
+    handleMove,
+    handleToggleShipped,
+    handleRemoveItem,
+    handleRemoveCandidate,
     onOpenGraduated,
   } = useRoadmapPage();
 
@@ -90,6 +99,7 @@ export const RoadmapPage = () => {
               {index > 0 && <Divider sketch className="my-6" />}
               <HorizonSection
                 horizon={horizon}
+                horizonTitles={horizonTitles}
                 highlightedItem={highlightedItem}
                 onPromote={(item, candidateName) =>
                   handlePromote(horizon.title, item, candidateName)
@@ -98,6 +108,13 @@ export const RoadmapPage = () => {
                   handleAddCandidate(horizon.title, itemName, name)
                 }
                 onOpenGraduated={onOpenGraduated}
+                onEdit={(item) => handleEdit(horizon.title, item)}
+                onMove={(item, toHorizon) => handleMove(horizon.title, item, toHorizon)}
+                onToggleShipped={(item) => handleToggleShipped(horizon.title, item)}
+                onRemove={(item) => handleRemoveItem(horizon.title, item)}
+                onRemoveCandidate={(item, candidateName) =>
+                  handleRemoveCandidate(horizon.title, item, candidateName)
+                }
               />
             </div>
           ))}
@@ -126,9 +143,18 @@ export const RoadmapPage = () => {
         onPromoted={loadRoadmap}
       />
       <AddRoadmapItemModal
-        open={addOpen}
+        open={addOpen || editing !== null}
         horizonTitles={horizonTitles}
-        onClose={() => setAddOpen(false)}
+        editing={editing}
+        onClose={() => {
+          setAddOpen(false);
+          setEditing(null);
+        }}
+      />
+      <RemoveRoadmapItemModal
+        horizonTitle={removing?.horizonTitle ?? null}
+        item={removing?.item ?? null}
+        onClose={() => setRemoving(null)}
       />
     </div>
   );

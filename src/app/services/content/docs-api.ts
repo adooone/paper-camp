@@ -160,6 +160,51 @@ export const addRoadmapCandidate = async (horizonTitle: string, itemName: string
   }
 };
 
+export const patchRoadmapItem = async (
+  horizonTitle: string,
+  itemName: string,
+  updates: { name?: string; description?: string; toHorizon?: string; shipped?: boolean },
+) => {
+  const res = await fetch(apiUrl('/api/roadmap/items'), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, itemName, ...updates }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to update roadmap item' }));
+    throw new Error(err.error);
+  }
+  return res.json() as Promise<{ ok: boolean; renamedSubjects: number }>;
+};
+
+export const deleteRoadmapItem = async (horizonTitle: string, itemName: string) => {
+  const res = await fetch(apiUrl('/api/roadmap/items'), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, itemName }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to remove roadmap item' }));
+    throw new Error(err.error);
+  }
+};
+
+export const deleteRoadmapCandidate = async (
+  horizonTitle: string,
+  itemName: string,
+  candidateName: string,
+) => {
+  const res = await fetch(apiUrl('/api/roadmap/candidates'), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horizonTitle, itemName, candidateName }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to remove roadmap candidate' }));
+    throw new Error(err.error);
+  }
+};
+
 export const fetchConsistency = async () => {
   const res = await fetch(apiUrl('/api/consistency'));
   return res.json() as Promise<ConsistencyIssue[]>;
