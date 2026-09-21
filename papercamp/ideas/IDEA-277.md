@@ -62,8 +62,9 @@ and standing concerns. Undo beyond git.
 - [x] Wire the PATCH and DELETE routes
       `PATCH /api/roadmap/items` for name, description, `toHorizon` and `shipped`; `DELETE` for an item and for a candidate; each calls `activity.notifyChanged()`.
       run: 1m27s · 26 in · 7.1k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
-- [ ] Carry a rename into every idea's subject
+- [x] Carry a rename into every idea's subject
       A changed name rewrites `subject:` in each entity filed under the item, archive included, in the same request.
+      run: 1m2s · 18 in · 5.4k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
 - [ ] Put the four verbs on the action row
       Edit through the prefilled add-item modal, Move as a horizon `Menu`, Mark shipped / Reopen, Remove behind a confirm that names the item and counts the ideas it renames; Remove beside Promote on a candidate.
 - [ ] Rewrite *How this file works* in `ROADMAP.md`

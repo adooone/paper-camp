@@ -321,13 +321,19 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         let updated = raw;
         let currentHorizon = horizonTitle;
         let currentItemName = itemName;
+        const newName = name?.trim();
+        let renamed = false;
 
-        if (name !== undefined || description !== undefined) {
-          updated = updateRoadmapItem(updated, currentHorizon, currentItemName, {
-            ...(name !== undefined ? { name: name.trim() } : {}),
+        if (newName !== undefined || description !== undefined) {
+          const next = updateRoadmapItem(updated, currentHorizon, currentItemName, {
+            ...(newName !== undefined ? { name: newName } : {}),
             ...(description !== undefined ? { description: description.trim() } : {}),
           });
-          if (name !== undefined) currentItemName = name.trim();
+          if (newName !== undefined && newName !== currentItemName && next !== updated) {
+            renamed = true;
+          }
+          updated = next;
+          if (newName !== undefined) currentItemName = newName;
         }
         if (toHorizon !== undefined) {
           updated = moveRoadmapItem(updated, currentHorizon, currentItemName, toHorizon);
@@ -347,8 +353,27 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           return;
         }
         await writeFile(roadmapPath, updated, 'utf-8');
+
+        // A rename empties the item unless every idea filed under the old name follows it —
+        // subject is free text, not a foreign key, so nothing else keeps it in sync.
+        let renamedSubjects = 0;
+        if (renamed) {
+          const ideasDir = campFile(root, 'ideas');
+          const { entries } = await readEntities(ideasDir);
+          const affected = entries.filter((entry) => entry.subject === itemName);
+          for (const entry of affected) {
+            const dir = entry.archived ? join(ideasDir, 'archive') : ideasDir;
+            await writeEntityFile(
+              root,
+              join(dir, `${entry.id}.md`),
+              entityFileInput(entry, { subject: currentItemName }),
+            );
+          }
+          renamedSubjects = affected.length;
+        }
+
         activity.notifyChanged();
-        sendJson(res, 200, { ok: true });
+        sendJson(res, 200, { ok: true, renamedSubjects });
       },
     },
 
