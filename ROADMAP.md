@@ -13,8 +13,11 @@ stays a human decision.
 ## How this file works
 
 The roadmap is the map; `papercamp/ideas/` is the queue. An item graduates by
-becoming an idea (capture → subject → run order) through the normal flow, and
-this file gets pruned when it does. Horizons are ordered by intent, not dates.
+becoming an idea (capture → subject → run order) through the normal flow.
+Shipped items stay in the file: marking one shipped appends a
+`  - ✓ shipped <date>` bullet under it, keeping its horizon, description and
+links so the map stays a record of what was bet and when it landed, not just
+what's still open. Horizons are ordered by intent, not dates.
 
 Items too big for one idea graduate differently: a **big bet** becomes a
 **Subject**, and gets decomposed into a run-ordered sequence of ideas under it

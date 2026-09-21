@@ -2,7 +2,7 @@
 id: IDEA-277
 title: Managing roadmap items
 type: feat
-status: idea
+status: review
 created: 2026-09-21
 tags:
   - app
@@ -68,5 +68,6 @@ and standing concerns. Undo beyond git.
 - [x] Put the four verbs on the action row
       Edit through the prefilled add-item modal, Move as a horizon `Menu`, Mark shipped / Reopen, Remove behind a confirm that names the item and counts the ideas it renames; Remove beside Promote on a candidate.
       run: 6m30s · 120 in · 41.1k out · sonnet-5 · sess:ad29beef-d3b1-4baf-81f6-6c3ebc692f26
-- [ ] Rewrite *How this file works* in `ROADMAP.md`
+- [x] Rewrite *How this file works* in `ROADMAP.md`
       Say shipped items stay in the file with their marker, replacing the pruning line.
+      run: 35s · 26 in · 1.8k out · sonnet-5 · sess:7d9dcbfe-5c64-44ac-b1a5-78052960d696
