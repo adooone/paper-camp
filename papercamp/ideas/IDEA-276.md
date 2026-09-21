@@ -78,8 +78,9 @@ lays out. A timeline or dated view.
 - [x] Rebuild the item row on a fixed grid
       Columns, state stamp, the `roughGenerator` bar and paper-ui's chevron; `progress-bar.tsx` and the old stamps go.
       run: 3m57s · 92 in · 20.8k out · sonnet-5 · sess:58772d92-b947-4225-b5e8-02b26c99df3e
-- [ ] Give a horizon a header, a rollup and a shipped fold
+- [x] Give a horizon a header, a rollup and a shipped fold
       Drop the item cards and separate horizons with the sketch `Divider`.
+      run: 3m · 62 in · 16.1k out · sonnet-5 · sess:58772d92-b947-4225-b5e8-02b26c99df3e
 - [ ] Reorder the expanded item around what is open
       Open ideas, candidates, the action row, a shipped fold, the phone stacking, and the candidate/promote wording.
 - [ ] Close the page with standing concerns and the unfiled

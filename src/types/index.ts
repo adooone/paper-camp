@@ -556,6 +556,7 @@ export interface ResolvedRoadmapItem extends RoadmapItem {
 
 export interface ResolvedRoadmapHorizon {
   title: string;
+  intro: string;
   items: ResolvedRoadmapItem[];
   rollup: RoadmapRollup;
 }

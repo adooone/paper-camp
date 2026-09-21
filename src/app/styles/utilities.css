@@ -173,7 +173,7 @@ header[class*="layout-module__header___"] {
 }
 
 /*
- * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/Roadmap/
+ * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/
  * worklist rows) are sized for desktop pointer precision; widen their tap area
  * at phone width so a thumb doesn't need to land on a single-line-tall target.
  * Same reach-into-the-nested-div pattern as the base .plan-row-card rule above.

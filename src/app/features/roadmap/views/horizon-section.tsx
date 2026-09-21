@@ -1,8 +1,11 @@
 import type { ResolvedRoadmapHorizon, ResolvedRoadmapItem } from '@/types/index';
 import { RoadmapItemRow } from './roadmap-item-row';
+import { ShippedFold } from './shipped-fold';
 
-const HORIZON_HEADER_CLASSES =
-  'font-handwritten text-md font-semibold opacity-70 leading-none pt-2 px-1 pb-0';
+const rollupLine = (horizon: ResolvedRoadmapHorizon) => {
+  const notStarted = horizon.items.filter((item) => item.state === 'not-started').length;
+  return `${horizon.rollup.done} of ${horizon.rollup.total} ideas shipped · ${notStarted} item${notStarted === 1 ? '' : 's'} not started`;
+};
 
 interface HorizonSectionProps {
   horizon: ResolvedRoadmapHorizon;
@@ -18,21 +21,43 @@ export const HorizonSection = ({
   onPromote,
   onAddCandidate,
   onOpenGraduated,
-}: HorizonSectionProps) => (
-  <div className="flex flex-col gap-1">
-    <div className={HORIZON_HEADER_CLASSES}>{horizon.title}</div>
-    <div className="flex flex-col">
-      {horizon.items.map((item) => (
-        <RoadmapItemRow
-          key={item.name}
-          item={item}
-          highlighted={item.name === highlightedItem}
-          onPromote={() => onPromote(item)}
-          onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}
-          onAddCandidate={(name) => onAddCandidate(item.name, name)}
+}: HorizonSectionProps) => {
+  const openItems = horizon.items.filter((item) => item.state !== 'shipped');
+  const shippedItems = horizon.items.filter((item) => item.state === 'shipped');
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3 px-1 pt-2">
+        <div className="min-w-0">
+          <div className="truncate font-handwritten text-md font-semibold leading-none opacity-70">
+            {horizon.title}
+          </div>
+          {horizon.intro && <div className="truncate text-sm opacity-60">{horizon.intro}</div>}
+        </div>
+        <div className="shrink-0 whitespace-nowrap font-handwritten text-2xs opacity-60">
+          {rollupLine(horizon)}
+        </div>
+      </div>
+      <div className="flex flex-col">
+        {openItems.map((item) => (
+          <RoadmapItemRow
+            key={item.name}
+            item={item}
+            highlighted={item.name === highlightedItem}
+            onPromote={() => onPromote(item)}
+            onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}
+            onAddCandidate={(name) => onAddCandidate(item.name, name)}
+            onOpenGraduated={onOpenGraduated}
+          />
+        ))}
+        <ShippedFold
+          items={shippedItems}
+          highlightedItem={highlightedItem}
+          onPromote={onPromote}
+          onAddCandidate={onAddCandidate}
           onOpenGraduated={onOpenGraduated}
         />
-      ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};

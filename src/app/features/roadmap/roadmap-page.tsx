@@ -1,6 +1,6 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
-import { Button } from '@dendelion/paper-ui';
+import { Button, Divider } from '@dendelion/paper-ui';
 import { useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal } from './modals';
 import { GoalBanner, HorizonSection } from './views';
@@ -87,22 +87,24 @@ export const RoadmapPage = () => {
           }
         />
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col">
           {horizons
             .filter((horizon) => horizon.items.length > 0)
-            .map((horizon) => (
-              <HorizonSection
-                key={horizon.title}
-                horizon={horizon}
-                highlightedItem={highlightedItem}
-                onPromote={(item, candidateName) =>
-                  handlePromote(horizon.title, item, candidateName)
-                }
-                onAddCandidate={(itemName, name) =>
-                  handleAddCandidate(horizon.title, itemName, name)
-                }
-                onOpenGraduated={onOpenGraduated}
-              />
+            .map((horizon, index) => (
+              <div key={horizon.title}>
+                {index > 0 && <Divider sketch className="my-6" />}
+                <HorizonSection
+                  horizon={horizon}
+                  highlightedItem={highlightedItem}
+                  onPromote={(item, candidateName) =>
+                    handlePromote(horizon.title, item, candidateName)
+                  }
+                  onAddCandidate={(itemName, name) =>
+                    handleAddCandidate(horizon.title, itemName, name)
+                  }
+                  onOpenGraduated={onOpenGraduated}
+                />
+              </div>
             ))}
         </div>
       )}

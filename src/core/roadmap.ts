@@ -324,7 +324,7 @@ export function resolveRoadmap(
       }),
       { total: 0, done: 0, open: 0 },
     );
-    return { title: horizon.title, items, rollup };
+    return { title: horizon.title, intro: horizon.intro, items, rollup };
   });
 
   const standingConcerns = roadmap.standingConcerns.map((item) =>
