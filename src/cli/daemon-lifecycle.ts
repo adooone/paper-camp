@@ -2,6 +2,7 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { closeSync, mkdirSync, openSync } from 'node:fs';
 import { open, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 import {
   type DaemonState,
   daemonLogPath,
@@ -389,16 +390,20 @@ export async function runLogs(opts: LogsOptions): Promise<void> {
   let printedLength = Buffer.byteLength(content, 'utf-8');
   const handle = await open(logPath, 'r').catch(() => null);
   if (!handle) return;
+  let decoder = new StringDecoder('utf-8');
   try {
     for (;;) {
       await sleep(LOGS_POLL_INTERVAL_MS);
       if (!isProcessAlive(parentPid) || process.stdout.destroyed) return;
       const { size } = await handle.stat();
-      if (size < printedLength) printedLength = 0;
+      if (size < printedLength) {
+        printedLength = 0;
+        decoder = new StringDecoder('utf-8');
+      }
       if (size > printedLength) {
         const buffer = Buffer.alloc(size - printedLength);
         await handle.read(buffer, 0, buffer.length, printedLength);
-        process.stdout.write(buffer.toString('utf-8'));
+        process.stdout.write(decoder.write(buffer));
         printedLength = size;
       }
     }

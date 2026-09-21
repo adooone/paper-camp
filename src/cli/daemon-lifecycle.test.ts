@@ -1,5 +1,14 @@
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process';
-import { access, appendFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  access,
+  appendFile,
+  mkdir,
+  mkdtemp,
+  open,
+  readFile,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { type Server, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -995,5 +1004,43 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     child.kill('SIGKILL');
     expect(stdout).toContain('line 1');
     expect(stdout).toContain('line 2');
+  });
+
+  it('logs -f decodes a multi-byte character split across polls', async () => {
+    const configDir = await makeTempConfigDir();
+    const logPath = join(configDir, 'daemon.log');
+    await writeFile(logPath, 'start\n', 'utf-8');
+
+    const child = spawn(
+      'bun',
+      [
+        '-e',
+        `import(${JSON.stringify(join(__dirname, 'daemon-lifecycle.ts'))}).then((m) => m.runLogs({ follow: true }));`,
+      ],
+      { env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir } },
+    );
+    children.push(child);
+    let stdout = '';
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+
+    await waitUntil(() => stdout.includes('start'));
+
+    const emoji = Buffer.from('😀\n', 'utf-8');
+    const handle = await open(logPath, 'a');
+    try {
+      await handle.appendFile(emoji.subarray(0, 2));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await handle.appendFile(emoji.subarray(2));
+    } finally {
+      await handle.close();
+    }
+
+    await waitUntil(() => stdout.includes('😀'));
+
+    child.kill('SIGKILL');
+    expect(stdout).toContain('😀');
+    expect(stdout).not.toContain('�');
   });
 });
