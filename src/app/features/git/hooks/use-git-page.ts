@@ -12,6 +12,8 @@ export const useGitPage = () => {
   const gitLogUpstream = useAppStore((s) => s.gitLogUpstream);
   const gitLogHasMore = useAppStore((s) => s.gitLogHasMore);
   const gitLogLoadingMore = useAppStore((s) => s.gitLogLoadingMore);
+  const gitLogLoadFailed = useAppStore((s) => s.gitLogLoadFailed);
+  const gitLogLoadMoreFailed = useAppStore((s) => s.gitLogLoadMoreFailed);
   const loadGitLog = useAppStore((s) => s.loadGitLog);
   const loadMoreGitLog = useAppStore((s) => s.loadMoreGitLog);
   const gitBranch = useAppStore((s) => s.gitBranch);
@@ -76,6 +78,9 @@ export const useGitPage = () => {
     gitLogUpstream,
     gitLogHasMore,
     gitLogLoadingMore,
+    gitLogLoadFailed,
+    gitLogLoadMoreFailed,
+    loadGitLog,
     loadMoreGitLog,
     gitBranch,
     gitAhead,

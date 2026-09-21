@@ -25,6 +25,8 @@ export type DiffSlice = {
   gitLogUpstream: string | null;
   gitLogHasMore: boolean;
   gitLogLoadingMore: boolean;
+  gitLogLoadFailed: boolean;
+  gitLogLoadMoreFailed: boolean;
   loadGitLog: () => Promise<void>;
   loadMoreGitLog: () => Promise<void>;
 };
@@ -68,6 +70,8 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
     gitLogUpstream: null,
     gitLogHasMore: false,
     gitLogLoadingMore: false,
+    gitLogLoadFailed: false,
+    gitLogLoadMoreFailed: false,
     loadGitLog: loadSlice(
       set,
       () => fetchGitLog(0),
@@ -75,12 +79,14 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
         gitLogCommits: page.commits,
         gitLogUpstream: page.upstream,
         gitLogHasMore: page.hasMore,
+        gitLogLoadFailed: false,
       }),
+      () => ({ gitLogLoadFailed: true }),
     ),
     loadMoreGitLog: async () => {
       const { gitLogCommits, gitLogHasMore, gitLogLoadingMore } = get();
       if (!gitLogCommits || !gitLogHasMore || gitLogLoadingMore) return;
-      set({ gitLogLoadingMore: true });
+      set({ gitLogLoadingMore: true, gitLogLoadMoreFailed: false });
       try {
         const page = await fetchGitLog(gitLogCommits.length);
         set((s) => ({
@@ -88,6 +94,8 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
           gitLogUpstream: page.upstream,
           gitLogHasMore: page.hasMore,
         }));
+      } catch {
+        set({ gitLogLoadMoreFailed: true });
       } finally {
         set({ gitLogLoadingMore: false });
       }

@@ -19,6 +19,9 @@ export const GitPage = () => {
     gitLogUpstream,
     gitLogHasMore,
     gitLogLoadingMore,
+    gitLogLoadFailed,
+    gitLogLoadMoreFailed,
+    loadGitLog,
     loadMoreGitLog,
     gitBranch,
     gitAhead,
@@ -72,21 +75,33 @@ export const GitPage = () => {
       {header}
       {files.length === 0 ? (
         <div className={`${contentClass} flex flex-col gap-3`}>
-          {gitLogCommits === null ? (
+          {gitLogLoadFailed ? (
+            <div className="flex flex-col items-start gap-3">
+              <p className="opacity-50 m-0">Couldn't load the commit history.</p>
+              <Button variant="secondary" size="small" onClick={loadGitLog}>
+                Retry
+              </Button>
+            </div>
+          ) : gitLogCommits === null ? (
             <Spinner label="Loading commit history…" />
           ) : (
             <>
               <CommitHistory commits={gitLogCommits} upstream={gitLogUpstream} />
               {gitLogHasMore && (
-                <Button
-                  className="self-start"
-                  variant="secondary"
-                  size="small"
-                  onClick={loadMoreGitLog}
-                  disabled={gitLogLoadingMore}
-                >
-                  {gitLogLoadingMore ? 'Loading…' : 'Show older'}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    className="self-start"
+                    variant="secondary"
+                    size="small"
+                    onClick={loadMoreGitLog}
+                    disabled={gitLogLoadingMore}
+                  >
+                    {gitLogLoadingMore ? 'Loading…' : 'Show older'}
+                  </Button>
+                  {gitLogLoadMoreFailed && (
+                    <span className="opacity-50 text-2xs">Couldn't load older commits.</span>
+                  )}
+                </div>
               )}
             </>
           )}
