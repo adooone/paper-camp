@@ -3,7 +3,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { Button, Divider } from '@dendelion/paper-ui';
 import { useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal } from './modals';
-import { GoalBanner, HorizonSection } from './views';
+import { GoalBanner, HorizonSection, StandingConcernsSection, UnfiledSection } from './views';
 
 export const RoadmapPage = () => {
   const {
@@ -107,6 +107,21 @@ export const RoadmapPage = () => {
               </div>
             ))}
         </div>
+      )}
+      {roadmap.standingConcerns.length > 0 && (
+        <>
+          <Divider sketch className="my-6" />
+          <StandingConcernsSection
+            items={roadmap.standingConcerns}
+            onOpenGraduated={onOpenGraduated}
+          />
+        </>
+      )}
+      {roadmap.unfiled.length > 0 && (
+        <>
+          <Divider sketch className="my-6" />
+          <UnfiledSection entities={roadmap.unfiled} onOpenGraduated={onOpenGraduated} />
+        </>
       )}
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
