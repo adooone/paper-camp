@@ -253,9 +253,8 @@ export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
   ];
 }
 
-// An item's ideas: entities whose subject names it, joined with its linked ids,
-// deduplicated by id — the linked join catches an idea whose subject drifted or was
-// never set, the subject join catches one a human forgot to link by hand.
+// An item's ideas: entities whose subject names it, joined with its linked ids
+// (dedup by id) — catches both subject-drifted ideas and unlinked ones.
 function resolveIdeas(
   item: RoadmapItem,
   entities: PlanEntry[],
