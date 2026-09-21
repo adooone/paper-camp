@@ -1,21 +1,12 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, Button, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Accordion, Button, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { HIGHLIGHT_OUTLINE_CLASS } from '../constants';
+import { HIGHLIGHT_OUTLINE_CLASS, ITEM_STATE_STAMP } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow } from './idea-row';
 import { RoughProgressBar } from './rough-progress-bar';
 import { ShippedIdeasFold } from './shipped-ideas-fold';
-
-const ITEM_STATE_STAMP: Record<
-  ResolvedRoadmapItem['state'],
-  { variant: StampVariant; label: string }
-> = {
-  'not-started': { variant: 'neutral', label: 'Not started' },
-  'in-progress': { variant: 'warning', label: 'In progress' },
-  shipped: { variant: 'success', label: 'Shipped' },
-};
 
 const GRID_CLASS = 'grid flex-1 min-w-0 items-center gap-3 grid-cols-[minmax(0,1fr)_6rem_8rem]';
 

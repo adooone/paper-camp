@@ -1,7 +1,8 @@
 import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
-import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
-import { Input, ListItem } from '@dendelion/paper-ui';
+import { Input, ListItem, Stamp } from '@dendelion/paper-ui';
+import { ITEM_STATE_STAMP } from './constants';
+import { stripHorizonPrefix } from './helpers';
 import { useRoadmapSidebar } from './hooks';
 
 export const RoadmapSidebar = () => {
@@ -48,7 +49,7 @@ export const RoadmapSidebar = () => {
               className="pc-row text-xs"
               action={<span className="text-2xs text-ink-500">{horizonCounts[title] ?? 0}</span>}
             >
-              {title}
+              {stripHorizonPrefix(title)}
             </ListItem>
           ))}
         </div>
@@ -65,15 +66,11 @@ export const RoadmapSidebar = () => {
               active={activeStatuses.has(status)}
               onClick={() => toggleRoadmapStatus(status)}
               className="pc-row text-xs"
-              icon={
-                <span
-                  className="w-[9px] h-[9px] rounded-full shrink-0"
-                  style={{ background: STATUS_STAMP[status].text }}
-                />
-              }
               action={<span className="text-2xs text-ink-500">{statusCounts[status] ?? 0}</span>}
             >
-              {STATUS_LABEL[status]}
+              <Stamp size="small" variant={ITEM_STATE_STAMP[status].variant}>
+                {ITEM_STATE_STAMP[status].label}
+              </Stamp>
             </ListItem>
           ))}
         </div>

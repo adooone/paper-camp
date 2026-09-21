@@ -1,9 +1,10 @@
 import { EmptyState, RowSkeleton } from '@/app/components';
 import { PageTitle } from '@/app/components/page-title';
 import { Button, Divider } from '@dendelion/paper-ui';
+import { firstSentence } from './helpers';
 import { useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal } from './modals';
-import { GoalBanner, HorizonSection, StandingConcernsSection, UnfiledSection } from './views';
+import { HorizonSection, StandingConcernsSection, UnfiledSection } from './views';
 
 export const RoadmapPage = () => {
   const {
@@ -76,36 +77,30 @@ export const RoadmapPage = () => {
           + Add item
         </Button>
       </div>
-      <GoalBanner goal={roadmap.goal} />
-      {totalVisible === 0 ? (
+      <p className="mb-6 truncate text-sm opacity-60">{firstSentence(roadmap.goal)}</p>
+      {totalVisible === 0 && !hasActiveFilters ? (
         <EmptyState
           illustration="empty-tray"
-          message={
-            hasActiveFilters
-              ? 'Nothing matches these filters — clear one from the sidebar to see more.'
-              : 'No roadmap items yet — add one from the sidebar.'
-          }
+          message="No roadmap items yet — add one from the sidebar."
         />
       ) : (
         <div className="flex flex-col">
-          {horizons
-            .filter((horizon) => horizon.items.length > 0)
-            .map((horizon, index) => (
-              <div key={horizon.title}>
-                {index > 0 && <Divider sketch className="my-6" />}
-                <HorizonSection
-                  horizon={horizon}
-                  highlightedItem={highlightedItem}
-                  onPromote={(item, candidateName) =>
-                    handlePromote(horizon.title, item, candidateName)
-                  }
-                  onAddCandidate={(itemName, name) =>
-                    handleAddCandidate(horizon.title, itemName, name)
-                  }
-                  onOpenGraduated={onOpenGraduated}
-                />
-              </div>
-            ))}
+          {horizons.map((horizon, index) => (
+            <div key={horizon.title}>
+              {index > 0 && <Divider sketch className="my-6" />}
+              <HorizonSection
+                horizon={horizon}
+                highlightedItem={highlightedItem}
+                onPromote={(item, candidateName) =>
+                  handlePromote(horizon.title, item, candidateName)
+                }
+                onAddCandidate={(itemName, name) =>
+                  handleAddCandidate(horizon.title, itemName, name)
+                }
+                onOpenGraduated={onOpenGraduated}
+              />
+            </div>
+          ))}
         </div>
       )}
       {roadmap.standingConcerns.length > 0 && (

@@ -38,26 +38,30 @@ export const HorizonSection = ({
           {rollupLine(horizon)}
         </div>
       </div>
-      <div className="flex flex-col">
-        {openItems.map((item) => (
-          <RoadmapItemRow
-            key={item.name}
-            item={item}
-            highlighted={item.name === highlightedItem}
-            onPromote={() => onPromote(item)}
-            onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}
-            onAddCandidate={(name) => onAddCandidate(item.name, name)}
+      {horizon.items.length === 0 ? (
+        <div className="px-1 py-2 text-sm opacity-50">Nothing here matches</div>
+      ) : (
+        <div className="flex flex-col">
+          {openItems.map((item) => (
+            <RoadmapItemRow
+              key={item.name}
+              item={item}
+              highlighted={item.name === highlightedItem}
+              onPromote={() => onPromote(item)}
+              onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}
+              onAddCandidate={(name) => onAddCandidate(item.name, name)}
+              onOpenGraduated={onOpenGraduated}
+            />
+          ))}
+          <ShippedFold
+            items={shippedItems}
+            highlightedItem={highlightedItem}
+            onPromote={onPromote}
+            onAddCandidate={onAddCandidate}
             onOpenGraduated={onOpenGraduated}
           />
-        ))}
-        <ShippedFold
-          items={shippedItems}
-          highlightedItem={highlightedItem}
-          onPromote={onPromote}
-          onAddCandidate={onAddCandidate}
-          onOpenGraduated={onOpenGraduated}
-        />
-      </div>
+        </div>
+      )}
     </div>
   );
 };

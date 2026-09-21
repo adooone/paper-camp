@@ -1,15 +1,8 @@
 import { useAppStore } from '@/app/stores/app-store';
-import type { PlanStatus } from '@/types/index';
+import type { RoadmapItemState } from '@/types/index';
 import { horizonItemCounts, statusItemCounts } from '../helpers';
 
-const STATUS_CHIP_ORDER: PlanStatus[] = [
-  'in-progress',
-  'review',
-  'planned',
-  'idea',
-  'done',
-  'dropped',
-];
+const STATUS_CHIP_ORDER: RoadmapItemState[] = ['not-started', 'in-progress', 'shipped'];
 
 export const useRoadmapSidebar = () => {
   const roadmap = useAppStore((s) => s.roadmap);

@@ -1,24 +1,20 @@
 import type {
-  PlanStatus,
   ResolvedRoadmap,
   ResolvedRoadmapHorizon,
   ResolvedRoadmapItem,
+  RoadmapItemState,
 } from '@/types/index';
 
 export interface RoadmapFilters {
   horizons: string[];
-  statuses: PlanStatus[];
+  statuses: RoadmapItemState[];
   search: string;
 }
 
 export const DEFAULT_ROADMAP_FILTERS: RoadmapFilters = { horizons: [], statuses: [], search: '' };
 
-export const itemStatuses = (item: ResolvedRoadmapItem): PlanStatus[] => [
-  ...new Set(item.ideas.map((idea) => idea.status)),
-];
-
-const matchesStatusFilter = (item: ResolvedRoadmapItem, statuses: PlanStatus[]): boolean =>
-  statuses.length === 0 || item.ideas.some((idea) => statuses.includes(idea.status));
+const matchesStatusFilter = (item: ResolvedRoadmapItem, statuses: RoadmapItemState[]): boolean =>
+  statuses.length === 0 || statuses.includes(item.state);
 
 const inHorizonFilter = (title: string, horizons: string[]): boolean =>
   horizons.length === 0 || horizons.includes(title);
@@ -61,15 +57,13 @@ export const horizonItemCounts = (
 export const statusItemCounts = (
   roadmap: ResolvedRoadmap,
   filters: RoadmapFilters,
-): Partial<Record<PlanStatus, number>> => {
-  const counts: Partial<Record<PlanStatus, number>> = {};
+): Partial<Record<RoadmapItemState, number>> => {
+  const counts: Partial<Record<RoadmapItemState, number>> = {};
   for (const horizon of roadmap.horizons) {
     if (!inHorizonFilter(horizon.title, filters.horizons)) continue;
     for (const item of horizon.items) {
       if (!matchesSearchFilter(item, filters.search)) continue;
-      for (const status of itemStatuses(item)) {
-        counts[status] = (counts[status] ?? 0) + 1;
-      }
+      counts[item.state] = (counts[item.state] ?? 0) + 1;
     }
   }
   return counts;
