@@ -67,7 +67,8 @@ which is [[IDEA-277]]. Assigning the 73 unfiled ideas a subject.
 - [x] Resolve each item to one deduplicated idea set
       Join subject matches with linked ids, derive `rollup` from the non-dropped, and add the item state with `readyToShip`.
       run: 3m30s · 42 in · 16.2k out · sonnet-5 · sess:de9a5b6b-92ac-475e-a92e-7fcdbeded982
-- [ ] Resolve standing concerns and the unfiled
+- [x] Resolve standing concerns and the unfiled
+      run: 1m52s · 38 in · 6.7k out · sonnet-5 · sess:de9a5b6b-92ac-475e-a92e-7fcdbeded982
 - [ ] Delete the unused roadmap events
       Drop `deriveRoadmapEvents`, `RoadmapEvent`, the `events` field and their tests.
 - [ ] Read `ideas` in bar, stamps and filters

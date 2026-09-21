@@ -2,6 +2,7 @@ import type {
   PlanEntry,
   ResolvedIdea,
   ResolvedRoadmap,
+  ResolvedRoadmapItem,
   Roadmap,
   RoadmapEvent,
   RoadmapItem,
@@ -297,6 +298,32 @@ function deriveItemState(
   return { state: 'in-progress', readyToShip: rollup.done === rollup.total };
 }
 
+function resolveItem(
+  item: RoadmapItem,
+  entities: PlanEntry[],
+  entityById: Map<string, PlanEntry>,
+  taskRunsById: Map<string, number>,
+  changelog: string,
+): ResolvedRoadmapItem {
+  const links = item.linked.flatMap((id) => {
+    const entity = entityById.get(id);
+    if (!entity?.status) return [];
+    return [
+      {
+        id,
+        status: entity.status,
+        taskRuns: taskRunsById.get(id) ?? 0,
+        pr: entity.pr,
+        released: findReleaseLineForId(changelog, id) !== undefined,
+      },
+    ];
+  });
+  const ideas = resolveIdeas(item, entities, entityById, changelog);
+  const rollup = rollupIdeas(ideas);
+  const { state, readyToShip } = deriveItemState(item, rollup);
+  return { ...item, links, ideas, rollup, state, readyToShip };
+}
+
 export function resolveRoadmap(
   roadmap: Roadmap,
   entities: PlanEntry[],
@@ -311,25 +338,9 @@ export function resolveRoadmap(
   }
 
   const horizons = roadmap.horizons.map((horizon) => {
-    const items = horizon.items.map((item) => {
-      const links = item.linked.flatMap((id) => {
-        const entity = entityById.get(id);
-        if (!entity?.status) return [];
-        return [
-          {
-            id,
-            status: entity.status,
-            taskRuns: taskRunsById.get(id) ?? 0,
-            pr: entity.pr,
-            released: findReleaseLineForId(changelog, id) !== undefined,
-          },
-        ];
-      });
-      const ideas = resolveIdeas(item, entities, entityById, changelog);
-      const rollup = rollupIdeas(ideas);
-      const { state, readyToShip } = deriveItemState(item, rollup);
-      return { ...item, links, ideas, rollup, state, readyToShip };
-    });
+    const items = horizon.items.map((item) =>
+      resolveItem(item, entities, entityById, taskRunsById, changelog),
+    );
     const rollup = items.reduce(
       (acc, item) => ({
         total: acc.total + item.rollup.total,
@@ -341,8 +352,17 @@ export function resolveRoadmap(
     return { title: horizon.title, items, rollup };
   });
 
+  const standingConcerns = roadmap.standingConcerns.map((item) =>
+    resolveItem(item, entities, entityById, taskRunsById, changelog),
+  );
+
+  const subjectVocabulary = new Set(deriveSubjectVocabulary(roadmap));
+  const unfiled = entities.filter(
+    (entity) => !entity.subject || !subjectVocabulary.has(entity.subject),
+  );
+
   const events = deriveRoadmapEvents(roadmap, entities, taskLog);
-  return { goal: roadmap.goal, horizons, events };
+  return { goal: roadmap.goal, horizons, standingConcerns, unfiled, events };
 }
 
 /**

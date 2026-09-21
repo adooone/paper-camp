@@ -630,6 +630,47 @@ describe('resolveRoadmap', () => {
       readyToShip: false,
     });
   });
+
+  it('resolves standing concerns through the same subject join as horizon items', () => {
+    const entities = [
+      plan({ id: 'IDEA-1', title: 'Refactor the reader', subject: 'Infrastructure' }),
+    ];
+
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+
+    expect(resolved.standingConcerns.map((c) => c.name)).toEqual(['Infrastructure', 'Code health']);
+    expect(resolved.standingConcerns[0]).toMatchObject({
+      ideas: [{ id: 'IDEA-1', title: 'Refactor the reader' }],
+      rollup: { total: 1, done: 0, open: 1 },
+      state: 'in-progress',
+    });
+    expect(resolved.standingConcerns[1]).toMatchObject({
+      ideas: [],
+      rollup: { total: 0, done: 0, open: 0 },
+      state: 'not-started',
+    });
+  });
+
+  it('lists an entity with no subject as unfiled', () => {
+    const entities = [plan({ id: 'IDEA-1', title: 'Stray idea', subject: undefined })];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.unfiled.map((e) => e.id)).toEqual(['IDEA-1']);
+  });
+
+  it('lists an entity whose subject names nothing on the map as unfiled', () => {
+    const entities = [plan({ id: 'IDEA-1', title: 'Stray idea', subject: 'No such item' })];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.unfiled.map((e) => e.id)).toEqual(['IDEA-1']);
+  });
+
+  it('excludes an entity whose subject names a horizon item or standing concern', () => {
+    const entities = [
+      plan({ id: 'IDEA-1', subject: 'Packaging' }),
+      plan({ id: 'IDEA-2', subject: 'Infrastructure' }),
+    ];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.unfiled).toEqual([]);
+  });
 });
 
 const task = (overrides: Partial<TaskLogEntry>): TaskLogEntry => ({

@@ -572,6 +572,9 @@ export interface ResolvedRoadmapHorizon {
 export interface ResolvedRoadmap {
   goal: string;
   horizons: ResolvedRoadmapHorizon[];
+  standingConcerns: ResolvedRoadmapItem[];
+  /** Every entity whose subject is missing or names nothing on the map. */
+  unfiled: PlanEntry[];
   events: RoadmapEvent[];
 }
 
