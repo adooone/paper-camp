@@ -29,49 +29,30 @@ const LINE_VIEW_HEIGHT = 40;
 
 interface RailLineProps {
   pushed: boolean;
-  seed: number;
   className: string;
 }
 
-// Only the line stretches to the row's height; the dot is its own unstretched drawing,
-// so a tall row lengthens the rail without squashing the commit mark.
-const RailLine = ({ pushed, seed, className }: RailLineProps) => {
-  const stroke = pushed ? color.textSecondary : color.accentAmberDark;
-  const paths = useMemo(
-    () =>
-      roughGenerator.toPaths(
-        roughGenerator.line(RAIL_WIDTH / 2, 0, RAIL_WIDTH / 2, LINE_VIEW_HEIGHT, {
-          seed,
-          roughness: 0.6,
-          bowing: 0.4,
-          disableMultiStroke: true,
-          stroke,
-          strokeWidth: 1.5,
-          ...(pushed ? {} : { strokeLineDash: DASH }),
-        }),
-      ),
-    [pushed, seed, stroke],
-  );
-  return (
-    <svg
-      viewBox={`0 0 ${RAIL_WIDTH} ${LINE_VIEW_HEIGHT}`}
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      className={`absolute left-0 w-full ${className}`}
-    >
-      {paths.map((path) => (
-        <path
-          key={path.d}
-          d={path.d}
-          stroke={path.stroke}
-          strokeWidth={path.strokeWidth}
-          fill="none"
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-    </svg>
-  );
-};
+// A plain stroke, not a rough one: per-row segments drawn with bowing never meet at the
+// same x, so the rail read as a chain of kinks. Only the dots keep the hand-drawn look.
+const RailLine = ({ pushed, className }: RailLineProps) => (
+  <svg
+    viewBox={`0 0 ${RAIL_WIDTH} ${LINE_VIEW_HEIGHT}`}
+    preserveAspectRatio="none"
+    aria-hidden="true"
+    className={`absolute left-0 w-full ${className}`}
+  >
+    <line
+      x1={RAIL_WIDTH / 2}
+      y1={0}
+      x2={RAIL_WIDTH / 2}
+      y2={LINE_VIEW_HEIGHT}
+      stroke={pushed ? color.textSecondary : color.accentAmberDark}
+      strokeWidth={1.5}
+      strokeDasharray={pushed ? undefined : DASH.join(' ')}
+      vectorEffect="non-scaling-stroke"
+    />
+  </svg>
+);
 
 interface RailSegmentProps {
   pushed: boolean;
@@ -98,10 +79,8 @@ const RailSegment = ({ pushed, isFirst, isLast, seed }: RailSegmentProps) => {
 
   return (
     <div className="relative w-5 shrink-0 self-stretch">
-      {!isFirst && <RailLine pushed={pushed} seed={seed} className="top-0 h-[calc(50%-8px)]" />}
-      {!isLast && (
-        <RailLine pushed={pushed} seed={seed + 1} className="bottom-0 h-[calc(50%-8px)]" />
-      )}
+      {!isFirst && <RailLine pushed={pushed} className="top-0 h-[calc(50%-8px)]" />}
+      {!isLast && <RailLine pushed={pushed} className="bottom-0 h-[calc(50%-8px)]" />}
       <svg
         viewBox={`0 0 ${DOT_BOX} ${DOT_BOX}`}
         width={DOT_BOX}
