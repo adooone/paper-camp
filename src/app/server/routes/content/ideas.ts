@@ -550,7 +550,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
 
         const archived: string[] = [];
         for (const id of ids) {
-          const target = entries.find((e) => e.id === id && e.kind !== 'note' && !e.archived);
+          const target = entries.find((e) => e.id === id && !e.archived);
           const sourcePath = join(ideasDir, `${id}.md`);
           if (!target || !(await fileExists(sourcePath))) continue;
           await writeEntityFile(

@@ -2124,6 +2124,14 @@ export function createAgentManager(
     return [...(task.reconcileResults ?? [])];
   }
 
+  // The queue lives on the task, which outlives the page that reviews it — a reload
+  // would otherwise fetch the same results and raise the same modals again.
+  function consumeReconcileQueue(): void {
+    const task = currentTask();
+    if (!task || task.taskKind !== 'batch-reconcile') return;
+    task.reconcileResults = [];
+  }
+
   function getFixReviewResult(): FixReviewResult | null {
     return state.pendingFixReviewResult;
   }
@@ -2216,6 +2224,7 @@ export function createAgentManager(
     getStatus,
     hasActiveTask,
     getReconcileQueue,
+    consumeReconcileQueue,
     getInterruptedOnBoot: () => interruptedOnBoot,
     // Handed to a hot-reloaded replacement instance so both share this exact
     // state object instead of drifting apart after the swap.
@@ -2309,6 +2318,7 @@ export interface AgentManager {
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;
   getReconcileQueue: () => ReconcileQueueItem[] | null;
+  consumeReconcileQueue: () => void;
   getInterruptedOnBoot: () => number;
   getState: () => AgentManagerState;
   subscribe: (res: ServerResponse) => void;

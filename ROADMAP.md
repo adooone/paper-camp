@@ -74,6 +74,17 @@ The loop works; make it smarter and more observable.
   parked questions; the full desk proxied on a `/paper-camp` subroute. Dev-only
   by default — remote access stays Horizon 3's job.
   - → IDEA-128
+- **One design system** — `@dendelion/paper-ui` becomes the only place the
+  desk's look and behaviour live. paper-camp's patterns, tested in daily use,
+  become paper-ui's defaults and components — tokens, text, rows, sidebars,
+  charts, the drawer — and paper-camp keeps only the surfaces that know what
+  Paper Camp is. Five paper-ui releases, each followed by one adoption here
+  that deletes what it replaces. A big bet: graduates as a Subject.
+  - → IDEA-279
+  - → IDEA-280
+  - → IDEA-281
+  - → IDEA-282
+  - → IDEA-283
 
 ## Horizon 3 — Beyond one desk
 

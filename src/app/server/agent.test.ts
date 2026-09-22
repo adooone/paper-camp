@@ -2151,6 +2151,19 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
     ]);
   });
 
+  it('serves an empty queue once the results are consumed, so a reload cannot replay them', async () => {
+    const { root } = await makeRoot(IDEA_OPEN);
+    agentScript.current = REWRITE_BODY;
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(manager.getReconcileQueue()).toHaveLength(1);
+
+    manager.consumeReconcileQueue();
+    expect(manager.getReconcileQueue()).toEqual([]);
+  });
+
   it('leaves the queue empty when no entity actually drifted', async () => {
     const { root } = await makeRoot(IDEA_OPEN);
     agentScript.current = 'process.exit(0)';

@@ -965,6 +965,15 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
 
     {
       method: 'POST',
+      path: '/api/agent/reconcile-queue/consume',
+      handle: (_req, res) => {
+        agent.consumeReconcileQueue();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/agent/stop',
       handle: async (req, res) => {
         const reqBody = await readBody(req);

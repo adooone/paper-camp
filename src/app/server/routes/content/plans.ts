@@ -207,9 +207,10 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           });
         }
 
-        // `done` is derived from a merged PR and needs no archiving; `dropped` has no
-        // such signal, so it's the one status that still archives on write.
-        if (updates.status === 'dropped') {
+        // `dropped` has no merged-PR signal, so it archives on write; so does a note's
+        // `done`, since a note never has a PR and only a person closes it.
+        const closesNote = target.kind === 'note' && updates.status === 'done';
+        if ((updates.status === 'dropped' || closesNote) && !target.archived) {
           await archiveEntityFile(root, target.id);
         }
 

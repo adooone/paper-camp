@@ -173,3 +173,28 @@ describe('PATCH /api/plans on a closed entity', () => {
     expect(planFile).toContain('Second phase');
   });
 });
+
+describe('PATCH /api/plans on a note', () => {
+  const NOTE = `---
+id: IDEA-3
+title: A note
+kind: note
+status: open
+created: 2026-09-01
+---
+Note body.
+`;
+
+  it('archives a note marked done, since a note has no PR to derive done from', async () => {
+    const root = await makeRoot();
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-3.md'), NOTE);
+    const { res, status } = fakeRes();
+    await route(root).handle(fakeReq('A note', JSON.stringify({ status: 'done' })), res);
+    expect(status()).toBe(200);
+    const archived = await readFile(
+      join(root, 'papercamp', 'ideas', 'archive', 'IDEA-3.md'),
+      'utf-8',
+    );
+    expect(archived).toContain('status: done');
+  });
+});

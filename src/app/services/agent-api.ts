@@ -28,6 +28,10 @@ export const fetchReconcileQueue = async (): Promise<ReconcileQueueItem[] | null
   return response.json();
 };
 
+export const consumeReconcileQueue = async (): Promise<void> => {
+  await apiFetch(apiUrl('/api/agent/reconcile-queue/consume'), { method: 'POST' });
+};
+
 export const launchAgent = async (planId: string, phaseIndex: number): Promise<void> => {
   const response = await apiFetch(apiUrl('/api/agent/launch'), {
     method: 'POST',

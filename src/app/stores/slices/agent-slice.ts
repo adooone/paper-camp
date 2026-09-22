@@ -2,6 +2,7 @@ import { fetchAgentAuthStatus } from '@/app/services/system';
 import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
   cancelLoginRelay as cancelLoginRelayApi,
+  consumeReconcileQueue,
   fetchAgentStatus,
   fetchLoginRelayStatus,
   fetchReconcileQueue,
@@ -170,6 +171,10 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
                   })),
                 ],
               }));
+              // The results are this page's now; clear them server-side so a reload
+              // starts from an empty queue instead of the same previews.
+              set({ batchReconcileConsumed: true });
+              await consumeReconcileQueue();
             }
           } else {
             await get().loadPlans();
