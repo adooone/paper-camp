@@ -1,6 +1,6 @@
+import { roughGenerator, useStableSeed } from '@dendelion/paper-ui';
 import { color, colors } from '@dendelion/paper-ui/tokens';
-import { useMemo, useState } from 'react';
-import { roughGenerator } from './rough-generator';
+import { useMemo } from 'react';
 
 export interface ArcGaugeProps {
   value: number;
@@ -41,7 +41,7 @@ export const ArcGauge = ({
   size = 96,
   className,
 }: ArcGaugeProps) => {
-  const [seed] = useState(() => Math.max(1, Math.round(Math.random() * 1_000_000)));
+  const seed = Math.max(1, Math.round(useStableSeed() * 1_000_000));
   const pct = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
   const cx = size / 2;
   const cy = size / 2;

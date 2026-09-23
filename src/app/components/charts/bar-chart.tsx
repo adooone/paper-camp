@@ -1,6 +1,6 @@
+import { roughGenerator, useStableSeed } from '@dendelion/paper-ui';
 import { color } from '@dendelion/paper-ui/tokens';
-import { useMemo, useState } from 'react';
-import { roughGenerator } from './rough-generator';
+import { useMemo } from 'react';
 
 export interface BarChartBar {
   label: string;
@@ -31,7 +31,7 @@ export const BarChart = ({
   height = 64,
   className,
 }: BarChartProps) => {
-  const [seed] = useState(() => Math.max(1, Math.round(Math.random() * 1_000_000)));
+  const seed = Math.max(1, Math.round(useStableSeed() * 1_000_000));
   const max = maxValue ?? Math.max(1, ...bars.map((b) => b.value));
   const slot = VIEW_WIDTH / Math.max(1, bars.length);
   const barWidth = slot * (1 - BAR_GAP_RATIO);

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { roughGenerator } from './rough-generator';
+import { roughGenerator, useStableSeed } from '@dendelion/paper-ui';
+import { useMemo } from 'react';
 
 export interface StackedBarSegment {
   label: string;
@@ -15,7 +15,7 @@ export interface StackedBarProps {
 }
 
 export const StackedBar = ({ segments, width = 240, height = 20, className }: StackedBarProps) => {
-  const [seed] = useState(() => Math.max(1, Math.round(Math.random() * 1_000_000)));
+  const seed = Math.max(1, Math.round(useStableSeed() * 1_000_000));
   const total = Math.max(
     1,
     segments.reduce((sum, segment) => sum + segment.value, 0),

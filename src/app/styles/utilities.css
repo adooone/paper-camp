@@ -1,25 +1,6 @@
 @tailwind utilities;
 
 /*
- * paper-ui defaults most text (and buttons) to Luminari via $font-family-serif.
- * This flips the default to the simpler body font everywhere except page H1s and
- * markdown headings, which set fontFamily.serif inline and so aren't affected.
- */
-:root {
-  --paper-font-default: "Cormorant Garamond", Georgia, serif;
-  /* Button palette. Washes, never opaque paint — the paper grain has to read
-     through. Declared here rather than in tailwind.config.ts because paper-ui
-     consumes them as CSS variables and this app emits no `@tailwind base` layer;
-     tailwind.config.ts maps theme.colors.btn onto these so utility classes work. */
-  --pui-btn-primary: rgba(143, 185, 150, 0.25);
-  --pui-btn-primary-hover: rgba(143, 185, 150, 0.3);
-  --pui-btn-primary-active: rgba(143, 185, 150, 0.3);
-  --pui-btn-secondary: rgba(61, 53, 43, 0.1);
-  --pui-btn-secondary-hover: rgba(61, 53, 43, 0.14);
-  --pui-btn-secondary-active: rgba(61, 53, 43, 0.18);
-}
-
-/*
  * paper-ui's Layout header is `justify-content: space-between` with a left slot
  * that only takes a string `title` — all arbitrary content goes into the
  * right-aligned `headerActions` div. Letting that slot grow to fill the row is
@@ -30,31 +11,6 @@
 header > div[class*="headerActions"] {
   flex: 1;
   min-width: 0;
-}
-
-/*
- * paper-ui's Layout header is a fixed 48px with no prop or CSS variable to size it.
- * Override it to 64px (two 32px background-grid cells) so the header sits flush on
- * the grid. The attribute selector matches the hashed CSS-module class by its stable
- * name part; the `header` tag and the `___` guard keep it off the headerActions/Title/
- * Subtitle divs, whose classes share the "header" prefix but not "header___".
- */
-header[class*="layout-module__header___"] {
-  height: 64px;
-}
-
-/*
- * paper-ui's .header always paints its own opaque background-color plus a
- * speckle background-image and border-bottom/box-shadow seam
- * (layout.module.scss) with no prop to clear any of it — cleared here so
- * the page's grid-lines paper texture shows through with no separator at
- * all. Same hashed-class reach-in pattern as the height override above.
- */
-header[class*="layout-module__header___"] {
-  background-color: transparent;
-  background-image: none;
-  border-bottom: none;
-  box-shadow: none;
 }
 
 /*
@@ -76,8 +32,8 @@ header[class*="layout-module__header___"] {
  * (colgroup), which don't reflow — below phone width this drops every table
  * element to block display so cells stack full-width instead of the
  * tableScroll wrapper forcing a sideways scroll. The `class*=` selector reaches
- * that CSS-module wrapper by its stable name part, same pattern as the header
- * overrides above.
+ * that CSS-module wrapper by its stable name part, same hashed-class reach-in
+ * pattern as the headerActions rule above.
  */
 @media (max-width: 480px) {
   .phase-table-phone [class*="tableScroll"] {
@@ -148,8 +104,8 @@ header[class*="layout-module__header___"] {
 .phase-running-row {
   background-image: linear-gradient(
     to right,
-    var(--pui-btn-primary) 0,
-    var(--pui-btn-primary) var(--phase-fill, 0%),
+    var(--phase-fill-color) 0,
+    var(--phase-fill-color) var(--phase-fill, 0%),
     transparent var(--phase-fill, 0%)
   );
 }
@@ -157,7 +113,7 @@ header[class*="layout-module__header___"] {
 /*
  * paper-ui's smallest IconButton/Checkbox hit areas are 40px square — under the
  * ~44px comfortable tap-target minimum. Bump both at phone width via the same
- * hashed-class reach-in pattern as the header overrides above; `small` alone is
+ * hashed-class reach-in pattern as the headerActions rule above; `small` alone is
  * too common a module-local class name, so it's paired with the component's own
  * stable class to stay scoped to just these two.
  */
@@ -319,15 +275,6 @@ header[class*="layout-module__header___"] {
   min-height: 0;
 }
 
-button,
-a,
-[role="button"],
-[role="tab"],
-[role="menuitem"],
-.pc-row[data-clickable] {
-  font-weight: 600;
-}
-
 /*
  * A Settings row is not a Card (IDEA-267): no fill and no hover — a settings row is
  * read and edited in place, never picked from a list — just padding and the phone tap area.
@@ -343,12 +290,4 @@ a,
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
   }
-}
-
-/*
- * paper-ui's Accordion rotates the chevron of any accordion nested in an expanded one;
- * fixed upstream, this pins a collapsed nested fold until that release is adopted.
- */
-.pc-nested-fold button[aria-expanded="false"] svg {
-  transform: none !important;
 }

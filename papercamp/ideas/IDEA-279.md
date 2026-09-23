@@ -2,7 +2,7 @@
 id: IDEA-279
 title: Adopt paper-ui's tokens and defaults
 type: refactor
-status: idea
+status: review
 created: 2026-09-22
 tags:
   - app
@@ -55,5 +55,6 @@ Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
       run: 4m11s · 104 in · 21.8k out · sonnet-5 · sess:ca5a37b9-514d-43ad-a188-832b75cab98f
 - [x] Resolve the remaining hex, rgba and outline literals to tokens
       run: 12m15s · 194 in · 46.3k out · sonnet-5 · sess:c0ad23e9-69e1-4ab8-9800-e1f8718e0e07
-- [ ] Strip the stylesheet overrides and adopt the exported rough helpers
+- [x] Strip the stylesheet overrides and adopt the exported rough helpers
       Covers the `AppShell` header props, `roughGenerator` and `useStableSeed`.
+      run: 6m47s · 182 in · 31.8k out · sonnet-5 · sess:d5eb7f17-1f6e-47fd-8acf-db55e8a126c6

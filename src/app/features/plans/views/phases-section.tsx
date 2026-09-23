@@ -61,7 +61,10 @@ export const PhasesSection = ({
       className="mb-8"
       style={
         runningFill
-          ? ({ '--phase-fill': `${runningFill.fraction * 100}%` } as CSSProperties)
+          ? ({
+              '--phase-fill': `${runningFill.fraction * 100}%`,
+              '--phase-fill-color': colors.primaryWash,
+            } as CSSProperties)
           : undefined
       }
     >

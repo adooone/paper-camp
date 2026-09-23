@@ -1,7 +1,6 @@
-import { roughGenerator } from '@/app/components/charts/rough-generator';
 import { useOpenEntity } from '@/app/hooks';
 import type { GitLogCommit } from '@/types/index';
-import { Divider, Stamp } from '@dendelion/paper-ui';
+import { Divider, Stamp, roughGenerator } from '@dendelion/paper-ui';
 import { color } from '@dendelion/paper-ui/tokens';
 import { useMemo } from 'react';
 

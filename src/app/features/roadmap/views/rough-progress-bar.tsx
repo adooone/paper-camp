@@ -1,6 +1,6 @@
-import { roughGenerator } from '@/app/components/charts/rough-generator';
+import { roughGenerator, useStableSeed } from '@dendelion/paper-ui';
 import { color, colors } from '@dendelion/paper-ui/tokens';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 interface RoughProgressBarProps {
   done: number;
@@ -17,7 +17,7 @@ export const RoughProgressBar = ({
   height = 7,
   className,
 }: RoughProgressBarProps) => {
-  const [seed] = useState(() => Math.max(1, Math.round(Math.random() * 1_000_000)));
+  const seed = Math.max(1, Math.round(useStableSeed() * 1_000_000));
   const fillWidth = total > 0 ? (Math.min(done, total) / total) * width : 0;
 
   const paths = useMemo(() => {

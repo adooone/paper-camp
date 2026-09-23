@@ -14,18 +14,16 @@ export const ShippedIdeasFold = ({ ideas, onOpen }: ShippedIdeasFoldProps) => {
   if (ideas.length === 0) return null;
 
   return (
-    <div className="pc-nested-fold">
-      <Accordion
-        expanded={expanded}
-        onToggle={() => setExpanded((v) => !v)}
-        title={`${ideas.length} shipped`}
-      >
-        <div className="flex flex-col">
-          {ideas.map((idea) => (
-            <IdeaRow key={idea.id} idea={idea} onOpen={() => onOpen(idea.id, idea.title)} />
-          ))}
-        </div>
-      </Accordion>
-    </div>
+    <Accordion
+      expanded={expanded}
+      onToggle={() => setExpanded((v) => !v)}
+      title={`${ideas.length} shipped`}
+    >
+      <div className="flex flex-col">
+        {ideas.map((idea) => (
+          <IdeaRow key={idea.id} idea={idea} onOpen={() => onOpen(idea.id, idea.title)} />
+        ))}
+      </div>
+    </Accordion>
   );
 };
