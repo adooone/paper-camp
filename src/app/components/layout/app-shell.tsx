@@ -21,10 +21,12 @@ import {
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
 import { Button, IconButton, Layout, ToastProvider, getSurfaceStyles } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { colors, surface, withAlpha } from '@dendelion/paper-ui/tokens';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
 import { NavLabel, SidebarToggleIcon, navItems } from './nav';
+
+const MOBILE_NAV_SHADOW = `0 -2px 8px ${withAlpha(colors.sketchInk, 0.08)}`;
 
 const DocsSidebar = lazy(() =>
   importWithRecovery('DocsSidebar', () => import('@/app/features/docs/index')).then((m) => ({
@@ -229,7 +231,8 @@ export const AppShell = () => {
           phone breakpoint — this fixed bottom bar replaces it, reachable one-handed. */}
       <nav
         aria-label="Main navigation"
-        className="hidden max-[480px]:flex max-[480px]:fixed max-[480px]:left-0 max-[480px]:right-0 max-[480px]:bottom-0 max-[480px]:z-[250] max-[480px]:items-stretch max-[480px]:justify-around max-[480px]:gap-1 max-[480px]:py-2 max-[480px]:px-2 max-[480px]:[padding-bottom:calc(0.5rem+env(safe-area-inset-bottom))] max-[480px]:bg-[var(--pui-bg-base,#fff)] max-[480px]:border-t max-[480px]:border-black/10 max-[480px]:shadow-[0_-2px_8px_rgba(0,0,0,0.08)]"
+        className="hidden max-[480px]:flex max-[480px]:fixed max-[480px]:left-0 max-[480px]:right-0 max-[480px]:bottom-0 max-[480px]:z-[250] max-[480px]:items-stretch max-[480px]:justify-around max-[480px]:gap-1 max-[480px]:py-2 max-[480px]:px-2 max-[480px]:[padding-bottom:calc(0.5rem+env(safe-area-inset-bottom))] max-[480px]:bg-[var(--pui-bg-base)] max-[480px]:border-t max-[480px]:border-black/10"
+        style={{ boxShadow: MOBILE_NAV_SHADOW }}
       >
         {hasSidebar && (
           <IconButton

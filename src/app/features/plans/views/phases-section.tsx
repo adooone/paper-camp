@@ -8,6 +8,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { formatRunSummary } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
 import { Button, Spinner, Table, Tooltip } from '@dendelion/paper-ui';
+import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
 import type { CSSProperties, ReactNode } from 'react';
 import {
   AddReviewPhasesButton,
@@ -176,11 +177,13 @@ export const PhasesSection = ({
         }}
         rowClassName={(row: WorkRow) => {
           if (isRunningRow(row, runningFill)) return 'phase-running-row';
-          if (row.kind === 'phase' && row.item.source === 'review') {
-            return 'bg-[rgba(155,122,181,0.08)]';
-          }
           return undefined;
         }}
+        rowStyle={(row: WorkRow) =>
+          row.kind === 'phase' && row.item.source === 'review'
+            ? { backgroundColor: withAlpha(colors.accentPurple, 0.08) }
+            : {}
+        }
         className="phase-table-phone"
       />
     </div>

@@ -1,8 +1,12 @@
 import { useStackPanel } from '@/app/hooks/use-stack-panel';
 import { IconButton, Spinner } from '@dendelion/paper-ui';
+import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
 import { VersionFooter } from './version-footer';
+
+const TOGGLE_HANDLE_SHADOW = `-2px 0 8px ${withAlpha(colors.sketchInk, 0.15)}`;
+const AGENT_ACTIVE_RING = `inset 0 0 0 1px ${withAlpha(colors.canvasDark, 0.6)}`;
 
 interface StackPanelProps {
   open: boolean;
@@ -21,8 +25,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
         <div
           // var() so utilities.css can nudge it toward one-handed thumb reach below the
           // phone breakpoint.
-          className="fixed right-0 top-[var(--pc-stack-toggle-top,50%)] z-[300] rounded-l-md shadow-[-2px_0_8px_rgba(0,0,0,0.15)] bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
-          style={{ transform: 'translateY(-50%)' }}
+          className="fixed right-0 top-[var(--pc-stack-toggle-top,50%)] z-[300] rounded-l-md bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]"
+          style={{ transform: 'translateY(-50%)', boxShadow: TOGGLE_HANDLE_SHADOW }}
         >
           <IconButton
             icon={
@@ -36,9 +40,8 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             size="small"
             label={agentActive ? 'Open stack panel — agent running' : 'Open stack panel'}
             onClick={onToggle}
-            className={`w-7 h-[64px] rounded-l-md ${
-              agentActive ? 'shadow-[inset_0_0_0_1px_rgba(214,196,160,0.6)]' : ''
-            }`}
+            className="w-7 h-[64px] rounded-l-md"
+            style={agentActive ? { boxShadow: AGENT_ACTIVE_RING } : undefined}
           />
         </div>
       )}

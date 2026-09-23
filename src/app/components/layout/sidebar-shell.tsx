@@ -1,4 +1,7 @@
+import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
 import { useEffect, useRef } from 'react';
+
+const MOBILE_DRAWER_SHADOW = `2px 0 12px ${withAlpha(colors.sketchInk, 0.15)}`;
 
 interface SidebarShellProps {
   routeKey: string;
@@ -56,11 +59,8 @@ export const SidebarShell = ({
         // engage; sizing to content lets it pin while the page scrolls.
         className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:flex lg:max-h-[calc(100dvh-var(--pc-header-h)-32px)] lg:flex-col lg:self-start lg:overflow-visible lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${
-          mobileOpen
-            ? 'bg-[var(--pui-bg-base)] shadow-[2px_0_12px_rgba(0,0,0,0.15)]'
-            : 'bg-transparent'
-        }`}
+        } ${mobileOpen ? 'bg-[var(--pui-bg-base)]' : 'bg-transparent'}`}
+        style={mobileOpen ? { boxShadow: MOBILE_DRAWER_SHADOW } : undefined}
       >
         <div key={routeKey} className="mt-8 mb-8 flex min-h-0 flex-col gap-8 overflow-y-auto">
           {children}

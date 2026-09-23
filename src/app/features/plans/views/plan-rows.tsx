@@ -1,8 +1,9 @@
 import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
+import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { color, colors, surface } from '@dendelion/paper-ui/tokens';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
@@ -39,7 +40,7 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
           </Stamp>
         </Tooltip>
       ) : (
-        <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+        <Stamp size="small" fillColor={colors.surfaceOverlay}>
           <span className="font-handwritten text-xs leading-none">{order}</span>
         </Stamp>
       )
@@ -90,7 +91,12 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                     }
                   : undefined
               }
-              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
+              style={
+                plan.title === activePlanTitle
+                  ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR }
+                  : undefined
+              }
             >
               <Card size="small" texture={surface.card} className="plan-row-card">
                 <div className={gridClass}>
@@ -121,7 +127,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                     )}
                     {plan.pr?.state === 'merged' && (
                       <Tooltip content={`Merged in #${plan.pr.number}`}>
-                        <span className="inline-flex text-[#7B5E9E]">
+                        <span className="inline-flex" style={{ color: color.accentPurpleDark }}>
                           <MergeIcon size={14} />
                         </span>
                       </Tooltip>

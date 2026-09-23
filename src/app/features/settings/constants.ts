@@ -1,4 +1,5 @@
 import type { CapabilityStatus, NotificationSettingKind } from '@/types/index';
+import { color, colors, withAlpha } from '@dendelion/paper-ui/tokens';
 
 export const TASK_TYPE_KEYS = [
   'phase',
@@ -27,17 +28,25 @@ export const CAPABILITY_STATUS_STAMP: Record<
   CapabilityStatus,
   { fill: string; text: string; label: string }
 > = {
-  ok: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66', label: 'Ready' },
-  warn: { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F', label: 'Needs attention' },
-  missing: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A', label: 'Missing' },
+  ok: { fill: colors.primaryWash, text: color.accentGreenDark, label: 'Ready' },
+  warn: {
+    fill: withAlpha(colors.accentAmber, 0.25),
+    text: color.accentAmberDark,
+    label: 'Needs attention',
+  },
+  missing: {
+    fill: withAlpha(colors.accentRose, 0.25),
+    text: color.accentRoseDark,
+    label: 'Missing',
+  },
 };
 
 export const MERGE_POLICY_STAMP: Record<'upToDate' | 'outdated', { fill: string; text: string }> = {
-  upToDate: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
-  outdated: { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F' },
+  upToDate: { fill: colors.primaryWash, text: color.accentGreenDark },
+  outdated: { fill: withAlpha(colors.accentAmber, 0.25), text: color.accentAmberDark },
 };
 
-export const VERSION_STAMP_FILL = 'rgba(143, 185, 150, 0.25)';
+export const VERSION_STAMP_FILL = colors.primaryWash;
 
 export const NOTIFICATION_KIND_LABELS: Record<NotificationSettingKind, string> = {
   'run-finished': 'Run finished',

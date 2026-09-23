@@ -15,7 +15,11 @@ const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_COLOR
   'components/layout/app-shell.tsx', // paper-ui's Layout has no className prop, only style
   'components/layout/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
+  'components/layout/sidebar-shell.tsx', // mobile drawer shadow computed via withAlpha
   'features/plans/views/phases-section.tsx', // running-phase fill fraction via --phase-fill CSS var
+  'features/plans/views/plan-rows.tsx', // highlight outline / merged-PR colour from tokens
+  'features/plans/views/worklist-rows.tsx', // highlight outline colour from tokens
+  'features/roadmap/views/roadmap-item-row.tsx', // highlight outline colour from tokens
   'components/charts/bar-chart.tsx', // label column width computed from bar count
   'components/charts/stacked-bar.tsx', // legend dot colour computed per segment
   'features/git/git-page.tsx', // paper-ui's getSurfaceStyles() has no className form

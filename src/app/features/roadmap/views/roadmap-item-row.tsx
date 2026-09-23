@@ -1,7 +1,7 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
 import { Accordion, Button, Menu, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { HIGHLIGHT_OUTLINE_CLASS, ITEM_STATE_STAMP } from '../constants';
+import { HIGHLIGHT_OUTLINE_COLOR, ITEM_STATE_STAMP } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow } from './idea-row';
@@ -56,7 +56,8 @@ export const RoadmapItemRow = ({
 
   return (
     <div
-      className={`border-b border-black/10 last:border-b-0 ${highlighted ? `roadmap-item-highlighted outline outline-2 outline-offset-[-2px] ${HIGHLIGHT_OUTLINE_CLASS}` : ''}`}
+      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
+      style={highlighted ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR } : undefined}
     >
       <Accordion
         expanded={expanded}

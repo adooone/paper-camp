@@ -1,4 +1,5 @@
 import { Stamp } from '@dendelion/paper-ui';
+import { colors } from '@dendelion/paper-ui/tokens';
 
 interface PlanIdStampProps {
   id?: string;
@@ -7,7 +8,7 @@ interface PlanIdStampProps {
 export const PlanIdStamp = ({ id }: PlanIdStampProps) => {
   if (!id) return null;
   return (
-    <Stamp size="small" fillColor="rgba(0,0,0,0.08)">
+    <Stamp size="small" fillColor={colors.borderSubtle}>
       {id}
     </Stamp>
   );

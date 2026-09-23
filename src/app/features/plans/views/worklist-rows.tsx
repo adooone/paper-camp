@@ -1,5 +1,6 @@
 import { NoteIcon } from '@/app/components/icons';
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
 import { Card, Stamp, Switch } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
@@ -267,7 +268,10 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
               }
             : undefined
         }
-        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px] outline-[rgba(200,154,90,0.5)]' : ''}`}
+        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
+        style={
+          fix.title === activePlanTitle ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR } : undefined
+        }
       >
         <Card size="small" texture={surface.card} className="plan-row-card">
           <div className={FIX_ROW_GRID_CLASS}>

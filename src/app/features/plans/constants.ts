@@ -1,13 +1,16 @@
 import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
 import type { StampVariant } from '@dendelion/paper-ui';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 
+// Mirrors the resolved text colour of each status's `StampVariant` (below), so the
+// status dot and its stamp always agree.
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
-  'in-progress': '#C89A5A',
-  planned: '#6A9B72',
-  idea: '#8A9BAA',
-  review: '#9B7AB5',
-  done: '#8A7A8A',
-  dropped: '#A06060',
+  'in-progress': color.accentAmberDark,
+  planned: color.accentGreenDark,
+  idea: color.accentSlateDark,
+  review: color.accentPurpleDark,
+  done: colors.textSecondary,
+  dropped: color.accentRoseDark,
 };
 
 export const STATUS_LABEL: Record<PlanEntry['status'], string> = {

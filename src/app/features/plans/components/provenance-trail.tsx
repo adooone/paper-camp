@@ -1,10 +1,11 @@
 import type { ProvenanceTrail } from '@/types/index';
 import { Stamp, Tooltip } from '@dendelion/paper-ui';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 import { PrBadge } from './pr-badge';
 import { ReviewSignalBadge } from './review-signal-badge';
 
-const REACHED_STAMP = { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' };
-const UNREACHED_STAMP = { fill: 'rgba(0, 0, 0, 0.05)', text: 'rgba(0, 0, 0, 0.35)' };
+const REACHED_STAMP = { fill: colors.primaryWash, text: color.accentGreenDark };
+const UNREACHED_STAMP = { fill: colors.surfaceOverlay, text: colors.textTertiary };
 
 interface TrailNodeProps {
   reached: boolean;

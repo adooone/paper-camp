@@ -13,6 +13,7 @@ import {
   Stamp,
   Tooltip,
 } from '@dendelion/paper-ui';
+import { colors } from '@dendelion/paper-ui/tokens';
 
 export const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   review: 'review',
@@ -91,7 +92,7 @@ export const FeedbackThread = ({
           </div>
           <div className="flex items-center gap-2">
             {fromAgent && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+              <Stamp size="small" fillColor={colors.surfaceOverlay}>
                 agent
               </Stamp>
             )}
@@ -106,7 +107,7 @@ export const FeedbackThread = ({
               <span className="text-sm font-semibold opacity-[0.45]">{message.date}</span>
             )}
             {label && (
-              <Stamp size="small" fillColor="rgba(0,0,0,0.06)">
+              <Stamp size="small" fillColor={colors.surfaceOverlay}>
                 {label}
               </Stamp>
             )}

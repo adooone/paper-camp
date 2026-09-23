@@ -8,7 +8,7 @@ interface StatusInfo {
 
 // Compact rows can't spare the ~39px a Stamp's blob costs for one letter; the colour
 // alone carries the same meaning in a fraction of the width.
-const COMPACT_COLOR: Record<StampVariant, string> = {
+const COMPACT_COLOR: Partial<Record<StampVariant, string>> = {
   success: 'text-watercolor-green-dark',
   info: 'text-watercolor-blue-dark',
   error: 'text-watercolor-rose-dark',

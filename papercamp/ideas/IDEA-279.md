@@ -53,6 +53,7 @@ Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
 - [x] Map the four stamp constants to `StampVariant`
       Drop every `fillColor`/`textColor` prop, moving chalkboard stamps to `surface="chalkboard"`.
       run: 4m11s · 104 in · 21.8k out · sonnet-5 · sess:ca5a37b9-514d-43ad-a188-832b75cab98f
-- [ ] Resolve the remaining hex, rgba and outline literals to tokens
+- [x] Resolve the remaining hex, rgba and outline literals to tokens
+      run: 12m15s · 194 in · 46.3k out · sonnet-5 · sess:c0ad23e9-69e1-4ab8-9800-e1f8718e0e07
 - [ ] Strip the stylesheet overrides and adopt the exported rough helpers
       Covers the `AppShell` header props, `roughGenerator` and `useStableSeed`.

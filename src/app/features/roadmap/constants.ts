@@ -1,7 +1,8 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
 import type { StampVariant } from '@dendelion/paper-ui';
+import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
 
-export const HIGHLIGHT_OUTLINE_CLASS = 'outline-[rgba(200,154,90,0.5)]';
+export const HIGHLIGHT_OUTLINE_COLOR = withAlpha(colors.accentAmber, 0.5);
 
 export const ITEM_STATE_STAMP: Record<
   ResolvedRoadmapItem['state'],
