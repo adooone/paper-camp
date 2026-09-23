@@ -44,8 +44,9 @@ are deleted; `AppShell` passes `headerHeight={64}` and
 Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
 
 ### Phases
-- [ ] Bump `@dendelion/paper-ui` to the release carrying IDEA-3
+- [x] Bump `@dendelion/paper-ui` to the release carrying IDEA-3
       Blocking prerequisite; nothing below can land until the export surface exists.
+      run: 2m35s · 42 in · 4.8k out · sonnet-5 · sess:ca5a37b9-514d-43ad-a188-832b75cab98f
 - [ ] Delete `tokens.ts` and repoint `color.*`/`surface.*` at the package
       Includes the `desk`, `chalk` and `state` tables in `tailwind.config.ts`.
 - [ ] Map the four stamp constants to `StampVariant`
