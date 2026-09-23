@@ -43,7 +43,8 @@ replaced by the exported one with `size`.
 Rows and sidebars, [[IDEA-281]].
 
 ### Phases
-- [ ] Bump paper-ui to the release carrying its IDEA-4
+- [x] Bump paper-ui to the release carrying its IDEA-4
+      run: 2m15s · 24 in · 2.8k out · sonnet-5 · sess:eee9e66e-0bb9-436a-a5eb-f260afcc2182
 - [ ] Swap typography strings for the library's text components
       Delete the local heading, inline-code, command-line, page-title and
       empty-state helpers, and pass the doodle as `EmptyState`'s `illustration`.
