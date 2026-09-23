@@ -15,20 +15,12 @@ export const ReviewSignalBadge = ({ pr }: ReviewSignalBadgeProps) => {
   return (
     <span className="inline-flex items-center gap-2">
       {reviewDecision && (
-        <Stamp
-          size="small"
-          fillColor={REVIEW_DECISION_STAMP[reviewDecision].fill}
-          textColor={REVIEW_DECISION_STAMP[reviewDecision].text}
-        >
+        <Stamp size="small" variant={REVIEW_DECISION_STAMP[reviewDecision]}>
           {REVIEW_DECISION_LABEL[reviewDecision]}
         </Stamp>
       )}
       {Boolean(unresolvedThreadCount) && (
-        <Stamp
-          size="small"
-          fillColor={STATUS_STAMP['in-progress'].fill}
-          textColor={STATUS_STAMP['in-progress'].text}
-        >
+        <Stamp size="small" variant={STATUS_STAMP['in-progress']}>
           {unresolvedThreadCount} unaddressed comment{unresolvedThreadCount === 1 ? '' : 's'}
           {hasNewCommentsSincePush ? ' · new' : ''}
         </Stamp>

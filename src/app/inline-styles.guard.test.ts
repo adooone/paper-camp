@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'features/roadmap/roadmap-sidebar.tsx', // status-dot colour from STATUS_STAMP
   'components/stack-panel/stack-panel.tsx', // open/closed slide toggled via `transform`
-  'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_STAMP
+  'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_COLOR
   'components/layout/app-shell.tsx', // paper-ui's Layout has no className prop, only style
   'components/layout/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
   'features/plans/views/phases-section.tsx', // running-phase fill fraction via --phase-fill CSS var

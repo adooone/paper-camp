@@ -19,11 +19,7 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
         <PlanIdStamp id={idea.id ?? undefined} />
         {idea.title}
         {idea.status && (
-          <Stamp
-            size="small"
-            fillColor={IDEA_STATUS_STAMP[idea.status].fill}
-            textColor={IDEA_STATUS_STAMP[idea.status].text}
-          >
+          <Stamp size="small" variant={IDEA_STATUS_STAMP[idea.status]}>
             {IDEA_STATUS_LABEL[idea.status]}
           </Stamp>
         )}

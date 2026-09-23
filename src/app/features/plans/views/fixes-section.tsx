@@ -33,11 +33,7 @@ export const FixesSection = ({ plan, otherPlans }: FixesSectionProps) => {
             <span className="flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
               {fix.title}
             </span>
-            <Stamp
-              size="small"
-              fillColor={STATUS_STAMP[fix.status].fill}
-              textColor={STATUS_STAMP[fix.status].text}
-            >
+            <Stamp size="small" variant={STATUS_STAMP[fix.status]}>
               {STATUS_LABEL[fix.status]}
             </Stamp>
           </button>

@@ -1,4 +1,5 @@
 import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
+import type { StampVariant } from '@dendelion/paper-ui';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {
   'in-progress': '#C89A5A',
@@ -18,13 +19,13 @@ export const STATUS_LABEL: Record<PlanEntry['status'], string> = {
   dropped: 'Dropped',
 };
 
-export const STATUS_STAMP: Record<PlanEntry['status'], { fill: string; text: string }> = {
-  idea: { fill: 'rgba(138, 155, 168, 0.25)', text: '#5E7080' },
-  planned: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
-  'in-progress': { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F' },
-  review: { fill: 'rgba(155, 122, 181, 0.25)', text: '#7B5E9E' },
-  done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
-  dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
+export const STATUS_STAMP: Record<PlanEntry['status'], StampVariant> = {
+  idea: 'idea',
+  planned: 'success',
+  'in-progress': 'warning',
+  review: 'review',
+  done: 'muted',
+  dropped: 'dropped',
 };
 
 // Manual status stamp for `kind: note` ideas only — plan-bearing ideas carry no status.
@@ -34,10 +35,10 @@ export const IDEA_STATUS_LABEL: Record<IdeaStatus, string> = {
   dropped: 'Dropped',
 };
 
-export const IDEA_STATUS_STAMP: Record<IdeaStatus, { fill: string; text: string }> = {
-  open: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
-  done: { fill: 'rgba(168, 155, 168, 0.25)', text: '#6E5E6E' },
-  dropped: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
+export const IDEA_STATUS_STAMP: Record<IdeaStatus, StampVariant> = {
+  open: 'success',
+  done: 'muted',
+  dropped: 'dropped',
 };
 
 export const PR_STATE_LABEL: Record<PrState, string> = {
@@ -47,11 +48,11 @@ export const PR_STATE_LABEL: Record<PrState, string> = {
   merged: 'Merged',
 };
 
-export const PR_STATE_STAMP: Record<PrState, { fill: string; text: string }> = {
-  draft: { fill: 'rgba(138, 155, 168, 0.25)', text: '#5E7080' },
-  open: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
-  closed: { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
-  merged: { fill: 'rgba(155, 122, 181, 0.25)', text: '#7B5E9E' },
+export const PR_STATE_STAMP: Record<PrState, StampVariant> = {
+  draft: 'neutral',
+  open: 'success',
+  closed: 'dropped',
+  merged: 'review',
 };
 
 export const REVIEW_DECISION_LABEL: Record<ReviewDecision, string> = {
@@ -60,8 +61,8 @@ export const REVIEW_DECISION_LABEL: Record<ReviewDecision, string> = {
   'review-required': 'Review required',
 };
 
-export const REVIEW_DECISION_STAMP: Record<ReviewDecision, { fill: string; text: string }> = {
-  approved: { fill: 'rgba(143, 185, 150, 0.25)', text: '#5E8A66' },
-  'changes-requested': { fill: 'rgba(201, 139, 139, 0.25)', text: '#6E3A3A' },
-  'review-required': { fill: 'rgba(212, 163, 115, 0.25)', text: '#A67B4F' },
+export const REVIEW_DECISION_STAMP: Record<ReviewDecision, StampVariant> = {
+  approved: 'success',
+  'changes-requested': 'dropped',
+  'review-required': 'warning',
 };

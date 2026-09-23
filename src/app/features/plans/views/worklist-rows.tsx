@@ -219,11 +219,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
             </span>
             <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
             <span className="text-sm opacity-30">—</span>
-            <Stamp
-              size="small"
-              fillColor={IDEA_STATUS_STAMP[status].fill}
-              textColor={IDEA_STATUS_STAMP[status].text}
-            >
+            <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
               {IDEA_STATUS_LABEL[status]}
             </Stamp>
           </div>
@@ -285,11 +281,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
                 <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
               )}
             </span>
-            <Stamp
-              size="small"
-              fillColor={STATUS_STAMP[status].fill}
-              textColor={STATUS_STAMP[status].text}
-            >
+            <Stamp size="small" variant={STATUS_STAMP[status]}>
               {STATUS_LABEL[status]}
             </Stamp>
           </div>

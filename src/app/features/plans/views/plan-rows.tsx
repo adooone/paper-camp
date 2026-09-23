@@ -109,11 +109,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                     <span className="text-sm opacity-30">—</span>
                   )}
                   <div className="flex items-center gap-1">
-                    <Stamp
-                      size="small"
-                      fillColor={STATUS_STAMP[status].fill}
-                      textColor={STATUS_STAMP[status].text}
-                    >
+                    <Stamp size="small" variant={STATUS_STAMP[status]}>
                       {STATUS_LABEL[status]}
                     </Stamp>
                     {plan.statusFallback && (

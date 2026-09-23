@@ -50,8 +50,9 @@ Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
 - [x] Delete `tokens.ts` and repoint `color.*`/`surface.*` at the package
       Includes the `desk`, `chalk` and `state` tables in `tailwind.config.ts`.
       run: 4m16s · 106 in · 23.2k out · sonnet-5 · sess:ca5a37b9-514d-43ad-a188-832b75cab98f
-- [ ] Map the four stamp constants to `StampVariant`
+- [x] Map the four stamp constants to `StampVariant`
       Drop every `fillColor`/`textColor` prop, moving chalkboard stamps to `surface="chalkboard"`.
+      run: 4m11s · 104 in · 21.8k out · sonnet-5 · sess:ca5a37b9-514d-43ad-a188-832b75cab98f
 - [ ] Resolve the remaining hex, rgba and outline literals to tokens
 - [ ] Strip the stylesheet overrides and adopt the exported rough helpers
       Covers the `AppShell` header props, `roughGenerator` and `useStableSeed`.

@@ -19,11 +19,7 @@ export const IdeaRow = ({ idea, onOpen }: IdeaRowProps) => (
     </button>
     <div className="flex shrink-0 items-center gap-1.5">
       {idea.pr && <PrBadge pr={idea.pr} />}
-      <Stamp
-        size="small"
-        fillColor={STATUS_STAMP[idea.status].fill}
-        textColor={STATUS_STAMP[idea.status].text}
-      >
+      <Stamp size="small" variant={STATUS_STAMP[idea.status]}>
         {STATUS_LABEL[idea.status]}
       </Stamp>
     </div>

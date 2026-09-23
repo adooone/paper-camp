@@ -51,7 +51,7 @@ export const PhaseTitleCell = ({ row, runningFill }: PhaseTitleCellProps) => (
       </span>
     )}
     {row.kind === 'phase' && row.item.source === 'review' && (
-      <Stamp size="small" fillColor={STATUS_STAMP.review.fill} textColor={STATUS_STAMP.review.text}>
+      <Stamp size="small" variant={STATUS_STAMP.review}>
         review
       </Stamp>
     )}

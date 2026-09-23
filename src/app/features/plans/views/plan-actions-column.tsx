@@ -66,11 +66,7 @@ export const PlanActionsColumn = () => {
         {/* Read-only: the dropped/reopen override lives in Actions below since
           abandonment leaves no branch or PR to derive status from. */}
         <div className="h-[32px] flex items-center">
-          <Stamp
-            size="small"
-            fillColor={STATUS_STAMP[displayStatus].fill}
-            textColor={STATUS_STAMP[displayStatus].text}
-          >
+          <Stamp size="small" variant={STATUS_STAMP[displayStatus]}>
             {STATUS_LABEL[displayStatus]}
           </Stamp>
         </div>

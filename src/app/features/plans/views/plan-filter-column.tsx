@@ -7,7 +7,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
 import { Input, ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { STATUS_LABEL, STATUS_STAMP } from '../constants';
+import { STATUS_COLOR, STATUS_LABEL } from '../constants';
 
 const STATUS_CHIP_ORDER: PlanStatus[] = [
   'in-progress',
@@ -69,7 +69,7 @@ export const PlanFilterColumn = () => {
                 icon={
                   <span
                     className="w-[9px] h-[9px] rounded-full shrink-0"
-                    style={{ background: STATUS_STAMP[status].text }}
+                    style={{ background: STATUS_COLOR[status] }}
                   />
                 }
                 action={<span className="text-2xs text-ink-500">{statusCounts[status]}</span>}

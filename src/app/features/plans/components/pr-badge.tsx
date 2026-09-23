@@ -13,11 +13,7 @@ interface PrBadgeProps {
 export const PrBadge = ({ pr, reviewing }: PrBadgeProps) => {
   const prFetchedAt = useAppStore((s) => s.status?.prFetchedAt ?? null);
   const stamp = (
-    <Stamp
-      size="small"
-      fillColor={PR_STATE_STAMP[pr.state].fill}
-      textColor={PR_STATE_STAMP[pr.state].text}
-    >
+    <Stamp size="small" variant={PR_STATE_STAMP[pr.state]}>
       <span className="inline-flex items-center gap-1">
         <GithubIcon />#{pr.number} {PR_STATE_LABEL[pr.state]}
       </span>
