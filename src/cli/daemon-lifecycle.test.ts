@@ -1043,4 +1043,43 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     expect(stdout).toContain('😀');
     expect(stdout).not.toContain('�');
   });
+
+  it('logs -f decodes a multi-byte character split right at a rotation truncation boundary', async () => {
+    const configDir = await makeTempConfigDir();
+    const logPath = join(configDir, 'daemon.log');
+    await writeFile(logPath, 'a much longer line before rotation\n', 'utf-8');
+
+    const child = spawn(
+      'bun',
+      [
+        '-e',
+        `import(${JSON.stringify(join(__dirname, 'daemon-lifecycle.ts'))}).then((m) => m.runLogs({ follow: true }));`,
+      ],
+      { env: { ...process.env, PAPERCAMP_CONFIG_DIR: configDir } },
+    );
+    children.push(child);
+    let stdout = '';
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+
+    await waitUntil(() => stdout.includes('a much longer line before rotation'));
+
+    const emoji = Buffer.from('😀\n', 'utf-8');
+    await writeFile(logPath, emoji.subarray(0, 2));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const handle = await open(logPath, 'a');
+    try {
+      await handle.appendFile(emoji.subarray(2));
+    } finally {
+      await handle.close();
+    }
+
+    await waitUntil(() => stdout.includes('😀'));
+
+    child.kill('SIGKILL');
+    expect(stdout).toContain('😀');
+    expect(stdout).not.toContain('�');
+  });
 });

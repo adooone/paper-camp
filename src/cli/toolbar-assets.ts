@@ -23,9 +23,23 @@ export function isToolbarAssetRequest(req: IncomingMessage): boolean {
   return toolbarAssetName(req) !== undefined;
 }
 
+const assetCache = new Map<string, Buffer>();
+
+async function readCachedAsset(path: string): Promise<Buffer | null> {
+  const cached = assetCache.get(path);
+  if (cached) return cached;
+
+  const contents = await readFile(path).catch(() => null);
+  if (contents === null) return null;
+
+  assetCache.set(path, contents);
+  return contents;
+}
+
 /** Serves the toolbar bundle (`dist/toolbar`) — the one static asset this runtime
  * still ships, now that the dashboard itself is the hosted client. Returns false for
- * any other path so the caller can fall through to its own routing. */
+ * any other path so the caller can fall through to its own routing. The bundle only
+ * changes on install/update, so reads are cached in memory keyed by full path. */
 export async function serveToolbarAsset(
   req: IncomingMessage,
   res: ServerResponse,
@@ -34,7 +48,7 @@ export async function serveToolbarAsset(
   const name = toolbarAssetName(req);
   if (!name) return false;
 
-  const contents = await readFile(join(dir, name)).catch(() => null);
+  const contents = await readCachedAsset(join(dir, name));
   if (contents === null) return false;
 
   res.statusCode = 200;
