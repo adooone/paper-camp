@@ -1,6 +1,6 @@
 import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
 import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Card, Divider, Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Card, Divider, Row, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import { Fragment } from 'react';
 import { useFindingFixTask } from '../hooks';
 
@@ -58,34 +58,30 @@ function ChunkRow({
   const fixing = launching || Boolean(activeTask);
 
   return (
-    // Raw <button>, not paper-ui's Button — the whole row is the way into the chunk view.
-    <button
-      type="button"
+    <Row
+      surface="none"
+      columns={{ id: '7rem', title: '10rem', meta: 'minmax(0,1fr)', trailing: '4.5rem' }}
       onClick={() => onOpen(chunk)}
-      className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 border-none bg-transparent bg-none px-0 py-2 text-left text-inherit [font:inherit] sm:grid-cols-[7rem_10rem_minmax(0,1fr)_4.5rem]"
-    >
-      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs font-semibold">
-        {chunk}
-      </span>
-      <span className="flex flex-wrap items-center gap-1">
-        {severityCounts(findings).map(({ severity, count }) => (
-          <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
-            {count} {severity}
-          </Stamp>
-        ))}
-      </span>
-      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-handwritten text-sm opacity-70">
-        {checksLine(findings)}
-      </span>
-      {/* Its own fixed column, so a fix in flight never shifts the row beside it. */}
-      <span className="flex justify-end">
-        {fixing && (
+      ariaLabel={chunk}
+      id={<span className="font-mono text-xs font-semibold">{chunk}</span>}
+      title={
+        <span className="flex flex-wrap items-center gap-1">
+          {severityCounts(findings).map(({ severity, count }) => (
+            <Stamp key={severity} size="small" variant={SEVERITY_STAMP_VARIANT[severity]}>
+              {count} {severity}
+            </Stamp>
+          ))}
+        </span>
+      }
+      meta={<span className="font-handwritten text-sm opacity-70">{checksLine(findings)}</span>}
+      trailing={
+        fixing && (
           <Stamp size="small" variant="warning">
             fixing…
           </Stamp>
-        )}
-      </span>
-    </button>
+        )
+      }
+    />
   );
 }
 

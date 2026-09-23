@@ -48,7 +48,7 @@ export const useRoadmapPage = () => {
 
   useEffect(() => {
     if (!highlightedItem || !roadmap) return;
-    const row = containerRef.current?.querySelector('.roadmap-item-highlighted');
+    const row = containerRef.current?.querySelector('[class*="highlighted"]');
     row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [highlightedItem, roadmap]);
 

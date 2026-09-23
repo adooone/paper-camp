@@ -14,7 +14,7 @@ export const ListView = ({ rows, activePlanTitle, onOpenPlan, onOpenIdea }: List
 
   useEffect(() => {
     if (!activePlanTitle) return;
-    const row = containerRef.current?.querySelector('.plan-row-highlighted');
+    const row = containerRef.current?.querySelector('[class*="highlighted"]');
     row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [activePlanTitle]);
 

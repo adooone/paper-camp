@@ -1,13 +1,11 @@
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
-import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
-import { Card, NoteIcon, Stamp, Switch } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { MetaLine, NoteIcon, Row, Stamp, Switch } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
-import { PLAN_ROWS_GRID_CLASS, PlanRows, RowMarker } from './plan-rows';
+import { PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -24,14 +22,6 @@ const subjectHeaderClass =
 const groupToggleLabelClass = 'font-handwritten text-xs font-semibold opacity-55 leading-none';
 
 const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
-
-const SORT_COLUMNS: { key: PlanSortKey; label: string }[] = [
-  { key: 'id', label: 'Id' },
-  { key: 'title', label: 'Title' },
-  { key: 'updated', label: 'Updated' },
-  { key: 'progress', label: 'Progress' },
-  { key: 'status', label: 'Status' },
-];
 
 const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
@@ -61,7 +51,6 @@ export const WorklistRows = ({
   onOpenPlan,
   onOpenIdea,
 }: WorklistRowsProps) => {
-  const gridClass = PLAN_ROWS_GRID_CLASS;
   const {
     roadmapItemNames,
     navigate,
@@ -97,6 +86,28 @@ export const WorklistRows = ({
     );
   };
 
+  const sortHeader = (key: PlanSortKey, label: string) => {
+    const active = key === sortKey;
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: this grid cell is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
+      <span
+        role="columnheader"
+        aria-sort={
+          sortReflectsRows && active
+            ? sortDirection === 'asc'
+              ? 'ascending'
+              : 'descending'
+            : undefined
+        }
+      >
+        <button type="button" className={headerButtonClass} onClick={() => handleSort(key)}>
+          {label}
+          {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+        </button>
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
@@ -122,37 +133,19 @@ export const WorklistRows = ({
           </button>
         </span>
         <div className="flex-1 min-w-0">
-          <Card size="small" texture={surface.card} className="plan-row-card">
-            <div className={gridClass}>
-              {SORT_COLUMNS.map(({ key, label }) => {
-                const active = key === sortKey;
-                return (
-                  <span
-                    // biome-ignore lint/a11y/useSemanticElements: this grid row is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
-                    key={key}
-                    role="columnheader"
-                    className={key === 'updated' ? 'max-lg:hidden' : undefined}
-                    aria-sort={
-                      sortReflectsRows && active
-                        ? sortDirection === 'asc'
-                          ? 'ascending'
-                          : 'descending'
-                        : undefined
-                    }
-                  >
-                    <button
-                      type="button"
-                      className={headerButtonClass}
-                      onClick={() => handleSort(key)}
-                    >
-                      {label}
-                      {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          </Card>
+          <Row
+            surface="card"
+            columns={PLAN_ROW_COLUMNS}
+            id={sortHeader('id', 'Id')}
+            title={sortHeader('title', 'Title')}
+            meta={
+              <span className="flex items-center gap-2">
+                {sortHeader('updated', 'Updated')}
+                {sortHeader('progress', 'Progress')}
+              </span>
+            }
+            trailing={sortHeader('status', 'Status')}
+          />
         </div>
       </div>
       {showSubjectHeaders
@@ -194,45 +187,30 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
   return (
     <div className="flex items-center">
       <RowMarker order={idea.order} done={status === 'done'} status={status} />
-      <div
-        role={onOpen ? 'button' : undefined}
-        tabIndex={onOpen ? 0 : undefined}
-        onClick={onOpen ? () => onOpen(idea.title) : undefined}
-        onKeyDown={
-          onOpen
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onOpen(idea.title);
-                }
-              }
-            : undefined
-        }
-        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
-      >
-        <Card size="small" texture={surface.card} className="plan-row-card">
-          <div className={PLAN_ROWS_GRID_CLASS}>
-            {idea.id ? <PlanIdStamp id={idea.id} /> : <span />}
-            <span className={`${titleButtonClass} [cursor:inherit]`}>
+      <div className="flex-1 min-w-0">
+        <Row
+          surface="card"
+          columns={PLAN_ROW_COLUMNS}
+          onClick={onOpen ? () => onOpen(idea.title) : undefined}
+          ariaLabel={idea.title}
+          id={idea.id ? <PlanIdStamp id={idea.id} /> : ''}
+          title={
+            <span className={titleButtonClass}>
               <NoteIcon />
               <span className={titleTextClass}>{idea.title}</span>
             </span>
-            <span className="max-lg:hidden text-sm opacity-[0.45]">—</span>
-            <span className="text-sm opacity-30">—</span>
+          }
+          meta={<MetaLine>—</MetaLine>}
+          trailing={
             <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
               {IDEA_STATUS_LABEL[status]}
             </Stamp>
-          </div>
-        </Card>
+          }
+        />
       </div>
     </div>
   );
 };
-
-// Fewer columns than a plan row (no updated/progress) — a fix is a distinct,
-// minimal follow-up entity, not a nested child of its (closed) parent (IDEA-187).
-const FIX_ROW_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_92px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 interface FixRowCardProps {
   row: FixRow;
@@ -253,42 +231,29 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
         running={Boolean(runningTaskForPlan(fix.id, agentStatus))}
         fallback={fix.statusFallback}
       />
-      <div
-        role={onOpen ? 'button' : undefined}
-        tabIndex={onOpen ? 0 : undefined}
-        onClick={onOpen ? () => onOpen(fix.title) : undefined}
-        onKeyDown={
-          onOpen
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onOpen(fix.title);
-                }
-              }
-            : undefined
-        }
-        className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${fix.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
-        style={
-          fix.title === activePlanTitle ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR } : undefined
-        }
-      >
-        <Card size="small" texture={surface.card} className="plan-row-card">
-          <div className={FIX_ROW_GRID_CLASS}>
-            <PlanIdStamp id={fix.id} />
-            <span className={`${titleButtonClass} [cursor:inherit]`}>
+      <div className="flex-1 min-w-0">
+        <Row
+          surface="card"
+          columns={PLAN_ROW_COLUMNS}
+          highlighted={fix.title === activePlanTitle}
+          onClick={onOpen ? () => onOpen(fix.title) : undefined}
+          ariaLabel={fix.title}
+          id={<PlanIdStamp id={fix.id} />}
+          title={
+            <span className={titleButtonClass}>
               <Stamp size="small" variant="warning">
                 fix
               </Stamp>
               <span className={titleTextClass}>{fix.title}</span>
-              {fix.idea && (
-                <span className="text-xs opacity-45 whitespace-nowrap font-mono">→ {fix.idea}</span>
-              )}
             </span>
+          }
+          meta={<MetaLine>{fix.idea ? `→ ${fix.idea}` : ''}</MetaLine>}
+          trailing={
             <Stamp size="small" variant={STATUS_STAMP[status]}>
               {STATUS_LABEL[status]}
             </Stamp>
-          </div>
-        </Card>
+          }
+        />
       </div>
     </div>
   );

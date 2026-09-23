@@ -1,14 +1,17 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
-import { Card, Stamp } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { MetaLine, Row, type RowColumns, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';
 
-export const LOG_ROW_GRID_CLASS =
-  'grid grid-cols-[100px_128px_minmax(0,1fr)_100px_72px_84px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+export const LOG_ROW_COLUMNS: RowColumns = {
+  id: 'auto',
+  title: 'minmax(0,1fr)',
+  meta: '320px',
+  trailing: '84px',
+};
 
 export interface LogRowViewProps {
   row: LogRow;
@@ -18,36 +21,25 @@ export const LogRowView = ({ row }: LogRowViewProps) => {
   const navigate = useNavigate();
 
   return (
-    <button
-      type="button"
+    <Row
+      surface="card"
+      columns={LOG_ROW_COLUMNS}
       onClick={() => navigate({ to: '/log/$entryId', params: { entryId: row.id } })}
-      className="group block w-full cursor-pointer rounded-[10px] border-none bg-transparent p-0 text-left"
-    >
-      <Card size="small" texture={surface.card} className="plan-row-card">
-        <div className={LOG_ROW_GRID_CLASS}>
-          <span className="font-handwritten text-xs opacity-[0.55] whitespace-nowrap">
-            {formatTime(row.timestamp)}
-          </span>
-          <Stamp size="small" variant="neutral">
-            {LOG_TYPE_LABELS[row.type]}
-          </Stamp>
-          <span className="flex min-w-0 items-center gap-2">
-            <PlanIdStamp id={row.entityId} />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.title}</span>
-          </span>
-          <span className="font-handwritten text-xs opacity-[0.55] overflow-hidden text-ellipsis whitespace-nowrap">
-            {row.agentId ? AGENT_LABELS[row.agentId] : '—'}
-          </span>
-          <span className="font-handwritten text-xs opacity-[0.55] whitespace-nowrap">
-            {row.durationMs != null ? formatDuration(row.durationMs) : '—'}
-          </span>
-          <div className="flex items-center">
-            <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]} dot={row.unread}>
-              {row.outcome}
-            </Stamp>
-          </div>
-        </div>
-      </Card>
-    </button>
+      ariaLabel={row.title}
+      id={<PlanIdStamp id={row.entityId} />}
+      title={row.title}
+      meta={
+        <MetaLine>
+          {formatTime(row.timestamp)} · {LOG_TYPE_LABELS[row.type]} ·{' '}
+          {row.agentId ? AGENT_LABELS[row.agentId] : '—'} ·{' '}
+          {row.durationMs != null ? formatDuration(row.durationMs) : '—'}
+        </MetaLine>
+      }
+      trailing={
+        <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]} dot={row.unread}>
+          {row.outcome}
+        </Stamp>
+      }
+    />
   );
 };

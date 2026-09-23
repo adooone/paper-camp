@@ -1,8 +1,16 @@
-import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Card, LightbulbIcon, MergeIcon, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { color, colors, surface } from '@dendelion/paper-ui/tokens';
+import {
+  LightbulbIcon,
+  MergeIcon,
+  MetaLine,
+  Row,
+  type RowColumns,
+  Spinner,
+  Stamp,
+  Tooltip,
+} from '@dendelion/paper-ui';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
@@ -53,14 +61,16 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
   </span>
 );
 
-/** Built from Cards, not paper-ui's Table, sharing the plan rows grid column
- * template so the header and rows line up. Exported so PlansListSkeleton can
- * match this exact column shape. */
-export const PLAN_ROWS_GRID_CLASS =
-  'grid grid-cols-[76px_minmax(0,1fr)_64px_52px_92px] gap-2.5 items-center max-lg:grid-cols-[76px_minmax(0,1fr)_52px_92px] max-[480px]:grid-cols-1 max-[480px]:gap-1';
+/** Shared by every row in the plans/worklist lists (plan, note and fix rows)
+ * so a header built from the same columns lines up with all three. */
+export const PLAN_ROW_COLUMNS: RowColumns = {
+  id: '76px',
+  title: 'minmax(0,1fr)',
+  meta: '110px',
+  trailing: '92px',
+};
 
 export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
-  const gridClass = PLAN_ROWS_GRID_CLASS;
   const agentStatus = useAppStore((s) => s.agentStatus);
   return (
     <div className="flex flex-col gap-1">
@@ -76,44 +86,23 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
               running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
               fallback={plan.statusFallback}
             />
-            <div
-              role={onOpen ? 'button' : undefined}
-              tabIndex={onOpen ? 0 : undefined}
-              onClick={onOpen ? () => onOpen(plan.title) : undefined}
-              onKeyDown={
-                onOpen
-                  ? (e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onOpen(plan.title);
-                      }
-                    }
-                  : undefined
-              }
-              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0 ${plan.title === activePlanTitle ? 'plan-row-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
-              style={
-                plan.title === activePlanTitle
-                  ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR }
-                  : undefined
-              }
-            >
-              <Card size="small" texture={surface.card} className="plan-row-card">
-                <div className={gridClass}>
-                  <PlanIdStamp id={plan.id} />
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    {plan.title}
-                  </span>
-                  <span className="max-lg:hidden font-handwritten text-sm opacity-[0.45] whitespace-nowrap">
+            <div className="flex-1 min-w-0">
+              <Row
+                surface="card"
+                columns={PLAN_ROW_COLUMNS}
+                highlighted={plan.title === activePlanTitle}
+                onClick={onOpen ? () => onOpen(plan.title) : undefined}
+                ariaLabel={plan.title}
+                id={<PlanIdStamp id={plan.id} />}
+                title={plan.title}
+                meta={
+                  <MetaLine>
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
-                  </span>
-                  {progress ? (
-                    <span className="font-handwritten text-sm opacity-50 whitespace-nowrap">
-                      {progress.done}/{progress.total}
-                    </span>
-                  ) : (
-                    <span className="text-sm opacity-30">—</span>
-                  )}
-                  <div className="flex items-center gap-1">
+                    {progress ? ` · ${progress.done}/${progress.total}` : ''}
+                  </MetaLine>
+                }
+                trailing={
+                  <>
                     <Stamp size="small" variant={STATUS_STAMP[status]}>
                       {STATUS_LABEL[status]}
                     </Stamp>
@@ -131,9 +120,9 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                         </span>
                       </Tooltip>
                     )}
-                  </div>
-                </div>
-              </Card>
+                  </>
+                }
+              />
             </div>
           </div>
         );

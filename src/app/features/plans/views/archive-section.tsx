@@ -1,10 +1,9 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea } from '@/types/index';
-import { Button, Card, useToast } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { Button, MetaLine, Row, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
-import { PLAN_ROWS_GRID_CLASS, RowMarker } from './plan-rows';
+import { PLAN_ROW_COLUMNS, RowMarker } from './plan-rows';
 
 interface ArchiveSectionProps {
   /** Takes the entity, not its title: these are work entities whose id is already
@@ -76,30 +75,16 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
         {visibleIdeas.map((idea) => (
           <div key={idea.id} className="flex items-center">
             <RowMarker done />
-            <div
-              role={onOpen ? 'button' : undefined}
-              tabIndex={onOpen ? 0 : undefined}
-              onClick={onOpen ? () => onOpen(idea) : undefined}
-              onKeyDown={
-                onOpen
-                  ? (e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onOpen(idea);
-                      }
-                    }
-                  : undefined
-              }
-              className={`${onOpen ? 'cursor-pointer' : ''} rounded-[10px] flex-1 min-w-0`}
-            >
-              <Card size="small" texture={surface.nestedCard} className="plan-row-card">
-                <div className={PLAN_ROWS_GRID_CLASS}>
-                  <PlanIdStamp id={idea.id} />
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                    {idea.title}
-                  </span>
-                  <span className="max-lg:hidden text-sm opacity-30">—</span>
-                  <span className="text-sm opacity-30">—</span>
+            <div className="flex-1 min-w-0">
+              <Row
+                surface="nestedCard"
+                columns={PLAN_ROW_COLUMNS}
+                onClick={onOpen ? () => onOpen(idea) : undefined}
+                ariaLabel={idea.title}
+                id={<PlanIdStamp id={idea.id} />}
+                title={idea.title}
+                meta={<MetaLine>—</MetaLine>}
+                trailing={
                   <Button
                     variant="ghost"
                     size="small"
@@ -113,8 +98,8 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                   >
                     {archivingId === idea.id ? 'Archiving…' : 'Archive'}
                   </Button>
-                </div>
-              </Card>
+                }
+              />
             </div>
           </div>
         ))}

@@ -47,8 +47,9 @@ Charts, [[IDEA-282]]; the drawer and status bar, [[IDEA-283]].
 ### Phases
 - [x] Bump `@dendelion/paper-ui` to the IDEA-5 release
       run: 1m16s · 28 in · 4.1k out · sonnet-5 · sess:635547af-1820-4f03-900d-5922e9c0f685
-- [ ] Replace the eight row grids with `Row`
+- [x] Replace the eight row grids with `Row`
       Port the column widths as `columns` templates, move the rest to ruled rows, and adopt the library's `RowSkeleton` and `highlighted`.
+      run: 13m45s · 158 in · 85.4k out · sonnet-5 · sess:635547af-1820-4f03-900d-5922e9c0f685
 - [ ] Swap the local sidebar kit and settings rows for the library's
       Delete the four `sidebar-*.tsx` files, `setting-row.tsx` and `SETTING_ROW_GRID_CLASS`, then rebuild each settings section as a `SettingGroup`.
 - [ ] Drop the table overrides and hand-rolled disclosures

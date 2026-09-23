@@ -1,6 +1,6 @@
 import { useOpenEntity } from '@/app/hooks';
 import type { GitLogCommit } from '@/types/index';
-import { Divider, Stamp, roughGenerator } from '@dendelion/paper-ui';
+import { Divider, MetaLine, Row, Stamp, roughGenerator } from '@dendelion/paper-ui';
 import { color } from '@dendelion/paper-ui/tokens';
 import { useMemo } from 'react';
 
@@ -118,50 +118,54 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
       {/* The divider lives beside the rail, not between rows, so the rail never breaks. */}
       <div className="flex min-w-0 flex-1 flex-col">
         {!isFirst && <Divider sketch />}
-        <div className="flex min-w-0 items-center gap-2">
-          {/* Fixed column, stamp hugging the title: titles line up and the gap stays constant. */}
-          <div className="hidden w-24 shrink-0 justify-end sm:flex">
-            {commit.prefix && (
+        <Row
+          surface="none"
+          columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: 'auto', trailing: 'auto' }}
+          id={
+            commit.prefix ? (
               <Stamp size="small" variant="neutral">
                 {commit.prefix}
               </Stamp>
-            )}
-          </div>
-          <div className="min-w-0 flex-1 py-1.5">
-            <div className="truncate">{commit.subject}</div>
-            <div className="flex flex-wrap items-baseline gap-x-1.5 font-handwritten text-sm leading-tight opacity-60">
+            ) : (
+              ''
+            )
+          }
+          title={<div className="truncate">{commit.subject}</div>}
+          meta={
+            <MetaLine className="flex flex-wrap items-baseline gap-x-1.5">
               <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
-              {commit.prefix && <span className="sm:hidden">· {commit.prefix}</span>}
               <span>· {formatRelativeTime(commit.date)}</span>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 py-1.5">
-            {commit.tags.map((tag) => (
-              <Stamp key={tag} size="small" variant="success">
-                {tag}
-              </Stamp>
-            ))}
-            {commit.isUpstreamHead && upstream && (
-              <Stamp size="small" variant="neutral">
-                {upstream}
-              </Stamp>
-            )}
-            {commit.ideaId && (
-              <Stamp
-                size="small"
-                variant="info"
-                onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
-              >
-                {commit.ideaId}
-              </Stamp>
-            )}
-            {!commit.pushed && (
-              <Stamp size="small" variant="warning">
-                not pushed
-              </Stamp>
-            )}
-          </div>
-        </div>
+            </MetaLine>
+          }
+          trailing={
+            <>
+              {commit.tags.map((tag) => (
+                <Stamp key={tag} size="small" variant="success">
+                  {tag}
+                </Stamp>
+              ))}
+              {commit.isUpstreamHead && upstream && (
+                <Stamp size="small" variant="neutral">
+                  {upstream}
+                </Stamp>
+              )}
+              {commit.ideaId && (
+                <Stamp
+                  size="small"
+                  variant="info"
+                  onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
+                >
+                  {commit.ideaId}
+                </Stamp>
+              )}
+              {!commit.pushed && (
+                <Stamp size="small" variant="warning">
+                  not pushed
+                </Stamp>
+              )}
+            </>
+          }
+        />
       </div>
     </div>
   );

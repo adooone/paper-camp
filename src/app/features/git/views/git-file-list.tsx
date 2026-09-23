@@ -3,14 +3,7 @@ import { SidebarCard } from '@/app/components/sidebar';
 import { CountBadge, GitStatusMarker } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
-import {
-  CheckAllIcon,
-  Checkbox,
-  EmptyState,
-  IconButton,
-  ListItem,
-  Tooltip,
-} from '@dendelion/paper-ui';
+import { CheckAllIcon, Checkbox, EmptyState, IconButton, Row, Tooltip } from '@dendelion/paper-ui';
 
 const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 
@@ -98,24 +91,29 @@ export const GitFileList = () => {
                       aria-label={entry.staged ? `Unstage ${entry.path}` : `Stage ${entry.path}`}
                     />
                     <GitStatusMarker status={entry.status} compact />
-                    <ListItem
-                      size="small"
-                      active={entry.path === activePath}
+                    <Row
+                      surface="none"
+                      className="min-w-0 flex-1"
+                      columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '0px', trailing: 'auto' }}
+                      highlighted={entry.path === activePath}
                       onClick={() => scrollToFile(entry.path, expandDiffPath)}
-                      className="min-w-0 flex-1 items-end py-0 text-3xs"
-                      action={
+                      ariaLabel={entry.path}
+                      id=""
+                      title={
+                        <span
+                          className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
+                          title={entry.path}
+                        >
+                          {splitPathForDisplay(entry.path).base}
+                        </span>
+                      }
+                      meta=""
+                      trailing={
                         !entry.binary && (
                           <CountBadge additions={entry.additions} deletions={entry.deletions} />
                         )
                       }
-                    >
-                      <span
-                        className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
-                        title={entry.path}
-                      >
-                        {splitPathForDisplay(entry.path).base}
-                      </span>
-                    </ListItem>
+                    />
                   </li>
                 ))}
               </ul>

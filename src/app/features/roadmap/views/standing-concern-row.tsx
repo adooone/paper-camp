@@ -1,5 +1,5 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion } from '@dendelion/paper-ui';
+import { Accordion, MetaLine, Row } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { IdeaRow } from './idea-row';
 
@@ -7,9 +7,6 @@ interface StandingConcernRowProps {
   item: ResolvedRoadmapItem;
   onOpen: (id: string | undefined, title: string) => void;
 }
-
-const GRID_CLASS =
-  'grid flex-1 min-w-0 items-center gap-x-3 gap-y-1 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_6rem_8rem]';
 
 export const StandingConcernRow = ({ item, onOpen }: StandingConcernRowProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -23,18 +20,25 @@ export const StandingConcernRow = ({ item, onOpen }: StandingConcernRowProps) =>
         expanded={expanded}
         onToggle={() => setExpanded((v) => !v)}
         title={
-          <div className={GRID_CLASS}>
-            <div className="min-w-0">
-              <div className="truncate">{item.name}</div>
-              <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
-                {item.description}
+          <Row
+            surface="none"
+            columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '0px', trailing: '8rem' }}
+            id=""
+            title={
+              <div className="min-w-0">
+                <div className="truncate">{item.name}</div>
+                <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
+                  {item.description}
+                </div>
               </div>
-            </div>
-            <div className="hidden sm:block" />
-            <div className="min-w-0 whitespace-nowrap font-handwritten text-2xs opacity-70">
-              {item.rollup.done} shipped · {item.rollup.open} open
-            </div>
-          </div>
+            }
+            meta=""
+            trailing={
+              <MetaLine className="whitespace-nowrap">
+                {item.rollup.done} shipped · {item.rollup.open} open
+              </MetaLine>
+            }
+          />
         }
       >
         <div className="flex flex-col gap-1 pb-2">

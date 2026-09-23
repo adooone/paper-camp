@@ -1,16 +1,12 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, Button, Menu, Stamp } from '@dendelion/paper-ui';
+import { Accordion, Button, Menu, MetaLine, Row, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { HIGHLIGHT_OUTLINE_COLOR, ITEM_STATE_STAMP } from '../constants';
+import { ITEM_STATE_STAMP } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow } from './idea-row';
 import { RoughProgressBar } from './rough-progress-bar';
 import { ShippedIdeasFold } from './shipped-ideas-fold';
-
-// Phone: name and description take the full width, state and progress share the row under them.
-const GRID_CLASS =
-  'grid flex-1 min-w-0 items-center gap-x-3 gap-y-1 grid-cols-[6rem_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_6rem_8rem]';
 
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
@@ -55,42 +51,45 @@ export const RoadmapItemRow = ({
   }, [highlighted]);
 
   return (
-    <div
-      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'roadmap-item-highlighted outline outline-2 outline-offset-[-2px]' : ''}`}
-      style={highlighted ? { outlineColor: HIGHLIGHT_OUTLINE_COLOR } : undefined}
-    >
+    <div className="border-b border-black/10 last:border-b-0">
       <Accordion
         expanded={expanded}
         onToggle={() => setExpanded((v) => !v)}
         title={
-          <div className={GRID_CLASS}>
-            <div className="col-span-2 min-w-0 sm:col-span-1">
-              <div className="truncate">{item.name}</div>
-              <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
-                {item.description}
+          <Row
+            surface="none"
+            highlighted={highlighted}
+            columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '8rem', trailing: '6rem' }}
+            id=""
+            title={
+              <div className="min-w-0">
+                <div className="truncate">{item.name}</div>
+                <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
+                  {item.description}
+                </div>
               </div>
-            </div>
-            <div>
-              <Stamp size="small" variant={stateStamp.variant}>
-                {stateStamp.label}
-              </Stamp>
-            </div>
-            <div className="min-w-0">
-              {item.rollup.total > 0 ? (
+            }
+            meta={
+              item.rollup.total > 0 ? (
                 <>
-                  <div className="font-handwritten text-2xs opacity-70 whitespace-nowrap">
+                  <MetaLine className="whitespace-nowrap">
                     {item.rollup.done} of {item.rollup.total} ·{' '}
                     {item.state === 'in-progress' && item.readyToShip
                       ? 'ready to ship'
                       : `${item.rollup.open} open`}
-                  </div>
+                  </MetaLine>
                   <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
                 </>
               ) : (
-                <div className="font-handwritten text-2xs opacity-50">No ideas yet</div>
-              )}
-            </div>
-          </div>
+                <MetaLine>No ideas yet</MetaLine>
+              )
+            }
+            trailing={
+              <Stamp size="small" variant={stateStamp.variant}>
+                {stateStamp.label}
+              </Stamp>
+            }
+          />
         }
       >
         <div className="flex flex-col gap-1 pb-2">
