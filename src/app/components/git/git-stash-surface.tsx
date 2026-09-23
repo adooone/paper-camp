@@ -1,9 +1,8 @@
 import { fetchStashDiff } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { GitStashEntry } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { Button, Stamp } from '@dendelion/paper-ui';
 import { useState } from 'react';
-import { LinkButton } from '../link-button';
 
 const formatStashAge = (days: number) =>
   days <= 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
@@ -37,9 +36,9 @@ const StashEntryRow = ({ entry }: { entry: GitStashEntry }) => {
 
   return (
     <div className="flex flex-col gap-1">
-      <LinkButton onClick={handleToggle}>
+      <Button variant="link" onClick={handleToggle} className="text-watercolor-amber-dark">
         {entry.branch}: {entry.message} · {formatStashAge(entry.ageDays)}
-      </LinkButton>
+      </Button>
       {showing && (
         <pre className="m-0 max-h-64 overflow-auto whitespace-pre-wrap font-mono text-2xs opacity-80">
           {loading ? 'Loading…' : (error ?? diff)}
@@ -58,17 +57,14 @@ export const GitStashSurface = () => {
 
   return (
     <div>
-      {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-      <button
-        type="button"
+      <Stamp
+        size="small"
+        variant={warning ? 'warning' : 'neutral'}
         onClick={() => setExpanded((prev) => !prev)}
-        className="inline-flex bg-none bg-transparent border-none p-0 cursor-pointer"
-        aria-expanded={expanded}
+        pressed={expanded}
       >
-        <Stamp size="small" variant={warning ? 'warning' : 'neutral'}>
-          {stashes.length} stash{stashes.length === 1 ? '' : 'es'}
-        </Stamp>
-      </button>
+        {stashes.length} stash{stashes.length === 1 ? '' : 'es'}
+      </Stamp>
       {expanded && (
         <div className="mt-2 flex flex-col gap-2">
           {warning && <p className="m-0 text-2xs opacity-80">{RECOVERY_HINT}</p>}

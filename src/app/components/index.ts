@@ -9,7 +9,6 @@ export type { CommitMessageFieldsState } from './git/commit-message-fields';
 export { GitStashSurface } from './git/git-stash-surface';
 export { GitSyncActions } from './git/git-sync-actions';
 export { DoodleIllustration } from './doodle-illustration';
-export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { SidebarCommand, SidebarField, SidebarLabel } from './sidebar';
 export { StackPanel } from './stack-panel';

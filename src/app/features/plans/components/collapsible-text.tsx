@@ -1,3 +1,4 @@
+import { Button } from '@dendelion/paper-ui';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 interface CollapsibleTextProps {
@@ -39,17 +40,16 @@ export const CollapsibleText = ({
       <div ref={ref} className={expanded ? undefined : `line-clamp-[${collapsedLines}]`}>
         {children}
       </div>
-      {/* Raw <button>: paper-ui's Button has no bare text-link variant. Conditionally
-          mounted, not visibility:hidden — `overflows` is measured pre-paint. */}
+      {/* Conditionally mounted, not visibility:hidden — `overflows` is measured pre-paint. */}
       {overflows && (
-        <button
-          type="button"
+        <Button
+          variant="link"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="self-start bg-none bg-transparent border-none py-1 px-0 [font:inherit] text-xs opacity-60 cursor-pointer underline"
+          className="text-xs opacity-60"
         >
           {expanded ? 'Show less' : 'Show more'}
-        </button>
+        </Button>
       )}
     </div>
   );

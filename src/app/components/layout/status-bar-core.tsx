@@ -30,7 +30,6 @@ const branchNameClass = 'min-w-0 max-w-[40vw] truncate text-[var(--pui-text-prim
 const secondaryClass = 'opacity-60';
 const spacerClass = 'flex-1';
 const rightGroupClass = 'flex items-center gap-2 shrink-0';
-const stampTriggerClass = 'bg-transparent border-none p-0 cursor-pointer';
 const notificationButtonClass = 'relative inline-flex h-[32px] items-center';
 // Raw badge: paper-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
 const notificationBadgeClass =
@@ -168,12 +167,9 @@ export const StatusBarCore = ({
       priority: 5,
       node: (
         <Tooltip content="Some features are disabled — open Setup to fix">
-          {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-          <button type="button" onClick={onOpenSetup} className={stampTriggerClass}>
-            <Stamp size="small" variant="warning">
-              Setup ({capabilityGapCount})
-            </Stamp>
-          </button>
+          <Stamp size="small" variant="warning" onClick={onOpenSetup}>
+            Setup ({capabilityGapCount})
+          </Stamp>
         </Tooltip>
       ),
       entry: { id: 'setup', label: `Setup (${capabilityGapCount})`, onSelect: onOpenSetup },
@@ -185,12 +181,9 @@ export const StatusBarCore = ({
       priority: 6,
       node: (
         <Tooltip content="Sign in from Settings → Connections so agent tasks can run">
-          {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-          <button type="button" onClick={onOpenSetup} className={stampTriggerClass}>
-            <Stamp size="small" variant="warning">
-              Agent not signed in
-            </Stamp>
-          </button>
+          <Stamp size="small" variant="warning" onClick={onOpenSetup}>
+            Agent not signed in
+          </Stamp>
         </Tooltip>
       ),
       entry: { id: 'signin', label: 'Agent not signed in', onSelect: onOpenSetup },
@@ -226,12 +219,9 @@ export const StatusBarCore = ({
             content={`${failingCheckCount} check${failingCheckCount === 1 ? '' : 's'} failing — open Git`}
           >
             <span ref={registerFixed('failing')}>
-              {/* paper-ui has no unstyled/clickable Stamp, so a raw button wraps it (see docs/CODE_STYLE.md §1) */}
-              <button type="button" onClick={onOpenGit} className={stampTriggerClass}>
-                <Stamp size="small" variant="error">
-                  {failingCheckCount} failing
-                </Stamp>
-              </button>
+              <Stamp size="small" variant="error" onClick={onOpenGit}>
+                {failingCheckCount} failing
+              </Stamp>
             </span>
           </Tooltip>
         )}

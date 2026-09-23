@@ -1,6 +1,6 @@
 import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
-import { Input, ListItem, Stamp } from '@dendelion/paper-ui';
+import { Button, Input, ListItem, Stamp } from '@dendelion/paper-ui';
 import { ITEM_STATE_STAMP } from './constants';
 import { stripHorizonPrefix } from './helpers';
 import { useRoadmapSidebar } from './hooks';
@@ -76,13 +76,13 @@ export const RoadmapSidebar = () => {
         </div>
 
         {hasActiveFilters && (
-          <button
-            type="button"
+          <Button
+            variant="link"
             onClick={clearRoadmapFilters}
-            className="pc-row-label text-2xs opacity-70 underline text-left"
+            className="pc-row-label text-2xs opacity-70"
           >
             Clear filters
-          </button>
+          </Button>
         )}
       </div>
     </SidebarCard>

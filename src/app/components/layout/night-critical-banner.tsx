@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
+import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export function criticalNightFindings(groups: NightReportGroup[]): NightSuggestionEntry[] {
@@ -28,14 +29,9 @@ export const NightCriticalBanner = () => {
       role="alert"
       className="bg-watercolor-rose-dark text-desk-text py-2 px-4 text-2xs font-mono shrink-0"
     >
-      {/* Raw <button>, not paper-ui's Button — this needs to read as an inline text link. */}
-      <button
-        type="button"
-        onClick={() => navigate({ to: '/' })}
-        className="bg-none bg-transparent border-none p-0 cursor-pointer text-inherit underline [font:inherit] text-left"
-      >
+      <Button variant="link" onClick={() => navigate({ to: '/' })} className="text-inherit">
         Critical from a review pass — {formatCriticalSummary(criticals)}
-      </button>
+      </Button>
     </div>
   );
 };

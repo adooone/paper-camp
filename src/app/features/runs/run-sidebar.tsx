@@ -3,7 +3,7 @@ import { SidebarField } from '@/app/components/sidebar';
 import { formatDuration } from '@/core/phase-run';
 import type { LogDateRange, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS } from '@/types/index';
-import { Input, Select } from '@dendelion/paper-ui';
+import { Button, Input, Select } from '@dendelion/paper-ui';
 import { formatCost } from './helpers';
 import { useLogPage } from './hooks';
 
@@ -86,14 +86,14 @@ export const LogSidebar = () => {
         </SidebarField>
 
         {hasActiveFilters && (
-          <button
-            type="button"
+          <Button
+            variant="link"
             data-testid="clear-log-filters"
             onClick={clearFilters}
-            className="pc-row-label text-2xs opacity-70 underline text-left"
+            className="pc-row-label text-2xs opacity-70"
           >
             Clear filters
-          </button>
+          </Button>
         )}
       </div>
     </SidebarCard>

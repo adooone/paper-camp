@@ -58,10 +58,10 @@ export const StackPanel = ({ open, onToggle, pinned = false }: StackPanelProps) 
             <IconButton
               icon={<span className="text-sm leading-none">&times;</span>}
               surface="chalkboard"
-              size="small"
+              size="tiny"
               label="Close stack panel"
               onClick={onToggle}
-              className="h-7 w-7 border border-desk-border"
+              className="border border-desk-border"
             />
           </div>
         )}

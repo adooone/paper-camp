@@ -147,16 +147,13 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
               </Stamp>
             )}
             {commit.ideaId && (
-              // Raw <button>: a chromeless click target wrapping a stamp, not a paper-ui Button.
-              <button
-                type="button"
+              <Stamp
+                size="small"
+                variant="info"
                 onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
-                className="bg-none bg-transparent border-none p-0 cursor-pointer [font:inherit] text-inherit"
               >
-                <Stamp size="small" variant="info">
-                  {commit.ideaId}
-                </Stamp>
-              </button>
+                {commit.ideaId}
+              </Stamp>
             )}
             {!commit.pushed && (
               <Stamp size="small" variant="warning">

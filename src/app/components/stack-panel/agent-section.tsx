@@ -8,7 +8,7 @@ import {
   type TaskKind,
   type TaskLogEntry,
 } from '@/types/index';
-import { Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
+import { Button, Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CapacityRow } from './capacity-row';
 import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
@@ -138,21 +138,14 @@ const AgentTaskCard = ({
   };
 
   return (
-    <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
-      {/* biome-ignore lint/a11y/useSemanticElements: the Stop IconButton nests inside, and a native <button> can't contain another button. */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={openTaskPage}
-        onKeyDown={(e) => {
-          if (e.target !== e.currentTarget) return;
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openTaskPage();
-          }
-        }}
-        className="flex h-full min-w-0 cursor-pointer flex-col justify-between gap-1 rounded-[10px]"
-      >
+    <Card
+      surface="chalkboard"
+      size="small"
+      className={TASK_CARD_HEIGHT_CLASS}
+      onClick={openTaskPage}
+      ariaLabel={taskCardTitle(task)}
+    >
+      <div className="flex h-full min-w-0 flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
             {taskCardTitle(task)}
@@ -163,12 +156,11 @@ const AgentTaskCard = ({
             <IconButton
               icon={<CloseIcon />}
               variant="ghost"
-              size="small"
+              size="tiny"
               surface="chalkboard"
               label="Stop agent"
               onClick={handleStop}
               disabled={task.status === 'stopping'}
-              className="h-auto min-h-0 w-auto shrink-0 p-0"
             />
           )}
         </div>
@@ -178,25 +170,19 @@ const AgentTaskCard = ({
           </span>
           <div className="flex shrink-0 items-center gap-2">
             {task.status === 'error' && task.errorKind === 'auth' ? (
-              // paper-ui has no clickable Stamp variant, so a raw button wraps it (see docs/CODE_STYLE.md §1)
-              <button
-                type="button"
+              <Stamp
+                surface="chalkboard"
+                size="small"
+                fillColor={statusFill.error}
+                textColor={statusText.error}
+                className="leading-none"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate({ to: '/settings/$section', params: { section: 'setup' } });
                 }}
-                className="bg-none bg-transparent border-none p-0 cursor-pointer"
               >
-                <Stamp
-                  surface="chalkboard"
-                  size="small"
-                  fillColor={statusFill.error}
-                  textColor={statusText.error}
-                  className="leading-none"
-                >
-                  stopped — agent signed out
-                </Stamp>
-              </button>
+                stopped — agent signed out
+              </Stamp>
             ) : (
               <Stamp
                 surface="chalkboard"
@@ -218,28 +204,28 @@ const AgentTaskCard = ({
 const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
   const navigate = useNavigate();
   return (
-    <button
-      type="button"
+    <Card
+      surface="chalkboard"
+      size="small"
+      className={TASK_CARD_HEIGHT_CLASS}
       onClick={() => navigate({ to: '/log/$entryId', params: { entryId: `task:${entry.id}` } })}
-      className="block w-full cursor-pointer border-none bg-transparent p-0 text-left"
+      ariaLabel={entry.planId ?? entry.planTitle}
     >
-      <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
-        <div className="flex h-full min-w-0 flex-col justify-center gap-1">
-          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-            {entry.planId ?? entry.planTitle}
-          </span>
-          <Stamp
-            surface="chalkboard"
-            size="small"
-            fillColor={statusFill.running}
-            textColor={statusText.running}
-            className="w-fit leading-none"
-          >
-            A run was interrupted; run again
-          </Stamp>
-        </div>
-      </Card>
-    </button>
+      <div className="flex h-full min-w-0 flex-col justify-center gap-1">
+        <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+          {entry.planId ?? entry.planTitle}
+        </span>
+        <Stamp
+          surface="chalkboard"
+          size="small"
+          fillColor={statusFill.running}
+          textColor={statusText.running}
+          className="w-fit leading-none"
+        >
+          A run was interrupted; run again
+        </Stamp>
+      </div>
+    </Card>
   );
 };
 
@@ -257,13 +243,13 @@ export const AgentSection = () => {
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <h3 className={`${groupLabelClassName} m-0`}>Agent</h3>
         {hiddenCount > 0 && (
-          <button
-            type="button"
+          <Button
+            variant="link"
             onClick={() => navigate({ to: '/log' })}
-            className="cursor-pointer border-none bg-transparent p-0 font-handwritten text-xs text-desk-text-muted underline"
+            className="font-handwritten text-xs text-desk-text-muted"
           >
             more
-          </button>
+          </Button>
         )}
       </div>
       <div

@@ -1,3 +1,4 @@
+import { Button } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 interface DeliverChangedFilesProps {
@@ -7,13 +8,12 @@ interface DeliverChangedFilesProps {
 export const DeliverChangedFiles = ({ count }: DeliverChangedFilesProps) => {
   const navigate = useNavigate();
   return (
-    // Raw <button>: paper-ui Button has no inline-underlined link style.
-    <button
-      type="button"
+    <Button
+      variant="link"
       onClick={() => navigate({ to: '/git' })}
-      className="bg-none bg-transparent border-none p-0 font-handwritten text-xs opacity-[0.6] underline cursor-pointer"
+      className="font-handwritten text-xs opacity-[0.6]"
     >
       {count} file{count === 1 ? '' : 's'} changed
-    </button>
+    </Button>
   );
 };

@@ -15,16 +15,15 @@ interface FilterChipProps {
 }
 
 const FilterChip = ({ active, onClick, children, variant }: FilterChipProps) => (
-  <button
-    type="button"
-    aria-pressed={active}
+  <Stamp
+    size="small"
+    variant={variant ?? (active ? 'info' : 'neutral')}
     onClick={onClick}
-    className={`shrink-0 border-none bg-transparent p-0 cursor-pointer ${active ? '' : 'opacity-60'}`}
+    pressed={active}
+    className={active ? '' : 'opacity-60'}
   >
-    <Stamp size="small" variant={variant ?? (active ? 'info' : 'neutral')}>
-      {children}
-    </Stamp>
-  </button>
+    {children}
+  </Stamp>
 );
 
 export interface LogFilterBarProps {

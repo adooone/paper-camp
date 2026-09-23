@@ -75,11 +75,7 @@ describe('StatusBarCore', () => {
     const tree = StatusBarCore({ ...baseProps, failingCheckCount: 2, onOpenGit });
     const stamps = collect(tree, (el) => el.type === Stamp);
     expect(textOf(stamps[0]?.props.children as ReactNode)).toBe('2 failing');
-    const trigger = collect(
-      tree,
-      (el) => el.type === 'button' && el.props.onClick === onOpenGit,
-    )[0];
-    (trigger?.props.onClick as () => void)?.();
+    (stamps[0]?.props.onClick as () => void)?.();
     expect(onOpenGit).toHaveBeenCalledTimes(1);
   });
 
@@ -102,12 +98,7 @@ describe('StatusBarCore', () => {
     const tree = StatusBarCore({ ...baseProps, agentNotSignedIn: true, onOpenSetup });
     const stamps = collect(tree, (el) => el.type === Stamp);
     expect(textOf(stamps[0]?.props.children as ReactNode)).toBe('Agent not signed in');
-
-    const triggers = collect(
-      tree,
-      (el) => el.type === 'button' && el.props.onClick === onOpenSetup,
-    );
-    expect(triggers).toHaveLength(1);
+    expect(stamps[0]?.props.onClick).toBe(onOpenSetup);
   });
 
   it('shows a setup gap stamp with the gap count', () => {

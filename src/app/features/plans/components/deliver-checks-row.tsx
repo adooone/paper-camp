@@ -1,7 +1,7 @@
 import { GitStashSurface } from '@/app/components';
 import { entityLink, entityRouteParam } from '@/app/hooks';
 import type { CheckStatus, DeskCheckState } from '@/types/index';
-import { Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
 import { useDeliverChecksRow } from '../hooks';
 
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
@@ -31,40 +31,32 @@ interface FixStampProps {
 
 const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps) => (
   <Tooltip content={tooltip}>
-    {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-    <button
-      type="button"
-      className={`inline-flex bg-none bg-transparent border-none p-0 ${
-        disabled
-          ? 'cursor-not-allowed opacity-50'
-          : 'cursor-pointer enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95]'
-      }`}
+    <Stamp
+      size="small"
+      variant={variant}
       onClick={onClick}
-      disabled={disabled}
+      className={disabled ? 'pointer-events-none opacity-50' : undefined}
     >
-      <Stamp size="small" variant={variant}>
-        {label}
-      </Stamp>
-    </button>
+      {label}
+    </Stamp>
   </Tooltip>
 );
 
 const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
   <Tooltip content={title}>
-    {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-    <button
-      type="button"
-      className={`inline-flex bg-none bg-transparent border-none p-0 enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] ${anyRunning ? 'cursor-not-allowed' : 'cursor-pointer'} ${anyRunning && status !== 'running' ? 'opacity-50' : 'opacity-100'}`}
+    <Stamp
+      size="small"
+      variant={CHECK_VARIANT[status]}
       onClick={() => {
         if (!anyRunning) onClick();
       }}
-      disabled={anyRunning}
+      className={
+        anyRunning ? `pointer-events-none ${status !== 'running' ? 'opacity-50' : ''}` : undefined
+      }
     >
-      <Stamp size="small" variant={CHECK_VARIANT[status]}>
-        {label}
-        <span className={status === 'running' ? 'visible' : 'invisible'}>…</span>
-      </Stamp>
-    </button>
+      {label}
+      <span className={status === 'running' ? 'visible' : 'invisible'}>…</span>
+    </Stamp>
   </Tooltip>
 );
 
@@ -115,21 +107,15 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
                   : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
               }
             >
-              {/* Raw <button>: the clickable target is a Stamp, so it needs a chrome-less wrapper. */}
-              <button
-                type="button"
-                className={`inline-flex bg-none bg-transparent border-none p-0 ${hasDocIssues ? 'enabled:hover:-translate-y-px enabled:hover:brightness-[1.15] enabled:active:translate-y-0 enabled:active:brightness-[0.95] cursor-pointer' : 'cursor-default'}`}
-                disabled={!hasDocIssues}
-                aria-expanded={hasDocIssues ? docsExpanded : undefined}
-                aria-controls="deliver-doc-findings"
-                onClick={() => {
-                  if (hasDocIssues) setDocsExpanded((prev) => !prev);
-                }}
+              <Stamp
+                size="small"
+                variant={hasDocIssues ? 'error' : 'success'}
+                onClick={hasDocIssues ? () => setDocsExpanded((prev) => !prev) : undefined}
+                pressed={docsExpanded}
+                className={hasDocIssues ? undefined : 'pointer-events-none'}
               >
-                <Stamp size="small" variant={hasDocIssues ? 'error' : 'success'}>
-                  Docs
-                </Stamp>
-              </button>
+                Docs
+              </Stamp>
             </Tooltip>
             {docsExpanded && hasDocIssues && (
               <div id="deliver-doc-findings" className="mt-2 flex flex-col gap-2">
@@ -141,13 +127,13 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
                       className="font-mono text-2xs opacity-70"
                     >
                       {linkedPlan ? (
-                        <button
-                          type="button"
+                        <Button
+                          variant="link"
                           onClick={() => navigate(entityLink(linkedPlan))}
-                          className="bg-none bg-transparent border-none p-0 underline cursor-pointer [font:inherit] text-left"
+                          className="text-inherit"
                         >
                           {issue.message}
-                        </button>
+                        </Button>
                       ) : (
                         <span className="text-left">{issue.message}</span>
                       )}

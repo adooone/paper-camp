@@ -5,7 +5,7 @@ import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
-import { Input, ListItem } from '@dendelion/paper-ui';
+import { Button, Input, ListItem } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { STATUS_COLOR, STATUS_LABEL } from '../constants';
 
@@ -81,17 +81,17 @@ export const PlanFilterColumn = () => {
         </div>
 
         {hasActiveFilters && (
-          <button
-            type="button"
+          <Button
+            variant="link"
             data-testid="clear-plan-filters"
             onClick={() => {
               clearPlanFilters();
               navigate({ to: '/', search: {} });
             }}
-            className="pc-row-label text-2xs opacity-70 underline text-left"
+            className="pc-row-label text-2xs opacity-70"
           >
             Clear filters
-          </button>
+          </Button>
         )}
       </div>
     </SidebarCard>
