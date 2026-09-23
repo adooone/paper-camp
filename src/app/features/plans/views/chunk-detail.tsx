@@ -5,7 +5,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { nightFindingKey, sortedFindings } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
-import { Button, Card, Stamp, Table, useToast } from '@dendelion/paper-ui';
+import { Button, Card, FactsGrid, Stamp, Table, useToast } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -20,21 +20,6 @@ interface Fact {
   label: string;
   value: string;
 }
-
-const FactsRow = ({ facts }: { facts: Fact[] }) => (
-  <dl className="m-0 flex flex-wrap items-start gap-4">
-    {facts.map((fact) => (
-      <div key={fact.label} className="flex min-w-0 flex-col items-end">
-        <dt className="font-handwritten text-xs font-semibold opacity-[0.45] whitespace-nowrap">
-          {fact.label}
-        </dt>
-        <dd className="m-0 font-handwritten text-base font-semibold whitespace-nowrap">
-          {fact.value}
-        </dd>
-      </div>
-    ))}
-  </dl>
-);
 
 const FindingActionsCell = ({ finding }: { finding: NightSuggestionEntry }) => {
   const promoteNightFinding = useAppStore((s) => s.promoteNightFinding);
@@ -171,7 +156,7 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
               </Stamp>
             )}
           </div>
-          <FactsRow facts={facts} />
+          <FactsGrid items={facts} />
         </div>
       </Card>
       <Table

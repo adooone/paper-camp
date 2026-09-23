@@ -49,6 +49,7 @@ Rows and sidebars, [[IDEA-281]].
       Delete the local heading, inline-code, command-line, page-title and
       empty-state helpers, and pass the doodle as `EmptyState`'s `illustration`.
       run: 8m54s · 224 in · 44.9k out · sonnet-5 · sess:eee9e66e-0bb9-436a-a5eb-f260afcc2182
-- [ ] Fold both facts grids into one `FactsGrid`
+- [x] Fold both facts grids into one `FactsGrid`
+      run: 1m41s · 66 in · 7.4k out · sonnet-5 · sess:1201b78d-2e94-4790-ba6f-524caf0fcb0b
 - [ ] Replace raw buttons with `Stamp`, `Button variant="link"` and `Card onClick`
 - [ ] Delete `icons.tsx` and import every glyph from the library

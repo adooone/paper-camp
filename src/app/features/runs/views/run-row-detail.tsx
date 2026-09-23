@@ -11,7 +11,7 @@ import {
   type PlanEntry,
   type StoredNotification,
 } from '@/types/index';
-import { Button, Card, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import { Button, Card, FactsGrid, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
@@ -37,21 +37,6 @@ const factsFor = (row: LogRow): Fact[] => {
   if (row.agentId) facts.push({ label: 'Agent', value: AGENT_LABELS[row.agentId] });
   return facts;
 };
-
-const FactsGrid = ({ facts }: { facts: Fact[] }) => (
-  <dl className="m-0 grid grid-cols-[repeat(auto-fit,minmax(96px,1fr))] gap-x-4 gap-y-2">
-    {facts.map((fact) => (
-      <div key={fact.label} className="flex min-w-0 flex-col">
-        <dt className="font-handwritten text-xs font-semibold opacity-[0.45] whitespace-nowrap">
-          {fact.label}
-        </dt>
-        <dd className="m-0 font-handwritten text-base font-semibold whitespace-nowrap">
-          {fact.value}
-        </dd>
-      </div>
-    ))}
-  </dl>
-);
 
 const FailureActions = ({
   issue,
@@ -293,7 +278,7 @@ export const EntryDetailsCard = ({ row, actions, lines }: EntryDetailsCardProps)
             {row.outcome}
           </Stamp>
         </div>
-        <FactsGrid facts={factsFor(row)} />
+        <FactsGrid items={factsFor(row)} />
         {hasBody(row, lines) && (
           <div className="border-t border-paper-950/[12%] pt-3">
             <EntryBody row={row} actions={actions} lines={lines} />
