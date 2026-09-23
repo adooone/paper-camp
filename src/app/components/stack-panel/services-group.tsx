@@ -1,9 +1,17 @@
 import { useServicesClient } from '@/app/hooks/use-services-client';
 import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
-import { Card, EmptyState, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
+import {
+  Card,
+  ChevronRightIcon,
+  EmptyState,
+  IconButton,
+  RunIcon,
+  Spinner,
+  StopIcon,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronRightIcon, RunIcon, StopIcon } from '../icons';
 import { groupLabelClassName } from './shared';
 
 const LOG_POLL_MS = 1500;

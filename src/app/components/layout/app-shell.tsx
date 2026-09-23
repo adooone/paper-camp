@@ -20,11 +20,18 @@ import {
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
-import { Button, IconButton, Layout, ToastProvider, getSurfaceStyles } from '@dendelion/paper-ui';
+import {
+  Button,
+  IconButton,
+  Layout,
+  SidebarToggleIcon,
+  ToastProvider,
+  getSurfaceStyles,
+} from '@dendelion/paper-ui';
 import { colors, surface, withAlpha } from '@dendelion/paper-ui/tokens';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
-import { NavLabel, SidebarToggleIcon, navItems } from './nav';
+import { NavLabel, navItems } from './nav';
 
 const MOBILE_NAV_SHADOW = `0 -2px 8px ${withAlpha(colors.sketchInk, 0.08)}`;
 

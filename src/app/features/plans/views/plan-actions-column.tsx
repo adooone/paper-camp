@@ -1,4 +1,3 @@
-import { RefreshIcon } from '@/app/components/icons';
 import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarCommand, SidebarField } from '@/app/components/sidebar';
 import { usePlanActionsColumn } from '@/app/features/plans/hooks';
@@ -8,6 +7,7 @@ import {
   FolderIcon,
   Input,
   ListItem,
+  RefreshIcon,
   Select,
   Stamp,
 } from '@dendelion/paper-ui';

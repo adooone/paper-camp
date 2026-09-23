@@ -1,4 +1,3 @@
-import { MoreIcon, NoteIcon } from '@/app/components/icons';
 import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
 import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 import {
@@ -9,6 +8,8 @@ import {
   LightbulbIcon,
   Menu,
   type MenuEntry,
+  MoreIcon,
+  NoteIcon,
   Spinner,
   Stamp,
   Tooltip,

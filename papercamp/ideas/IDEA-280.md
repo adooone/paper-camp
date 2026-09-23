@@ -2,7 +2,7 @@
 id: IDEA-280
 title: Adopt paper-ui's text, links and icons
 type: refactor
-status: idea
+status: review
 created: 2026-09-22
 tags:
   - app
@@ -53,4 +53,5 @@ Rows and sidebars, [[IDEA-281]].
       run: 1m41s · 66 in · 7.4k out · sonnet-5 · sess:1201b78d-2e94-4790-ba6f-524caf0fcb0b
 - [x] Replace raw buttons with `Stamp`, `Button variant="link"` and `Card onClick`
       run: 7m34s · 194 in · 43.4k out · sonnet-5 · sess:1201b78d-2e94-4790-ba6f-524caf0fcb0b
-- [ ] Delete `icons.tsx` and import every glyph from the library
+- [x] Delete `icons.tsx` and import every glyph from the library
+      run: 3m41s · 130 in · 21.8k out · sonnet-5 · sess:f7cbabde-a49d-42b5-817a-6a19bb2d07ef

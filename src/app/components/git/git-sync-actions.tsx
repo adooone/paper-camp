@@ -1,7 +1,6 @@
 import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, Tooltip } from '@dendelion/paper-ui';
-import { MergeIcon, PullIcon, PushIcon } from '../icons';
+import { Button, MergeIcon, PullIcon, PushIcon, Tooltip } from '@dendelion/paper-ui';
 
 // Always renders all three, disabling whichever doesn't apply — the one Sync/Push/Pull row.
 export const GitSyncActions = () => {

@@ -1,9 +1,8 @@
-import { GithubIcon } from '@/app/components/icons';
 import { SidebarCommand } from '@/app/components/sidebar';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Tooltip } from '@dendelion/paper-ui';
+import { GithubIcon, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface PrReviewButtonProps {

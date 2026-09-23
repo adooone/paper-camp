@@ -1,7 +1,6 @@
-import { RefreshIcon } from '@/app/components/icons';
 import { SignInAction } from '@/app/components/sign-in-action';
 import type { ConnectionResult } from '@/types/index';
-import { IconButton, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { IconButton, RefreshIcon, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { CAPABILITY_STATUS_STAMP } from '../constants';
 import { ConnectActionView } from './connect-action-view';
 import { SettingRow } from './setting-row';

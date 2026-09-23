@@ -1,6 +1,5 @@
-import { LightbulbIcon } from '@/app/components/icons';
 import type { SuggestionEntry } from '@/types/index';
-import { Card, IconButton } from '@dendelion/paper-ui';
+import { Card, IconButton, LightbulbIcon } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 
 interface SuggestionsSectionProps {
@@ -26,7 +25,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
                   onClick={() => onOpen(suggestion)}
                   className="flex-1 min-w-0 flex items-center gap-2 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit"
                 >
-                  <LightbulbIcon />
+                  <LightbulbIcon size={14} />
                   <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     {suggestion.title}
                   </span>

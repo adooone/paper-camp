@@ -1,7 +1,16 @@
-import { MoreIcon, NoteIcon, ShuffleIcon, WandIcon } from '@/app/components/icons';
 import { selectAgentBusy, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { CheckIcon, IconButton, Menu, type MenuEntry, useToast } from '@dendelion/paper-ui';
+import {
+  CheckIcon,
+  IconButton,
+  Menu,
+  type MenuEntry,
+  MoreIcon,
+  NoteIcon,
+  ShuffleIcon,
+  WandIcon,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { DraftAllModal } from '../modals/draft-all-modal';
 import { buildSuggestIdeasPrompt } from '../prompts';

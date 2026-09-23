@@ -1,8 +1,7 @@
-import { LightbulbIcon, MergeIcon } from '@/app/components/icons';
 import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Card, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Card, LightbulbIcon, MergeIcon, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
 import { color, colors, surface } from '@dendelion/paper-ui/tokens';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';

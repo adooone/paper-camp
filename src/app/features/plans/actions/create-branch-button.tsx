@@ -1,10 +1,9 @@
-import { GitBranchIcon } from '@/app/components/icons';
 import { SidebarCommand } from '@/app/components/sidebar';
 import { createPlanBranch } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { Tooltip, useToast } from '@dendelion/paper-ui';
+import { GitBranchIcon, Tooltip, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface CreateBranchButtonProps {

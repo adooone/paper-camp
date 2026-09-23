@@ -10,6 +10,7 @@ import {
   Modal,
   Stamp,
   Switch,
+  UndoIcon,
 } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
@@ -442,21 +443,4 @@ const Section = ({ title, summary, onAdd, children }: SectionProps) => (
     </div>
     {children}
   </div>
-);
-
-const UndoIcon = ({ size = 16 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M3 7v6h6" />
-    <path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
-  </svg>
 );

@@ -1,10 +1,9 @@
-import { WandIcon } from '@/app/components/icons';
 import { SidebarCommand } from '@/app/components/sidebar';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
-import { Button, Tooltip, useToast } from '@dendelion/paper-ui';
+import { Button, Tooltip, WandIcon, useToast } from '@dendelion/paper-ui';
 import { buildPlanDraftPrompt } from '../prompts';
 
 interface DraftPlanButtonProps {

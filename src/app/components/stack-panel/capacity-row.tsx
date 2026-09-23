@@ -1,7 +1,6 @@
-import { RefreshIcon } from '@/app/components/icons';
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
-import { Card, IconButton, Progress, Spinner, Stamp } from '@dendelion/paper-ui';
+import { Card, IconButton, Progress, RefreshIcon, Spinner, Stamp } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { chalkStatusFill, chalkStatusText } from './shared';
 

@@ -1,8 +1,7 @@
-import { RunIcon } from '@/app/components/icons';
 import { SidebarCommand } from '@/app/components/sidebar';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Tooltip } from '@dendelion/paper-ui';
+import { RunIcon, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface RunAllPhasesButtonProps {

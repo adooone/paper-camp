@@ -1,8 +1,7 @@
-import { NoteIcon } from '@/app/components/icons';
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { HIGHLIGHT_OUTLINE_COLOR } from '@/app/features/roadmap/constants';
 import { useAppStore } from '@/app/stores/app-store';
-import { Card, Stamp, Switch } from '@dendelion/paper-ui';
+import { Card, NoteIcon, Stamp, Switch } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
