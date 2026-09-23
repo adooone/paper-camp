@@ -1,7 +1,6 @@
-import { EmptyState } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
 import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
+import { EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { DocsSearch } from './components/docs-search';
 import { ReleaseNotesDetail } from './components/release-notes-detail';
 import { RepoDocDetail } from './components/repo-doc-detail';

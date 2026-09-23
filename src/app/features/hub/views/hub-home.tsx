@@ -1,5 +1,4 @@
-import { PageTitle } from '@/app/components/page-title';
-import { Input, Page } from '@dendelion/paper-ui';
+import { Input, Page, PageTitle } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { AddMachineFooter, HubNumbersColumn, MachineSection } from '../components';
 import {

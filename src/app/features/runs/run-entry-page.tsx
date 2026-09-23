@@ -1,6 +1,6 @@
-import { EmptyState, RowSkeleton } from '@/app/components';
+import { RowSkeleton } from '@/app/components';
 import type { LogRow } from '@/types/index';
-import { Button } from '@dendelion/paper-ui';
+import { Button, EmptyState } from '@dendelion/paper-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useLogEntryPage } from './hooks';
 import type { LogRowActions } from './hooks/use-run-rows';
@@ -56,14 +56,12 @@ export const LogEntryPage = () => {
   if (!row) {
     if (loading) return <RowSkeleton />;
     return (
-      <EmptyState
-        message="This entry doesn't exist."
-        action={
-          <Button size="small" onClick={() => navigate({ to: '/log' })}>
-            Back to Log
-          </Button>
-        }
-      />
+      <div className="flex flex-col items-center gap-3">
+        <EmptyState message="This entry doesn't exist." />
+        <Button size="small" onClick={() => navigate({ to: '/log' })}>
+          Back to Log
+        </Button>
+      </div>
     );
   }
 

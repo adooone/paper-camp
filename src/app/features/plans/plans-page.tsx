@@ -1,7 +1,6 @@
-import { EmptyState, RowSkeleton } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
+import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import type { PlanEntry } from '@/types/index';
-import { Card } from '@dendelion/paper-ui';
+import { Card, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
 import { PromoteSuggestionModal } from './modals';
@@ -116,7 +115,7 @@ export const PlansPage = () => {
 
           {plans.entries.length === 0 ? (
             <EmptyState
-              illustration="empty-tray"
+              illustration={<DoodleIllustration name="empty-tray" />}
               message={
                 <>
                   No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}

@@ -1,11 +1,9 @@
 import { useFeedbackComposer } from '@/app/features/plans/hooks';
 import type { PlanEntry } from '@/types/index';
-import { Button, Card, Spinner, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, SectionHeading, Spinner, Textarea } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { FeedbackThread } from '../components';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
-
-const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
 interface FeedbackSectionProps {
   plan: PlanEntry;
@@ -39,7 +37,9 @@ export const FeedbackSection = ({
 
   return (
     <div className="mb-8">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Feedback</h3>
+      <SectionHeading as="h3" className="mb-3">
+        Feedback
+      </SectionHeading>
       <Card size="small" accent accentColor="slate" texture={surface.card}>
         <div className="flex flex-col gap-3 mb-4">
           {thread.length > 0 || pending ? (

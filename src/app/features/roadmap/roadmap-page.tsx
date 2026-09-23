@@ -1,6 +1,5 @@
-import { EmptyState, RowSkeleton } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
-import { Button, Divider } from '@dendelion/paper-ui';
+import { DoodleIllustration, RowSkeleton } from '@/app/components';
+import { Button, Divider, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { firstSentence } from './helpers';
 import { useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';
@@ -60,7 +59,7 @@ export const RoadmapPage = () => {
       <div>
         <PageTitle>Roadmap</PageTitle>
         <EmptyState
-          illustration="empty-tray"
+          illustration={<DoodleIllustration name="empty-tray" />}
           message={
             <>
               No <code>ROADMAP.md</code> found at the project root.
@@ -89,7 +88,7 @@ export const RoadmapPage = () => {
       <p className="mb-6 truncate text-sm opacity-60">{firstSentence(roadmap.goal)}</p>
       {totalVisible === 0 && !hasActiveFilters ? (
         <EmptyState
-          illustration="empty-tray"
+          illustration={<DoodleIllustration name="empty-tray" />}
           message="No roadmap items yet — add one from the sidebar."
         />
       ) : (

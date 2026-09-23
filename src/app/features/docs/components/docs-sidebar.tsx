@@ -1,7 +1,6 @@
-import { EmptyState } from '@/app/components';
 import { SidebarCard } from '@/app/components/sidebar';
 import { SidebarLabel } from '@/app/components/sidebar';
-import { Input, ListItem, Skeleton } from '@dendelion/paper-ui';
+import { EmptyState, Input, ListItem, Skeleton } from '@dendelion/paper-ui';
 import { useDocsSidebar } from '../hooks';
 
 const simplecaseLabel = (name: string) =>

@@ -1,6 +1,6 @@
-import { EmptyState } from '@/app/components';
 import { formatTokens } from '@/core/phase-run';
 import type { ProjectStats } from '@/types/index';
+import { EmptyState } from '@dendelion/paper-ui';
 import { StatCard, StatRow } from './stat-card';
 
 export interface MostExpensiveIdeasCardProps {

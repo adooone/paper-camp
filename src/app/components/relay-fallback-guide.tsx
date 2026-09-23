@@ -1,5 +1,4 @@
-import { CommandLine } from '@/app/components/command-line';
-import { inlineCodeClassName } from '@/app/components/inline-code-style';
+import { CommandLine, InlineCode } from '@dendelion/paper-ui';
 
 // Same two commands the relay drives interactively — shown as copy-paste fallback
 // when the relay itself can't run (no PTY, offline, unsupported CLI version).
@@ -14,9 +13,9 @@ export const RelayFallbackGuide = () => (
       <CommandLine key={cmd} command={cmd} />
     ))}
     <p className="opacity-50 text-sm m-0">
-      Alternatively, set <code className={inlineCodeClassName}>ANTHROPIC_API_KEY</code> in the
-      server's environment — that bills as API usage rather than your Max subscription, so treat it
-      as a fallback, not the default.
+      Alternatively, set <InlineCode>ANTHROPIC_API_KEY</InlineCode> in the server's environment —
+      that bills as API usage rather than your Max subscription, so treat it as a fallback, not the
+      default.
     </p>
   </div>
 );

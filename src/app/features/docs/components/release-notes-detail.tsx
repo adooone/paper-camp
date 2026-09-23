@@ -1,6 +1,6 @@
-import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
+import { Text } from '@dendelion/paper-ui';
 import { useReleaseNotes } from '../hooks/use-release-notes';
 
 export const ReleaseNotesDetail = () => {
@@ -11,7 +11,14 @@ export const ReleaseNotesDetail = () => {
   if (!sections) {
     return (
       <div>
-        <h2 className={`${detailHeadingClassName} m-0 mb-4`}>{version}</h2>
+        <Text
+          as="h2"
+          face="display"
+          weight="semibold"
+          className="text-[1.75rem] leading-[1.2] mb-4"
+        >
+          {version}
+        </Text>
         <p className="opacity-50">No release notes found for {version}.</p>
       </div>
     );
@@ -20,7 +27,14 @@ export const ReleaseNotesDetail = () => {
   if (sections.length === 0) {
     return (
       <div>
-        <h2 className={`${detailHeadingClassName} m-0 mb-4`}>{version}</h2>
+        <Text
+          as="h2"
+          face="display"
+          weight="semibold"
+          className="text-[1.75rem] leading-[1.2] mb-4"
+        >
+          {version}
+        </Text>
         <p className="opacity-50">No ideas could be resolved for this release.</p>
       </div>
     );
@@ -35,7 +49,9 @@ export const ReleaseNotesDetail = () => {
 
   return (
     <div>
-      <h2 className={`${detailHeadingClassName} m-0 mb-4`}>{version}</h2>
+      <Text as="h2" face="display" weight="semibold" className="text-[1.75rem] leading-[1.2] mb-4">
+        {version}
+      </Text>
       <div className="text-base leading-[1.7] text-ink-900">
         <Markdown>{markdown}</Markdown>
       </div>

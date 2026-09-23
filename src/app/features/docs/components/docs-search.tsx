@@ -1,6 +1,6 @@
-import { EmptyState } from '@/app/components';
+import { DoodleIllustration } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button } from '@dendelion/paper-ui';
+import { Button, EmptyState } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 interface SearchMatch {
@@ -50,7 +50,12 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   };
 
   if (results.length === 0) {
-    return <EmptyState illustration="magnifier" message={<>No results found for "{query}".</>} />;
+    return (
+      <EmptyState
+        illustration={<DoodleIllustration name="magnifier" />}
+        message={<>No results found for "{query}".</>}
+      />
+    );
   }
 
   return (

@@ -1,7 +1,6 @@
 import { RowSkeleton } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
 import { FeedbackThread } from '@/app/features/plans/components';
-import { Button, Card, Spinner, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, PageTitle, Spinner, Textarea } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useChatPage } from './hooks/use-chat-page';
 import { ChatTitleActions, ClearChatModal } from './views';

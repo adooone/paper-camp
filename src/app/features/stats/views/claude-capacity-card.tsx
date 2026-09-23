@@ -1,9 +1,8 @@
-import { EmptyState } from '@/app/components';
 import { formatDuration } from '@/core/phase-run';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { ProjectStats } from '@/types/index';
 import type { RateLimitWindowKey } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { EmptyState, Stamp } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { CAPACITY_STAMP } from '../constants';
 import { StatCard, StatRow } from './stat-card';

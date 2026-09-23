@@ -1,6 +1,5 @@
-import { EmptyState } from '@/app/components';
 import type { ChunkHealth, ProjectStats } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { EmptyState, Stamp } from '@dendelion/paper-ui';
 import { StatCard, StatRow } from './stat-card';
 
 const scoreVariant = (score: number): 'error' | 'warning' | 'success' => {

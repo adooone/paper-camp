@@ -1,11 +1,9 @@
 import { entityLink } from '@/app/hooks';
 import type { PlanEntry } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { SectionHeading, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { PlanIdStamp } from '../components';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
-
-const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
 interface FixesSectionProps {
   plan: PlanEntry;
@@ -20,7 +18,9 @@ export const FixesSection = ({ plan, otherPlans }: FixesSectionProps) => {
   if (fixes.length === 0) return null;
   return (
     <div className="mb-5">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Fixes</h3>
+      <SectionHeading as="h3" className="mb-3">
+        Fixes
+      </SectionHeading>
       <div className="flex flex-col gap-2 mb-3">
         {fixes.map((fix) => (
           <button

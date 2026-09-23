@@ -1,10 +1,9 @@
 import { CommitMessageFields, GitStashSurface, GitSyncActions } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
 import { DeliverChecksRow } from '@/app/features/plans/components';
-import { Button, Divider, Spinner, getSurfaceStyles } from '@dendelion/paper-ui';
+import { Button, Divider, PageTitle, Spinner, getSurfaceStyles } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { Fragment } from 'react';
 

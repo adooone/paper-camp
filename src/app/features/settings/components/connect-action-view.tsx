@@ -1,6 +1,5 @@
-import { CommandLine } from '@/app/components/command-line';
 import type { ConnectionResult } from '@/types/index';
-import { Button } from '@dendelion/paper-ui';
+import { Button, CommandLine } from '@dendelion/paper-ui';
 
 interface ConnectActionViewProps {
   connection: ConnectionResult;

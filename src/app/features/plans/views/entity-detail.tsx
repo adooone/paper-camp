@@ -1,4 +1,3 @@
-import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import {
   usePlanStatusPatch,
   useRunningPhaseFill,
@@ -7,7 +6,7 @@ import {
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { Text, useToast } from '@dendelion/paper-ui';
 import { useEffect, useMemo } from 'react';
 import { RefreshButton } from '../actions';
 import { PlanIdStamp } from '../components';
@@ -105,10 +104,15 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3 mb-2">
-        <h2 className={`${detailHeadingClassName} m-0 flex items-center gap-3 min-w-0 flex-wrap`}>
+        <Text
+          as="h2"
+          face="display"
+          weight="semibold"
+          className="text-[1.75rem] leading-[1.2] flex items-center gap-3 min-w-0 flex-wrap"
+        >
           <PlanIdStamp id={plan.id} />
           {plan.title}
-        </h2>
+        </Text>
         <div className="flex items-center gap-2 flex-shrink-0 font-handwritten">
           <span className="text-sm opacity-[0.45] whitespace-nowrap">
             <span className="max-[480px]:hidden">{plan.updated ? 'updated ' : 'created '}</span>

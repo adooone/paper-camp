@@ -1,9 +1,8 @@
 import { useServicesClient } from '@/app/hooks/use-services-client';
 import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
-import { Card, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
+import { Card, EmptyState, IconButton, Spinner, useToast } from '@dendelion/paper-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EmptyState } from '../empty-state';
 import { ChevronRightIcon, RunIcon, StopIcon } from '../icons';
 import { groupLabelClassName } from './shared';
 

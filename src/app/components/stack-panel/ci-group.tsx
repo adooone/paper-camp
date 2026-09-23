@@ -1,9 +1,8 @@
 import { useCiRelease } from '@/app/hooks/use-ci-release';
 import { useAppStore } from '@/app/stores/app-store';
 import type { CiRun, CiRunStatus } from '@/types/index';
-import { Card } from '@dendelion/paper-ui';
+import { Card, EmptyState } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
-import { EmptyState } from '../empty-state';
 import { groupLabelClassName } from './shared';
 
 export const CI_GROUP_LABEL = 'CI & release';

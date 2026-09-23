@@ -8,7 +8,7 @@ export { CommitMessageFields } from './git/commit-message-fields';
 export type { CommitMessageFieldsState } from './git/commit-message-fields';
 export { GitStashSurface } from './git/git-stash-surface';
 export { GitSyncActions } from './git/git-sync-actions';
-export { EmptyState } from './empty-state';
+export { DoodleIllustration } from './doodle-illustration';
 export { LinkButton } from './link-button';
 export { Markdown } from './markdown';
 export { SidebarCommand, SidebarField, SidebarLabel } from './sidebar';

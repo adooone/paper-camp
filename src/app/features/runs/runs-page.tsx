@@ -1,5 +1,5 @@
-import { EmptyState, RowSkeleton } from '@/app/components';
-import { PageTitle } from '@/app/components/page-title';
+import { DoodleIllustration, RowSkeleton } from '@/app/components';
+import { EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { useLogPage } from './hooks';
 import { LogFilterBar, LogList, LogTitleActions } from './views';
 
@@ -40,7 +40,10 @@ export const LogPage = () => {
       </div>
       {loading && !hasAnyRows && <RowSkeleton />}
       {!loading && !hasAnyRows && (
-        <EmptyState illustration="resting-pen" message="No runs recorded yet." />
+        <EmptyState
+          illustration={<DoodleIllustration name="resting-pen" />}
+          message="No runs recorded yet."
+        />
       )}
       {hasAnyRows && (
         <>

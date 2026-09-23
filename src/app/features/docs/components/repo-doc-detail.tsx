@@ -1,6 +1,6 @@
-import { detailHeadingClassName } from '@/app/components/detail-heading-style';
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
+import { Text } from '@dendelion/paper-ui';
 
 export const RepoDocDetail = () => {
   const repoDocs = useAppStore((s) => s.repoDocs);
@@ -13,7 +13,9 @@ export const RepoDocDetail = () => {
 
   return (
     <div>
-      <h2 className={`${detailHeadingClassName} m-0 mb-4`}>{file.name}</h2>
+      <Text as="h2" face="display" weight="semibold" className="text-[1.75rem] leading-[1.2] mb-4">
+        {file.name}
+      </Text>
 
       {isMarkdown ? (
         <div className="text-base leading-[1.7] text-ink-900">

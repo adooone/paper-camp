@@ -7,7 +7,7 @@ import type { RunningPhaseFill } from '@/app/features/plans/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { formatRunSummary } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
-import { Button, Spinner, Table, Tooltip } from '@dendelion/paper-ui';
+import { Button, SectionHeading, Spinner, Table, Tooltip } from '@dendelion/paper-ui';
 import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
 import type { CSSProperties, ReactNode } from 'react';
 import {
@@ -19,8 +19,6 @@ import {
   StylePassButton,
 } from '../actions';
 import { type WorkRow, isRunningRow } from '../helpers';
-
-const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
 interface PhasesSectionProps {
   plan: PlanEntry;
@@ -71,7 +69,7 @@ export const PhasesSection = ({
       <Table
         data={rows}
         toolbar={{
-          title: <h3 className={`${sectionHeadingClass} m-0`}>Phases</h3>,
+          title: <SectionHeading as="h3">Phases</SectionHeading>,
           actions: (
             <>
               {auditRunning && <Spinner size="small" label="Audit running…" />}

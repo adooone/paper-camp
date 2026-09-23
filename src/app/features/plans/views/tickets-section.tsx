@@ -2,11 +2,10 @@ import { entityLink } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
+import { SectionHeading } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AddTicketButton } from '../actions';
 import { PlanRows } from './plan-rows';
-
-const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
 
 // A board's decomposition, in the worklist's row treatment (IDEA-201), never the
 // phases Table — a board carries no phases; adding one posts and reloads in place.
@@ -36,7 +35,7 @@ export const TicketsSection = ({ plan, otherPlans }: TicketsSectionProps) => {
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-3">
-        <h3 className={`${sectionHeadingClass} m-0`}>Tickets</h3>
+        <SectionHeading as="h3">Tickets</SectionHeading>
         <AddTicketButton onAdd={handleAddTicket} disabled={!plan.id} />
       </div>
       {tickets.length > 0 ? (

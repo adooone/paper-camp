@@ -1,7 +1,6 @@
-import { CommandLine } from '@/app/components/command-line';
 import { daemonStartCommand } from '@/app/services/hub';
 import type { ModuleLayer } from '@/app/services/module-layer';
-import { Card } from '@dendelion/paper-ui';
+import { Card, CommandLine } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 
 export const RuntimeUnavailable = ({ layer: _layer }: { layer?: ModuleLayer }) => (

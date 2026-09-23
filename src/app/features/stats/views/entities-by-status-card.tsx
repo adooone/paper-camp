@@ -1,5 +1,5 @@
-import { EmptyState } from '@/app/components';
 import type { ProjectStats } from '@/types/index';
+import { EmptyState } from '@dendelion/paper-ui';
 import { ENTITY_STATUS_LABEL, ENTITY_STATUS_ORDER } from '../constants';
 import { StatCard, StatRow } from './stat-card';
 

@@ -1,6 +1,5 @@
 import type { LogEntry } from '@/types/index';
-
-const sectionHeadingClass = 'font-display-luminari text-sm font-semibold opacity-[0.65]';
+import { SectionHeading } from '@dendelion/paper-ui';
 
 interface ClarificationsSectionProps {
   clarifications: LogEntry[];
@@ -10,7 +9,9 @@ export const ClarificationsSection = ({ clarifications }: ClarificationsSectionP
   if (clarifications.length === 0) return null;
   return (
     <div className="mb-5">
-      <h3 className={`${sectionHeadingClass} mb-3`}>Clarifications</h3>
+      <SectionHeading as="h3" className="mb-3">
+        Clarifications
+      </SectionHeading>
       <div className="flex flex-col gap-2 mb-3">
         {clarifications.map((entry, i) => (
           <div
