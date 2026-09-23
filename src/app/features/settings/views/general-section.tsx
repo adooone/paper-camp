@@ -1,6 +1,6 @@
 import { RowSkeleton } from '@/app/components';
-import { color } from '@/app/styles/tokens';
 import { Alert, Button, Input, Stamp, Switch } from '@dendelion/paper-ui';
+import { color } from '@dendelion/paper-ui/tokens';
 import { SettingGroup } from '../components/setting-group';
 import { SettingRow } from '../components/setting-row';
 import { SettingsHeader } from '../components/settings-header';

@@ -1,4 +1,4 @@
-import { color } from '@/app/styles/tokens';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 import { useMemo, useState } from 'react';
 import { roughGenerator } from './rough-generator';
 
@@ -55,7 +55,7 @@ export const ArcGauge = ({
           seed,
           roughness: 1.6,
           strokeWidth: STROKE_WIDTH,
-          stroke: color.textTertiary,
+          stroke: colors.textTertiary,
         }),
       ),
     [seed, cx, cy, r],

@@ -1,7 +1,7 @@
 import { CommandLine } from '@/app/components/command-line';
 import { daemonStartCommand } from '@/app/services/hub';
-import { surface } from '@/app/styles/tokens';
 import { Button, Card, Input } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { useState } from 'react';
 
 export const AddMachineFooter = () => {

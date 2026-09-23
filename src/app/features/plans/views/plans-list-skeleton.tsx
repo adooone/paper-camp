@@ -1,5 +1,5 @@
-import { surface } from '@/app/styles/tokens';
 import { Card, Skeleton } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { PLAN_ROWS_GRID_CLASS } from './plan-rows';
 
 // Stable keys + varied title widths so the placeholder rows read as a real,

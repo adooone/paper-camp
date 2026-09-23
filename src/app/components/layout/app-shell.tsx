@@ -20,8 +20,8 @@ import {
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
-import { surface } from '@/app/styles/tokens';
 import { Button, IconButton, Layout, ToastProvider, getSurfaceStyles } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
 import { NavLabel, SidebarToggleIcon, navItems } from './nav';

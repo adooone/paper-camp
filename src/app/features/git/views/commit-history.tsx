@@ -1,8 +1,8 @@
 import { roughGenerator } from '@/app/components/charts/rough-generator';
 import { useOpenEntity } from '@/app/hooks';
-import { color } from '@/app/styles/tokens';
 import type { GitLogCommit } from '@/types/index';
 import { Divider, Stamp } from '@dendelion/paper-ui';
+import { color } from '@dendelion/paper-ui/tokens';
 import { useMemo } from 'react';
 
 const RAIL_WIDTH = 20;

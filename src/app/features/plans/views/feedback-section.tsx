@@ -1,7 +1,7 @@
 import { useFeedbackComposer } from '@/app/features/plans/hooks';
-import { surface } from '@/app/styles/tokens';
 import type { PlanEntry } from '@/types/index';
 import { Button, Card, Spinner, Textarea } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { FeedbackThread } from '../components';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 

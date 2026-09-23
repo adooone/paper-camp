@@ -1,5 +1,5 @@
 import { roughGenerator } from '@/app/components/charts/rough-generator';
-import { color } from '@/app/styles/tokens';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 import { useMemo, useState } from 'react';
 
 interface RoughProgressBarProps {
@@ -25,10 +25,10 @@ export const RoughProgressBar = ({
       roughGenerator.rectangle(0, 0, width, height, {
         seed,
         roughness: 1.2,
-        fill: color.textTertiary,
+        fill: colors.textTertiary,
         fillStyle: 'hachure',
         hachureGap: 2.5,
-        stroke: color.textTertiary,
+        stroke: colors.textTertiary,
         strokeWidth: 1,
       }),
     );

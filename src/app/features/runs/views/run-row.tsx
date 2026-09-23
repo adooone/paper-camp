@@ -1,8 +1,8 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
-import { surface } from '@/app/styles/tokens';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Card, Stamp } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';

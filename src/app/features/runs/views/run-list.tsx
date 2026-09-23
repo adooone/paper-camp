@@ -1,6 +1,6 @@
-import { surface } from '@/app/styles/tokens';
 import type { LogRow } from '@/types/index';
 import { Button, Card } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { LOG_ROW_GRID_CLASS, LogRowView } from './run-row';
 
 const headerLabelClassName = 'font-handwritten text-sm font-semibold whitespace-nowrap opacity-60';

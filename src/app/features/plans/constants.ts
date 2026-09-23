@@ -1,4 +1,3 @@
-import { color } from '@/app/styles/tokens';
 import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
 
 export const STATUS_COLOR: Record<PlanEntry['status'], string> = {

@@ -1,7 +1,7 @@
 import { LightbulbIcon } from '@/app/components/icons';
-import { surface } from '@/app/styles/tokens';
 import type { SuggestionEntry } from '@/types/index';
 import { Card, IconButton } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 
 interface SuggestionsSectionProps {
   suggestions: SuggestionEntry[];

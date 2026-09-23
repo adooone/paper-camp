@@ -1,5 +1,5 @@
-import { color } from '@/app/styles/tokens';
 import { Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { color, withAlpha } from '@dendelion/paper-ui/tokens';
 import type { ReactNode } from 'react';
 
 export const sectionLabelClassName =
@@ -9,15 +9,15 @@ export const groupLabelClassName =
   'font-handwritten text-sm tracking-wide text-desk-text-muted mb-2';
 
 export const chalkStatusFill = {
-  pass: color.chalkPass,
-  fail: color.chalkFail,
-  running: color.chalkRunning,
+  pass: withAlpha(color.chalkPass, 0.16),
+  fail: withAlpha(color.chalkFail, 0.16),
+  running: withAlpha(color.chalkRunning, 0.1),
 } as const;
 
 export const chalkStatusText = {
-  pass: color.chalkPassText,
-  fail: color.chalkFailText,
-  running: color.chalkRunningText,
+  pass: color.chalkPass,
+  fail: color.chalkFail,
+  running: color.chalkRunning,
 } as const;
 
 export const StampButton = ({

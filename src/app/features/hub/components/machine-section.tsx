@@ -1,7 +1,7 @@
 import type { HubMachine } from '@/app/services/hub-machines';
 import { CLIENT_VERSION } from '@/app/services/version';
-import { surface } from '@/app/styles/tokens';
 import { Button, Card, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { ProjectRow } from './project-row';
 
 function ReachStamp({ machine, onRetry }: { machine: HubMachine; onRetry: () => void }) {

@@ -4,8 +4,8 @@ import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
 import { DeliverChecksRow } from '@/app/features/plans/components';
-import { surface } from '@/app/styles/tokens';
 import { Button, Divider, Spinner, getSurfaceStyles } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { Fragment } from 'react';
 
 export const GitPage = () => {

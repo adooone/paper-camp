@@ -1,8 +1,8 @@
 import { CommandLine } from '@/app/components/command-line';
 import { daemonStartCommand } from '@/app/services/hub';
 import type { ModuleLayer } from '@/app/services/module-layer';
-import { surface } from '@/app/styles/tokens';
 import { Card } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 
 export const RuntimeUnavailable = ({ layer: _layer }: { layer?: ModuleLayer }) => (
   <div className="flex flex-1 flex-col items-center justify-center gap-2 py-24 text-center">

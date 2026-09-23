@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import { paperPreset } from '@dendelion/paper-ui/tailwind';
+import { color, colors, withAlpha } from '@dendelion/paper-ui/tokens';
 
 const config: Config = {
   darkMode: 'class',
@@ -48,24 +49,24 @@ const config: Config = {
           'secondary-active': 'var(--pui-btn-secondary-active)',
         },
         desk: {
-          bg: '#1e3a2d',
-          light: '#264a3a',
-          text: '#e8e4d9',
-          'text-muted': '#a8b5a0',
-          border: 'rgba(200, 210, 195, 0.15)',
-          chalk: '#d4e8cb',
+          bg: colors.chalkboardSurface,
+          light: colors.chalkboardLight,
+          text: colors.chalkboardText,
+          'text-muted': colors.chalkboardMuted,
+          border: colors.chalkboardBorder15,
+          chalk: colors.chalkboardChalk,
         },
         chalk: {
-          pass: '#2d5a3b',
-          'pass-text': '#b5d6b5',
-          fail: '#5a2d2d',
-          'fail-text': '#d6a0a0',
-          running: '#5a4a2d',
-          'running-text': '#d6c4a0',
+          pass: withAlpha(color.chalkPass, 0.16),
+          'pass-text': color.chalkPass,
+          fail: withAlpha(color.chalkFail, 0.16),
+          'fail-text': color.chalkFail,
+          running: withAlpha(color.chalkRunning, 0.1),
+          'running-text': color.chalkRunning,
         },
         state: {
-          success: '#6A9B72',
-          danger: '#A06060',
+          success: colors.accentGreenDark,
+          danger: colors.accentRoseDark,
         },
       },
     },

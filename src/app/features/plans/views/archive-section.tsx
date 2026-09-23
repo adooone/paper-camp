@@ -1,7 +1,7 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { surface } from '@/app/styles/tokens';
 import type { ArchivableIdea } from '@/types/index';
 import { Button, Card, useToast } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
 import { PLAN_ROWS_GRID_CLASS, RowMarker } from './plan-rows';

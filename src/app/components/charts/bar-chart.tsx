@@ -1,4 +1,4 @@
-import { color } from '@/app/styles/tokens';
+import { color } from '@dendelion/paper-ui/tokens';
 import { useMemo, useState } from 'react';
 import { roughGenerator } from './rough-generator';
 

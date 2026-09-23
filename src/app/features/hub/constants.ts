@@ -1,10 +1,10 @@
 import { STATUS_COLOR } from '@/app/features/plans/constants';
-import { color } from '@/app/styles/tokens';
 import type { EntityStatus, NightFindingSeverity } from '@/types/index';
+import { color, colors } from '@dendelion/paper-ui/tokens';
 
 export const ENTITY_STATUS_COLOR: Record<EntityStatus, string> = {
   ...STATUS_COLOR,
-  open: color.textTertiary,
+  open: colors.textTertiary,
 };
 
 export const SEVERITY_COLOR: Record<NightFindingSeverity, string> = {

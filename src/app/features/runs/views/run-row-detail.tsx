@@ -1,6 +1,5 @@
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
-import { surface } from '@/app/styles/tokens';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { formatDuration, shortModel } from '@/core/phase-run';
 import { usageForEntry } from '@/core/run-rows';
@@ -13,6 +12,7 @@ import {
   type StoredNotification,
 } from '@/types/index';
 import { Button, Card, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import { surface } from '@dendelion/paper-ui/tokens';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatTime, promoteLabel, summaryLine } from '../helpers';
