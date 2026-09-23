@@ -2,7 +2,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
-import { archiveEntityFile, todayDateString } from '@/core/serialize';
+import { archiveEntityFile, todayDateString, unarchiveEntityFile } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
 import { replaceThreadKinds } from '@/core/thread';
 import {
@@ -212,6 +212,11 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
         const closesNote = target.kind === 'note' && updates.status === 'done';
         if ((updates.status === 'dropped' || closesNote) && !target.archived) {
           await archiveEntityFile(root, target.id);
+        }
+        // A file in archive/ derives `done` whatever its frontmatter says, so a reopen
+        // must move it back out or the cleared status changes nothing.
+        if (updates.status === null && target.archived) {
+          await unarchiveEntityFile(root, target.id);
         }
 
         activity.notifyChanged();

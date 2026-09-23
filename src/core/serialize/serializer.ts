@@ -99,3 +99,16 @@ export async function archiveEntityFile(root: string, entityId: string): Promise
     throw error;
   }
 }
+
+export async function unarchiveEntityFile(root: string, entityId: string): Promise<boolean> {
+  const ideasDir = join(root, 'papercamp', 'ideas');
+  const sourcePath = join(ideasDir, 'archive', `${entityId}.md`);
+  const destPath = join(ideasDir, `${entityId}.md`);
+  try {
+    await rename(sourcePath, destPath);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
+}

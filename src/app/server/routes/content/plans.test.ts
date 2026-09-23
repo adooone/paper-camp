@@ -198,3 +198,20 @@ Note body.
     expect(archived).toContain('status: done');
   });
 });
+
+describe('PATCH /api/plans reopening an archived entity', () => {
+  it('moves the file back out of archive/, since an archived file always derives done', async () => {
+    const root = await makeRoot();
+    const archiveDir = join(root, 'papercamp', 'ideas', 'archive');
+    await mkdir(archiveDir, { recursive: true });
+    await writeFile(
+      join(archiveDir, 'IDEA-4.md'),
+      PLAN_IN_PROGRESS.replace('IDEA-2', 'IDEA-4').replace('Active plan', 'Archived plan'),
+    );
+    const { res, status } = fakeRes();
+    await route(root).handle(fakeReq('Archived plan', JSON.stringify({ status: null })), res);
+    expect(status()).toBe(200);
+    const reopened = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-4.md'), 'utf-8');
+    expect(reopened).not.toContain('status: done');
+  });
+});

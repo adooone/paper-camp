@@ -15,4 +15,20 @@ const checkPermissionsAllowMissing: DoctorCheck = ({ hasPermissionsAllow }) =>
       ]
     : [];
 
-export const toolingChecks: DoctorCheck[] = [checkPermissionsAllowMissing];
+const checkDefaultAgentsMissing: DoctorCheck = ({ config }) =>
+  config && !config.defaultAgents
+    ? [
+        {
+          file: 'papercamp/config.json',
+          line: 1,
+          rule: 'no-default-agents',
+          message:
+            'no defaultAgents — every run uses the built-in agent and model; choose them in Settings → General.',
+        },
+      ]
+    : [];
+
+export const toolingChecks: DoctorCheck[] = [
+  checkPermissionsAllowMissing,
+  checkDefaultAgentsMissing,
+];

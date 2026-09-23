@@ -83,6 +83,13 @@ export const DOCTOR_RULES = [
     summary:
       '.claude/settings.json has no permissions.allow list, so a headless run denies every edit and shell command outside the defaults — run `paper-camp init --settings` to add it.',
   },
+  {
+    id: 'no-default-agents',
+    category: 'tooling',
+    severity: 'warning',
+    summary:
+      'config.json has no defaultAgents, so every run uses the built-in agent and model — choose them in Settings → General so a project never runs on a fallback it did not pick.',
+  },
 ] as const satisfies readonly DoctorRule[];
 
 export type DoctorRuleId = (typeof DOCTOR_RULES)[number]['id'];

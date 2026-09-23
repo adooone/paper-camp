@@ -628,7 +628,7 @@ export interface DefaultAgentsMap {
 }
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
-  phase: { agent: 'opencode' },
+  phase: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
   planDraft: { agent: 'claude-code' },
   ideaExtend: { agent: 'claude-code' },
   commitSuggest: { agent: 'claude-code' },

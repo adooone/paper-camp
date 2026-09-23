@@ -69,3 +69,16 @@ describe('collectDoctorContext hasPermissionsAllow', () => {
     expect(findings).toContainEqual(expect.objectContaining({ rule: 'missing-permissions-allow' }));
   });
 });
+
+describe('no-default-agents', () => {
+  it('warns when config.json chooses no agents, and not when it does', () => {
+    const base = { files: [], hasPermissionsAllow: true };
+    const without = runDoctorChecks({ ...base, config: { nextId: { idea: 1 } } } as never);
+    expect(without).toContainEqual(expect.objectContaining({ rule: 'no-default-agents' }));
+    const withAgents = runDoctorChecks({
+      ...base,
+      config: { nextId: { idea: 1 }, defaultAgents: { phase: { agent: 'claude-code' } } },
+    } as never);
+    expect(withAgents).not.toContainEqual(expect.objectContaining({ rule: 'no-default-agents' }));
+  });
+});

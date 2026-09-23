@@ -6,7 +6,7 @@ import { parseEntityFile } from '../core/parse';
 import { computePlanContentHash } from '../core/serialize';
 import { runAudit } from './index';
 
-// `runAudit` still spawns the configured agent binary (default "opencode", see
+// `runAudit` still spawns the configured agent binary (default "claude", see
 // DEFAULT_AGENTS.phase in src/types/index.ts) — a shim binary of that name is put first
 // on PATH so the test never shells out to a real, network-calling AI agent.
 
@@ -42,9 +42,9 @@ async function makeProject(planMd: string): Promise<{ root: string; planFile: st
   dirs.push(root);
   const shimBin = join(root, 'shim-bin');
   await mkdir(shimBin, { recursive: true });
-  // A no-op "opencode" that exits 0 without touching the plan file, standing in for
+  // A no-op "claude" that exits 0 without touching the plan file, standing in for
   // an agent run that made no changes (the [done]/gapPhases=0 case).
-  const shimPath = join(shimBin, 'opencode');
+  const shimPath = join(shimBin, 'claude');
   await writeFile(shimPath, '#!/usr/bin/env node\nprocess.exit(0);\n');
   await chmod(shimPath, 0o755);
 
