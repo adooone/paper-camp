@@ -181,3 +181,17 @@ header > div[class*="headerActions"] {
   padding-bottom: 4px;
   line-height: 1;
 }
+
+/*
+ * paper-ui scopes its weight-600 rule to elements inside `Layout`, but the app
+ * header, status bar, stack panel and every portal (Menu, Modal, Select, Toast,
+ * Tooltip) render outside it — restored globally here until paper-ui's IDEA-3
+ * fix "The 600 weight for clickables is global" ships in a release.
+ */
+button,
+a,
+[role="button"],
+[role="tab"],
+[role="menuitem"] {
+  font-weight: 600;
+}
