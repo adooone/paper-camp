@@ -2,8 +2,9 @@
 id: IDEA-278
 title: Refresh the roadmap file
 kind: note
-status: open
+status: done
 created: 2026-09-21
+updated: 2026-09-24
 tags:
   - roadmap
 subject: Planning surface

@@ -55,3 +55,11 @@ Rows and sidebars, [[IDEA-281]].
       run: 7m34s · 194 in · 43.4k out · sonnet-5 · sess:1201b78d-2e94-4790-ba6f-524caf0fcb0b
 - [x] Delete `icons.tsx` and import every glyph from the library
       run: 3m41s · 130 in · 21.8k out · sonnet-5 · sess:f7cbabde-a49d-42b5-817a-6a19bb2d07ef
+
+### Fixes
+- [ ] Every page title keeps its 24px gap
+      `docs-page`, `stats-page`, `plans-page` and the three `roadmap-page` titles pass `mb-6` until `PageTitle` defaults to it again.
+- [ ] `run-entry-page` keeps its action under the empty state
+      The `Button` goes back into `EmptyState`'s `action` slot once paper-ui restores it; until then the wrapper gap is 12px with no extra padding.
+- [ ] Lightbulb and Note keep their .55 opacity and the stop button its 20px
+      Every `LightbulbIcon`/`NoteIcon` call site passes `opacity={0.55}` (or `className="opacity-[0.55]"` until the prop exists); `agent-section.tsx`'s stop `IconButton` is back to the 20px override.

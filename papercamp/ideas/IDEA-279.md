@@ -58,3 +58,9 @@ Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
 - [x] Strip the stylesheet overrides and adopt the exported rough helpers
       Covers the `AppShell` header props, `roughGenerator` and `useStableSeed`.
       run: 6m47s · 182 in · 31.8k out · sonnet-5 · sess:d5eb7f17-1f6e-47fd-8acf-db55e8a126c6
+
+### Fixes
+- [ ] Chalkboard plates, the merge purple and the neutral chips read the old values
+      Until paper-ui ships the token fixes on its IDEA-3, `shared.tsx` keeps the opaque #2d5a3b/#5a2d2d/#5a4a2d plates with #b5d6b5/#d6a0a0/#d6c4a0 text; the merged-PR purple is #7B5E9E; `PlanIdStamp`, `RowMarker`, `FeedbackThread` and `UNREACHED_STAMP` use rgba(0,0,0,.08/.06/.05) with text rgba(0,0,0,.35); the review-phase tint is rgba(155,122,181,.08); the highlight outline is rgba(200,154,90,.5); the shadows are rgba(0,0,0,…). `tailwind.config.ts` drops the dead `colors.btn` map.
+- [ ] Restore the global 600 weight until paper-ui carries it
+      `utilities.css` gets back `button, a, [role=button], [role=tab], [role=menuitem] { font-weight: 600 }` with a note naming the paper-ui fix that retires it; the app header, status bar, stack panel and every portal render outside `Layout`.

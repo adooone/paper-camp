@@ -23,6 +23,14 @@ sketch`; the capacity row's `Progress` gains `sketch` too so the two bars
 match. `commit-history.tsx` drops `RailLine` and `RailSegment` for
 `CommitRail`.
 
+**Parity is the acceptance test.** This idea changes no pixel. The bump
+phase is blocked until the paper-ui release has been checked against
+paper-camp's own rendering in the browser, and the final phase does not
+close until the same pages have been compared again: any difference in
+font, size, weight, colour, spacing, texture, border or behaviour is a
+fix on the paper-ui idea that shipped the component, not something to
+absorb here.
+
 ### Out of scope
 
 Any change to what the numbers show.
