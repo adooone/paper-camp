@@ -2,7 +2,7 @@
 id: IDEA-281
 title: Adopt paper-ui's rows and sidebars
 type: refactor
-status: in-progress
+status: review
 created: 2026-09-22
 updated: 2026-09-24
 tags:
@@ -56,10 +56,12 @@ Charts, [[IDEA-282]]; the drawer and status bar, [[IDEA-283]].
       run: 5m31s · 168 in · 35.4k out · sonnet-5 · sess:7e9fcd97-3e6c-41ca-822b-56985a0ca951
 - [x] Drop the table overrides and hand-rolled disclosures
       run: 3m55s · 94 in · 13.6k out · sonnet-5 · sess:d2016cc8-d989-4a4b-91c1-829dcc1231f6
-- [ ] Trim `utilities.css` down to the `--pc-*` layout variables and the run-meta container query
+- [x] Trim `utilities.css` down to the `--pc-*` layout variables and the run-meta container query
+      run: 3m11s · 46 in · 17.2k out · sonnet-5 · sess:d2016cc8-d989-4a4b-91c1-829dcc1231f6
 
 ### Thread
 - [x] 2026-09-23 [question] [agent] Run-all parked on phase 3 ("Swap the local sidebar kit and settings rows for the library's") — the agent needs a decision: paper-ui's `SidebarItem` (the IDEA-5 spec, confirmed against `~/dev/paper-ui`'s source and showcase) only takes `icon`, `count`, `note`, `busy`, `tone`, `disabled` — it has no `active`/selected state (ListItem's blob-fill highlight is gone entirely) and no free-form `action` slot. Six current `ListItem` + `pc-row` call sites rely on exactly those two things: `docs-sidebar.tsx`, `settings-sidebar.tsx`, `plan-actions-column.tsx` (current-page/tab highlighting via `active`), and `roadmap-sidebar.tsx`, `plan-filter-column.tsx` (both `active` toggle-highlighting *and* an `action`/custom-content slot holding a count span or a `Stamp`). Converting them to `SidebarItem` as the phase literally instructs would silently drop the selected-item highlight from every sidebar nav list and drop the Stamp/count trailing content from the roadmap and plan filters. Should I (a) proceed and accept that loss as part of adopting the leaner library component, (b) keep `ListItem` (not `pc-row`) for these six active/action call sites and only convert the sidebar rows that don't need those two props, or (c) something else (e.g. simulate the selected state with a custom class using a `--pui-*` token)?
 - [x] 2026-09-24 [chat] Decision: option (b), and the gap is fixed upstream. paper-ui's SidebarItem was specified without `active` and `action`; a fix on paper-ui IDEA-5 adds both, and the next paper-ui release will carry them. For this run: convert every sidebar row that needs neither prop to SidebarItem now; leave the six call sites that need `active` or an `action` slot on ListItem, keeping their `pc-row` class so nothing visibly changes, and note in the phase log that they wait on the SidebarItem fix. Do not drop a highlight or a trailing Stamp anywhere. Then continue to phase 4.
 - [x] 2026-09-24 [chat] [agent] Got it — phase 3 stays scoped to the sidebar/settings kit swap, waiting on the paper-ui SidebarItem fix for the six active/action call sites. Continuing to phase 4.
 - [x] 2026-09-24 [log] [agent] Chose option (b): convert sidebar rows to SidebarItem now, leave 6 active/action call sites on ListItem pending paper-ui's upcoming SidebarItem fix, then proceed to phase 4.
+- [x] 2026-09-24 [log] [agent] Phase 5: deleted only the CSS that's actually dead — `.plan-row-card` (2 rules, superseded by `Row`) and `.pc-sidebar-card`/`.pc-setting-row` (unused since the sidebar-kit/`SettingGroup` swap). Kept `.pc-row`/`.pc-row-label` since the 6 call sites from the phase-3 decision above are still on `ListItem` pending the SidebarItem fix — deleting their styling now would break those sidebars. Also kept `header[class*="headerActions"]`, the phone-width IconButton/Checkbox tap-target bump, `.pc-app-header`, `.pc-git-file-row`'s Checkbox resize, and `.archive-row-action` — none of these are Row/sidebar/SettingRow/table leftovers from this idea; they're live workarounds for other paper-ui components (Layout, Checkbox, IconButton, Button) outside this idea's scope, and removing them would break rendering with no replacement in this phase. `utilities.css` isn't literally down to just `--pc-*` vars and the run-meta query — flagging this gap for the human review pass.

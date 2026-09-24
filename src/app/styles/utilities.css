@@ -14,20 +14,6 @@ header > div[class*="headerActions"] {
 }
 
 /*
- * Card's own smallest padding (.75rem 1rem on its textureLayer) is still sized
- * for content cards; rows need a tighter, single-line fit. Reaches into the
- * nested textureLayer div from outside, since Card exposes no padding prop.
- */
-.plan-row-card [class*="textureLayer"] {
-  padding: 0.375rem 0.875rem;
-}
-
-/*
- * The Stack's Agent section is a column of one Card per task; Card's smallest
- * padding is still sized for content cards, so tighten it to a single-line row
- * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
- */
-/*
  * The phase table's title column (entity-detail.tsx) takes the row's
  * flexible width; the actions column next to it is fixed to fit its content
  * instead of stretching. The token count alone is the default, and the full
@@ -71,19 +57,6 @@ header > div[class*="headerActions"] {
   label[class*="wrapper"] [class*="boxWrapper"] {
     width: 44px;
     height: 44px;
-  }
-}
-
-/*
- * The dense row cards (.plan-row-card, shared by Plans/Ideas/Tasks/
- * worklist rows) are sized for desktop pointer precision; widen their tap area
- * at phone width so a thumb doesn't need to land on a single-line-tall target.
- * Same reach-into-the-nested-div pattern as the base .plan-row-card rule above.
- */
-@media (max-width: 480px) {
-  .plan-row-card [class*="textureLayer"] {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
   }
 }
 
@@ -207,33 +180,4 @@ header > div[class*="headerActions"] {
   height: 32px;
   padding-bottom: 4px;
   line-height: 1;
-}
-
-/*
- * The sidebar card is capped at the viewport and scrolls inside; Card's own
- * border and texture layers have to pass that constraint down, or the inner
- * scroll region never gets a bounded height. Same reach-in pattern as above.
- */
-.pc-sidebar-card [class*="borderLayer"],
-.pc-sidebar-card [class*="textureLayer"] {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-/*
- * A Settings row is not a Card (IDEA-267): no fill and no hover — a settings row is
- * read and edited in place, never picked from a list — just padding and the phone tap area.
- */
-.pc-setting-row {
-  display: block;
-  padding: 0.375rem 0.875rem;
-  border-radius: 10px;
-}
-
-@media (max-width: 480px) {
-  .pc-setting-row {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
 }
