@@ -1,5 +1,4 @@
-import { SidebarCard } from '@/app/components/sidebar';
-import { Skeleton } from '@dendelion/paper-ui';
+import { SidebarCard, Skeleton } from '@dendelion/paper-ui';
 
 const LINES = [
   { key: 'a', width: '62%' },

@@ -1,9 +1,8 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
-import { Button, Tooltip, WandIcon, useToast } from '@dendelion/paper-ui';
+import { Button, SidebarItem, Tooltip, WandIcon, useToast } from '@dendelion/paper-ui';
 import { buildPlanDraftPrompt } from '../prompts';
 
 interface DraftPlanButtonProps {
@@ -13,7 +12,7 @@ interface DraftPlanButtonProps {
   className?: string;
   /** Replaces the existing `### Phases` list in place instead of drafting a fresh one. */
   redraft?: boolean;
-  /** Renders as a SidebarCommand row (the idea sidebar's Redraft slot) instead of a Button. */
+  /** Renders as a SidebarItem row (the idea sidebar's Redraft slot) instead of a Button. */
   sidebar?: boolean;
 }
 
@@ -72,7 +71,7 @@ export const DraftPlanButton = ({
   if (sidebar) {
     return (
       <Tooltip content={title}>
-        <SidebarCommand
+        <SidebarItem
           icon={<WandIcon size={16} />}
           onClick={handleClick}
           disabled={!idea.id || !hasAgent}
@@ -80,7 +79,7 @@ export const DraftPlanButton = ({
           tone={state === 'error' ? 'danger' : undefined}
         >
           {label}
-        </SidebarCommand>
+        </SidebarItem>
       </Tooltip>
     );
   }

@@ -1,10 +1,9 @@
 import { RowSkeleton } from '@/app/components';
 import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
-import { Alert, Button, Stamp, Switch, useToast } from '@dendelion/paper-ui';
+import { Alert, Button, SettingRow, Stamp, Switch, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { MERGE_POLICY_STAMP } from '../constants';
-import { SettingRow } from './setting-row';
 import { SettingsHeader } from './settings-header';
 
 const RECOMMENDED: MergePolicy = {
@@ -126,20 +125,23 @@ export const MergePolicySection = () => {
                 hint={
                   current !== recommended ? `recommended: ${recommended ? 'on' : 'off'}` : undefined
                 }
-              >
-                <Switch
-                  size="small"
-                  checked={current}
-                  disabled={togglingKey === key}
-                  onChange={() => handleToggle(key)}
-                />
-              </SettingRow>
+                control={
+                  <Switch
+                    size="small"
+                    checked={current}
+                    disabled={togglingKey === key}
+                    onChange={() => handleToggle(key)}
+                  />
+                }
+              />
             );
           })}
           {VALUE_ROWS.map(({ key, label }) => (
-            <SettingRow key={key} label={label}>
-              <span className="text-sm opacity-[0.65]">{result.policy[key]}</span>
-            </SettingRow>
+            <SettingRow
+              key={key}
+              label={label}
+              control={<span className="text-sm opacity-[0.65]">{result.policy[key]}</span>}
+            />
           ))}
         </div>
       )}

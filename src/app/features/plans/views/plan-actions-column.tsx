@@ -1,5 +1,3 @@
-import { SidebarCard } from '@/app/components/sidebar';
-import { SidebarCommand, SidebarField } from '@/app/components/sidebar';
 import { usePlanActionsColumn } from '@/app/features/plans/hooks';
 import {
   CheckIcon,
@@ -9,6 +7,9 @@ import {
   ListItem,
   RefreshIcon,
   Select,
+  SidebarCard,
+  SidebarField,
+  SidebarItem,
   Stamp,
 } from '@dendelion/paper-ui';
 import {
@@ -152,36 +153,36 @@ export const PlanActionsCommandsColumn = () => {
         )}
 
         {done && (
-          <SidebarCommand
+          <SidebarItem
             icon={<FolderIcon size={16} />}
             onClick={handleArchive}
             disabled={!plan.id}
             busy={archiving ? 'Archiving…' : undefined}
           >
             Archive
-          </SidebarCommand>
+          </SidebarItem>
         )}
 
         {canMarkDone && (
-          <SidebarCommand
+          <SidebarItem
             icon={<CheckIcon size={16} />}
             onClick={handleMarkDone}
             disabled={!plan.id}
             busy={archiving ? 'Completing…' : undefined}
           >
             Complete idea
-          </SidebarCommand>
+          </SidebarItem>
         )}
 
         {!done && (
-          <SidebarCommand
+          <SidebarItem
             icon={dropped ? <RefreshIcon size={16} /> : <CloseIcon size={16} />}
             tone={dropped ? undefined : 'danger'}
             onClick={() => patch({ status: dropped ? null : 'dropped' })}
             disabled={updating}
           >
             {dropped ? 'Reopen plan' : 'Mark dropped'}
-          </SidebarCommand>
+          </SidebarItem>
         )}
       </div>
     </SidebarCard>

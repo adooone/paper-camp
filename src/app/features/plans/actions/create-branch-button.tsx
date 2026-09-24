@@ -1,9 +1,8 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { createPlanBranch } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { GitBranchIcon, Tooltip, useToast } from '@dendelion/paper-ui';
+import { GitBranchIcon, SidebarItem, Tooltip, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface CreateBranchButtonProps {
@@ -44,7 +43,7 @@ export const CreateBranchButton = ({ plan, disabled }: CreateBranchButtonProps) 
           : undefined
       }
     >
-      <SidebarCommand
+      <SidebarItem
         icon={<GitBranchIcon size={16} />}
         onClick={handleClick}
         disabled={disabled || !plan.id}
@@ -56,7 +55,7 @@ export const CreateBranchButton = ({ plan, disabled }: CreateBranchButtonProps) 
         }
       >
         Create branch
-      </SidebarCommand>
+      </SidebarItem>
     </Tooltip>
   );
 };

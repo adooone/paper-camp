@@ -1,10 +1,9 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { completeIdea } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { CheckIcon, useToast } from '@dendelion/paper-ui';
+import { CheckIcon, SidebarItem, useToast } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { completionGate } from '../helpers';
 
@@ -56,7 +55,7 @@ export const CompleteIdeaButton = ({
   };
 
   return (
-    <SidebarCommand
+    <SidebarItem
       icon={<CheckIcon size={16} />}
       onClick={handleClick}
       disabled={disabled || !plan.id || !gate.ready}
@@ -66,6 +65,6 @@ export const CompleteIdeaButton = ({
       }
     >
       Complete idea
-    </SidebarCommand>
+    </SidebarItem>
   );
 };

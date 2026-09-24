@@ -1,8 +1,7 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { GithubIcon, Tooltip } from '@dendelion/paper-ui';
+import { GithubIcon, SidebarItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface PrReviewButtonProps {
@@ -54,7 +53,7 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
 
   return (
     <Tooltip content={hint}>
-      <SidebarCommand
+      <SidebarItem
         icon={<GithubIcon size={16} />}
         onClick={handleClick}
         disabled={disabled || !plan.id || !hasAgent || !ghOk}
@@ -62,7 +61,7 @@ export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
         note={advisories.length > 0 ? advisories.join(' · ') : undefined}
       >
         {label}
-      </SidebarCommand>
+      </SidebarItem>
     </Tooltip>
   );
 };

@@ -1,11 +1,16 @@
 import { SidebarSkeleton } from '@/app/components';
-import { SidebarCard } from '@/app/components/sidebar';
-import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
 import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/helpers';
 import { useActivePlan } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanStatus } from '@/types/index';
-import { Button, Input, ListItem } from '@dendelion/paper-ui';
+import {
+  Button,
+  Input,
+  ListItem,
+  SidebarCard,
+  SidebarField,
+  SidebarLabel,
+} from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { STATUS_COLOR, STATUS_LABEL } from '../constants';
 

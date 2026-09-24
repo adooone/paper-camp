@@ -1,7 +1,6 @@
 import type { DeskCi } from '@/types/index';
-import { Input, Switch } from '@dendelion/paper-ui';
+import { Input, SettingRow, Switch } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-import { SettingRow } from '../components/setting-row';
 
 interface DeskCiEditorProps {
   ci: DeskCi;
@@ -20,33 +19,42 @@ export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
 
   return (
     <>
-      <SettingRow label="Repo">
-        <Input
-          size="small"
-          value={local.repo}
-          onChange={(e) => setLocal({ ...local, repo: e.target.value })}
-          onBlur={commit}
-        />
-      </SettingRow>
-      <SettingRow label="Branch">
-        <Input
-          size="small"
-          value={local.branch ?? ''}
-          onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
-          onBlur={commit}
-        />
-      </SettingRow>
-      <SettingRow label="Release Please">
-        <Switch
-          size="small"
-          checked={local.releasePlease ?? false}
-          onChange={(e) => {
-            const next = { ...local, releasePlease: e.target.checked };
-            setLocal(next);
-            onSave(next);
-          }}
-        />
-      </SettingRow>
+      <SettingRow
+        label="Repo"
+        control={
+          <Input
+            size="small"
+            value={local.repo}
+            onChange={(e) => setLocal({ ...local, repo: e.target.value })}
+            onBlur={commit}
+          />
+        }
+      />
+      <SettingRow
+        label="Branch"
+        control={
+          <Input
+            size="small"
+            value={local.branch ?? ''}
+            onChange={(e) => setLocal({ ...local, branch: e.target.value || undefined })}
+            onBlur={commit}
+          />
+        }
+      />
+      <SettingRow
+        label="Release Please"
+        control={
+          <Switch
+            size="small"
+            checked={local.releasePlease ?? false}
+            onChange={(e) => {
+              const next = { ...local, releasePlease: e.target.checked };
+              setLocal(next);
+              onSave(next);
+            }}
+          />
+        }
+      />
     </>
   );
 };

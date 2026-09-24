@@ -1,9 +1,16 @@
 import { SidebarSkeleton } from '@/app/components';
-import { SidebarCard } from '@/app/components/sidebar';
 import { CountBadge, GitStatusMarker } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
-import { CheckAllIcon, Checkbox, EmptyState, IconButton, Row, Tooltip } from '@dendelion/paper-ui';
+import {
+  CheckAllIcon,
+  Checkbox,
+  EmptyState,
+  IconButton,
+  Row,
+  SidebarCard,
+  Tooltip,
+} from '@dendelion/paper-ui';
 
 const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 

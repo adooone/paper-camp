@@ -1,7 +1,5 @@
-import { SidebarCard } from '@/app/components/sidebar';
-import { SidebarLabel } from '@/app/components/sidebar';
 import { useActiveSettingsSection } from '@/app/hooks';
-import { ListItem } from '@dendelion/paper-ui';
+import { ListItem, SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export const SettingsSidebar = () => {

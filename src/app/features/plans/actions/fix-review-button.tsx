@@ -1,7 +1,6 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { CheckAllIcon, Tooltip } from '@dendelion/paper-ui';
+import { CheckAllIcon, SidebarItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface FixReviewButtonProps {
@@ -39,14 +38,14 @@ export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
 
   return (
     <Tooltip content={hint}>
-      <SidebarCommand
+      <SidebarItem
         icon={<CheckAllIcon size={16} />}
         onClick={handleClick}
         disabled={disabled || !plan.id || !hasAgent || !ghOk}
         busy={launching ? 'Starting…' : undefined}
       >
         Fix review comments
-      </SidebarCommand>
+      </SidebarItem>
     </Tooltip>
   );
 };

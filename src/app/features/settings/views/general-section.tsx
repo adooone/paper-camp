@@ -1,8 +1,6 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Input, Stamp, Switch } from '@dendelion/paper-ui';
+import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@dendelion/paper-ui';
 import { color } from '@dendelion/paper-ui/tokens';
-import { SettingGroup } from '../components/setting-group';
-import { SettingRow } from '../components/setting-row';
 import { SettingsHeader } from '../components/settings-header';
 import { VERSION_STAMP_FILL } from '../constants';
 import { useSettingsPage } from '../hooks';
@@ -49,66 +47,80 @@ export const GeneralSection = () => {
       )}
       {config && (
         <div className="flex flex-col gap-1">
-          <SettingRow label="Project name">
-            <Input
-              size="small"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onBlur={handleSaveName}
-            />
-          </SettingRow>
+          <SettingRow
+            label="Project name"
+            control={
+              <Input
+                size="small"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onBlur={handleSaveName}
+              />
+            }
+          />
 
-          <SettingRow label="Icon">
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-2">
-                {iconDataUri && (
-                  <img
-                    src={iconDataUri}
-                    alt="Project icon"
-                    className="w-8 h-8 object-contain shrink-0 rounded"
+          <SettingRow
+            label="Icon"
+            control={
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  {iconDataUri && (
+                    <img
+                      src={iconDataUri}
+                      alt="Project icon"
+                      className="w-8 h-8 object-contain shrink-0 rounded"
+                    />
+                  )}
+                  {/* paper-ui has no file-input component, so this raw input is intentional */}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept=".svg,.png,.jpg,.jpeg,.gif,.webp"
+                    onChange={handleFile}
+                    className="hidden"
                   />
+                  <Button
+                    size="small"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? 'Uploading…' : 'Choose file'}
+                  </Button>
+                </div>
+                {identityLoading && <span className="text-sm opacity-50">Loading…</span>}
+                {!identityLoading && !iconDataUri && !uploading && (
+                  <span className="text-sm opacity-[0.45]">No icon set.</span>
                 )}
-                {/* paper-ui has no file-input component, so this raw input is intentional */}
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".svg,.png,.jpg,.jpeg,.gif,.webp"
-                  onChange={handleFile}
-                  className="hidden"
-                />
-                <Button size="small" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                  {uploading ? 'Uploading…' : 'Choose file'}
-                </Button>
               </div>
-              {identityLoading && <span className="text-sm opacity-50">Loading…</span>}
-              {!identityLoading && !iconDataUri && !uploading && (
-                <span className="text-sm opacity-[0.45]">No icon set.</span>
-              )}
-            </div>
-          </SettingRow>
+            }
+          />
 
           <SettingRow
             label="Port"
             hint="Default for `paper-camp dev`. Restart the server to apply a change."
-          >
-            <Input
-              size="small"
-              type="number"
-              value={portInput}
-              onChange={(e) => setPortInput(e.target.value)}
-              onBlur={handleSavePort}
-            />
-          </SettingRow>
+            control={
+              <Input
+                size="small"
+                type="number"
+                value={portInput}
+                onChange={(e) => setPortInput(e.target.value)}
+                onBlur={handleSavePort}
+              />
+            }
+          />
 
-          <SettingRow label="In-app dev toolbar">
-            <Switch
-              size="small"
-              checked={config.integration?.toolbar?.enabled ?? true}
-              onChange={handleToggleToolbar}
-            />
-          </SettingRow>
+          <SettingRow
+            label="In-app dev toolbar"
+            control={
+              <Switch
+                size="small"
+                checked={config.integration?.toolbar?.enabled ?? true}
+                onChange={handleToggleToolbar}
+              />
+            }
+          />
 
-          <SettingGroup label="Default agents">
+          <SettingGroup title="Default agents">
             <AgentTaskTable defaultAgents={config.defaultAgents} onSave={handleSaveAgentConfig} />
           </SettingGroup>
         </div>

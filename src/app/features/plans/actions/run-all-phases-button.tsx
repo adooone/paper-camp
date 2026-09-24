@@ -1,7 +1,6 @@
-import { SidebarCommand } from '@/app/components/sidebar';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { RunIcon, Tooltip } from '@dendelion/paper-ui';
+import { RunIcon, SidebarItem, Tooltip } from '@dendelion/paper-ui';
 import { useState } from 'react';
 
 interface RunAllPhasesButtonProps {
@@ -34,14 +33,14 @@ export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) 
 
   return (
     <Tooltip content={hint}>
-      <SidebarCommand
+      <SidebarItem
         icon={<RunIcon size={16} />}
         onClick={handleClick}
         disabled={disabled || !plan.id || !hasAgent}
         busy={launching ? 'Starting…' : undefined}
       >
         Run all phases
-      </SidebarCommand>
+      </SidebarItem>
     </Tooltip>
   );
 };

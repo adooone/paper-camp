@@ -1,9 +1,7 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Switch } from '@dendelion/paper-ui';
+import { Alert, SettingGroup, SettingRow, Switch } from '@dendelion/paper-ui';
 import { useSetupSection } from '../hooks';
 import { ConnectionRow } from './connection-row';
-import { SettingGroup } from './setting-group';
-import { SettingRow } from './setting-row';
 import { SettingsHeader } from './settings-header';
 
 export const SetupSection = () => {
@@ -36,7 +34,7 @@ export const SetupSection = () => {
             </Alert>
           )}
           {externalConnections.length > 0 && (
-            <SettingGroup label="External services">
+            <SettingGroup title="External services">
               {externalConnections.map((c) => (
                 <ConnectionRow
                   key={c.id}
@@ -50,7 +48,7 @@ export const SetupSection = () => {
             </SettingGroup>
           )}
           {localConnections.length > 0 && (
-            <SettingGroup label="Local adapters">
+            <SettingGroup title="Local adapters">
               {localConnections.map((c) => (
                 <ConnectionRow
                   key={c.id}
@@ -63,9 +61,12 @@ export const SetupSection = () => {
               ))}
             </SettingGroup>
           )}
-          <SettingRow label="Show Setup on open">
-            <Switch size="small" checked={!setupDismissed} onChange={handleDismissToggle} />
-          </SettingRow>
+          <SettingRow
+            label="Show Setup on open"
+            control={
+              <Switch size="small" checked={!setupDismissed} onChange={handleDismissToggle} />
+            }
+          />
         </div>
       )}
     </div>

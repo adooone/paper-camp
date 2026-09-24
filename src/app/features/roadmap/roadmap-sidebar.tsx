@@ -1,6 +1,12 @@
-import { SidebarCard } from '@/app/components/sidebar';
-import { SidebarField, SidebarLabel } from '@/app/components/sidebar';
-import { Button, Input, ListItem, Stamp } from '@dendelion/paper-ui';
+import {
+  Button,
+  Input,
+  ListItem,
+  SidebarCard,
+  SidebarField,
+  SidebarLabel,
+  Stamp,
+} from '@dendelion/paper-ui';
 import { ITEM_STATE_STAMP } from './constants';
 import { stripHorizonPrefix } from './helpers';
 import { useRoadmapSidebar } from './hooks';

@@ -1,7 +1,6 @@
 import { RowSkeleton } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
-import { Alert, Button, Spinner } from '@dendelion/paper-ui';
-import { SettingGroup } from '../components/setting-group';
+import { Alert, Button, SettingGroup, Spinner } from '@dendelion/paper-ui';
 import { SettingsHeader } from '../components/settings-header';
 import { useDeskSection } from '../hooks/use-desk-section';
 import { DeskCheckTable } from './desk-check-table';
@@ -55,7 +54,7 @@ export const DeskSection = () => {
       )}
       {config && (
         <div className="flex flex-col gap-4">
-          <SettingGroup label="Services">
+          <SettingGroup title="Services">
             <DeskServiceTable
               services={services}
               onAdd={addService}
@@ -64,7 +63,7 @@ export const DeskSection = () => {
             />
           </SettingGroup>
 
-          <SettingGroup label="Checks">
+          <SettingGroup title="Checks">
             <DeskCheckTable
               checks={checks}
               onAdd={addCheck}
@@ -73,7 +72,7 @@ export const DeskSection = () => {
             />
           </SettingGroup>
 
-          <SettingGroup label="CI">
+          <SettingGroup title="CI">
             <DeskCiEditor ci={ci} onSave={updateCi} />
           </SettingGroup>
 

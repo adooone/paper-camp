@@ -1,9 +1,7 @@
-import { SidebarCard } from '@/app/components/sidebar';
-import { SidebarField } from '@/app/components/sidebar';
 import { formatDuration } from '@/core/phase-run';
 import type { LogDateRange, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS } from '@/types/index';
-import { Button, Input, Select } from '@dendelion/paper-ui';
+import { Button, Input, Select, SidebarCard, SidebarField } from '@dendelion/paper-ui';
 import { formatCost } from './helpers';
 import { useLogPage } from './hooks';
 
