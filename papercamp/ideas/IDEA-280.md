@@ -57,9 +57,14 @@ Rows and sidebars, [[IDEA-281]].
       run: 3m41s · 130 in · 21.8k out · sonnet-5 · sess:f7cbabde-a49d-42b5-817a-6a19bb2d07ef
 
 ### Fixes
-- [ ] Every page title keeps its 24px gap
+- [ ] Bump to the paper-ui release carrying the parity fixes, and use the final forms
+      The fixes above were written with "until paper-ui ships it" fallbacks; paper-ui 0.22.2 shipped most of them and the next release the rest. Bump to that release first, then apply each fix in its final form — the library prop, never the fallback — and delete every fallback that a previous run left in place.
+- [x] Every page title keeps its 24px gap
       `docs-page`, `stats-page`, `plans-page` and the three `roadmap-page` titles pass `mb-6` until `PageTitle` defaults to it again.
-- [ ] `run-entry-page` keeps its action under the empty state
+      run: 2m22s · 72 in · 11.3k out · sonnet-5 · sess:0857bfab-d348-4fe8-94a7-a01412940e3d
+- [x] `run-entry-page` keeps its action under the empty state
       The `Button` goes back into `EmptyState`'s `action` slot once paper-ui restores it; until then the wrapper gap is 12px with no extra padding.
-- [ ] Lightbulb and Note keep their .55 opacity and the stop button its 20px
+      run: 1m26s · 28 in · 6.6k out · sonnet-5 · sess:0857bfab-d348-4fe8-94a7-a01412940e3d
+- [x] Lightbulb and Note keep their .55 opacity and the stop button its 20px
       Every `LightbulbIcon`/`NoteIcon` call site passes `opacity={0.55}` (or `className="opacity-[0.55]"` until the prop exists); `agent-section.tsx`'s stop `IconButton` is back to the 20px override.
+      run: 1m12s · 44 in · 5.2k out · sonnet-5 · sess:0857bfab-d348-4fe8-94a7-a01412940e3d

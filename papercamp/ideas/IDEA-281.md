@@ -60,6 +60,8 @@ Charts, [[IDEA-282]]; the drawer and status bar, [[IDEA-283]].
       run: 3m11s · 46 in · 17.2k out · sonnet-5 · sess:d2016cc8-d989-4a4b-91c1-829dcc1231f6
 
 ### Fixes
+- [ ] Bump to the paper-ui release carrying the parity fixes, and use the final forms
+      The fixes above were written with "until paper-ui ships it" fallbacks; paper-ui 0.22.2 shipped most of them and the next release the rest. Bump to that release first, then apply each fix in its final form — the library prop, never the fallback — and delete every fallback that a previous run left in place.
 - [ ] The log list gets fixed columns back
       `run-row.tsx`'s `Row` template is `100px 128px minmax(0,1fr) 100px 72px 84px` with the Type stamp in its own cell, Time/Agent/Duration as handwritten 14px at .55, and the header sharing the template; `id: 'auto'` is never used, since each `Row` is its own grid. The worklist header gets Updated and Progress their own 64px and 52px cells.
 - [ ] Roadmap rows keep stamp before progress, and the whole item highlights
