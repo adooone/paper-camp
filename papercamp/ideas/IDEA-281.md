@@ -2,8 +2,9 @@
 id: IDEA-281
 title: Adopt paper-ui's rows and sidebars
 type: refactor
-status: idea
+status: in-progress
 created: 2026-09-22
+updated: 2026-09-24
 tags:
   - app
   - ui
@@ -54,3 +55,9 @@ Charts, [[IDEA-282]]; the drawer and status bar, [[IDEA-283]].
       Delete the four `sidebar-*.tsx` files, `setting-row.tsx` and `SETTING_ROW_GRID_CLASS`, then rebuild each settings section as a `SettingGroup`.
 - [ ] Drop the table overrides and hand-rolled disclosures
 - [ ] Trim `utilities.css` down to the `--pc-*` layout variables and the run-meta container query
+
+### Thread
+- [x] 2026-09-23 [question] [agent] Run-all parked on phase 3 ("Swap the local sidebar kit and settings rows for the library's") — the agent needs a decision: paper-ui's `SidebarItem` (the IDEA-5 spec, confirmed against `~/dev/paper-ui`'s source and showcase) only takes `icon`, `count`, `note`, `busy`, `tone`, `disabled` — it has no `active`/selected state (ListItem's blob-fill highlight is gone entirely) and no free-form `action` slot. Six current `ListItem` + `pc-row` call sites rely on exactly those two things: `docs-sidebar.tsx`, `settings-sidebar.tsx`, `plan-actions-column.tsx` (current-page/tab highlighting via `active`), and `roadmap-sidebar.tsx`, `plan-filter-column.tsx` (both `active` toggle-highlighting *and* an `action`/custom-content slot holding a count span or a `Stamp`). Converting them to `SidebarItem` as the phase literally instructs would silently drop the selected-item highlight from every sidebar nav list and drop the Stamp/count trailing content from the roadmap and plan filters. Should I (a) proceed and accept that loss as part of adopting the leaner library component, (b) keep `ListItem` (not `pc-row`) for these six active/action call sites and only convert the sidebar rows that don't need those two props, or (c) something else (e.g. simulate the selected state with a custom class using a `--pui-*` token)?
+- [x] 2026-09-24 [chat] Decision: option (b), and the gap is fixed upstream. paper-ui's SidebarItem was specified without `active` and `action`; a fix on paper-ui IDEA-5 adds both, and the next paper-ui release will carry them. For this run: convert every sidebar row that needs neither prop to SidebarItem now; leave the six call sites that need `active` or an `action` slot on ListItem, keeping their `pc-row` class so nothing visibly changes, and note in the phase log that they wait on the SidebarItem fix. Do not drop a highlight or a trailing Stamp anywhere. Then continue to phase 4.
+- [x] 2026-09-24 [chat] [agent] Got it — phase 3 stays scoped to the sidebar/settings kit swap, waiting on the paper-ui SidebarItem fix for the six active/action call sites. Continuing to phase 4.
+- [x] 2026-09-24 [log] [agent] Chose option (b): convert sidebar rows to SidebarItem now, leave 6 active/action call sites on ListItem pending paper-ui's upcoming SidebarItem fix, then proceed to phase 4.
