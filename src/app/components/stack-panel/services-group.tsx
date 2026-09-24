@@ -3,7 +3,7 @@ import { fetchServiceLog } from '@/app/services/services-api';
 import type { ServiceState } from '@/types/index';
 import {
   Card,
-  ChevronRightIcon,
+  Disclosure,
   EmptyState,
   IconButton,
   RunIcon,
@@ -106,27 +106,23 @@ const ServiceRow = ({
   return (
     <Card surface="chalkboard" size="small">
       <div className="flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => setShowLog((v) => !v)}
-          aria-expanded={showLog}
-          className="flex min-w-0 cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left"
+        <Disclosure
+          expanded={showLog}
+          onToggle={() => setShowLog((v) => !v)}
+          className="min-w-0 text-desk-chalk"
         >
-          <span
-            className={`shrink-0 text-desk-text-muted transition-transform ${showLog ? 'rotate-90' : ''}`}
-          >
-            <ChevronRightIcon />
-          </span>
-          <StatusDot service={service} />
-          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm text-desk-chalk">
-            {service.name}
-          </span>
-          {service.port && (
-            <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
-              :{service.port}
+          <span className="flex min-w-0 items-center gap-2">
+            <StatusDot service={service} />
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm">
+              {service.name}
             </span>
-          )}
-        </button>
+            {service.port && (
+              <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
+                :{service.port}
+              </span>
+            )}
+          </span>
+        </Disclosure>
         <div className="flex shrink-0 items-center gap-1">
           {busy ? (
             <Spinner size="small" surface="chalkboard" label="Working" />

@@ -28,44 +28,6 @@ header > div[class*="headerActions"] {
  * fit — same reach-into-the-nested-div pattern as .plan-row-card above.
  */
 /*
- * paper-ui's phase Table is a real <table> with fixed pixel column widths
- * (colgroup), which don't reflow — below phone width this drops every table
- * element to block display so cells stack full-width instead of the
- * tableScroll wrapper forcing a sideways scroll. The `class*=` selector reaches
- * that CSS-module wrapper by its stable name part, same hashed-class reach-in
- * pattern as the headerActions rule above.
- */
-@media (max-width: 480px) {
-  .phase-table-phone [class*="tableScroll"] {
-    overflow-x: visible;
-  }
-  .phase-table-phone table,
-  .phase-table-phone thead,
-  .phase-table-phone tbody,
-  .phase-table-phone tr,
-  .phase-table-phone th,
-  .phase-table-phone td {
-    display: block;
-    width: auto;
-  }
-  .phase-table-phone thead {
-    display: none;
-  }
-  .phase-table-phone tr {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  .phase-table-phone tr:last-child {
-    border-bottom: none;
-  }
-  .phase-table-phone td {
-    height: auto;
-    padding: 0.125rem 1rem;
-    border-bottom: none;
-  }
-}
-
-/*
  * The phase table's title column (entity-detail.tsx) takes the row's
  * flexible width; the actions column next to it is fixed to fit its content
  * instead of stretching. The token count alone is the default, and the full
@@ -92,22 +54,6 @@ header > div[class*="headerActions"] {
  */
 .archive-row-action {
   padding: 0.25rem 0.75rem;
-}
-
-/*
- * A running phase row fills left-to-right like a loading line: the fraction is
- * published as --phase-fill on the Phases wrapper (entity-detail.tsx) and read
- * here, since paper-ui's Table exposes only rowClassName (a static class), no
- * per-row inline style. Done rows get a darker canvas paper texture via the
- * Table's rowTexture prop so pending work stays the bright part of the table.
- */
-.phase-running-row {
-  background-image: linear-gradient(
-    to right,
-    var(--phase-fill-color) 0,
-    var(--phase-fill-color) var(--phase-fill, 0%),
-    transparent var(--phase-fill, 0%)
-  );
 }
 
 /*

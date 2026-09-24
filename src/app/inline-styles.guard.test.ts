@@ -16,7 +16,6 @@ const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'components/layout/app-shell.tsx', // paper-ui's Layout has no className prop, only style
   'components/layout/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
   'components/layout/sidebar-shell.tsx', // mobile drawer shadow computed via withAlpha
-  'features/plans/views/phases-section.tsx', // running-phase fill fraction via --phase-fill CSS var
   'features/plans/views/plan-rows.tsx', // highlight outline / merged-PR colour from tokens
   'features/plans/views/worklist-rows.tsx', // highlight outline colour from tokens
   'features/roadmap/views/roadmap-item-row.tsx', // highlight outline colour from tokens

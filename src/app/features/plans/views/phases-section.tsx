@@ -9,7 +9,7 @@ import { formatRunSummary } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
 import { Button, SectionHeading, Spinner, Table, Tooltip } from '@dendelion/paper-ui';
 import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import {
   AddReviewPhasesButton,
   AuditPhasesButton,
@@ -55,17 +55,7 @@ export const PhasesSection = ({
     ...fixes.map((item, index) => ({ kind: 'fix' as const, item, index })),
   ];
   return (
-    <div
-      className="mb-8"
-      style={
-        runningFill
-          ? ({
-              '--phase-fill': `${runningFill.fraction * 100}%`,
-              '--phase-fill-color': colors.primaryWash,
-            } as CSSProperties)
-          : undefined
-      }
-    >
+    <div className="mb-8">
       <Table
         data={rows}
         toolbar={{
@@ -176,16 +166,19 @@ export const PhasesSection = ({
           if (row.kind === 'phase' && row.item.done) return 'canvas';
           return undefined;
         }}
-        rowClassName={(row: WorkRow) => {
-          if (isRunningRow(row, runningFill)) return 'phase-running-row';
-          return undefined;
+        rowStyle={(row: WorkRow) => {
+          if (row.kind === 'phase' && row.item.source === 'review') {
+            return { backgroundColor: withAlpha(colors.accentPurple, 0.08) };
+          }
+          if (runningFill && isRunningRow(row, runningFill)) {
+            const fill = `${runningFill.fraction * 100}%`;
+            return {
+              backgroundImage: `linear-gradient(to right, ${colors.primaryWash} 0, ${colors.primaryWash} ${fill}, transparent ${fill})`,
+            };
+          }
+          return {};
         }}
-        rowStyle={(row: WorkRow) =>
-          row.kind === 'phase' && row.item.source === 'review'
-            ? { backgroundColor: withAlpha(colors.accentPurple, 0.08) }
-            : {}
-        }
-        className="phase-table-phone"
+        phoneLayout="stacked"
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { Button } from '@dendelion/paper-ui';
+import { Disclosure } from '@dendelion/paper-ui';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 interface CollapsibleTextProps {
@@ -42,14 +42,13 @@ export const CollapsibleText = ({
       </div>
       {/* Conditionally mounted, not visibility:hidden — `overflows` is measured pre-paint. */}
       {overflows && (
-        <Button
-          variant="link"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
+        <Disclosure
+          expanded={expanded}
+          onToggle={() => setExpanded((v) => !v)}
           className="text-xs opacity-60"
         >
           {expanded ? 'Show less' : 'Show more'}
-        </Button>
+        </Disclosure>
       )}
     </div>
   );
