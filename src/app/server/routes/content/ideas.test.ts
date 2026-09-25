@@ -176,6 +176,55 @@ describe('POST /api/night-findings/dismiss', () => {
   });
 });
 
+describe('POST /api/ideas/archive', () => {
+  it('archives an idea, moving it to ideas/archive with status done', async () => {
+    const root = await makeRoot();
+    const createRes = fakeRes();
+    await route(root, 'POST', '/api/ideas').handle(
+      fakeReq(JSON.stringify({ title: 'An idea', kind: 'idea' })),
+      createRes.res,
+    );
+    const { id } = createRes.json() as { id: string };
+
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', '/api/ideas/archive').handle(
+      fakeReq(JSON.stringify({ ids: [id] })),
+      res,
+    );
+
+    expect(status()).toBe(200);
+    expect((json() as { archived: string[] }).archived).toEqual([id]);
+    const archived = await readFile(
+      join(root, 'papercamp', 'ideas', 'archive', `${id}.md`),
+      'utf-8',
+    );
+    const parsed = parseEntityFile(archived).entries[0];
+    expect(parsed?.status).toBe('done');
+    await expect(readFile(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8')).rejects.toThrow();
+  });
+
+  it('does not archive notes', async () => {
+    const root = await makeRoot();
+    const createRes = fakeRes();
+    await route(root, 'POST', '/api/ideas').handle(
+      fakeReq(JSON.stringify({ title: 'A note', kind: 'note' })),
+      createRes.res,
+    );
+    const { id } = createRes.json() as { id: string };
+
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', '/api/ideas/archive').handle(
+      fakeReq(JSON.stringify({ ids: [id] })),
+      res,
+    );
+
+    expect(status()).toBe(200);
+    expect((json() as { archived: string[] }).archived).toEqual([]);
+    const stillThere = await readFile(join(root, 'papercamp', 'ideas', `${id}.md`), 'utf-8');
+    expect(stillThere).toContain('kind: note');
+  });
+});
+
 describe('POST /api/tickets', () => {
   it('mints a TICKET-N id and links it back to its board via idea:', async () => {
     const root = await makeRoot();

@@ -13,9 +13,9 @@ export const chalkStatusFill = {
 } as const;
 
 export const chalkStatusText = {
-  pass: color.chalkPass,
-  fail: color.chalkFail,
-  running: color.chalkRunning,
+  pass: color.chalkPassText,
+  fail: color.chalkFailText,
+  running: color.chalkRunningText,
 } as const;
 
 const isSameDay = (a: Date, b: Date): boolean =>

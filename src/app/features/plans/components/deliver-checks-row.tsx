@@ -34,7 +34,9 @@ const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps)
     <Stamp
       size="small"
       variant={variant}
-      onClick={onClick}
+      onClick={() => {
+        if (!disabled) onClick();
+      }}
       className={disabled ? 'pointer-events-none opacity-50' : undefined}
     >
       {label}
