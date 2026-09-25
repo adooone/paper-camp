@@ -28,7 +28,7 @@ is this app's own. This idea is the one run that finishes it; the unrun
 fixes on [[IDEA-279]], [[IDEA-280]] and [[IDEA-281]] are folded in here
 and deleted there.
 
-**Bump first, to the release that carries paper-ui's IDEA-8.** That
+**Bump first, to the release that carries paper-ui's IDEA-8 and IDEA-9.** That
 release also carries 0.22.3's type-scale correction, so nothing here
 compensates for size: where a size looks wrong after the bump, the fix
 is a paper-ui fix, not a class on this side.
@@ -65,6 +65,14 @@ chalkboard stamps through `surface="chalkboard"` — the opaque plates —
 and deletes its `withAlpha(color.chalk*, 0.16)` washes.
 `commit-history.tsx` shows `· prefix` in the meta line below 640px.
 
+**The chunk view lays out as it did.** `chunk-detail.tsx` renders its
+facts with `FactsGrid layout="inline" align="end"` beside the title, so
+Date, Passes and Cost sit in one row of label-over-value pairs and wrap
+under the title only on a phone; the findings table's actions column is
+`width: 'auto'` with the three ghost buttons in one line, and the finding
+column takes the rest. Both props come from paper-ui's IDEA-9, which the
+bump phase's release carries.
+
 **Leftovers from the other two.** Every page title that lost its 24px
 gap has it; `run-entry-page` puts its button in `EmptyState`'s `action`
 slot; every `LightbulbIcon` and `NoteIcon` passes `opacity={0.55}`; the
@@ -90,3 +98,17 @@ does not close until that list is empty.
 
 Charts and the drawer, which are [[IDEA-282]] and [[IDEA-283]] and have
 not run. Anything the baseline did not draw.
+
+### Phases
+- [ ] Bump paper-ui to the release carrying IDEA-8 and IDEA-9
+- [ ] Restore the log, worklist, roadmap and plan row grids
+      Column templates, cell order and handwritten meta across the run,
+      roadmap, standing-concern and plan rows.
+- [ ] Fix the sidebars, the git file list and the stamps
+      Includes moving the six `ListItem` lists to `SidebarItem` and dropping
+      `.pc-row` from `utilities.css`.
+- [ ] Lay out the chunk view, then clear the leftovers
+      The facts grid and findings table, the leftover icon, gap and button
+      fixes, and the `utilities.css` and `tailwind.config.ts` deletions.
+- [ ] Compare against the `7a58b8b7` baseline at 1440px and 420px
+      Log every remaining difference as a fix on the owning paper-ui idea.
