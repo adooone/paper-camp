@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.37.2](https://github.com/adooone/paper-camp/compare/v0.37.1...v0.37.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* **app:** Consistency ([6a2aa3b](https://github.com/adooone/paper-camp/commit/6a2aa3b3364cc71ecfba454ea7405acf5b1c023d))
+* **app:** Restore paper-ui token overrides and 600 weight ([c5d5ec4](https://github.com/adooone/paper-camp/commit/c5d5ec4d873a3521522d09fe8548787d8b5ca2ff))
+* **cli:** cache toolbar assets in memory, test log truncation decoder reset ([89d4071](https://github.com/adooone/paper-camp/commit/89d40718c80e0bf330e8c683d0a1d92a16348370))
+* **cli:** decode follow-mode log tail with a stateful StringDecoder ([076f2d8](https://github.com/adooone/paper-camp/commit/076f2d802863f7e191468ee30abcf990103c1422))
+* **plans:** Unarchive an entity when its status is reopened ([d38d4d3](https://github.com/adooone/paper-camp/commit/d38d4d3f3fb2eed2e7640f686b25ce610e89dee4))
+* **ui:** Draw commit rail lines as plain straight strokes ([7a58b8b](https://github.com/adooone/paper-camp/commit/7a58b8b70851c1244ae6e49822c775b359b612d2))
+
 ## [0.37.1](https://github.com/adooone/paper-camp/compare/v0.37.0...v0.37.1) (2026-09-21)
 
 
