@@ -59,13 +59,13 @@ export const FeedbackThread = ({
         {
           id: 'log',
           label: 'Promote to log',
-          icon: <NoteIcon size={16} />,
+          icon: <NoteIcon size={16} opacity={0.55} />,
           onSelect: () => onPromote?.(i, 'log'),
         },
         {
           id: 'idea',
           label: 'Promote to idea',
-          icon: <LightbulbIcon size={16} />,
+          icon: <LightbulbIcon size={16} opacity={0.55} />,
           onSelect: () => onPromote?.(i, 'idea'),
         },
       ];

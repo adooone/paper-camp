@@ -44,7 +44,7 @@ export const PlansPage = () => {
   if (plansError) {
     return (
       <div>
-        <PageTitle>Plans</PageTitle>
+        <PageTitle className="mb-6">Plans</PageTitle>
         <Card size="small" accent accentColor="rose">
           <p className="m-0 font-semibold">Couldn't load plans.md</p>
           <p className="m-0 opacity-75">{plansError}</p>

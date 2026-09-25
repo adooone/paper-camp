@@ -37,7 +37,7 @@ export const RoadmapPage = () => {
   if (roadmapError) {
     return (
       <div>
-        <PageTitle>Roadmap</PageTitle>
+        <PageTitle className="mb-6">Roadmap</PageTitle>
         <p className="opacity-50">
           Couldn't load the roadmap — the server may need a restart to pick up new routes.
         </p>
@@ -48,7 +48,7 @@ export const RoadmapPage = () => {
   if (!roadmap) {
     return (
       <div>
-        <PageTitle>Roadmap</PageTitle>
+        <PageTitle className="mb-6">Roadmap</PageTitle>
         <RowSkeleton />
       </div>
     );
@@ -57,7 +57,7 @@ export const RoadmapPage = () => {
   if (roadmap.horizons.length === 0) {
     return (
       <div>
-        <PageTitle>Roadmap</PageTitle>
+        <PageTitle className="mb-6">Roadmap</PageTitle>
         <EmptyState
           illustration={<DoodleIllustration name="empty-tray" />}
           message={

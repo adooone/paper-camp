@@ -20,7 +20,11 @@ export const NewIdeaButton = () => {
 
   return (
     <>
-      <Button icon={<LightbulbIcon size={16} />} size="small" onClick={() => setOpen(true)}>
+      <Button
+        icon={<LightbulbIcon size={16} opacity={0.55} />}
+        size="small"
+        onClick={() => setOpen(true)}
+      >
         New idea
       </Button>
       <CreateIdeaModal open={open} onClose={() => setOpen(false)} onAdd={handleAdd} />

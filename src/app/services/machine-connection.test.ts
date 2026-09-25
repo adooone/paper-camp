@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadMachineConnection, readMachineConnection } from './machine-connection';
+import {
+  loadMachineConnection,
+  readMachineConnection,
+  rehostPairingLink,
+} from './machine-connection';
 import { listMachines } from './machine-store';
 
 class FakeLocalStorage {
@@ -63,5 +67,29 @@ describe('loadMachineConnection', () => {
       pairingToken: null,
     });
     expect(listMachines()).toEqual([]);
+  });
+});
+
+describe('rehostPairingLink', () => {
+  it('carries machine and token onto the pasting origin instead of the link’s own', () => {
+    expect(
+      rehostPairingLink(
+        'https://paper.adoo.one/?machine=https%3A%2F%2Fdeimos.example%2F&token=abc',
+        'https://preview.example',
+        '',
+      ),
+    ).toBe('https://preview.example/?machine=https%3A%2F%2Fdeimos.example%2F&token=abc');
+  });
+
+  it('keeps a mount prefix and rejects text that is not a machine link', () => {
+    expect(
+      rehostPairingLink(
+        'https://paper.adoo.one/?machine=http%3A%2F%2Flocalhost%3A4333',
+        'http://app.test',
+        '/paper-camp',
+      ),
+    ).toBe('http://app.test/paper-camp?machine=http%3A%2F%2Flocalhost%3A4333');
+    expect(rehostPairingLink('not a link', 'http://app.test', '')).toBeNull();
+    expect(rehostPairingLink('https://paper.adoo.one/roadmap', 'http://app.test', '')).toBeNull();
   });
 });

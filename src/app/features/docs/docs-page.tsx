@@ -37,7 +37,7 @@ export const DocsPage = () => {
 
   return (
     <div>
-      <PageTitle>Docs</PageTitle>
+      <PageTitle className="mb-6">Docs</PageTitle>
       <EmptyState message="Pick a doc from the sidebar — start with a repo doc if you're new here." />
     </div>
   );

@@ -32,3 +32,24 @@ export function loadMachineConnection(location: { search: string } | null): Mach
 export const machineConnection = loadMachineConnection(
   typeof window === 'undefined' ? null : window.location,
 );
+
+/**
+ * Where a pasted pairing link lands: its `machine` and `token` carried onto THIS
+ * origin, so a link printed for the hosted client pairs whichever build pasted it —
+ * a preview deployment, a local build — instead of navigating away to production.
+ * Returns null when the text is not a link or carries no machine.
+ */
+export function rehostPairingLink(text: string, origin: string, prefix: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(text.trim());
+  } catch {
+    return null;
+  }
+  const machine = parsed.searchParams.get(MACHINE_URL_PARAM);
+  if (!machine) return null;
+  const params = new URLSearchParams({ [MACHINE_URL_PARAM]: machine });
+  const token = parsed.searchParams.get(PAIRING_TOKEN_PARAM);
+  if (token) params.set(PAIRING_TOKEN_PARAM, token);
+  return `${origin}${prefix || '/'}?${params}`;
+}

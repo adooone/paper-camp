@@ -115,7 +115,7 @@ export const WorklistActionsMenu = () => {
     {
       id: 'draft-all',
       label: 'Draft all',
-      icon: <NoteIcon size={16} />,
+      icon: <NoteIcon size={16} opacity={0.55} />,
       disabled: busy || !hasAgent,
       onSelect: () => setDraftAllOpen(true),
     },

@@ -196,7 +196,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
           id={idea.id ? <PlanIdStamp id={idea.id} /> : ''}
           title={
             <span className={titleButtonClass}>
-              <NoteIcon />
+              <NoteIcon opacity={0.55} />
               <span className={titleTextClass}>{idea.title}</span>
             </span>
           }

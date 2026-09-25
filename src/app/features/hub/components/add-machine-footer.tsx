@@ -1,4 +1,6 @@
 import { daemonStartCommand } from '@/app/services/hub';
+import { rehostPairingLink } from '@/app/services/machine-connection';
+import { mountPrefix } from '@/app/services/mount';
 import { Button, Card, CommandLine, Input } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useState } from 'react';
@@ -11,13 +13,12 @@ export const AddMachineFooter = () => {
   const submit = () => {
     const trimmed = link.trim();
     if (trimmed === '') return;
-    try {
-      new URL(trimmed);
-    } catch {
+    const target = rehostPairingLink(trimmed, window.location.origin, mountPrefix);
+    if (!target) {
       setError(true);
       return;
     }
-    window.location.assign(trimmed);
+    window.location.assign(target);
   };
 
   return (

@@ -24,7 +24,7 @@ export const SuggestionsSection = ({ suggestions, onOpen, onDismiss }: Suggestio
             id=""
             title={
               <span className="flex items-center gap-2">
-                <LightbulbIcon size={14} />
+                <LightbulbIcon size={14} opacity={0.55} />
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                   {suggestion.title}
                 </span>

@@ -62,11 +62,12 @@ Replacing any component; that is [[IDEA-280]] to [[IDEA-283]].
 - [x] [manual] Restore paper-ui token overrides and 600 weight
 
 ### Fixes
-- [ ] Bump to the paper-ui release carrying the parity fixes, and use the final forms
-      The fixes above were written with "until paper-ui ships it" fallbacks; paper-ui 0.22.2 shipped most of them and the next release the rest. Bump to that release first, then apply each fix in its final form — the library prop, never the fallback — and delete every fallback that a previous run left in place.
 - [x] Chalkboard plates, the merge purple and the neutral chips read the old values
       Until paper-ui ships the token fixes on its IDEA-3, `shared.tsx` keeps the opaque #2d5a3b/#5a2d2d/#5a4a2d plates with #b5d6b5/#d6a0a0/#d6c4a0 text; the merged-PR purple is #7B5E9E; `PlanIdStamp`, `RowMarker`, `FeedbackThread` and `UNREACHED_STAMP` use rgba(0,0,0,.08/.06/.05) with text rgba(0,0,0,.35); the review-phase tint is rgba(155,122,181,.08); the highlight outline is rgba(200,154,90,.5); the shadows are rgba(0,0,0,…). `tailwind.config.ts` drops the dead `colors.btn` map.
       run: 49s · 30 in · 3.9k out · sonnet-5 · sess:c3345043-95f7-4bb0-9f99-6eae65afb70c
 - [x] Restore the global 600 weight until paper-ui carries it
       `utilities.css` gets back `button, a, [role=button], [role=tab], [role=menuitem] { font-weight: 600 }` with a note naming the paper-ui fix that retires it; the app header, status bar, stack panel and every portal render outside `Layout`.
       run: 1m3s · 34 in · 4.2k out · sonnet-5 · sess:c3345043-95f7-4bb0-9f99-6eae65afb70c
+
+### Thread
+- [x] 2026-09-24 [note] The unrun fixes here moved to [[IDEA-285]], one run for everything still adrift from the baseline.

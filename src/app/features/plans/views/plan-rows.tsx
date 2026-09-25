@@ -55,7 +55,7 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
       // Run order only covers planned/in-progress/review, so a backlog idea has no
       // number to show — mark it as unplanned rather than leaving the gutter blank.
       <span aria-label="Backlog — not planned yet" className="inline-flex text-ink-300">
-        <LightbulbIcon size={14} />
+        <LightbulbIcon size={14} opacity={0.55} />
       </span>
     ) : null}
   </span>

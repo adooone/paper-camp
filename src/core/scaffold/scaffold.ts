@@ -114,15 +114,26 @@ async function registerInMachineRegistry(targetDir: string, projectName: string)
   }
 }
 
-const PAIRING_GITIGNORE_ENTRY = 'papercamp/.pairing.json';
+// Everything the daemon writes for itself: a committed pairing token lets anyone with
+// read access pair as a trusted client, and the caches and logs churn on every refresh.
+export const DAEMON_GITIGNORE_ENTRIES = [
+  'papercamp/.pairing.json',
+  'papercamp/.task-logs/',
+  'papercamp/tasks.log',
+  'papercamp/notifications.log',
+  'papercamp/pr-reviews.json',
+  'papercamp/pr-map.json',
+  'papercamp/night.json',
+  'papercamp/run-order.md',
+] as const;
 
-// Machine-local pairing state must never be tracked — a token committed to the
-// repo would let anyone with read access pair as a trusted hosted client.
 async function ensureGitignoreEntry(targetDir: string): Promise<void> {
   const gitignorePath = join(targetDir, '.gitignore');
   const content = (await exists(gitignorePath)) ? await readFile(gitignorePath, 'utf-8') : '';
   const lines = content.length > 0 ? content.split('\n') : [];
-  if (lines.some((line) => line.trim() === PAIRING_GITIGNORE_ENTRY)) return;
+  const present = new Set(lines.map((line) => line.trim()));
+  const missing = DAEMON_GITIGNORE_ENTRIES.filter((entry) => !present.has(entry));
+  if (missing.length === 0) return;
 
   const lastPapercampLine = lines.reduce(
     (last, line, i) => (line.startsWith('papercamp/') ? i : last),
@@ -130,10 +141,10 @@ async function ensureGitignoreEntry(targetDir: string): Promise<void> {
   );
   if (lastPapercampLine === -1) {
     const separator = content.length > 0 && !content.endsWith('\n') ? '\n' : '';
-    await writeFile(gitignorePath, `${content}${separator}${PAIRING_GITIGNORE_ENTRY}\n`, 'utf-8');
+    await writeFile(gitignorePath, `${content}${separator}${missing.join('\n')}\n`, 'utf-8');
     return;
   }
-  lines.splice(lastPapercampLine + 1, 0, PAIRING_GITIGNORE_ENTRY);
+  lines.splice(lastPapercampLine + 1, 0, ...missing);
   await writeFile(gitignorePath, lines.join('\n'), 'utf-8');
 }
 

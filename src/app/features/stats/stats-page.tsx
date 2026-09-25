@@ -8,7 +8,7 @@ export const StatsPage = () => {
 
   return (
     <div>
-      <PageTitle>Stats</PageTitle>
+      <PageTitle className="mb-6">Stats</PageTitle>
       <p className="opacity-50 mb-6">
         A read-only look at project health — every number here is informational, none of them gate
         anything.
