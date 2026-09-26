@@ -10,7 +10,7 @@ const LINES = [
 // Same slots the real sidebars fill — a 64px search row, then 32px rows — so the
 // card keeps its height when the content arrives.
 export const SidebarSkeleton = () => (
-  <SidebarCard>
+  <SidebarCard className="shrink-0">
     <div className="flex flex-col" aria-hidden="true">
       <div className="flex h-[64px] items-center">
         <Skeleton variant="rect" width="100%" height={28} />

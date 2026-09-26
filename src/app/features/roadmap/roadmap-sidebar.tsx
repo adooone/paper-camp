@@ -1,9 +1,9 @@
 import {
   Button,
   Input,
-  ListItem,
   SidebarCard,
   SidebarField,
+  SidebarItem,
   SidebarLabel,
   Stamp,
 } from '@dendelion/paper-ui';
@@ -31,7 +31,7 @@ export const RoadmapSidebar = () => {
   if (!roadmap) return null;
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -47,46 +47,35 @@ export const RoadmapSidebar = () => {
         <SidebarLabel>Horizon</SidebarLabel>
         <div className="flex flex-col">
           {horizonTitles.map((title) => (
-            <ListItem
+            <SidebarItem
               key={title}
-              size="small"
               active={activeHorizons.has(title)}
               onClick={() => toggleRoadmapHorizon(title)}
-              className="pc-row text-xs"
-              action={<span className="text-2xs text-ink-500">{horizonCounts[title] ?? 0}</span>}
+              count={horizonCounts[title] ?? 0}
             >
               {stripHorizonPrefix(title)}
-            </ListItem>
+            </SidebarItem>
           ))}
         </div>
 
         <SidebarLabel>Status</SidebarLabel>
         <div className="flex flex-col">
           {visibleStatuses.map((status) => (
-            <ListItem
+            <SidebarItem
               key={status}
-              size="small"
               active={activeStatuses.has(status)}
               onClick={() => toggleRoadmapStatus(status)}
-              className="pc-row text-xs"
-              action={<span className="text-2xs text-ink-500">{statusCounts[status] ?? 0}</span>}
+              count={statusCounts[status] ?? 0}
             >
-              {/* Negative margin: a stamp is taller than the row's text line and drops the count. */}
-              <span className="-my-1 inline-flex items-center">
-                <Stamp size="small" variant={ITEM_STATE_STAMP[status].variant}>
-                  {ITEM_STATE_STAMP[status].label}
-                </Stamp>
-              </span>
-            </ListItem>
+              <Stamp size="small" variant={ITEM_STATE_STAMP[status].variant}>
+                {ITEM_STATE_STAMP[status].label}
+              </Stamp>
+            </SidebarItem>
           ))}
         </div>
 
         {hasActiveFilters && (
-          <Button
-            variant="link"
-            onClick={clearRoadmapFilters}
-            className="pc-row-label text-2xs opacity-70"
-          >
+          <Button variant="link" onClick={clearRoadmapFilters} className="text-2xs opacity-70">
             Clear filters
           </Button>
         )}

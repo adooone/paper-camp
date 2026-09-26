@@ -1,5 +1,5 @@
 import { useActiveSettingsSection } from '@/app/hooks';
-import { ListItem, SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarCard, SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export const SettingsSidebar = () => {
@@ -7,78 +7,61 @@ export const SettingsSidebar = () => {
   const navigate = useNavigate();
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <SidebarLabel>General</SidebarLabel>
       <div className="flex flex-col">
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
-          active={section === null}
-          onClick={() => navigate({ to: '/settings' })}
-        >
+        <SidebarItem active={section === null} onClick={() => navigate({ to: '/settings' })}>
           Project Info
-        </ListItem>
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        </SidebarItem>
+        <SidebarItem
           active={section === 'setup'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'setup' } })}
         >
           Setup
-        </ListItem>
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        </SidebarItem>
+        <SidebarItem
           active={section === 'merge-policy'}
           onClick={() =>
             navigate({ to: '/settings/$section', params: { section: 'merge-policy' } })
           }
         >
           Merge Policy
-        </ListItem>
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        </SidebarItem>
+        <SidebarItem
           active={section === 'toolbar'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'toolbar' } })}
         >
           Toolbar
-        </ListItem>
+        </SidebarItem>
       </div>
       <SidebarLabel>Stack</SidebarLabel>
       <div className="flex flex-col">
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        <SidebarItem
           active={section === 'desk'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'desk' } })}
         >
           Desk
-        </ListItem>
+        </SidebarItem>
       </div>
       <SidebarLabel>Automation</SidebarLabel>
       <div className="flex flex-col">
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        <SidebarItem
           active={section === 'night'}
           onClick={() => navigate({ to: '/settings/$section', params: { section: 'night' } })}
         >
           Review passes
-        </ListItem>
+        </SidebarItem>
       </div>
       <SidebarLabel>Notifications</SidebarLabel>
       <div className="flex flex-col">
-        <ListItem
-          size="small"
-          className="pc-row text-xs"
+        <SidebarItem
           active={section === 'notifications'}
           onClick={() =>
             navigate({ to: '/settings/$section', params: { section: 'notifications' } })
           }
         >
           Notifications
-        </ListItem>
+        </SidebarItem>
       </div>
     </SidebarCard>
   );

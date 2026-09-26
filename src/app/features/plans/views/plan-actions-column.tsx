@@ -4,7 +4,6 @@ import {
   CloseIcon,
   FolderIcon,
   Input,
-  ListItem,
   RefreshIcon,
   Select,
   SidebarCard,
@@ -43,25 +42,15 @@ export const PlanActionsColumn = () => {
   } = data;
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex flex-col">
         <div className="flex flex-col">
-          <ListItem
-            size="small"
-            active={detailView === 'details'}
-            onClick={() => setDetailView('details')}
-            className="pc-row text-xs"
-          >
+          <SidebarItem active={detailView === 'details'} onClick={() => setDetailView('details')}>
             Details
-          </ListItem>
-          <ListItem
-            size="small"
-            active={detailView === 'feedback'}
-            onClick={() => setDetailView('feedback')}
-            className="pc-row text-xs"
-          >
+          </SidebarItem>
+          <SidebarItem active={detailView === 'feedback'} onClick={() => setDetailView('feedback')}>
             Feedback
-          </ListItem>
+          </SidebarItem>
         </div>
 
         {/* Read-only: the dropped/reopen override lives in Actions below since
@@ -136,7 +125,7 @@ export const PlanActionsCommandsColumn = () => {
   } = data;
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex flex-col">
         {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
         {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}

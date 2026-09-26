@@ -106,9 +106,10 @@ not run. Anything the baseline did not draw.
       Column templates, cell order and handwritten meta across the run,
       roadmap, standing-concern and plan rows.
       run: 27m31s · 220 in · 81.4k out · sonnet-5 · sess:4609f538-45fd-4ce6-be06-57ba6a56a75c
-- [ ] Fix the sidebars, the git file list and the stamps
+- [x] Fix the sidebars, the git file list and the stamps
       Includes moving the six `ListItem` lists to `SidebarItem` and dropping
       `.pc-row` from `utilities.css`.
+      run: 27m5s · 258 in · 62.8k out · sonnet-5 · sess:68430586-72e5-4f3f-be17-3d9cfc86ef9a
 - [ ] Lay out the chunk view, then clear the leftovers
       The facts grid and findings table, the leftover icon, gap and button
       fixes, and the `utilities.css` and `tailwind.config.ts` deletions.

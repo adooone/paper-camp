@@ -158,31 +158,6 @@ header > div[class*="headerActions"] {
 }
 
 /*
- * Sidebar rows are written on the ruled background: one 32px cell each, with the text
- * resting just above the rule rather than floating mid-cell. line-height is explicit
- * because an inherited tall one fills the cell and leaves flex-end nothing to push.
- * On a paper-ui ListItem this also has to beat its own align-items:center — it does,
- * on source order, since utilities.css is imported after the library's stylesheet.
- */
-.pc-row {
-  display: flex;
-  align-items: flex-end;
-  height: 32px;
-  padding-top: 0;
-  padding-bottom: 4px;
-  line-height: 1;
-}
-
-/* The label that heads a sidebar group — same cell, same rule. */
-.pc-row-label {
-  display: flex;
-  align-items: flex-end;
-  height: 32px;
-  padding-bottom: 4px;
-  line-height: 1;
-}
-
-/*
  * paper-ui scopes its weight-600 rule to elements inside `Layout`, but the app
  * header, status bar, stack panel and every portal (Menu, Modal, Select, Toast,
  * Tooltip) render outside it — restored globally here until paper-ui's IDEA-3

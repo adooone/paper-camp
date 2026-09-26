@@ -1,8 +1,8 @@
 import {
   EmptyState,
   Input,
-  ListItem,
   SidebarCard,
+  SidebarItem,
   SidebarLabel,
   Skeleton,
 } from '@dendelion/paper-ui';
@@ -27,7 +27,7 @@ export const DocsSidebar = () => {
   } = useDocsSidebar();
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex h-[64px] items-center">
         <Input
           size="small"
@@ -46,15 +46,13 @@ export const DocsSidebar = () => {
           </span>
         ) : repoDocs.length > 0 ? (
           repoDocs.map((f) => (
-            <ListItem
+            <SidebarItem
               key={f.name}
-              size="small"
-              className="pc-row text-xs"
               active={activeDocSection === 'repo-docs' && activeDocTitle === f.name}
               onClick={() => selectRepoDoc(f.name)}
             >
               {simplecaseLabel(f.name)}
-            </ListItem>
+            </SidebarItem>
           ))
         ) : (
           <EmptyState message="No repo docs found" />
@@ -69,15 +67,13 @@ export const DocsSidebar = () => {
           </span>
         ) : releaseVersions.length > 0 ? (
           releaseVersions.map((version) => (
-            <ListItem
+            <SidebarItem
               key={version}
-              size="small"
-              className="pc-row text-xs"
               active={activeDocSection === 'release-notes' && activeReleaseVersion === version}
               onClick={() => selectReleaseVersion(version)}
             >
               {version}
-            </ListItem>
+            </SidebarItem>
           ))
         ) : (
           <EmptyState message="No releases yet" />

@@ -31,14 +31,7 @@ interface FixStampProps {
 
 const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps) => (
   <Tooltip content={tooltip}>
-    <Stamp
-      size="small"
-      variant={variant}
-      onClick={() => {
-        if (!disabled) onClick();
-      }}
-      className={disabled ? 'pointer-events-none opacity-50' : undefined}
-    >
+    <Stamp size="small" variant={variant} onClick={onClick} disabled={disabled}>
       {label}
     </Stamp>
   </Tooltip>
@@ -46,16 +39,7 @@ const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps)
 
 const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
   <Tooltip content={title}>
-    <Stamp
-      size="small"
-      variant={CHECK_VARIANT[status]}
-      onClick={() => {
-        if (!anyRunning) onClick();
-      }}
-      className={
-        anyRunning ? `pointer-events-none ${status !== 'running' ? 'opacity-50' : ''}` : undefined
-      }
-    >
+    <Stamp size="small" variant={CHECK_VARIANT[status]} onClick={onClick} disabled={anyRunning}>
       {label}
       <span className={status === 'running' ? 'visible' : 'invisible'}>…</span>
     </Stamp>
@@ -109,15 +93,21 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
                   : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
               }
             >
-              <Stamp
-                size="small"
-                variant={hasDocIssues ? 'error' : 'success'}
-                onClick={hasDocIssues ? () => setDocsExpanded((prev) => !prev) : undefined}
-                pressed={docsExpanded}
-                className={hasDocIssues ? undefined : 'pointer-events-none'}
+              {/* Raw <button>: Stamp has no aria-controls prop, and the expand toggle needs one. */}
+              <button
+                type="button"
+                className="inline-flex border-none bg-none bg-transparent p-0"
+                disabled={!hasDocIssues}
+                aria-expanded={hasDocIssues ? docsExpanded : undefined}
+                aria-controls="deliver-doc-findings"
+                onClick={() => {
+                  if (hasDocIssues) setDocsExpanded((prev) => !prev);
+                }}
               >
-                Docs
-              </Stamp>
+                <Stamp size="small" variant={hasDocIssues ? 'error' : 'success'}>
+                  Docs
+                </Stamp>
+              </button>
             </Tooltip>
             {docsExpanded && hasDocIssues && (
               <div id="deliver-doc-findings" className="mt-2 flex flex-col gap-2">

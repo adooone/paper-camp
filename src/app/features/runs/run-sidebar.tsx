@@ -41,7 +41,7 @@ export const LogSidebar = () => {
   const { filters, setFilters, hasActiveFilters, clearFilters } = useLogPage();
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -88,7 +88,7 @@ export const LogSidebar = () => {
             variant="link"
             data-testid="clear-log-filters"
             onClick={clearFilters}
-            className="pc-row-label text-2xs opacity-70"
+            className="text-2xs opacity-70"
           >
             Clear filters
           </Button>
@@ -102,7 +102,7 @@ export const LogStatsSidebar = () => {
   const { stats } = useLogPage();
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <StatRow label="Runs" value={String(stats.runs)} />
         <StatRow label="Failed" value={String(stats.failed)} />

@@ -6,9 +6,9 @@ import type { PlanStatus } from '@/types/index';
 import {
   Button,
   Input,
-  ListItem,
   SidebarCard,
   SidebarField,
+  SidebarItem,
   SidebarLabel,
 } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -47,7 +47,7 @@ export const PlanFilterColumn = () => {
     filters.search !== '' || filters.subject !== null || !isDefaultStatuses(filters.statuses);
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <div className="flex flex-col">
         <SidebarField label="Search">
           <Input
@@ -65,22 +65,20 @@ export const PlanFilterColumn = () => {
           {visibleStatuses.map((status) => {
             const isActive = activeStatuses.has(status);
             return (
-              <ListItem
+              <SidebarItem
                 key={status}
-                size="small"
                 active={isActive}
                 onClick={() => togglePlanStatus(status)}
-                className="pc-row text-xs"
                 icon={
                   <span
                     className="w-[9px] h-[9px] rounded-full shrink-0"
                     style={{ background: STATUS_COLOR[status] }}
                   />
                 }
-                action={<span className="text-2xs text-ink-500">{statusCounts[status]}</span>}
+                count={statusCounts[status]}
               >
                 {STATUS_LABEL[status]}
-              </ListItem>
+              </SidebarItem>
             );
           })}
         </div>
@@ -93,7 +91,7 @@ export const PlanFilterColumn = () => {
               clearPlanFilters();
               navigate({ to: '/', search: {} });
             }}
-            className="pc-row-label text-2xs opacity-70"
+            className="text-2xs opacity-70"
           >
             Clear filters
           </Button>

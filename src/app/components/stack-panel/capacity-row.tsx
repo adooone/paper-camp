@@ -1,13 +1,21 @@
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
-import { Card, IconButton, Progress, RefreshIcon, Spinner, Stamp } from '@dendelion/paper-ui';
+import {
+  Card,
+  IconButton,
+  Progress,
+  RefreshIcon,
+  Spinner,
+  Stamp,
+  Tooltip,
+} from '@dendelion/paper-ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { chalkStatusFill, chalkStatusText } from './shared';
+import { chalkStatusText } from './shared';
 
-const levelFill = {
-  allowed: chalkStatusFill.pass,
-  warning: chalkStatusFill.running,
-  rejected: chalkStatusFill.fail,
+const levelVariant = {
+  allowed: 'success',
+  warning: 'warning',
+  rejected: 'error',
 } as const;
 
 const levelText = {
@@ -95,31 +103,31 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
             className="min-w-0 flex-1"
             value={pct}
             max={100}
-            // The chalk *Text* tokens are the light marks on the board; the *Fill*
-            // tokens are dark stamp backgrounds and vanish against it.
+            // The chalk *Text* tokens are the light marks that read on the board.
             color={levelText[level]}
             surface="chalkboard"
           />
           <span className="flex shrink-0 items-center gap-2">
             {snapshot?.overage && (
+              <Tooltip
+                content="Extra usage beyond the plan's included capacity."
+                surface="chalkboard"
+              >
+                <Stamp surface="chalkboard" size="small" variant="warning">
+                  overage
+                </Stamp>
+              </Tooltip>
+            )}
+            <Tooltip content={`5-hour window usage: ${level}`} surface="chalkboard">
               <Stamp
                 surface="chalkboard"
                 size="small"
-                fillColor={chalkStatusFill.running}
-                textColor={chalkStatusText.running}
+                variant={levelVariant[level]}
+                className="leading-none"
               >
-                overage
+                {fiveHour ? `${pct}%` : (snapshot?.status ?? 'no report')}
               </Stamp>
-            )}
-            <Stamp
-              surface="chalkboard"
-              size="small"
-              fillColor={levelFill[level]}
-              textColor={levelText[level]}
-              className="leading-none"
-            >
-              {fiveHour ? `${pct}%` : (snapshot?.status ?? 'no report')}
-            </Stamp>
+            </Tooltip>
           </span>
         </div>
       </div>

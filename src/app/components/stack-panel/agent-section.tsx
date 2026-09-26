@@ -8,10 +8,19 @@ import {
   type TaskKind,
   type TaskLogEntry,
 } from '@/types/index';
-import { Button, Card, CloseIcon, IconButton, Stamp, useToast } from '@dendelion/paper-ui';
+import {
+  Button,
+  Card,
+  CloseIcon,
+  IconButton,
+  Stamp,
+  type StampVariant,
+  Tooltip,
+  useToast,
+} from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CapacityRow } from './capacity-row';
-import { chalkStatusFill, chalkStatusText, formatLastRun, groupLabelClassName } from './shared';
+import { formatLastRun, groupLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
 // Shared by the task and capacity cards so they read as one stack. Their contents flex
@@ -92,21 +101,13 @@ export const taskSubtitle = (task: AgentTaskState): string => {
   return ` — ${label}`;
 };
 
-const statusFill: Record<AgentTaskStatus, string> = {
-  starting: chalkStatusFill.running,
-  running: chalkStatusFill.running,
-  stopping: chalkStatusFill.running,
-  done: chalkStatusFill.pass,
-  error: chalkStatusFill.fail,
-  superseded: chalkStatusFill.running,
-};
-const statusText: Record<AgentTaskStatus, string> = {
-  starting: chalkStatusText.running,
-  running: chalkStatusText.running,
-  stopping: chalkStatusText.running,
-  done: chalkStatusText.pass,
-  error: chalkStatusText.fail,
-  superseded: chalkStatusText.running,
+const statusVariant: Record<AgentTaskStatus, StampVariant> = {
+  starting: 'warning',
+  running: 'warning',
+  stopping: 'warning',
+  done: 'success',
+  error: 'error',
+  superseded: 'warning',
 };
 
 const AgentTaskCard = ({
@@ -170,25 +171,28 @@ const AgentTaskCard = ({
           </span>
           <div className="flex shrink-0 items-center gap-2">
             {task.status === 'error' && task.errorKind === 'auth' ? (
-              <Stamp
+              <Tooltip
+                content="Click to sign back in from Settings → Connections."
                 surface="chalkboard"
-                size="small"
-                fillColor={statusFill.error}
-                textColor={statusText.error}
-                className="leading-none"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate({ to: '/settings/$section', params: { section: 'setup' } });
-                }}
               >
-                stopped — agent signed out
-              </Stamp>
+                <Stamp
+                  surface="chalkboard"
+                  size="small"
+                  variant="error"
+                  className="leading-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate({ to: '/settings/$section', params: { section: 'setup' } });
+                  }}
+                >
+                  stopped — agent signed out
+                </Stamp>
+              </Tooltip>
             ) : (
               <Stamp
                 surface="chalkboard"
                 size="small"
-                fillColor={statusFill[task.status]}
-                textColor={statusText[task.status]}
+                variant={statusVariant[task.status]}
                 className="leading-none"
               >
                 {task.status}
@@ -215,15 +219,11 @@ const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
         <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
           {entry.planId ?? entry.planTitle}
         </span>
-        <Stamp
-          surface="chalkboard"
-          size="small"
-          fillColor={statusFill.running}
-          textColor={statusText.running}
-          className="w-fit leading-none"
-        >
-          A run was interrupted; run again
-        </Stamp>
+        <Tooltip content="Click to open the run and retry it." surface="chalkboard">
+          <Stamp surface="chalkboard" size="small" variant="warning" className="w-fit leading-none">
+            A run was interrupted; run again
+          </Stamp>
+        </Tooltip>
       </div>
     </Card>
   );

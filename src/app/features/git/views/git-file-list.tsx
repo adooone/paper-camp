@@ -46,7 +46,7 @@ export const GitFileList = () => {
   if (!files) return <SidebarSkeleton />;
   if (files.length === 0) {
     return (
-      <SidebarCard>
+      <SidebarCard className="shrink-0">
         <div className="flex flex-col">
           <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
             <span>Changed files</span>
@@ -58,7 +58,7 @@ export const GitFileList = () => {
   }
 
   return (
-    <SidebarCard>
+    <SidebarCard className="shrink-0">
       <nav aria-label="Changed files" className="flex flex-col">
         <div className={`${sectionLabelClass} flex h-[32px] items-end justify-between pb-1`}>
           <span>Changed files</span>
@@ -101,11 +101,10 @@ export const GitFileList = () => {
                     <Row
                       surface="none"
                       className="min-w-0 flex-1"
-                      columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '0px', trailing: 'auto' }}
-                      highlighted={entry.path === activePath}
+                      columns={{ title: 'minmax(0,1fr)', trailing: 'auto' }}
+                      active={entry.path === activePath}
                       onClick={() => scrollToFile(entry.path, expandDiffPath)}
                       ariaLabel={entry.path}
-                      id=""
                       title={
                         <span
                           className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
@@ -114,7 +113,6 @@ export const GitFileList = () => {
                           {splitPathForDisplay(entry.path).base}
                         </span>
                       }
-                      meta=""
                       trailing={
                         !entry.binary && (
                           <CountBadge additions={entry.additions} deletions={entry.deletions} />

@@ -123,9 +123,11 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
           columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: 'auto', trailing: 'auto' }}
           id={
             commit.prefix ? (
-              <Stamp size="small" variant="neutral">
-                {commit.prefix}
-              </Stamp>
+              <span className="hidden sm:inline-flex">
+                <Stamp size="small" variant="neutral">
+                  {commit.prefix}
+                </Stamp>
+              </span>
             ) : (
               ''
             )
@@ -134,6 +136,7 @@ const CommitRow = ({ commit, upstream, isFirst, isLast, seed }: CommitRowProps) 
           meta={
             <MetaLine className="flex flex-wrap items-baseline gap-x-1.5">
               <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
+              {commit.prefix && <span className="sm:hidden">· {commit.prefix}</span>}
               <span>· {formatRelativeTime(commit.date)}</span>
             </MetaLine>
           }
