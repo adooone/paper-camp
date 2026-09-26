@@ -100,7 +100,8 @@ Charts and the drawer, which are [[IDEA-282]] and [[IDEA-283]] and have
 not run. Anything the baseline did not draw.
 
 ### Phases
-- [ ] Bump paper-ui to the release carrying IDEA-8 and IDEA-9
+- [x] Bump paper-ui to the release carrying IDEA-8 and IDEA-9
+      run: 8m49s · 36 in · 3.4k out · sonnet-5 · sess:4609f538-45fd-4ce6-be06-57ba6a56a75c
 - [ ] Restore the log, worklist, roadmap and plan row grids
       Column templates, cell order and handwritten meta across the run,
       roadmap, standing-concern and plan rows.
