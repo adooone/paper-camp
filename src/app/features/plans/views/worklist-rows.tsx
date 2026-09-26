@@ -1,11 +1,11 @@
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { MetaLine, NoteIcon, Row, Stamp, Switch } from '@dendelion/paper-ui';
+import { MetaLine, NoteIcon, Row, Stamp, Switch, Text } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
-import { PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
+import { FIX_ROW_COLUMNS, PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -138,13 +138,13 @@ export const WorklistRows = ({
             columns={PLAN_ROW_COLUMNS}
             id={sortHeader('id', 'Id')}
             title={sortHeader('title', 'Title')}
-            meta={
+            meta={sortHeader('updated', 'Updated')}
+            trailing={
               <span className="flex items-center gap-2">
-                {sortHeader('updated', 'Updated')}
                 {sortHeader('progress', 'Progress')}
+                {sortHeader('status', 'Status')}
               </span>
             }
-            trailing={sortHeader('status', 'Status')}
           />
         </div>
       </div>
@@ -202,9 +202,14 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
           }
           meta={<MetaLine>—</MetaLine>}
           trailing={
-            <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
-              {IDEA_STATUS_LABEL[status]}
-            </Stamp>
+            <>
+              <Text face="serif" size="base" className="opacity-30">
+                —
+              </Text>
+              <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
+                {IDEA_STATUS_LABEL[status]}
+              </Stamp>
+            </>
           }
         />
       </div>
@@ -234,7 +239,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
       <div className="flex-1 min-w-0">
         <Row
           surface="card"
-          columns={PLAN_ROW_COLUMNS}
+          columns={FIX_ROW_COLUMNS}
           highlighted={fix.title === activePlanTitle}
           onClick={onOpen ? () => onOpen(fix.title) : undefined}
           ariaLabel={fix.title}
@@ -244,10 +249,14 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
               <Stamp size="small" variant="warning">
                 fix
               </Stamp>
-              <span className={titleTextClass}>{fix.title}</span>
+              <span className={`${titleTextClass} min-w-0 flex-1`}>{fix.title}</span>
+              {fix.idea && (
+                <Text face="mono" size="xs" tone="faint" noWrap>
+                  {fix.idea}
+                </Text>
+              )}
             </span>
           }
-          meta={<MetaLine>{fix.idea ? `→ ${fix.idea}` : ''}</MetaLine>}
           trailing={
             <Stamp size="small" variant={STATUS_STAMP[status]}>
               {STATUS_LABEL[status]}

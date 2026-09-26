@@ -1,6 +1,6 @@
 import type { LogRow } from '@/types/index';
 import { Button, Row } from '@dendelion/paper-ui';
-import { LOG_ROW_COLUMNS, LogRowView } from './run-row';
+import { LOG_ROW_GRID_CLASS, LogRowView } from './run-row';
 
 const headerLabelClassName = 'font-handwritten text-sm font-semibold whitespace-nowrap opacity-60';
 
@@ -14,11 +14,17 @@ export const LogList = ({ rows, hasMore, onLoadMore }: LogListProps) => (
   <div className="flex flex-col gap-1">
     <Row
       surface="card"
-      columns={LOG_ROW_COLUMNS}
-      id={<span className={headerLabelClassName} />}
-      title={<span className={headerLabelClassName}>Entry</span>}
-      meta={<span className={headerLabelClassName}>Time · Type · Agent · Duration</span>}
-      trailing={<span className={headerLabelClassName}>Outcome</span>}
+      columns={{ title: 'minmax(0,1fr)' }}
+      title={
+        <div className={LOG_ROW_GRID_CLASS}>
+          <span className={headerLabelClassName}>Time</span>
+          <span className={headerLabelClassName}>Type</span>
+          <span className={headerLabelClassName}>Entry</span>
+          <span className={headerLabelClassName}>Agent</span>
+          <span className={headerLabelClassName}>Duration</span>
+          <span className={headerLabelClassName}>Outcome</span>
+        </div>
+      }
     />
     {rows.map((row) => (
       <LogRowView key={row.id} row={row} />

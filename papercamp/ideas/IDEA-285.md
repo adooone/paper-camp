@@ -102,9 +102,10 @@ not run. Anything the baseline did not draw.
 ### Phases
 - [x] Bump paper-ui to the release carrying IDEA-8 and IDEA-9
       run: 8m49s · 36 in · 3.4k out · sonnet-5 · sess:4609f538-45fd-4ce6-be06-57ba6a56a75c
-- [ ] Restore the log, worklist, roadmap and plan row grids
+- [x] Restore the log, worklist, roadmap and plan row grids
       Column templates, cell order and handwritten meta across the run,
       roadmap, standing-concern and plan rows.
+      run: 27m31s · 220 in · 81.4k out · sonnet-5 · sess:4609f538-45fd-4ce6-be06-57ba6a56a75c
 - [ ] Fix the sidebars, the git file list and the stamps
       Includes moving the six `ListItem` lists to `SidebarItem` and dropping
       `.pc-row` from `utilities.css`.

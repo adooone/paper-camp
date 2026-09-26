@@ -8,6 +8,7 @@ import {
   type RowColumns,
   Spinner,
   Stamp,
+  Text,
   Tooltip,
 } from '@dendelion/paper-ui';
 import { color, colors } from '@dendelion/paper-ui/tokens';
@@ -66,7 +67,13 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
 export const PLAN_ROW_COLUMNS: RowColumns = {
   id: '76px',
   title: 'minmax(0,1fr)',
-  meta: '110px',
+  meta: { width: '64px', hideBelow: 'lg' },
+  trailing: '154px',
+};
+
+export const FIX_ROW_COLUMNS: RowColumns = {
+  id: '76px',
+  title: 'minmax(0,1fr)',
   trailing: '92px',
 };
 
@@ -96,13 +103,21 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                 id={<PlanIdStamp id={plan.id} />}
                 title={plan.title}
                 meta={
-                  <MetaLine>
+                  <MetaLine className="whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
-                    {progress ? ` · ${progress.done}/${progress.total}` : ''}
                   </MetaLine>
                 }
                 trailing={
                   <>
+                    {progress ? (
+                      <MetaLine className="whitespace-nowrap">
+                        {progress.done}/{progress.total}
+                      </MetaLine>
+                    ) : (
+                      <Text face="serif" size="base" className="opacity-30">
+                        —
+                      </Text>
+                    )}
                     <Stamp size="small" variant={STATUS_STAMP[status]}>
                       {STATUS_LABEL[status]}
                     </Stamp>

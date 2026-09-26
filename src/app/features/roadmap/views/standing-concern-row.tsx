@@ -1,5 +1,5 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, MetaLine, Row } from '@dendelion/paper-ui';
+import { Accordion, Row, Text } from '@dendelion/paper-ui';
 import { useState } from 'react';
 import { IdeaRow } from './idea-row';
 
@@ -22,8 +22,8 @@ export const StandingConcernRow = ({ item, onOpen }: StandingConcernRowProps) =>
         title={
           <Row
             surface="none"
-            columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '0px', trailing: '8rem' }}
-            id=""
+            className="px-0"
+            columns={{ title: 'minmax(0,1fr)', meta: '6rem', trailing: '8rem' }}
             title={
               <div className="min-w-0">
                 <div className="truncate">{item.name}</div>
@@ -32,11 +32,10 @@ export const StandingConcernRow = ({ item, onOpen }: StandingConcernRowProps) =>
                 </div>
               </div>
             }
-            meta=""
             trailing={
-              <MetaLine className="whitespace-nowrap">
+              <Text face="handwritten" size="xs" tone="secondary" noWrap>
                 {item.rollup.done} shipped · {item.rollup.open} open
-              </MetaLine>
+              </Text>
             }
           />
         }

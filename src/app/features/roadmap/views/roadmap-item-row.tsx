@@ -1,5 +1,6 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, Button, Menu, MetaLine, Row, Stamp } from '@dendelion/paper-ui';
+import { Accordion, Button, Menu, Row, Stamp, Text } from '@dendelion/paper-ui';
+import { color } from '@dendelion/paper-ui/tokens';
 import { useEffect, useState } from 'react';
 import { ITEM_STATE_STAMP } from '../constants';
 import { AddCandidateForm } from './add-candidate-form';
@@ -51,16 +52,18 @@ export const RoadmapItemRow = ({
   }, [highlighted]);
 
   return (
-    <div className="border-b border-black/10 last:border-b-0">
+    <div
+      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'rounded-[10px] outline outline-2 outline-offset-[-2px]' : ''}`}
+      style={highlighted ? { outlineColor: color.accentAmber } : undefined}
+    >
       <Accordion
         expanded={expanded}
         onToggle={() => setExpanded((v) => !v)}
         title={
           <Row
             surface="none"
-            highlighted={highlighted}
-            columns={{ id: '0px', title: 'minmax(0,1fr)', meta: '8rem', trailing: '6rem' }}
-            id=""
+            className="px-0"
+            columns={{ title: 'minmax(0,1fr)', meta: '6rem', trailing: '8rem' }}
             title={
               <div className="min-w-0">
                 <div className="truncate">{item.name}</div>
@@ -70,24 +73,26 @@ export const RoadmapItemRow = ({
               </div>
             }
             meta={
+              <Stamp size="small" variant={stateStamp.variant}>
+                {stateStamp.label}
+              </Stamp>
+            }
+            trailing={
               item.rollup.total > 0 ? (
-                <>
-                  <MetaLine className="whitespace-nowrap">
+                <div className="flex flex-col items-end gap-1">
+                  <Text face="handwritten" size="xs" tone="secondary" noWrap>
                     {item.rollup.done} of {item.rollup.total} ·{' '}
                     {item.state === 'in-progress' && item.readyToShip
                       ? 'ready to ship'
                       : `${item.rollup.open} open`}
-                  </MetaLine>
+                  </Text>
                   <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
-                </>
+                </div>
               ) : (
-                <MetaLine>No ideas yet</MetaLine>
+                <Text face="handwritten" size="xs" tone="secondary">
+                  No ideas yet
+                </Text>
               )
-            }
-            trailing={
-              <Stamp size="small" variant={stateStamp.variant}>
-                {stateStamp.label}
-              </Stamp>
             }
           />
         }
