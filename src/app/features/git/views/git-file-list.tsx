@@ -70,7 +70,7 @@ export const GitFileList = () => {
               disabled={bulkPending}
               label={allStaged ? 'Unstage all files' : 'Stage all files'}
               onClick={toggleAll}
-              icon={<CheckAllIcon />}
+              icon={<CheckAllIcon size={14} />}
             />
           </Tooltip>
         </div>

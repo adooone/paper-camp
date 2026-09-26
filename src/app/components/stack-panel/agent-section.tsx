@@ -155,7 +155,7 @@ const AgentTaskCard = ({
             task.status === 'starting' ||
             task.status === 'stopping') && (
             <IconButton
-              icon={<CloseIcon />}
+              icon={<CloseIcon size={20} />}
               variant="ghost"
               size="tiny"
               surface="chalkboard"

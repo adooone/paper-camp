@@ -156,7 +156,7 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
               </Stamp>
             )}
           </div>
-          <FactsGrid items={facts} />
+          <FactsGrid items={facts} layout="inline" align="end" />
         </div>
       </Card>
       <Table
@@ -190,7 +190,7 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
             key: 'actions',
             header: '',
             align: 'end',
-            width: 10,
+            width: 'auto',
             cell: (finding: NightSuggestionEntry) => <FindingActionsCell finding={finding} />,
           },
         ]}

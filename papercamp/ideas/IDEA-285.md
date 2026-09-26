@@ -110,8 +110,9 @@ not run. Anything the baseline did not draw.
       Includes moving the six `ListItem` lists to `SidebarItem` and dropping
       `.pc-row` from `utilities.css`.
       run: 27m5s · 258 in · 62.8k out · sonnet-5 · sess:68430586-72e5-4f3f-be17-3d9cfc86ef9a
-- [ ] Lay out the chunk view, then clear the leftovers
+- [x] Lay out the chunk view, then clear the leftovers
       The facts grid and findings table, the leftover icon, gap and button
       fixes, and the `utilities.css` and `tailwind.config.ts` deletions.
+      run: 5m · 130 in · 26.2k out · sonnet-5 · sess:84bf2c57-e111-4ae2-92f9-3252fd6d3633
 - [ ] Compare against the `7a58b8b7` baseline at 1440px and 420px
       Log every remaining difference as a fix on the owning paper-ui idea.

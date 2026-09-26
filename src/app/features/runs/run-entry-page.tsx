@@ -56,12 +56,14 @@ export const LogEntryPage = () => {
   if (!row) {
     if (loading) return <RowSkeleton />;
     return (
-      <div className="flex flex-col items-center gap-3">
-        <EmptyState className="pb-0" message="This entry doesn't exist." />
-        <Button size="small" onClick={() => navigate({ to: '/log' })}>
-          Back to Log
-        </Button>
-      </div>
+      <EmptyState
+        message="This entry doesn't exist."
+        action={
+          <Button size="small" onClick={() => navigate({ to: '/log' })}>
+            Back to Log
+          </Button>
+        }
+      />
     );
   }
 
