@@ -4,6 +4,7 @@ title: Back to the pixel
 type: fix
 status: idea
 created: 2026-09-24
+updated: 2026-09-27
 tags:
   - app
   - ui
@@ -116,3 +117,26 @@ not run. Anything the baseline did not draw.
       run: 5m · 130 in · 26.2k out · sonnet-5 · sess:84bf2c57-e111-4ae2-92f9-3252fd6d3633
 - [ ] Compare against the `7a58b8b7` baseline at 1440px and 420px
       Log every remaining difference as a fix on the owning paper-ui idea.
+
+### Fixes
+- [ ] Fix the failing "lint" check
+      Fix the failing "lint" check in this repo.
+      
+      The command was `pnpm lint`.
+      
+      Output from the last run:
+      
+      
+      > @dendelion/paper-camp@0.37.1 lint /home/croco/dev/paper-camp
+      > biome check . && node scripts/comment-stats.mjs
+      
+      Checked 732 files in 14s. No fixes applied.
+      Comments: 2160 / 52574 lines = 4.11%
+      Trailing comment lines (code; // why): 18
+      Runs over the 2-line cap: 1 (3 lines)
+        src/app/server/agent.ts:1734 — 3 lines
+       ELIFECYCLE  Command failed with exit code 1.
+      
+
+### Thread
+- [x] 2026-09-27 [log] [agent] This run is headless — no browser, no display, no way to open the dev server or the `7a58b8b7` Vercel deployment side by side. The phase's only work is that visual comparison, so nothing was changed, no diff list was produced, and this phase's checkbox stays unticked. A human needs to run the comparison at 1440px and 420px across Plans, an idea, Roadmap, Git, Log, Settings and the stack panel, and log whatever differences remain as fixes on the owning paper-ui idea before this idea can go to `review`.
