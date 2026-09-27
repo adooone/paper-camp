@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.38.0](https://github.com/adooone/paper-camp/compare/v0.37.1...v0.38.0) (2026-09-27)
+
+
+### Features
+
+* **agent:** Treat unflipped checkboxes as a human pause, not a failure ([d5331d1](https://github.com/adooone/paper-camp/commit/d5331d1a30f0e890748a2bd9807dd10ee05907cf))
+
+
+### Bug Fixes
+
+* **agent:** Trim comment under lint's 2-line cap ([467e46a](https://github.com/adooone/paper-camp/commit/467e46ae7c37657a354cb10a12f0269293fbbf73))
+* **app:** Bump paper-ui to the release carrying IDEA-8 and IDEA-9 ([c1011f6](https://github.com/adooone/paper-camp/commit/c1011f6a4c6b6e19ca356be5a78d0277b9d6bc09))
+* **app:** Consistency ([6a2aa3b](https://github.com/adooone/paper-camp/commit/6a2aa3b3364cc71ecfba454ea7405acf5b1c023d))
+* **app:** Fix the sidebars, the git file list and the stamps ([ba1db74](https://github.com/adooone/paper-camp/commit/ba1db74f7d5aba5284473ed4223aebeb77703915))
+* **app:** Lay out the chunk view, then clear the leftovers ([a25538f](https://github.com/adooone/paper-camp/commit/a25538fa7268d6b4693346e889522b393ddcd949))
+* **app:** Restore chalk text contrast, archive note guard, fix-stamp a11y ([d8e223a](https://github.com/adooone/paper-camp/commit/d8e223ac26cc7515cc8facfa6a12ef69910e02a9))
+* **app:** Restore paper-ui token overrides and 600 weight ([c5d5ec4](https://github.com/adooone/paper-camp/commit/c5d5ec4d873a3521522d09fe8548787d8b5ca2ff))
+* **app:** Restore the log, worklist, roadmap and plan row grids ([a271655](https://github.com/adooone/paper-camp/commit/a2716558c188f755eb87ff45ef0917d9a9335753))
+* **app:** Swap Row for ListItem in git file list ([ebaabf7](https://github.com/adooone/paper-camp/commit/ebaabf7d9638ef1f2aab352a95f69c29f1ac86ad))
+* **app:** Use shared PLAN_ROW_COLUMNS for fix rows ([0f60f3a](https://github.com/adooone/paper-camp/commit/0f60f3aa112b8a38ef7e5a6b6243b2d2b549bc2d))
+* **cli:** cache toolbar assets in memory, test log truncation decoder reset ([89d4071](https://github.com/adooone/paper-camp/commit/89d40718c80e0bf330e8c683d0a1d92a16348370))
+* **cli:** decode follow-mode log tail with a stateful StringDecoder ([076f2d8](https://github.com/adooone/paper-camp/commit/076f2d802863f7e191468ee30abcf990103c1422))
+* **plans:** Unarchive an entity when its status is reopened ([d38d4d3](https://github.com/adooone/paper-camp/commit/d38d4d3f3fb2eed2e7640f686b25ce610e89dee4))
+* **ui:** Draw commit rail lines as plain straight strokes ([7a58b8b](https://github.com/adooone/paper-camp/commit/7a58b8b70851c1244ae6e49822c775b359b612d2))
+
 ## [0.37.1](https://github.com/adooone/paper-camp/compare/v0.37.0...v0.37.1) (2026-09-21)
 
 
