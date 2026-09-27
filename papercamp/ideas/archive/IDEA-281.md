@@ -2,9 +2,9 @@
 id: IDEA-281
 title: Adopt paper-ui's rows and sidebars
 type: refactor
-status: review
+status: done
 created: 2026-09-22
-updated: 2026-09-24
+updated: 2026-09-27
 tags:
   - app
   - ui
@@ -58,8 +58,6 @@ Charts, [[IDEA-282]]; the drawer and status bar, [[IDEA-283]].
       run: 3m55s · 94 in · 13.6k out · sonnet-5 · sess:d2016cc8-d989-4a4b-91c1-829dcc1231f6
 - [x] Trim `utilities.css` down to the `--pc-*` layout variables and the run-meta container query
       run: 3m11s · 46 in · 17.2k out · sonnet-5 · sess:d2016cc8-d989-4a4b-91c1-829dcc1231f6
-
-### Fixes
 
 ### Thread
 - [x] 2026-09-23 [question] [agent] Run-all parked on phase 3 ("Swap the local sidebar kit and settings rows for the library's") — the agent needs a decision: paper-ui's `SidebarItem` (the IDEA-5 spec, confirmed against `~/dev/paper-ui`'s source and showcase) only takes `icon`, `count`, `note`, `busy`, `tone`, `disabled` — it has no `active`/selected state (ListItem's blob-fill highlight is gone entirely) and no free-form `action` slot. Six current `ListItem` + `pc-row` call sites rely on exactly those two things: `docs-sidebar.tsx`, `settings-sidebar.tsx`, `plan-actions-column.tsx` (current-page/tab highlighting via `active`), and `roadmap-sidebar.tsx`, `plan-filter-column.tsx` (both `active` toggle-highlighting *and* an `action`/custom-content slot holding a count span or a `Stamp`). Converting them to `SidebarItem` as the phase literally instructs would silently drop the selected-item highlight from every sidebar nav list and drop the Stamp/count trailing content from the roadmap and plan filters. Should I (a) proceed and accept that loss as part of adopting the leaner library component, (b) keep `ListItem` (not `pc-row`) for these six active/action call sites and only convert the sidebar rows that don't need those two props, or (c) something else (e.g. simulate the selected state with a custom class using a `--pui-*` token)?
