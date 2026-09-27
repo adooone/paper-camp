@@ -353,6 +353,9 @@ function noProgressWarning(task: AgentTask): string {
   if (task.phaseIndex !== undefined) {
     return 'Warning: agent finished but did not check off this phase in the plan file — verify manually';
   }
+  if (task.fixIndex !== undefined) {
+    return 'Warning: agent finished but did not check off this fix in the plan file — verify manually';
+  }
   return 'Warning: agent finished but appended nothing to Phases or Log — verify manually';
 }
 

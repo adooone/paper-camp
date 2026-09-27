@@ -843,6 +843,30 @@ Plan body.
       expect(onRunComplete).toHaveBeenCalledOnce();
     });
 
+    it('stops without an error when a clean run leaves a fix checkbox unflipped', async () => {
+      const { root, plan } = await makeRoot(PLAN_PHASES_DONE_TWO_FIXES);
+      agentScript.current = 'process.exit(0)'; // exits cleanly but edits nothing, e.g. a visual-only fix
+      const spawns: string[] = [];
+      agentScript.buildArgs = (prompt) => {
+        spawns.push(prompt);
+        return ['-e', agentScript.current];
+      };
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+
+      manager.startRunAllPhases(plan);
+      expect(await waitForStatus(manager, settled)).toBe('done');
+      expect(currentStatus(manager)?.lines.join('\n')).toContain(
+        'did not check off this fix in the plan file',
+      );
+      expect(currentStatus(manager)?.lines.join('\n')).toContain(
+        'Run stopped after 0 phase(s) and 0 fix(es) completed — the rest needs a human',
+      );
+      // Stopped after the first fix: no second spawn, no run-complete handoff.
+      expect(spawns).toHaveLength(1);
+      expect(onRunComplete).not.toHaveBeenCalled();
+    });
+
     it('rejects a run when every phase and every fix are already checked', async () => {
       const { root, plan } = await makeRoot(
         PLAN_PHASES_DONE_TWO_FIXES.replace(/- \[ \]/g, '- [x]'),
