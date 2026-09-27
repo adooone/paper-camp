@@ -7,7 +7,7 @@ import {
   Checkbox,
   EmptyState,
   IconButton,
-  Row,
+  ListItem,
   SidebarCard,
   Tooltip,
 } from '@dendelion/paper-ui';
@@ -98,27 +98,24 @@ export const GitFileList = () => {
                       aria-label={entry.staged ? `Unstage ${entry.path}` : `Stage ${entry.path}`}
                     />
                     <GitStatusMarker status={entry.status} compact />
-                    <Row
-                      surface="none"
-                      className="min-w-0 flex-1"
-                      columns={{ title: 'minmax(0,1fr)', trailing: 'auto' }}
+                    <ListItem
+                      size="small"
                       active={entry.path === activePath}
                       onClick={() => scrollToFile(entry.path, expandDiffPath)}
-                      ariaLabel={entry.path}
-                      title={
-                        <span
-                          className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
-                          title={entry.path}
-                        >
-                          {splitPathForDisplay(entry.path).base}
-                        </span>
-                      }
-                      trailing={
+                      className="min-w-0 flex-1 items-end py-0 text-3xs"
+                      action={
                         !entry.binary && (
                           <CountBadge additions={entry.additions} deletions={entry.deletions} />
                         )
                       }
-                    />
+                    >
+                      <span
+                        className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
+                        title={entry.path}
+                      >
+                        {splitPathForDisplay(entry.path).base}
+                      </span>
+                    </ListItem>
                   </li>
                 ))}
               </ul>
