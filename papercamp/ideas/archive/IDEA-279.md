@@ -2,9 +2,9 @@
 id: IDEA-279
 title: Adopt paper-ui's tokens and defaults
 type: refactor
-status: review
+status: done
 created: 2026-09-22
-updated: 2026-09-24
+updated: 2026-09-27
 tags:
   - app
   - ui
