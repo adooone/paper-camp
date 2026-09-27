@@ -2,8 +2,9 @@
 id: IDEA-280
 title: Adopt paper-ui's text, links and icons
 type: refactor
-status: review
+status: done
 created: 2026-09-22
+updated: 2026-09-27
 tags:
   - app
   - ui
