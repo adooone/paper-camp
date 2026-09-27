@@ -71,12 +71,6 @@ export const PLAN_ROW_COLUMNS: RowColumns = {
   trailing: '154px',
 };
 
-export const FIX_ROW_COLUMNS: RowColumns = {
-  id: '76px',
-  title: 'minmax(0,1fr)',
-  trailing: '92px',
-};
-
 export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   return (

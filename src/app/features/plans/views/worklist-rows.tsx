@@ -3,9 +3,9 @@ import { useAppStore } from '@/app/stores/app-store';
 import { MetaLine, NoteIcon, Row, Stamp, Switch, Text } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus, runningTaskForPlan } from '../helpers';
+import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
-import { FIX_ROW_COLUMNS, PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
+import { PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -239,7 +239,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
       <div className="flex-1 min-w-0">
         <Row
           surface="card"
-          columns={FIX_ROW_COLUMNS}
+          columns={PLAN_ROW_COLUMNS}
           highlighted={fix.title === activePlanTitle}
           onClick={onOpen ? () => onOpen(fix.title) : undefined}
           ariaLabel={fix.title}
@@ -256,6 +256,11 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
                 </Text>
               )}
             </span>
+          }
+          meta={
+            <MetaLine className="whitespace-nowrap">
+              {fix.updated ? relativeDate(fix.updated) : relativeDate(fix.created)}
+            </MetaLine>
           }
           trailing={
             <Stamp size="small" variant={STATUS_STAMP[status]}>
