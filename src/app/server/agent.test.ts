@@ -460,9 +460,9 @@ describe('startRunAllPhases', () => {
     expect(resumes).toEqual([undefined, 'sess-1', 'sess-2']);
   });
 
-  it('stops with an error when the phase checkbox does not flip', async () => {
+  it('stops without an error when a clean run leaves the phase checkbox unflipped', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = 'process.exit(0)'; // exits cleanly but edits nothing
+    agentScript.current = 'process.exit(0)'; // exits cleanly but edits nothing, e.g. a visual-only phase
     const spawns: string[] = [];
     agentScript.buildArgs = (prompt) => {
       spawns.push(prompt);
@@ -473,8 +473,10 @@ describe('startRunAllPhases', () => {
     const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
 
     manager.startRunAllPhases(plan);
-    expect(await waitForStatus(manager, settled)).toBe('error');
-    expect(currentStatus(manager)?.lines.join('\n')).toContain('checkbox did not flip');
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(currentStatus(manager)?.lines.join('\n')).toContain(
+      'did not check off this phase in the plan file',
+    );
     // Stopped after the first phase: no second spawn, no commit, no review handoff.
     expect(spawns).toHaveLength(1);
     expect(onPhaseCommit).not.toHaveBeenCalled();

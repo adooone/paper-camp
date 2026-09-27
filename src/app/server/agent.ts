@@ -1646,10 +1646,11 @@ export function createAgentManager(
     failed: number;
     toleratedRed: Set<CheckName>;
     sessionId: string | undefined;
-    exit: 'superseded' | 'stopping' | 'ran';
+    exit: 'superseded' | 'stopping' | 'paused' | 'ran';
   }> {
     let completed = 0;
     let failed = 0;
+    let pausedForHuman = false;
     const toleratedRed = initialToleratedRed;
     let sessionId = initialSessionId;
 
@@ -1730,24 +1731,18 @@ export function createAgentManager(
       }
 
       const progressed = await didTaskProgress(task);
-      // A single phase run by hand is left for the human to check off; only a
-      // run-all treats an unflipped checkbox as a stop.
-      if (!progressed && task.taskKind === 'phase') {
+      // A clean run that leaves the checkbox unflipped (e.g. a phase that's
+      // inherently a human/visual check) is not a failure — in a solo phase
+      // run or mid run-all alike. Only an unreadable plan is a real failure.
+      if (progressed === false) {
         pushLine(task, noProgressWarning(task));
+        pausedForHuman = true;
         break;
       }
-      if (!progressed) {
+      if (progressed === null) {
         failed++;
-        task.errorReason =
-          progressed === null
-            ? `${kind} ${i + 1} — could not read plan after run`
-            : `${kind} ${i + 1} — ${kind} checkbox did not flip`;
-        pushLine(
-          task,
-          progressed === null
-            ? `[fail] ${kind} ${i + 1} — could not read plan after run, stopping`
-            : `[fail] ${kind} ${i + 1} — ${kind} checkbox did not flip, stopping`,
-        );
+        task.errorReason = `${kind} ${i + 1} — could not read plan after run`;
+        pushLine(task, `[fail] ${kind} ${i + 1} — could not read plan after run, stopping`);
         break;
       }
 
@@ -1778,7 +1773,13 @@ export function createAgentManager(
       failed,
       toleratedRed,
       sessionId,
-      exit: isSuperseded(task) ? 'superseded' : task.status === 'stopping' ? 'stopping' : 'ran',
+      exit: isSuperseded(task)
+        ? 'superseded'
+        : task.status === 'stopping'
+          ? 'stopping'
+          : pausedForHuman
+            ? 'paused'
+            : 'ran',
     };
   }
 
@@ -1843,6 +1844,14 @@ export function createAgentManager(
           void setStatus(task, 'done');
           return;
         }
+        if (phaseResult.exit === 'paused') {
+          pushLine(
+            task,
+            `Run stopped after ${phaseResult.completed} phase(s) completed — the rest needs a human`,
+          );
+          void setStatus(task, 'done');
+          return;
+        }
 
         // Fixes only start once every phase has landed clean — a plan mid-build
         // never jumps ahead to post-build follow-ups.
@@ -1872,6 +1881,14 @@ export function createAgentManager(
             return;
           }
           if (fixResult.exit === 'stopping') {
+            void setStatus(task, 'done');
+            return;
+          }
+          if (fixResult.exit === 'paused') {
+            pushLine(
+              task,
+              `Run stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed — the rest needs a human`,
+            );
             void setStatus(task, 'done');
             return;
           }
