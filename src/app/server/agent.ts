@@ -1731,9 +1731,8 @@ export function createAgentManager(
       }
 
       const progressed = await didTaskProgress(task);
-      // A clean run that leaves the checkbox unflipped (e.g. a phase that's
-      // inherently a human/visual check) is not a failure — in a solo phase
-      // run or mid run-all alike. Only an unreadable plan is a real failure.
+      // Unflipped checkbox after a clean run isn't a failure (e.g. a human/visual
+      // check phase); only an unreadable plan is.
       if (progressed === false) {
         pushLine(task, noProgressWarning(task));
         pausedForHuman = true;
