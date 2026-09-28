@@ -1,4 +1,4 @@
-import { splitQuestionText } from '@/core/parked-questions';
+import { splitQuestionText } from '@/core/decision-text';
 import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
 import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/paper-ui';
 import { useState } from 'react';

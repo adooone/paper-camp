@@ -214,9 +214,8 @@ export const REVIEW_SECTION: SectionDef<LogEntry> = {
   formatLines: (entries) => formatDatedLines('### Review', entries),
 };
 
-/** Like `foldContinuation`, but a `question` message's continuation lines can carry
- * `option:`/`context:` lines (IDEA-287) instead of wrapped prose — those are pulled
- * out into their own fields rather than folded back into `text`. */
+/** Like `foldContinuation`, but a `question` message's `option:`/`context:` continuation
+ * lines (IDEA-287) are pulled into their own fields rather than folded back into `text`. */
 function foldThreadContinuation(
   lines: string[],
   start: number,
