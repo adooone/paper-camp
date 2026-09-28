@@ -42,3 +42,14 @@ acceptance, never as a bare phase; the guide's phase rules say the same.
 
 Reminders or notifications for open manual steps. Any change to what a
 phase run does once it starts.
+
+### Phases
+- [ ] Parse and serialize the `[manual]` marker
+      A leading `[manual]` on a phase or fix line sets `manual: true` on the item and survives a write-back round trip.
+- [ ] Skip manual items in run-all
+      The loop steps past them to the next agent item and finishes done when only manual items remain open.
+- [ ] Derive review status and add the doctor warning
+      All agent phases done with manual ones open reads `review`; an open idea with no agent phase is a finding.
+- [ ] Show the *you* stamp on manual phase rows
+      No run control, and the checkbox flips through the status route without an agent task behind it.
+- [ ] Teach the drafters and the guide the rule

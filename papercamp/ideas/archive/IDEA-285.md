@@ -2,7 +2,7 @@
 id: IDEA-285
 title: Back to the pixel
 type: fix
-status: review
+status: done
 created: 2026-09-24
 updated: 2026-09-27
 tags:
