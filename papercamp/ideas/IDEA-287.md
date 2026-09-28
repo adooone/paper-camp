@@ -2,7 +2,7 @@
 id: IDEA-287
 title: Small questions with answers to pick
 type: feat
-status: in-progress
+status: review
 created: 2026-09-28
 tags:
   - app
@@ -83,7 +83,8 @@ Questions the user writes.
       with the first stamped *Recommended*, and a text field; pressing one sends
       its label through `feedback-message` and records the choice on the message.
       run: 8m18s · 110 in · 30.5k out · sonnet-5 · sess:d59bd794-9934-43db-b717-4bc91472e3dc
-- [ ] Trim the bell to the question line
+- [x] Trim the bell to the question line
+      run: 3m10s · 92 in · 15.9k out · sonnet-5 · sess:df90d280-7ede-43b7-811a-beb963f03ffb
 
 ### Thread
 - [ ] 2026-09-28 [question] [agent] Run-all parked on phase 1 ("Ask every decision prompt for the block") — the agent needs a decision: ` (three in `agent.ts`, two in `prompts.ts`). Type-check and biome both pass; the phase checkbox in IDEA-287.md is now checked (other phases remain unchecked, so status stays `idea`).

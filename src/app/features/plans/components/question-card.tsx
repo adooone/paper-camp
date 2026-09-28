@@ -1,24 +1,7 @@
+import { splitQuestionText } from '@/core/parked-questions';
 import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
 import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/paper-ui';
 import { useState } from 'react';
-
-const DECISION_MARKER = 'needs a decision: ';
-
-/** `escalateToLog` composes the thread message's `text` as a phase-context lead-in
- * followed by the bare question (agent.ts); split it back apart here so the card
- * can show the lead-in muted and the question at body size. */
-function splitQuestionText(text: string): { phaseLine?: string; question: string } {
-  const idx = text.lastIndexOf(DECISION_MARKER);
-  if (idx === -1) return { question: text };
-  const phaseLine = text
-    .slice(0, idx)
-    .replace(/[—-]\s*$/, '')
-    .trim();
-  return {
-    phaseLine: phaseLine || undefined,
-    question: text.slice(idx + DECISION_MARKER.length).trim(),
-  };
-}
 
 interface QuestionCardProps {
   message: ThreadMessage;
