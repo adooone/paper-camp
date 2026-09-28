@@ -2,7 +2,7 @@
 id: IDEA-286
 title: Manual steps are not phases
 type: feat
-status: in-progress
+status: review
 created: 2026-09-27
 updated: 2026-09-28
 tags:
@@ -63,7 +63,8 @@ phase run does once it starts.
 - [x] Hide the run control on manual phase rows
       No run control, and the checkbox flips through the status route without an agent task behind it.
       run: 41s · 22 in · 1.9k out · sonnet-5 · sess:fa098354-8edd-41cf-8eed-476ca86d7821
-- [ ] Teach the drafters and the guide the rule
+- [x] Teach the drafters and the guide the rule
+      run: 2m27s · 66 in · 9.5k out · sonnet-5 · sess:fa098354-8edd-41cf-8eed-476ca86d7821
 
 ### Thread
 - [x] 2026-09-28 [question] [agent] Run-all parked on phase 1 ("Parse and serialize the `[manual]` marker") — the agent needs a decision: The `[manual]` marker text is already in use. `PHASE_SOURCE_RE` in `src/core/sections.ts` already parses a leading `[manual]` into `source: 'manual'` — an existing, different concept (`appendManualPhase` in `src/app/features/plans/helpers/manual-commit.ts` tags phases that were completed via a manual git commit outside the agent flow, always `done: true`, rendered with a "manual" stamp in `phase-row-cells.tsx`). IDEA-286 phase 1 asks for a leading `[manual]` to set a new `manual: true` field meaning "this phase is human-only work, not runnable by an agent" — a distinct concept (any done state, skips run-all, renders a "you" stamp instead of the existing "manual" stamp). Both would parse the identical bracket text via the same regex, so I can't add this without either colliding with or overloading the existing `source: 'manual'` marker. How should these coexist — rename/repurpose the existing commit-provenance marker to free up `[manual]`, reuse `source: 'manual'` for both purposes, or use different bracket text for the new human-task marker?

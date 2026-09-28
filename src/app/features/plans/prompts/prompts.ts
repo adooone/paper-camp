@@ -21,6 +21,9 @@ export const BREVITY_CONTRACT = `Keep phases short: 3-5 phases, each a one-line 
 
 export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
 
+export const MANUAL_PHASE_RULE =
+  'A phase is a unit an agent runs. Anything needing a browser, a device, a human account, or a judgment call is not a phase an agent can run — put it under a `[manual]` marker (`- [ ] [manual] <title>`) or fold it into the body as acceptance, never as a bare phase.';
+
 // "Fix it here" (IDEA-192) — no plan/idea file to scope this to, so unlike the phase
 // runner this fix commits its own work; a human reviews it via ordinary git status.
 export function buildIssueFixPrompt(issue: Pick<Issue, 'title' | 'reason' | 'output'>): string {
@@ -210,7 +213,9 @@ ${logList}`;
   const keepUnchanged = `- the YAML frontmatter (id, title)
 - the \`## ${idea.id ?? 'IDEA-N'}: ${idea.title}\` heading line and the original body prose beneath it`;
 
-  return buildIdeaFleshOutPrompt(idea, 'expanding', context, keepUnchanged);
+  return `${buildIdeaFleshOutPrompt(idea, 'expanding', context, keepUnchanged)}
+
+If the workable approach involves steps a later drafting pass would turn into phases, say so with the same rule those phases will follow: ${MANUAL_PHASE_RULE}`;
 }
 
 const PROMOTE_KEEP_UNCHANGED = `- the YAML frontmatter (id, title, status)
@@ -274,6 +279,7 @@ Hard rules:
 - Never rewrite or delete the existing prose body or \`### Log\` entries — the idea's history stays intact.
 - Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
 - Steps that edit the same files are one phase, not split across several.
+- ${MANUAL_PHASE_RULE}
 ${redraft ? '- Only one `### Phases` section may exist when you finish — replace it in place, never leave the old list and append a new one below it.\n' : ''}
 ## Every other open (non-done) plan, for scope context
 

@@ -26,6 +26,8 @@ When a user asks you to work on a plan (each entity — an *idea* with its plan 
 
 If the boundary between phases is unclear, or if you are unsure whether the user wants the next phase done, ask before continuing.
 
+A phase is a unit an agent runs. Anything needing a browser, a device, a human account, or a judgment call is not a phase an agent can run — put it under a `[manual]` marker (`- [ ] [manual] <title>`) or fold it into the body as acceptance, never as a bare phase.
+
 ## Update the plan as you go
 
 Mark the completed phase `[x]` in the entity's file (`papercamp/ideas/<ID>.md`) and keep its `status:` frontmatter field honest (`in-progress` / `review` / `done`).
