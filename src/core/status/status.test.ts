@@ -9,6 +9,7 @@ import {
 } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });
+const manualPhase = (done: boolean) => ({ done, text: 'manual phase', source: 'manual' as const });
 const pr = (state: PrInfo['state']): PrInfo => ({ number: 1, url: 'u', state });
 
 interface DeriveCase {
@@ -116,6 +117,24 @@ describe('deriveStatus', () => {
     {
       name: 'resolved, no PR, stored review (direct-to-main) -> review',
       entity: { phases: [phase(true)], status: 'review' },
+      expected: 'review',
+    },
+    {
+      name: 'open PR, agent phase checked, manual phase open -> review',
+      entity: { phases: [phase(true), manualPhase(false)] },
+      pr: pr('open'),
+      expected: 'review',
+    },
+    {
+      name: 'open PR, agent phase open, manual phase done -> in-progress',
+      entity: { phases: [phase(false), manualPhase(true)] },
+      pr: pr('open'),
+      expected: 'in-progress',
+    },
+    {
+      name: 'open PR, phases checked, manual fix open -> review',
+      entity: { phases: [phase(true)], fixes: [manualPhase(false)] },
+      pr: pr('open'),
       expected: 'review',
     },
     {

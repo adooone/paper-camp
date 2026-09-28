@@ -64,6 +64,13 @@ export const DOCTOR_RULES = [
       'A file carries more than one Phases heading — a redraft appended instead of replacing the existing list in place.',
   },
   {
+    id: 'no-agent-phase',
+    category: 'structural',
+    severity: 'warning',
+    summary:
+      'A planned/in-progress/review entity has no phase an agent can run — every phase is `[manual]` or the Phases section is empty, so the idea can never move on its own.',
+  },
+  {
     id: 'archive-placement',
     category: 'structural',
     severity: 'warning',

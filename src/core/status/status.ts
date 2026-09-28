@@ -20,9 +20,15 @@ export function isClosedEntity(entity: { status?: EntityStatus; archived?: boole
   return entity.archived === true || entity.status === 'done';
 }
 
+// A `[manual]` item is a person's task, not the agent's — it never blocks the
+// derived status the way an unchecked agent phase does.
+function agentItemsDone(items: PhaseItem[]): boolean {
+  return items.filter((item) => item.source !== 'manual').every((item) => item.done);
+}
+
 function allChecked(entity: StatusDerivationInput): boolean {
-  const phasesDone = entity.phases.length > 0 && entity.phases.every((p) => p.done);
-  const fixesDone = (entity.fixes ?? []).every((f) => f.done);
+  const phasesDone = entity.phases.length > 0 && agentItemsDone(entity.phases);
+  const fixesDone = agentItemsDone(entity.fixes ?? []);
   return phasesDone && fixesDone;
 }
 

@@ -15,6 +15,8 @@ const WIKILINK_RE = /\[\[\s*((?:IDEA|TICKET)-\d+)(?:\s*\|[^\]]*)?\s*\]\]/g;
 
 const ACTIVE_STATUSES = new Set(['idea', 'planned', 'in-progress', 'review', 'open']);
 const CLOSED_STATUSES = new Set(['done', 'dropped']);
+const PLANNED_STATUSES = new Set(['planned', 'in-progress', 'review']);
+const MANUAL_PHASE_RE = /^\[manual\]\s+/;
 
 function frontmatterData(content: string): Record<string, unknown> | null {
   const match = content.match(FRONTMATTER_RE);
@@ -96,6 +98,43 @@ const checkDuplicatePhasesSection: DoctorCheck = ({ files }) =>
       );
   });
 
+const checkNoAgentPhase: DoctorCheck = ({ files }) =>
+  files.flatMap((file) => {
+    const data = frontmatterData(file.content);
+    const kind = typeof data?.kind === 'string' ? data.kind : undefined;
+    if (kind === 'note' || kind === 'board') return [];
+    const status = typeof data?.status === 'string' ? data.status : undefined;
+    if (!status || !PLANNED_STATUSES.has(status)) return [];
+
+    const lines = file.content.split('\n');
+    let inPhases = false;
+    let phasesLine = -1;
+    let hasAgentPhase = false;
+    for (let i = 0; i < lines.length; i++) {
+      const heading = lines[i].match(HEADING_RE);
+      if (heading) {
+        inPhases = /^phases$/i.test(heading[1].trim());
+        if (inPhases && phasesLine === -1) phasesLine = i;
+        continue;
+      }
+      if (!inPhases) continue;
+      const box = lines[i].match(CHECKBOX_RE);
+      if (!box) continue;
+      if (!MANUAL_PHASE_RE.test(box[1].trim())) hasAgentPhase = true;
+    }
+    if (hasAgentPhase) return [];
+
+    const line = phasesLine === -1 ? lineOf(file.content, /^status:/) : phasesLine + 1;
+    return [
+      mk(
+        file,
+        line,
+        'no-agent-phase',
+        `status "${status}" but no agent-runnable phase — only manual phases (or none at all), which reads as a note wearing an idea's clothes`,
+      ),
+    ];
+  });
+
 const checkArchivePlacement: DoctorCheck = ({ files }) =>
   files.flatMap((file) => {
     const status = frontmatterData(file.content)?.status;
@@ -157,6 +196,7 @@ export const structuralChecks: DoctorCheck[] = [
   checkPhasesListSplit,
   checkNoteHasPhases,
   checkDuplicatePhasesSection,
+  checkNoAgentPhase,
   checkArchivePlacement,
   checkDanglingLink,
 ];

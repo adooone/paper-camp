@@ -66,6 +66,47 @@ describe('duplicate-phases-section', () => {
   });
 });
 
+describe('no-agent-phase', () => {
+  it('flags a planned idea whose only phase is [manual]', () => {
+    const content =
+      '---\nid: IDEA-1\ntitle: X\ntype: feat\nstatus: planned\ncreated: 2026-01-01\n---\n\n### Phases\n- [ ] [manual] Compare on a phone\n';
+    const findings = run([file('IDEA-1', '', { content })]).filter(
+      (f) => f.rule === 'no-agent-phase',
+    );
+    expect(findings).toHaveLength(1);
+  });
+
+  it('flags an in-progress idea with no Phases section at all', () => {
+    const content =
+      '---\nid: IDEA-1\ntitle: X\ntype: feat\nstatus: in-progress\ncreated: 2026-01-01\n---\n\nBody.\n';
+    const findings = run([file('IDEA-1', '', { content })]).filter(
+      (f) => f.rule === 'no-agent-phase',
+    );
+    expect(findings).toHaveLength(1);
+  });
+
+  it('accepts a planned idea with at least one agent phase alongside a manual one', () => {
+    const content =
+      '---\nid: IDEA-1\ntitle: X\ntype: feat\nstatus: planned\ncreated: 2026-01-01\n---\n\n### Phases\n- [ ] Build the thing\n- [ ] [manual] Compare on a phone\n';
+    expect(
+      run([file('IDEA-1', '', { content })]).filter((f) => f.rule === 'no-agent-phase'),
+    ).toEqual([]);
+  });
+
+  it('leaves a bare idea (not yet planned) alone', () => {
+    const findings = run([file('IDEA-1', '')]).filter((f) => f.rule === 'no-agent-phase');
+    expect(findings).toEqual([]);
+  });
+
+  it('leaves a note alone', () => {
+    const content =
+      '---\nid: IDEA-1\ntitle: X\nkind: note\nstatus: open\ncreated: 2026-01-01\n---\n\nBody.\n';
+    expect(
+      run([file('IDEA-1', '', { content })]).filter((f) => f.rule === 'no-agent-phase'),
+    ).toEqual([]);
+  });
+});
+
 describe('archive-placement', () => {
   it('flags a closed entity still under ideas/', () => {
     const content =
