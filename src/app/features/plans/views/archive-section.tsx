@@ -81,7 +81,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                 columns={PLAN_ROW_COLUMNS}
                 onClick={onOpen ? () => onOpen(idea) : undefined}
                 ariaLabel={idea.title}
-                id={<PlanIdStamp id={idea.id} />}
+                id={<PlanIdStamp id={idea.id} fill />}
                 title={idea.title}
                 meta={<MetaLine>—</MetaLine>}
                 trailing={

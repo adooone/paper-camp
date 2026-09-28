@@ -193,7 +193,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
           columns={PLAN_ROW_COLUMNS}
           onClick={onOpen ? () => onOpen(idea.title) : undefined}
           ariaLabel={idea.title}
-          id={idea.id ? <PlanIdStamp id={idea.id} /> : ''}
+          id={idea.id ? <PlanIdStamp id={idea.id} fill /> : ''}
           title={
             <span className={titleButtonClass}>
               <NoteIcon opacity={0.55} />
@@ -243,7 +243,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
           highlighted={fix.title === activePlanTitle}
           onClick={onOpen ? () => onOpen(fix.title) : undefined}
           ariaLabel={fix.title}
-          id={<PlanIdStamp id={fix.id} />}
+          id={<PlanIdStamp id={fix.id} fill />}
           title={
             <span className={titleButtonClass}>
               <Stamp size="small" variant="warning">

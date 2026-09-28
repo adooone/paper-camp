@@ -94,7 +94,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                 highlighted={plan.title === activePlanTitle}
                 onClick={onOpen ? () => onOpen(plan.title) : undefined}
                 ariaLabel={plan.title}
-                id={<PlanIdStamp id={plan.id} />}
+                id={<PlanIdStamp id={plan.id} fill />}
                 title={plan.title}
                 meta={
                   <MetaLine className="whitespace-nowrap">
