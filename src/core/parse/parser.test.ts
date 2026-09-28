@@ -239,6 +239,12 @@ Body.
       'Fix off-by-one in pagination',
     ],
     ['manual', '- [x] [manual] Smaller toolbar button text', true, 'Smaller toolbar button text'],
+    [
+      'manual',
+      '- [ ] [manual] Compare against the design baseline',
+      false,
+      'Compare against the design baseline',
+    ],
   ] as const)('parses the [%s] inline tag as phase.source', (source, line, done, text) => {
     const md = `## Short title
 
@@ -735,6 +741,23 @@ Body prose.
     expect(warnings).toEqual([]);
     expect(entries[0].fixes).toEqual([
       { text: 'Docs check regressed', done: false, description: 'Found during review.' },
+    ]);
+  });
+
+  it('round-trips an open [manual] fix', () => {
+    const written = formatEntityFile({
+      id: 'IDEA-99',
+      title: 'Tolerant heading',
+      type: 'feat',
+      created: '2026-07-13',
+      body: 'Body prose.',
+      phases: [{ text: 'first', done: true }],
+      fixes: [{ text: 'Verify on a physical device', done: false, source: 'manual' }],
+    });
+    const { entries, warnings } = parseEntityFile(written);
+    expect(warnings).toEqual([]);
+    expect(entries[0].fixes).toEqual([
+      { text: 'Verify on a physical device', done: false, source: 'manual' },
     ]);
   });
 

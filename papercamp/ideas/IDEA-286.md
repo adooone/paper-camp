@@ -51,8 +51,9 @@ Reminders or notifications for open manual steps. Any change to what a
 phase run does once it starts.
 
 ### Phases
-- [ ] Parse and serialize the `[manual]` marker
+- [x] Parse and serialize the `[manual]` marker
       A leading `[manual]` on a phase or fix line sets `manual: true` on the item and survives a write-back round trip.
+      run: 1m31s · 50 in · 6.5k out · sonnet-5 · sess:621277ba-0578-414a-a890-913a2e3402df
 - [ ] Skip manual items in run-all
       The loop steps past them to the next agent item and finishes done when only manual items remain open.
 - [ ] Derive review status and add the doctor warning
