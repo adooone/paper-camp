@@ -65,3 +65,19 @@ re-read the idea before parking.
 
 Answering a question without a person. Changing what parks a run.
 Questions the user writes.
+
+### Phases
+- [ ] Ask every decision prompt for the block
+      Give each prompt that carries `NEEDS-DECISION:` the four-line shape with
+      its limits, the one-decision-per-park rule, and what is never a decision.
+- [ ] Parse the block in `extractDecision`
+      Return question, options and context, treat an old single line as the
+      question, and log a broken shape without un-parking the run.
+- [ ] Carry options and context through the thread
+      Write and read `option:` and `context:` continuation lines, add the fields
+      to `ThreadMessage`, and mirror the same lines into the chat.
+- [ ] Render the question card
+      Card with the question, a *Why it matters* disclosure, pressable options
+      with the first stamped *Recommended*, and a text field; pressing one sends
+      its label through `feedback-message` and records the choice on the message.
+- [ ] Trim the bell to the question line

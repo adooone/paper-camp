@@ -2,7 +2,7 @@
 id: IDEA-286
 title: Manual steps are not phases
 type: feat
-status: review
+status: done
 created: 2026-09-27
 updated: 2026-09-28
 tags:
