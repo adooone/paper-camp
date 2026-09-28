@@ -101,7 +101,7 @@ export const PhaseActionsCell = ({
       </div>
     );
   }
-  if (row.kind !== 'phase') return null;
+  if (row.kind !== 'phase' || row.item.source === 'manual') return null;
   return (
     <div className="flex justify-end">
       <AgentStartButton planId={planId} phaseIndex={row.index} disabled={agentBusy} />

@@ -60,8 +60,9 @@ phase run does once it starts.
 - [x] Derive review status and add the doctor warning
       All agent phases done with manual ones open reads `review`; an open idea with no agent phase is a finding.
       run: 3m14s · 68 in · 14.2k out · sonnet-5 · sess:621277ba-0578-414a-a890-913a2e3402df
-- [ ] Hide the run control on manual phase rows
+- [x] Hide the run control on manual phase rows
       No run control, and the checkbox flips through the status route without an agent task behind it.
+      run: 41s · 22 in · 1.9k out · sonnet-5 · sess:fa098354-8edd-41cf-8eed-476ca86d7821
 - [ ] Teach the drafters and the guide the rule
 
 ### Thread
