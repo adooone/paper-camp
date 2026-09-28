@@ -70,9 +70,10 @@ Questions the user writes.
 - [x] Ask every decision prompt for the block
       Give each prompt that carries `NEEDS-DECISION:` the four-line shape with
       its limits, the one-decision-per-park rule, and what is never a decision.
-- [ ] Parse the block in `extractDecision`
+- [x] Parse the block in `extractDecision`
       Return question, options and context, treat an old single line as the
       question, and log a broken shape without un-parking the run.
+      run: 2m9s · 46 in · 9.9k out · sonnet-5 · sess:d59bd794-9934-43db-b717-4bc91472e3dc
 - [ ] Carry options and context through the thread
       Write and read `option:` and `context:` continuation lines, add the fields
       to `ThreadMessage`, and mirror the same lines into the chat.
