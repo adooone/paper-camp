@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.39.0](https://github.com/adooone/paper-camp/compare/v0.38.0...v0.39.0) (2026-09-28)
+
+
+### Features
+
+* **core:** Derive review status and add the doctor warning ([5de2dd4](https://github.com/adooone/paper-camp/commit/5de2dd43f7c21222ce8940375da4d047d662dcc8))
+* **core:** Hide the run control on manual phase rows ([016902b](https://github.com/adooone/paper-camp/commit/016902b63f6d5c5e4277921b3d88451c712e4c9b))
+* **core:** Parse and serialize the `[manual]` marker ([a851a0a](https://github.com/adooone/paper-camp/commit/a851a0ac6e484658ed4af1a6311d6c59c4a6f442))
+* **core:** Skip manual items in run-all ([141b74a](https://github.com/adooone/paper-camp/commit/141b74ada99e65204e8c7fe945eab31e4ef20106))
+* **core:** Teach the drafters and the guide the rule ([68b9e20](https://github.com/adooone/paper-camp/commit/68b9e20d042decff7bc425efadb7072c555b7e57))
+
+
+### Bug Fixes
+
+* **app:** Give fix-queue pauses their own no-progress warning ([7b4386c](https://github.com/adooone/paper-camp/commit/7b4386c4224f9e240dfe749cd41c45ff69b4cf58))
+* **server:** Ignore untracked corpus files not naming the idea ([210a61e](https://github.com/adooone/paper-camp/commit/210a61e3a340f2ccaeb30abcfa36b3059680e089))
+* **server:** Scope dirty-tree check to the idea's own corpus file ([2b26302](https://github.com/adooone/paper-camp/commit/2b2630289dcc8133dad0112dfcc18a5e304582b3))
+
 ## [0.38.0](https://github.com/adooone/paper-camp/compare/v0.37.1...v0.38.0) (2026-09-27)
 
 
