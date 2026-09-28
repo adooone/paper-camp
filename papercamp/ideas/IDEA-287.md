@@ -2,7 +2,7 @@
 id: IDEA-287
 title: Small questions with answers to pick
 type: feat
-status: idea
+status: in-progress
 created: 2026-09-28
 tags:
   - app
@@ -67,7 +67,7 @@ Answering a question without a person. Changing what parks a run.
 Questions the user writes.
 
 ### Phases
-- [ ] Ask every decision prompt for the block
+- [x] Ask every decision prompt for the block
       Give each prompt that carries `NEEDS-DECISION:` the four-line shape with
       its limits, the one-decision-per-park rule, and what is never a decision.
 - [ ] Parse the block in `extractDecision`
@@ -81,3 +81,6 @@ Questions the user writes.
       with the first stamped *Recommended*, and a text field; pressing one sends
       its label through `feedback-message` and records the choice on the message.
 - [ ] Trim the bell to the question line
+
+### Thread
+- [ ] 2026-09-28 [question] [agent] Run-all parked on phase 1 ("Ask every decision prompt for the block") — the agent needs a decision: ` (three in `agent.ts`, two in `prompts.ts`). Type-check and biome both pass; the phase checkbox in IDEA-287.md is now checked (other phases remain unchecked, so status stays `idea`).
