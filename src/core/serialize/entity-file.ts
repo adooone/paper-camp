@@ -5,6 +5,7 @@ import type {
   PhaseItem,
   SuggestionEntry,
   ThreadMessage,
+  ThreadMessageOption,
 } from '../../types/index';
 import { SUGGESTION_ENTRY_RE } from '../parse/parser';
 import {
@@ -39,6 +40,7 @@ export function agentThreadMessage(
   text: string,
   kind: ThreadMessage['kind'] = 'log',
   entityId?: string,
+  decision?: { options?: ThreadMessageOption[]; context?: string },
 ): ThreadMessage {
   return {
     kind,
@@ -47,6 +49,8 @@ export function agentThreadMessage(
     from: 'agent',
     ...(kind === 'question' ? { state: 'open' as const } : {}),
     ...(entityId ? { entityId } : {}),
+    ...(decision?.options && decision.options.length > 0 ? { options: decision.options } : {}),
+    ...(decision?.context ? { context: decision.context } : {}),
   };
 }
 

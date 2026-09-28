@@ -78,6 +78,13 @@ export type ThreadMessageKind =
   | 'question'
   | 'chat';
 
+/** A pickable answer to a parked `question`, written as an `option:` continuation
+ * line under the message (IDEA-287). */
+export interface ThreadMessageOption {
+  label: string;
+  consequence: string;
+}
+
 export interface ThreadMessage {
   kind: ThreadMessageKind;
   /** Absent for messages ported from the old Notes section, which never carried a date. */
@@ -90,6 +97,12 @@ export interface ThreadMessage {
   /** The entity a `question` parked in the project chat (IDEA-251) belongs to — chat.md
    * is the only file that carries this, since every other thread is already on its entity. */
   entityId?: string;
+  /** Only meaningful for a `question` kind — two to four pickable answers, written as
+   * `option:` continuation lines under the message (IDEA-287). */
+  options?: ThreadMessageOption[];
+  /** Only meaningful for a `question` kind — the *why it matters* prose, written as a
+   * `context:` continuation line under the message (IDEA-287). */
+  context?: string;
 }
 
 /** Ambient context a chat mount (desk, toolbar) feeds alongside a message — each

@@ -6,6 +6,7 @@ import type {
   PhaseItem,
   ThreadMessage,
   ThreadMessageKind,
+  ThreadMessageOption,
 } from '../types/index';
 import { formatRunLine, parseRunLine } from './phase-run';
 
@@ -18,6 +19,8 @@ const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s
 const THREAD_LINE_RE =
   /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(?:\[\[([A-Za-z]+-\d+)\]\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
+const OPTION_LINE_RE = /^option:\s*(.*)$/i;
+const CONTEXT_LINE_RE = /^context:\s*(.*)$/i;
 
 /** Entry grammars match a single line, so a hand-wrapped entry would otherwise keep only
  * its first line; this folds the indented continuation lines back in before re-parsing. */
@@ -211,6 +214,38 @@ export const REVIEW_SECTION: SectionDef<LogEntry> = {
   formatLines: (entries) => formatDatedLines('### Review', entries),
 };
 
+/** Like `foldContinuation`, but a `question` message's continuation lines can carry
+ * `option:`/`context:` lines (IDEA-287) instead of wrapped prose — those are pulled
+ * out into their own fields rather than folded back into `text`. */
+function foldThreadContinuation(
+  lines: string[],
+  start: number,
+  end: number,
+): { text: string; options: ThreadMessageOption[]; context?: string; next: number } {
+  const parts: string[] = [];
+  const options: ThreadMessageOption[] = [];
+  let context: string | undefined;
+  let i = start;
+  while (i < end) {
+    const line = lines[i];
+    if (line.trim() === '' || !/^\s/.test(line)) break;
+    const trimmed = line.trimStart();
+    if (THREAD_LINE_RE.test(trimmed) || SUB_HEADING_RE.test(trimmed)) break;
+    const optionMatch = trimmed.match(OPTION_LINE_RE);
+    const contextMatch = trimmed.match(CONTEXT_LINE_RE);
+    if (optionMatch) {
+      const [label, consequence] = optionMatch[1].split('—').map((s) => s.trim());
+      options.push({ label: label || optionMatch[1].trim(), consequence: consequence ?? '' });
+    } else if (contextMatch) {
+      context = contextMatch[1].trim();
+    } else {
+      parts.push(trimmed);
+    }
+    i++;
+  }
+  return { text: parts.join(' '), options, context, next: i };
+}
+
 function parseThreadEntries(lines: string[], start: number, end: number): ThreadMessage[] {
   const messages: ThreadMessage[] = [];
   let i = start;
@@ -221,11 +256,13 @@ function parseThreadEntries(lines: string[], start: number, end: number): Thread
       continue;
     }
     const kind = match[3] as ThreadMessageKind;
-    const folded = foldContinuation(lines, i + 1, end, THREAD_LINE_RE);
+    const folded = foldThreadContinuation(lines, i + 1, end);
     const message: ThreadMessage = { kind, text: joinFolded(match[6], folded.text) };
     if (match[2]) message.date = match[2];
     if (match[4]) message.from = 'agent';
     if (match[5]) message.entityId = match[5];
+    if (folded.options.length > 0) message.options = folded.options;
+    if (folded.context !== undefined) message.context = folded.context;
     if (NOTE_STATE_KINDS.includes(kind)) {
       message.state = match[1].toLowerCase() === 'x' ? 'resolved' : 'open';
     }
@@ -243,6 +280,10 @@ function formatThreadLines(messages: ThreadMessage[]): string[] {
     const author = m.from === 'agent' ? '[agent] ' : '';
     const entityLink = m.entityId ? `[[${m.entityId}]] ` : '';
     lines.push(`- [${checked ? 'x' : ' '}] ${date}[${m.kind}] ${author}${entityLink}${m.text}`);
+    for (const option of m.options ?? []) {
+      lines.push(`      option: ${option.label} — ${option.consequence}`);
+    }
+    if (m.context) lines.push(`      context: ${m.context}`);
   }
   return lines;
 }
