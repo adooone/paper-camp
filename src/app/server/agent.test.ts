@@ -659,6 +659,72 @@ process.exit(1)
     });
   });
 
+  it('skips a manual phase and completes as soon as only manual work remains open', async () => {
+    const PLAN_WITH_MANUAL = `---
+id: IDEA-1
+title: Test plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+- [ ] [manual] Compare on a phone
+`;
+    const { root, plan } = await makeRoot(PLAN_WITH_MANUAL);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const onRunComplete = vi.fn(async () => {});
+    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(onRunComplete).toHaveBeenCalledOnce();
+
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('All 1 phase(s) completed');
+
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases).toEqual([
+      { done: true, text: 'First phase' },
+      { done: false, text: 'Compare on a phone', source: 'manual' },
+    ]);
+  });
+
+  it('finishes done without launching an agent when only a manual phase is unchecked', async () => {
+    const PLAN_MANUAL_ONLY = `---
+id: IDEA-1
+title: Test plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [x] First phase
+- [ ] [manual] Compare on a phone
+`;
+    const { root, plan } = await makeRoot(PLAN_MANUAL_ONLY);
+    agentScript.current = 'process.exit(3)'; // would fail the run if the agent were ever spawned
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const after = parseEntityFile(
+      await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+    );
+    expect(after.entries[0].phases[1]).toEqual({
+      done: false,
+      text: 'Compare on a phone',
+      source: 'manual',
+    });
+  });
+
   it('rejects concurrent starts while a run is in flight', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);

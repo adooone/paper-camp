@@ -54,8 +54,9 @@ phase run does once it starts.
 - [x] Parse and serialize the `[manual]` marker
       A leading `[manual]` on a phase or fix line sets `manual: true` on the item and survives a write-back round trip.
       run: 1m31s · 50 in · 6.5k out · sonnet-5 · sess:621277ba-0578-414a-a890-913a2e3402df
-- [ ] Skip manual items in run-all
+- [x] Skip manual items in run-all
       The loop steps past them to the next agent item and finishes done when only manual items remain open.
+      run: 2m28s · 54 in · 10.5k out · sonnet-5 · sess:621277ba-0578-414a-a890-913a2e3402df
 - [ ] Derive review status and add the doctor warning
       All agent phases done with manual ones open reads `review`; an open idea with no agent phase is a finding.
 - [ ] Hide the run control on manual phase rows

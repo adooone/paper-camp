@@ -1803,6 +1803,11 @@ export function createAgentManager(
       return { ok: false, error: 'No unchecked phases to run' };
     }
 
+    // A manual item is a person's task, not an agent's — the loop steps past it to
+    // the next agent item and, if only manual items remain, finishes done.
+    const runnablePhases = unchecked.filter(({ item }) => item.source !== 'manual');
+    const runnableFixes = uncheckedFixes.filter(({ item }) => item.source !== 'manual');
+
     const task = startOrchestrated('run-all', plan);
     const { adapter, model, effort } = resolveAgent({
       agentId: plan.agent,
@@ -1828,7 +1833,7 @@ export function createAgentManager(
           task,
           plan,
           'phase',
-          unchecked,
+          runnablePhases,
           plan.phases.length,
           adapter,
           model,
@@ -1864,12 +1869,12 @@ export function createAgentManager(
           sessionId: phaseResult.sessionId,
           exit: 'ran',
         };
-        if (phaseResult.failed === 0 && uncheckedFixes.length > 0) {
+        if (phaseResult.failed === 0 && runnableFixes.length > 0) {
           fixResult = await runQueue(
             task,
             plan,
             'fix',
-            uncheckedFixes,
+            runnableFixes,
             (plan.fixes ?? []).length,
             adapter,
             model,
@@ -1898,10 +1903,10 @@ export function createAgentManager(
 
         const failed = phaseResult.failed + fixResult.failed;
         const summary = [
-          unchecked.length > 0 || uncheckedFixes.length === 0
+          runnablePhases.length > 0 || runnableFixes.length === 0
             ? `${phaseResult.completed} phase(s)`
             : undefined,
-          uncheckedFixes.length > 0 ? `${fixResult.completed} fix(es)` : undefined,
+          runnableFixes.length > 0 ? `${fixResult.completed} fix(es)` : undefined,
         ]
           .filter(Boolean)
           .join(' and ');
