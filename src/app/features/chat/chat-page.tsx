@@ -14,6 +14,7 @@ export const ChatPage = () => {
     pending,
     sending,
     handleSend,
+    handleAnswer,
     unansweredCount,
     confirmOpen,
     openConfirmClear,
@@ -38,7 +39,14 @@ export const ChatPage = () => {
           <div className="flex flex-col gap-3 mb-4">
             {thread.length > 0 || pending ? (
               <>
-                <FeedbackThread messages={thread} undo={null} undoing={false} onUndo={() => {}} />
+                <FeedbackThread
+                  messages={thread}
+                  undo={null}
+                  undoing={false}
+                  onUndo={() => {}}
+                  onAnswer={handleAnswer}
+                  answering={sending}
+                />
                 {pending && (
                   <div className="flex flex-col gap-1 items-end">
                     <div className="max-w-[85%]">

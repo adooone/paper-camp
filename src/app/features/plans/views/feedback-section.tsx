@@ -30,6 +30,7 @@ export const FeedbackSection = ({
     promotingIndex,
     ideaPromptIndex,
     handleSend,
+    handleAnswer,
     handlePromote,
     handlePromoteToIdea,
     closeIdeaPrompt,
@@ -51,6 +52,8 @@ export const FeedbackSection = ({
                 onUndo={onUndo}
                 onPromote={handlePromote}
                 promotingIndex={promotingIndex}
+                onAnswer={handleAnswer}
+                answering={Boolean(pending) || updating}
               />
               {pending && (
                 <div className="flex flex-col gap-1 items-end">

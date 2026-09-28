@@ -23,12 +23,9 @@ export function useChatPage() {
     loadChat();
   }, [loadChat]);
 
-  const handleSend = async () => {
-    const text = input.trim();
-    if (!text) return;
+  const sendText = async (text: string, { restoreOnFailure }: { restoreOnFailure: boolean }) => {
     setSending(true);
     setPending(text);
-    setInput('');
     try {
       const { error } = await postChatMessage(text);
       await loadChat();
@@ -45,11 +42,24 @@ export function useChatPage() {
         description: oneLineErrorSummary((err as Error).message),
         variant: 'error',
       });
-      setInput((current) => current || text);
+      if (restoreOnFailure) setInput((current) => current || text);
     } finally {
       setPending(null);
       setSending(false);
     }
+  };
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    await sendText(text, { restoreOnFailure: true });
+  };
+
+  // A picked option answers exactly like a typed message, but never touches the
+  // composer's draft — it isn't that draft.
+  const handleAnswer = async (text: string) => {
+    await sendText(text, { restoreOnFailure: false });
   };
 
   const openConfirmClear = () => setConfirmOpen(true);
@@ -80,6 +90,7 @@ export function useChatPage() {
     pending,
     sending,
     handleSend,
+    handleAnswer,
     unansweredCount: thread.filter(isUnansweredQuestion).length,
     confirmOpen,
     openConfirmClear,

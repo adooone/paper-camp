@@ -78,10 +78,11 @@ Questions the user writes.
       Write and read `option:` and `context:` continuation lines, add the fields
       to `ThreadMessage`, and mirror the same lines into the chat.
       run: 5m2s · 110 in · 23.3k out · sonnet-5 · sess:d59bd794-9934-43db-b717-4bc91472e3dc
-- [ ] Render the question card
+- [x] Render the question card
       Card with the question, a *Why it matters* disclosure, pressable options
       with the first stamped *Recommended*, and a text field; pressing one sends
       its label through `feedback-message` and records the choice on the message.
+      run: 8m18s · 110 in · 30.5k out · sonnet-5 · sess:d59bd794-9934-43db-b717-4bc91472e3dc
 - [ ] Trim the bell to the question line
 
 ### Thread

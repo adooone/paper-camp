@@ -42,6 +42,14 @@ export function useFeedbackComposer(plan: PlanEntry, onSend: (text: string) => P
     setPending(null);
   };
 
+  // A picked option or a question card's own reply field answers exactly like a
+  // typed message, but never touches the composer's draft — it isn't that draft.
+  const handleAnswer = async (text: string) => {
+    setPending(text);
+    await onSend(text);
+    setPending(null);
+  };
+
   const handlePromote = (index: number, target: PromoteTarget) => {
     if (target === 'idea') setIdeaPromptIndex(index);
     else promoteToDurable(index, target);
@@ -66,6 +74,7 @@ export function useFeedbackComposer(plan: PlanEntry, onSend: (text: string) => P
     promotingIndex,
     ideaPromptIndex,
     handleSend,
+    handleAnswer,
     handlePromote,
     handlePromoteToIdea,
     closeIdeaPrompt,

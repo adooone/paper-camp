@@ -1,4 +1,5 @@
 import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
+import { QuestionCard } from '@/app/features/plans/components/question-card';
 import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 import {
   Button,
@@ -34,6 +35,10 @@ interface FeedbackThreadProps {
   /** Only offered on `chat`-kind messages — everything else is already durable. */
   onPromote?: (index: number, target: PromoteTarget) => void;
   promotingIndex?: number | null;
+  /** Answers a parked `question` — pressing an option or the card's own reply
+   * field sends through here exactly as a typed message does (IDEA-287). */
+  onAnswer?: (text: string) => void;
+  answering?: boolean;
 }
 
 export const FeedbackThread = ({
@@ -43,12 +48,16 @@ export const FeedbackThread = ({
   onUndo,
   onPromote,
   promotingIndex,
+  onAnswer,
+  answering = false,
 }: FeedbackThreadProps) => (
   <>
     {messages.map((message, i) => {
       const label = THREAD_KIND_LABEL[message.kind];
       const fromAgent = message.from === 'agent';
       const isLast = i === messages.length - 1;
+      const isDecisionCard =
+        message.kind === 'question' && (message.options?.length ?? 0) > 0 && Boolean(onAnswer);
       const promoteItems: MenuEntry[] = [
         {
           id: 'decision',
@@ -75,21 +84,29 @@ export const FeedbackThread = ({
           className={`flex flex-col gap-1 ${fromAgent ? 'items-start' : 'items-end'}`}
         >
           <div className="max-w-[85%]">
-            <Card
-              size="small"
-              surface="paper"
-              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
-              shade={fromAgent}
-              accent={!fromAgent}
-              accentColor={label ? 'rose' : 'blue'}
-            >
-              <CollapsibleText
-                collapsedLines={message.kind === 'chat' ? 1 : 3}
-                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+            {isDecisionCard ? (
+              <QuestionCard
+                message={message}
+                onAnswer={(text) => onAnswer?.(text)}
+                busy={answering}
+              />
+            ) : (
+              <Card
+                size="small"
+                surface="paper"
+                texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
+                shade={fromAgent}
+                accent={!fromAgent}
+                accentColor={label ? 'rose' : 'blue'}
               >
-                {message.text}
-              </CollapsibleText>
-            </Card>
+                <CollapsibleText
+                  collapsedLines={message.kind === 'chat' ? 1 : 3}
+                  resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
+                >
+                  {message.text}
+                </CollapsibleText>
+              </Card>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {fromAgent && (

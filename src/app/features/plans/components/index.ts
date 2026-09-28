@@ -9,4 +9,5 @@ export * from './plan-id-stamp';
 export * from './pr-badge';
 export * from './progress-bar';
 export * from './provenance-trail';
+export * from './question-card';
 export * from './review-signal-badge';
