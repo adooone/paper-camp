@@ -134,8 +134,10 @@ export function createGitManager(root: string) {
     });
   }
 
-  function runGitStatus(): Promise<GitStatusEntry[]> {
-    return runGit(['status', '--porcelain=v1']).then(parsePorcelain);
+  function runGitStatus(options?: { untrackedFiles?: 'all' }): Promise<GitStatusEntry[]> {
+    const args = ['status', '--porcelain=v1'];
+    if (options?.untrackedFiles) args.push(`--untracked-files=${options.untrackedFiles}`);
+    return runGit(args).then(parsePorcelain);
   }
 
   async function assertCleanWorkingTree(): Promise<void> {
@@ -382,12 +384,20 @@ export function createGitManager(root: string) {
     return null;
   }
 
+  // The daemon rewrites papercamp/ on its own schedule, so inside the corpus only a
+  // file naming this idea counts as unfinished work; an untracked corpus directory hides its files.
+  function blocksCompletion(entry: GitStatusEntry, id: string): boolean {
+    if (!entry.path.startsWith('papercamp/')) return true;
+    if (entry.path.endsWith('/')) return true;
+    return entry.path.includes(`${id}.md`);
+  }
+
   // Both a clean tree and a commit-on-main are checked (not short-circuited) so the
   // report names everything still missing, not just the first failure.
   async function verifyDirectCompletion(id: string): Promise<DirectCompletionCheck> {
     const missing: string[] = [];
-    const status = await runGitStatus();
-    if (status.length > 0) missing.push('a clean working tree');
+    const status = await runGitStatus({ untrackedFiles: 'all' });
+    if (status.some((entry) => blocksCompletion(entry, id))) missing.push('a clean working tree');
     const commits = await runGit(['log', await mainRef(), '--grep', id, '--format=%H', '-1']).catch(
       () => '',
     );

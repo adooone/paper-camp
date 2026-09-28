@@ -1057,6 +1057,27 @@ describe('verifyDirectCompletion', () => {
     });
   });
 
+  it('ignores dirty corpus files that do not name the idea', async () => {
+    await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'suggestions.md'), '- night: churn\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'another idea\n');
+    await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
+      ready: true,
+      missing: [],
+    });
+  });
+
+  it("still blocks on the idea's own uncommitted file", async () => {
+    await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-203.md'), 'edited\n');
+    await expect(manager.verifyDirectCompletion('IDEA-203')).resolves.toEqual({
+      ready: false,
+      missing: ['a clean working tree'],
+    });
+  });
+
   it('checks origin/main when it exists, not the possibly-behind local main', async () => {
     await addOrigin(root);
     await commitFile(root, 'notes.md', 'work', 'fix(app): IDEA-203 land the thing');
