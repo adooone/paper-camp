@@ -2,8 +2,9 @@
 id: IDEA-286
 title: Manual steps are not phases
 type: feat
-status: idea
+status: in-progress
 created: 2026-09-27
+updated: 2026-09-28
 tags:
   - core
   - app
@@ -20,13 +21,19 @@ five such phases, every one of them tagged `[manual]` by hand, and the
 tag means nothing: the parser ignores it and run-all tries them anyway.
 Work that belongs to a person needs a place that is not the run queue.
 
-**`[manual]` becomes real.** A phase or fix whose text starts with
-`[manual]` parses with `manual: true`. Run-all skips it and moves to the
-next agent phase; a run that reaches the end with only manual phases
-open reports done rather than failing. The phase row shows a *you*
-stamp and no run control; its checkbox is the person's to tick, in the
-row or through the existing status route, which accepts a done flip on a
-manual phase without an agent task behind it.
+**`[manual]` is one thing: a person's phase.** The marker already exists
+— `PHASE_SOURCE_RE` parses a leading `[manual]` into `source: 'manual'`,
+written after the fact by `appendManualPhase` when a person lands work
+with their own commit, always done. That is the same idea, seen from the
+other end: a phase whose work is a person's. So there is no new field.
+An open `[manual]` phase is a person's task not yet done; a done one is a
+person's task recorded. Run-all skips any phase with `source: 'manual'`
+and moves to the next agent phase; a run that reaches the end with only
+manual phases open reports done rather than failing. The phase row keeps
+the existing *manual* stamp for both states and shows no run control;
+its checkbox is the person's to tick, in the row or through the existing
+status route, which accepts a done flip on a manual phase without an
+agent task behind it.
 
 **Status reads it right.** An idea whose agent phases are all done and
 whose manual phases are not is `review` — the agent work is finished,
@@ -50,6 +57,12 @@ phase run does once it starts.
       The loop steps past them to the next agent item and finishes done when only manual items remain open.
 - [ ] Derive review status and add the doctor warning
       All agent phases done with manual ones open reads `review`; an open idea with no agent phase is a finding.
-- [ ] Show the *you* stamp on manual phase rows
+- [ ] Hide the run control on manual phase rows
       No run control, and the checkbox flips through the status route without an agent task behind it.
 - [ ] Teach the drafters and the guide the rule
+
+### Thread
+- [x] 2026-09-28 [question] [agent] Run-all parked on phase 1 ("Parse and serialize the `[manual]` marker") — the agent needs a decision: The `[manual]` marker text is already in use. `PHASE_SOURCE_RE` in `src/core/sections.ts` already parses a leading `[manual]` into `source: 'manual'` — an existing, different concept (`appendManualPhase` in `src/app/features/plans/helpers/manual-commit.ts` tags phases that were completed via a manual git commit outside the agent flow, always `done: true`, rendered with a "manual" stamp in `phase-row-cells.tsx`). IDEA-286 phase 1 asks for a leading `[manual]` to set a new `manual: true` field meaning "this phase is human-only work, not runnable by an agent" — a distinct concept (any done state, skips run-all, renders a "you" stamp instead of the existing "manual" stamp). Both would parse the identical bracket text via the same regex, so I can't add this without either colliding with or overloading the existing `source: 'manual'` marker. How should these coexist — rename/repurpose the existing commit-provenance marker to free up `[manual]`, reuse `source: 'manual'` for both purposes, or use different bracket text for the new human-task marker?
+- [x] 2026-09-28 [chat] Decision: reuse source: 'manual' for both — they are the same concept from two ends. A [manual] phase is a person's phase: open means the person has not done it yet, done means it was recorded after their own commit as appendManualPhase already does. No new field, no second marker, no 'you' stamp: keep the existing 'manual' stamp for both states. Run-all skips any phase with source 'manual'; a run that ends with only manual phases open reports done. The idea body and phase 4 are updated to say this. Continue phase 1 on that basis: the only parser change is that an open [manual] phase is valid, not only a done one.
+- [x] 2026-09-28 [chat] [agent] Good, continuing phase 1 on that basis: open [manual] phases parse as valid, source: 'manual' either way, same stamp for both states.
+- [x] 2026-09-28 [log] [agent] Manual phases reuse source: 'manual' for both open/done states, no new field; run-all skips manual phases and treats manual-only remainders as done.
