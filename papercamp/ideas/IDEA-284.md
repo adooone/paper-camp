@@ -66,9 +66,10 @@ the item's ideas themselves show.
       Render `RoadmapPage` at the new corpus-layer route, turn the `?item=`
       search param into a redirect to it, and derive the trail in `PageBreadcrumb`.
       run: 2m32s · 72 in · 17.2k out · sonnet-5 · sess:9e70822c-5191-459a-804d-4703e0766a76
-- [ ] Build the item page shell and head card
+- [x] Build the item page shell and head card
       A view and hook that resolve the item or standing concern by name, with
       title, state stamp, counts, description and the facts line.
+      run: 5m24s · 86 in · 41.8k out · sonnet-5 · sess:9e70822c-5191-459a-804d-4703e0766a76
 - [ ] Render the Open, Thoughts and Shipped sections
       Includes renaming candidates to thoughts in every user-facing string,
       the promote modal among them.

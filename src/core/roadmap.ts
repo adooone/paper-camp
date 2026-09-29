@@ -367,6 +367,7 @@ function resolveIdeas(
     status: entity.status,
     pr: entity.pr,
     released: findReleaseLineForId(changelog, id) !== undefined,
+    created: entity.created,
   }));
 }
 

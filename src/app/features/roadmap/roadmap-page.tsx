@@ -1,11 +1,12 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { Button, Divider, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { firstSentence } from './helpers';
-import { useRoadmapPage } from './hooks';
+import { useRoadmapItemPage, useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';
-import { HorizonSection, StandingConcernsSection, UnfiledSection } from './views';
+import { HorizonSection, RoadmapItemPage, StandingConcernsSection, UnfiledSection } from './views';
 
 export const RoadmapPage = () => {
+  const { isItemRoute, item, horizonTitle, dateRange } = useRoadmapItemPage();
   const {
     roadmap,
     roadmapError,
@@ -52,6 +53,18 @@ export const RoadmapPage = () => {
         <RowSkeleton />
       </div>
     );
+  }
+
+  if (isItemRoute) {
+    if (!item) {
+      return (
+        <div>
+          <PageTitle className="mb-6">Roadmap</PageTitle>
+          <p className="opacity-50">Couldn't find that roadmap item.</p>
+        </div>
+      );
+    }
+    return <RoadmapItemPage item={item} horizonTitle={horizonTitle} dateRange={dateRange} />;
   }
 
   if (roadmap.horizons.length === 0) {

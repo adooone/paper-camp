@@ -552,6 +552,7 @@ export interface ResolvedIdea {
   status: PlanStatus;
   pr?: PrInfo;
   released: boolean;
+  created: string;
 }
 
 /** `shipped` only once the item carries the shipped marker a human writes (see IDEA-277);
