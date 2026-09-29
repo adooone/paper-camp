@@ -66,13 +66,13 @@ chalkboard stamps through `surface="chalkboard"` — the opaque plates —
 and deletes its `withAlpha(color.chalk*, 0.16)` washes.
 `commit-history.tsx` shows `· prefix` in the meta line below 640px.
 
-**The chunk view lays out as it did.** `chunk-detail.tsx` renders its
-facts with `FactsGrid layout="inline" align="end"` beside the title, so
-Date, Passes and Cost sit in one row of label-over-value pairs and wrap
-under the title only on a phone; the findings table's actions column is
-`width: 'auto'` with the three ghost buttons in one line, and the finding
-column takes the rest. Both props come from paper-ui's IDEA-9, which the
-bump phase's release carries.
+**The chunk view lays out as it did, then better.** `chunk-detail.tsx`
+renders its facts with `FactsGrid layout="inline" align="end"` beside the
+title. Its findings are not a table: each is a ruled row in the parchment
+card, separated by the sketch `Divider` — stamps, the file path and the
+actions on one line, the message across the full width below — since a
+one-line-of-facts-plus-a-paragraph shape has no columns to give a table.
+The `auto` column from paper-ui's IDEA-9 is no longer used here.
 
 **Leftovers from the other two.** Every page title that lost its 24px
 gap has it; `run-entry-page` puts its button in `EmptyState`'s `action`

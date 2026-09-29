@@ -5,10 +5,10 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { nightFindingKey, sortedFindings } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
-import { Button, Card, FactsGrid, Stamp, Table, useToast } from '@dendelion/paper-ui';
+import { Button, Card, Divider, FactsGrid, Stamp, useToast } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useFindingFixTask } from '../hooks';
 import { SEVERITY_STAMP_VARIANT, severityCounts } from './night-report-section';
 
@@ -21,7 +21,7 @@ interface Fact {
   value: string;
 }
 
-const FindingActionsCell = ({ finding }: { finding: NightSuggestionEntry }) => {
+const FindingActions = ({ finding }: { finding: NightSuggestionEntry }) => {
   const promoteNightFinding = useAppStore((s) => s.promoteNightFinding);
   const dismissNightFinding = useAppStore((s) => s.dismissNightFinding);
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
@@ -89,10 +89,18 @@ const FindingActionsCell = ({ finding }: { finding: NightSuggestionEntry }) => {
     }
   };
 
+  if (fixing) {
+    return (
+      <Stamp size="small" variant="warning">
+        fixing…
+      </Stamp>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex shrink-0 items-center justify-end gap-1">
       <Button type="button" variant="ghost" size="small" onClick={handleFix} disabled={disabled}>
-        {fixing ? 'fixing…' : 'Fix'}
+        Fix
       </Button>
       <Button
         type="button"
@@ -159,42 +167,32 @@ export const ChunkDetail = ({ chunk }: ChunkDetailProps) => {
           <FactsGrid items={facts} layout="inline" align="end" />
         </div>
       </Card>
-      <Table
-        data={sortedFindings(chunk.findings)}
-        rowKey={(finding) => nightFindingKey(finding)}
-        hideHeader
-        className="mb-4"
-        columns={[
-          {
-            key: 'finding',
-            header: '',
-            cell: (finding: NightSuggestionEntry) => (
-              <div className="flex flex-col gap-1.5 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
-                    {finding.severity}
-                  </Stamp>
-                  <Stamp size="small" variant="neutral">
-                    {finding.check}
-                  </Stamp>
-                  <span className="font-mono text-sm opacity-80">
-                    {finding.file}
-                    {finding.line ? `:${finding.line}` : ''}
-                  </span>
-                </div>
-                <p className="m-0 text-sm opacity-80">{finding.message}</p>
+      <Card size="small" texture={surface.card} className="mb-4">
+        {sortedFindings(chunk.findings).map((finding, index) => (
+          <Fragment key={nightFindingKey(finding)}>
+            {index > 0 && <Divider sketch />}
+            <article className="flex flex-col gap-1.5 py-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <Stamp size="small" variant={SEVERITY_STAMP_VARIANT[finding.severity]}>
+                  {finding.severity}
+                </Stamp>
+                <Stamp size="small" variant="neutral">
+                  {finding.check}
+                </Stamp>
+                <span
+                  className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm opacity-80"
+                  title={finding.file}
+                >
+                  {finding.file}
+                  {finding.line ? `:${finding.line}` : ''}
+                </span>
+                <FindingActions finding={finding} />
               </div>
-            ),
-          },
-          {
-            key: 'actions',
-            header: '',
-            align: 'end',
-            width: 'auto',
-            cell: (finding: NightSuggestionEntry) => <FindingActionsCell finding={finding} />,
-          },
-        ]}
-      />
+              <p className="m-0 text-sm leading-relaxed opacity-80">{finding.message}</p>
+            </article>
+          </Fragment>
+        ))}
+      </Card>
       <div className="flex items-center justify-end gap-2 border-t border-paper-950/[12%] pt-4">
         <Button type="button" variant="primary" onClick={handleFixAll} disabled={fixing}>
           {fixing ? 'Fixing…' : 'Fix all'}

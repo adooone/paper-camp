@@ -2,8 +2,9 @@
 id: IDEA-284
 title: A page for a roadmap item
 type: feat
-status: review
+status: done
 created: 2026-09-22
+updated: 2026-09-29
 tags:
   - app
   - ui
