@@ -2,7 +2,7 @@
 id: IDEA-287
 title: Small questions with answers to pick
 type: feat
-status: review
+status: done
 created: 2026-09-28
 updated: 2026-09-29
 tags:
