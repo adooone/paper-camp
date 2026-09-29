@@ -5,7 +5,11 @@ import { readFile, stat } from 'node:fs/promises';
 import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { buildPlanDraftPrompt, buildReconcilePrompt } from '@/app/features/plans/prompts';
+import {
+  NEEDS_DECISION_PROTOCOL,
+  buildPlanDraftPrompt,
+  buildReconcilePrompt,
+} from '@/app/features/plans/prompts';
 import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
@@ -40,6 +44,7 @@ import {
   type ReviewThread,
   type RunUsage,
   type TaskKind,
+  type ThreadMessageOption,
   coerceAgentConfig,
 } from '@/types/index';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
@@ -73,6 +78,7 @@ const FIX_ATTEMPT_CAP = 2;
 const SESSION_CONTEXT_LIMIT = 120_000;
 const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
 const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
+const DECISION_QUESTION_LIMIT = 140;
 // A failing test run can print tens of kilobytes; the fix pass only needs the end.
 const CHECK_OUTPUT_TAIL_CHARS = 4000;
 
@@ -137,12 +143,57 @@ function humanizeTaskKind(kind: TaskKind): string {
   return kind.replace(/-/g, ' ');
 }
 
-// Lets the phase/fix-pass agent short-circuit to escalation on a genuine
-// ambiguity instead of guessing or spinning through the fix-attempt cap.
-function extractBlocker(text: string): string | undefined {
+// What actually blocks a run — carried on `task.blocker` and, once escalated,
+// mirrored onto the thread's `option:`/`context:` continuation lines (IDEA-287).
+interface DecisionBlocker {
+  question: string;
+  options?: ThreadMessageOption[];
+  context?: string;
+}
+
+interface ParsedDecision extends Omit<DecisionBlocker, 'options'> {
+  options: ThreadMessageOption[];
+  /** Set when the agent attempted the OPTION:/CONTEXT: block but broke its
+   * limits — still parks the run, but flags the prompt for tightening. */
+  brokenShape?: string;
+}
+
+// Lets the phase/fix-pass agent short-circuit to escalation on genuine ambiguity.
+// Tolerates the old single-line form by treating the whole line as the question, unchecked against limits.
+function extractDecision(text: string): ParsedDecision | undefined {
   const idx = text.indexOf(NEEDS_DECISION_MARKER);
   if (idx === -1) return undefined;
-  return text.slice(idx + NEEDS_DECISION_MARKER.length).trim() || undefined;
+  const lines = text.slice(idx + NEEDS_DECISION_MARKER.length).split('\n');
+  const question = lines[0]?.trim();
+  if (!question) return undefined;
+
+  const options: ThreadMessageOption[] = [];
+  let context: string | undefined;
+  for (const raw of lines.slice(1)) {
+    const line = raw.trim();
+    if (line.startsWith('OPTION:')) {
+      const rest = line.slice('OPTION:'.length).trim();
+      const [label, consequence] = rest.split('—').map((s) => s.trim());
+      options.push({ label: label || rest, consequence: consequence ?? '' });
+    } else if (line.startsWith('CONTEXT:')) {
+      context = line.slice('CONTEXT:'.length).trim();
+    } else if (line !== '') {
+      break;
+    }
+  }
+
+  if (options.length === 0 && context === undefined) {
+    return { question, options };
+  }
+
+  const brokenShape =
+    question.length > DECISION_QUESTION_LIMIT
+      ? `question exceeds ${DECISION_QUESTION_LIMIT} characters`
+      : options.length === 0
+        ? 'names no option'
+        : undefined;
+
+  return { question, options, context, brokenShape };
 }
 
 export interface AgentTask {
@@ -160,7 +211,7 @@ export interface AgentTask {
   fixIndex?: number;
   fixAttempt?: number;
   fixAttemptCap?: number;
-  blocker?: string;
+  blocker?: DecisionBlocker;
   planBaseline?: { phases: number; log: number };
   ideaId?: string;
   ideaLogBaseline?: number;
@@ -265,7 +316,9 @@ You are headless with no browser or display. Never open the app, navigate to a U
 
 When you have finished editing, run \`pnpm run check-types\` and \`npx biome check . --write\` once each, and run a test file only if you edited that file; do not run the lint or test suites — the run verifies them once after the last phase.
 
-If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the phase.
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Park it and stop without finishing the phase:
+
+${NEEDS_DECISION_PROTOCOL}
 
 When the work is done:
 1. In the plan file's \`### Phases\` list, change this phase's checkbox from \`- [ ]\` to \`- [x]\`. Do not change any other line.
@@ -297,7 +350,9 @@ ${FOREGROUND_COMMANDS_ONLY}
 
 Run \`pnpm run check-types\`, \`npx biome check . --write\`, \`npx vitest run\`, \`pnpm run consistency\`, and \`paper-camp doctor\` to see what's red, fix exactly that, then stop.
 
-If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop.`;
+If the failure requires a decision you can't make on your own — not just a fix you haven't found yet — park it and stop:
+
+${NEEDS_DECISION_PROTOCOL}`;
 }
 
 // Implements one post-build Fix — a finding logged after the plan's phases already
@@ -329,7 +384,9 @@ You are headless with no browser or display. Verify only with terminal commands 
 
 Leave the whole repo green before you finish, not just the files you edited: run \`pnpm run check-types\` and fix anything red. Keep such fixes minimal and correct.
 
-If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`${NEEDS_DECISION_MARKER}\` followed by your question, then stop without finishing the fix.
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Park it and stop without finishing the fix:
+
+${NEEDS_DECISION_PROTOCOL}
 
 When the work is done, in the plan file's \`### Fixes\` list, change this fix's checkbox from \`- [ ]\` to \`- [x]\`. Do not change any other line.`;
 }
@@ -445,6 +502,7 @@ export function createAgentManager(
     task: AgentTask,
     planId: string | undefined,
     message: string,
+    decision?: { options?: ThreadMessageOption[]; context?: string },
   ): Promise<void> {
     task.errorKind = 'question';
     if (!planId) return;
@@ -462,11 +520,14 @@ export function createAgentManager(
       root,
       file,
       entityFileInput(entry, {
-        thread: [...(entry.thread ?? []), agentThreadMessage(message, 'question')],
+        thread: [
+          ...(entry.thread ?? []),
+          agentThreadMessage(message, 'question', undefined, decision),
+        ],
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
-    await appendToChatFile(root, agentThreadMessage(message, 'question', planId));
+    await appendToChatFile(root, agentThreadMessage(message, 'question', planId, decision));
   }
 
   function registerTask(task: AgentTask): void {
@@ -809,13 +870,22 @@ export function createAgentManager(
         if (parsed?.rateLimit) task.rateLimit = parsed.rateLimit;
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
-          if (opts.trackBlocker) task.blocker = parsed.reason;
+          if (opts.trackBlocker) task.blocker = { question: parsed.reason };
         }
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
           if (opts.trackBlocker) {
-            const blocker = extractBlocker(parsed.text);
-            if (blocker) task.blocker = blocker;
+            const decision = extractDecision(parsed.text);
+            if (decision) {
+              task.blocker = {
+                question: decision.question,
+                options: decision.options.length > 0 ? decision.options : undefined,
+                context: decision.context,
+              };
+              if (decision.brokenShape) {
+                pushLine(task, `[decision-shape] agent broke the shape — ${decision.brokenShape}`);
+              }
+            }
           }
         }
       });
@@ -1518,7 +1588,7 @@ export function createAgentManager(
     let verifyOk = introduced.length === 0;
 
     let fixAttempt = 0;
-    let fixBlocker: string | undefined;
+    let fixBlocker: DecisionBlocker | undefined;
     let fixSessionId = sessionId;
     while (!verifyOk && fixAttempt < FIX_ATTEMPT_CAP) {
       if (isSuperseded(task) || isStopping(task)) break;
@@ -1590,12 +1660,13 @@ export function createAgentManager(
     }
 
     if (fixBlocker) {
-      task.errorReason ??= fixBlocker;
-      pushLine(task, `[blocked] ${label} — agent needs a decision: ${fixBlocker}`);
+      task.errorReason ??= fixBlocker.question;
+      pushLine(task, `[blocked] ${label} — agent needs a decision: ${fixBlocker.question}`);
       await escalateToLog(
         task,
         plan.id,
-        `${context}'s final verify — the fix pass needs a decision: ${fixBlocker}`,
+        `${context}'s final verify — the fix pass needs a decision: ${fixBlocker.question}`,
+        { options: fixBlocker.options, context: fixBlocker.context },
       );
       void setStatus(task, 'error');
       return false;
@@ -1699,13 +1770,15 @@ export function createAgentManager(
       if (isStopping(task)) break;
 
       if (task.blocker) {
+        const blocker = task.blocker;
         failed++;
-        task.errorReason ??= task.blocker;
-        pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${task.blocker}`);
+        task.errorReason ??= blocker.question;
+        pushLine(task, `[blocked] ${kind} ${i + 1} — agent needs a decision: ${blocker.question}`);
         await escalateToLog(
           task,
           plan.id,
-          `${task.taskKind === 'run-all' ? 'Run-all' : 'Phase run'} parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${task.blocker}`,
+          `${task.taskKind === 'run-all' ? 'Run-all' : 'Phase run'} parked on ${kind} ${i + 1} ("${item.text}") — the agent needs a decision: ${blocker.question}`,
+          { options: blocker.options, context: blocker.context },
         );
         task.blocker = undefined;
         break;

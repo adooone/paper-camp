@@ -24,6 +24,15 @@ export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters
 export const MANUAL_PHASE_RULE =
   'A phase is a unit an agent runs. Anything needing a browser, a device, a human account, or a judgment call is not a phase an agent can run — put it under a `[manual]` marker (`- [ ] [manual] <title>`) or fold it into the body as acceptance, never as a bare phase.';
 
+// The shape a parked question must take (IDEA-287) — a short question plus pickable
+// options beats a paragraph the recipient has to forward to another agent to parse.
+export const NEEDS_DECISION_PROTOCOL = `Ask for one question, not a list: if two decisions block the work, ask the first and stop — the run parks again for the second once the first is answered, since one short question is answered far faster than one long one. Never treat as a decision anything the idea body already settles or anything a file or a test can answer; re-read the idea before parking. Shape it as:
+
+NEEDS-DECISION: <one question, at most 140 characters, ending in ?>
+OPTION: <at most 80 characters> — <one consequence, at most 100 characters>
+OPTION: <two to four options total; the first is your recommendation>
+CONTEXT: <at most three sentences; no file paths unless the choice is about a file>`;
+
 // "Fix it here" (IDEA-192) — no plan/idea file to scope this to, so unlike the phase
 // runner this fix commits its own work; a human reviews it via ordinary git status.
 export function buildIssueFixPrompt(issue: Pick<Issue, 'title' | 'reason' | 'output'>): string {
@@ -41,7 +50,9 @@ Comments: do NOT add any comments to the code — none, the code is the document
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
 
-If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`NEEDS-DECISION:\` followed by your question, then stop without committing.`;
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Park it and stop without committing:
+
+${NEEDS_DECISION_PROTOCOL}`;
 }
 
 const LOCKFILE_INSTALL_COMMANDS: Record<PackageManager, string> = {
@@ -81,7 +92,9 @@ Comments: do NOT add any comments to the code — none, the code is the document
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
 
-If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Output a single line starting with \`NEEDS-DECISION:\` followed by your question, then stop without committing.`;
+If you hit a genuine blocker — an ambiguous requirement or a real product decision only a human can make, not just something you haven't figured out yet — do not guess. Park it and stop without committing:
+
+${NEEDS_DECISION_PROTOCOL}`;
 }
 
 export function buildConvergenceAuditPrompt(plan: PlanEntry): string {
