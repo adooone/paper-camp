@@ -37,7 +37,7 @@ interface FeedbackThreadProps {
   promotingIndex?: number | null;
   /** Answers a parked `question` — pressing an option or the card's own reply
    * field sends through here exactly as a typed message does (IDEA-287). */
-  onAnswer?: (text: string) => void;
+  onAnswer?: (text: string) => Promise<boolean>;
   answering?: boolean;
 }
 
@@ -87,7 +87,7 @@ export const FeedbackThread = ({
             {isDecisionCard ? (
               <QuestionCard
                 message={message}
-                onAnswer={(text) => onAnswer?.(text)}
+                onAnswer={(text) => onAnswer?.(text) ?? Promise.resolve(false)}
                 busy={answering}
               />
             ) : (

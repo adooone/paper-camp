@@ -385,10 +385,9 @@ export function createGitManager(root: string) {
   }
 
   // The daemon rewrites papercamp/ on its own schedule, so inside the corpus only a
-  // file naming this idea counts as unfinished work; an untracked corpus directory hides its files.
+  // file naming this idea counts as unfinished work.
   function blocksCompletion(entry: GitStatusEntry, id: string): boolean {
     if (!entry.path.startsWith('papercamp/')) return true;
-    if (entry.path.endsWith('/')) return true;
     return entry.path.includes(`${id}.md`);
   }
 

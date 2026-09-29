@@ -46,8 +46,9 @@ export function useFeedbackComposer(plan: PlanEntry, onSend: (text: string) => P
   // typed message, but never touches the composer's draft — it isn't that draft.
   const handleAnswer = async (text: string) => {
     setPending(text);
-    await onSend(text);
+    const ok = await onSend(text);
     setPending(null);
+    return ok;
   };
 
   const handlePromote = (index: number, target: PromoteTarget) => {

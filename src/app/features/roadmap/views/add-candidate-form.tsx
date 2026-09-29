@@ -29,6 +29,7 @@ export const AddCandidateForm = ({ onAdd }: AddCandidateFormProps) => {
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleAdd();
         }}
+        aria-label="Add a thought"
         placeholder="Add a thought"
         disabled={saving}
         className="flex-1"

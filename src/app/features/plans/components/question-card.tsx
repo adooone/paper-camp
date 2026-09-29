@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 interface QuestionCardProps {
   message: ThreadMessage;
-  onAnswer: (text: string) => void;
+  onAnswer: (text: string) => Promise<boolean>;
   busy: boolean;
 }
 
@@ -13,21 +13,28 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
   const [chosen, setChosen] = useState<string | null>(null);
   const [reply, setReply] = useState('');
   const [contextOpen, setContextOpen] = useState(false);
+  const [sending, setSending] = useState(false);
   const options = message.options ?? [];
   const { phaseLine, question } = splitQuestionText(message.text);
   const answered = message.state === 'resolved' || chosen !== null;
 
-  const pick = (option: ThreadMessageOption) => {
-    setChosen(option.label);
-    onAnswer(option.label);
+  const pick = async (option: ThreadMessageOption) => {
+    setSending(true);
+    const ok = await onAnswer(option.label);
+    setSending(false);
+    if (ok) setChosen(option.label);
   };
 
-  const sendReply = () => {
+  const sendReply = async () => {
     const text = reply.trim();
     if (!text) return;
-    setChosen(text);
-    setReply('');
-    onAnswer(text);
+    setSending(true);
+    const ok = await onAnswer(text);
+    setSending(false);
+    if (ok) {
+      setChosen(text);
+      setReply('');
+    }
   };
 
   return (
@@ -48,7 +55,7 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
             key={option.label}
             onClick={() => pick(option)}
             active={chosen === option.label}
-            disabled={busy || answered}
+            disabled={busy || sending || answered}
           >
             <div className="flex flex-col items-start gap-0.5">
               <span className="flex items-center gap-2">
@@ -74,10 +81,10 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
             aria-label="Answer in your own words"
             placeholder="Or answer in your own words…"
             rows={2}
-            disabled={busy}
+            disabled={busy || sending}
           />
           <div className="flex justify-end">
-            <Button size="small" onClick={sendReply} disabled={busy || !reply.trim()}>
+            <Button size="small" onClick={sendReply} disabled={busy || sending || !reply.trim()}>
               Send
             </Button>
           </div>

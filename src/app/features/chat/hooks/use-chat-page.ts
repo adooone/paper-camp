@@ -26,10 +26,12 @@ export function useChatPage() {
   const sendText = async (text: string, { restoreOnFailure }: { restoreOnFailure: boolean }) => {
     setSending(true);
     setPending(text);
+    let ok = true;
     try {
       const { error } = await postChatMessage(text);
       await loadChat();
       if (error) {
+        ok = false;
         toast({
           title: 'Agent did not reply',
           description: oneLineErrorSummary(error),
@@ -37,6 +39,7 @@ export function useChatPage() {
         });
       }
     } catch (err) {
+      ok = false;
       toast({
         title: 'Message failed to send',
         description: oneLineErrorSummary((err as Error).message),
@@ -47,6 +50,7 @@ export function useChatPage() {
       setPending(null);
       setSending(false);
     }
+    return ok;
   };
 
   const handleSend = async () => {
@@ -58,9 +62,7 @@ export function useChatPage() {
 
   // A picked option answers exactly like a typed message, but never touches the
   // composer's draft — it isn't that draft.
-  const handleAnswer = async (text: string) => {
-    await sendText(text, { restoreOnFailure: false });
-  };
+  const handleAnswer = async (text: string) => sendText(text, { restoreOnFailure: false });
 
   const openConfirmClear = () => setConfirmOpen(true);
   const closeConfirmClear = () => setConfirmOpen(false);
