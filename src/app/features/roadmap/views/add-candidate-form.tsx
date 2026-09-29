@@ -29,7 +29,7 @@ export const AddCandidateForm = ({ onAdd }: AddCandidateFormProps) => {
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleAdd();
         }}
-        placeholder="Add a candidate"
+        placeholder="Add a thought"
         disabled={saving}
         className="flex-1"
       />

@@ -553,6 +553,7 @@ export interface ResolvedIdea {
   pr?: PrInfo;
   released: boolean;
   created: string;
+  phases: PhaseItem[];
 }
 
 /** `shipped` only once the item carries the shipped marker a human writes (see IDEA-277);

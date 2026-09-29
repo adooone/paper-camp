@@ -787,7 +787,15 @@ describe('resolveRoadmap', () => {
     const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities, changelog);
 
     expect(resolved.horizons[0].items[1].ideas).toEqual([
-      { id: 'IDEA-1', title: 'Packaging plan', status: 'done', pr, released: true },
+      {
+        id: 'IDEA-1',
+        title: 'Packaging plan',
+        status: 'done',
+        pr,
+        released: true,
+        created: '2026-01-01',
+        phases: [],
+      },
     ]);
   });
 

@@ -64,7 +64,30 @@ export const RoadmapPage = () => {
         </div>
       );
     }
-    return <RoadmapItemPage item={item} horizonTitle={horizonTitle} dateRange={dateRange} />;
+    return (
+      <>
+        <RoadmapItemPage
+          item={item}
+          horizonTitle={horizonTitle}
+          dateRange={dateRange}
+          onOpenGraduated={onOpenGraduated}
+          onAddCandidate={(name) => handleAddCandidate(horizonTitle ?? '', item.name, name)}
+          onPromoteCandidate={(candidateName) =>
+            handlePromote(horizonTitle ?? '', item, candidateName)
+          }
+          onRemoveCandidate={(candidateName) =>
+            handleRemoveCandidate(horizonTitle ?? '', item, candidateName)
+          }
+        />
+        <PromoteRoadmapItemModal
+          horizonTitle={promoting?.horizonTitle ?? null}
+          item={promoting?.item ?? null}
+          candidateName={promoting?.candidateName}
+          onClose={() => setPromoting(null)}
+          onPromoted={loadRoadmap}
+        />
+      </>
+    );
   }
 
   if (roadmap.horizons.length === 0) {

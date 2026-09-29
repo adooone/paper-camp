@@ -43,6 +43,7 @@ export const UnfiledSection = ({ entities, onOpenGraduated }: UnfiledSectionProp
                 pr: entity.pr,
                 released: false,
                 created: entity.created,
+                phases: entity.phases,
               }}
               onOpen={() => onOpenGraduated(entity.id, entity.title)}
             />

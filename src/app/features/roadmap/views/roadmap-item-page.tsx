@@ -4,11 +4,19 @@ import { Card, type FactItem, FactsGrid, PageTitle, Stamp, Text } from '@dendeli
 import { surface } from '@dendelion/paper-ui/tokens';
 import { ITEM_STATE_STAMP } from '../constants';
 import { type IdeaDateRange, formatFactDate } from '../helpers';
+import { AddCandidateForm } from './add-candidate-form';
+import { CandidateRow } from './candidate-row';
+import { IdeaRow } from './idea-row';
+import { ShippedIdeasFold } from './shipped-ideas-fold';
 
 interface RoadmapItemPageProps {
   item: ResolvedRoadmapItem;
   horizonTitle: string | null;
   dateRange: IdeaDateRange | null;
+  onOpenGraduated: (id: string | undefined, title: string) => void;
+  onAddCandidate: (name: string) => Promise<void>;
+  onPromoteCandidate: (candidateName: string) => void;
+  onRemoveCandidate: (candidateName: string) => void;
 }
 
 const countLabel = (item: ResolvedRoadmapItem): string => {
@@ -17,7 +25,18 @@ const countLabel = (item: ResolvedRoadmapItem): string => {
   return `${item.rollup.done} of ${item.rollup.total} · ${item.rollup.open} open`;
 };
 
-export const RoadmapItemPage = ({ item, horizonTitle, dateRange }: RoadmapItemPageProps) => {
+const SECTION_TITLE_CLASS =
+  'truncate px-1 pt-2 font-handwritten text-md font-semibold leading-none opacity-70';
+
+export const RoadmapItemPage = ({
+  item,
+  horizonTitle,
+  dateRange,
+  onOpenGraduated,
+  onAddCandidate,
+  onPromoteCandidate,
+  onRemoveCandidate,
+}: RoadmapItemPageProps) => {
   const stateStamp = ITEM_STATE_STAMP[item.state];
   const facts: FactItem[] = [
     ...(horizonTitle ? [{ label: 'Horizon', value: horizonTitle }] : []),
@@ -26,6 +45,15 @@ export const RoadmapItemPage = ({ item, horizonTitle, dateRange }: RoadmapItemPa
       ? [{ label: 'Last idea', value: formatFactDate(dateRange.lastIdea) }]
       : []),
   ];
+  // Roadmap markdown only addresses items inside a `Horizon N` heading — a standing
+  // concern (horizonTitle null) can't take thought mutations yet, so its thoughts render read-only.
+  const isTrackedItem = horizonTitle !== null;
+  const openIdeas = [...item.ideas]
+    .filter((idea) => idea.status !== 'done' && idea.status !== 'dropped')
+    .sort((a, b) => Number(b.status === 'in-progress') - Number(a.status === 'in-progress'));
+  const shippedIdeas = item.ideas.filter(
+    (idea) => idea.status === 'done' || idea.status === 'dropped',
+  );
 
   return (
     <div>
@@ -48,6 +76,52 @@ export const RoadmapItemPage = ({ item, horizonTitle, dateRange }: RoadmapItemPa
         )}
         {facts.length > 0 && <FactsGrid items={facts} layout="inline" />}
       </Card>
+      <div className="flex flex-col gap-1">
+        {openIdeas.length > 0 && (
+          <>
+            <div className={SECTION_TITLE_CLASS}>Open</div>
+            <div className="flex flex-col">
+              {openIdeas.map((idea) => (
+                <IdeaRow
+                  key={idea.id}
+                  idea={idea}
+                  onOpen={() => onOpenGraduated(idea.id, idea.title)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+        {(isTrackedItem || item.candidates.length > 0) && (
+          <>
+            <div className={SECTION_TITLE_CLASS}>Thoughts</div>
+            <div className="flex flex-col">
+              {item.candidates.map((candidateName) =>
+                isTrackedItem ? (
+                  <CandidateRow
+                    key={candidateName}
+                    name={candidateName}
+                    onPromote={() => onPromoteCandidate(candidateName)}
+                    onRemove={() => onRemoveCandidate(candidateName)}
+                  />
+                ) : (
+                  <div
+                    key={candidateName}
+                    className="border-black/10 border-b py-1.5 last:border-b-0"
+                  >
+                    {candidateName}
+                  </div>
+                ),
+              )}
+              {isTrackedItem && (
+                <div className="pt-1">
+                  <AddCandidateForm onAdd={onAddCandidate} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
+        <ShippedIdeasFold ideas={shippedIdeas} onOpen={onOpenGraduated} />
+      </div>
     </div>
   );
 };

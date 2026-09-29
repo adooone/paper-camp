@@ -70,9 +70,10 @@ the item's ideas themselves show.
       A view and hook that resolve the item or standing concern by name, with
       title, state stamp, counts, description and the facts line.
       run: 5m24s · 86 in · 41.8k out · sonnet-5 · sess:9e70822c-5191-459a-804d-4703e0766a76
-- [ ] Render the Open, Thoughts and Shipped sections
+- [x] Render the Open, Thoughts and Shipped sections
       Includes renaming candidates to thoughts in every user-facing string,
       the promote modal among them.
+      run: 8m5s · 152 in · 45.9k out · sonnet-5 · sess:8279945c-d71b-4a07-84c1-2d26f7ad8e47
 - [ ] Wire the bottom action bar
       Edit, Move, Mark shipped/Reopen, Remove and Promote to idea, reusing the
       roadmap page's modals; Remove navigates back.
