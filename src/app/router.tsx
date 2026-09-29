@@ -135,7 +135,18 @@ const roadmapRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { item?: string } => ({
     item: typeof search.item === 'string' ? search.item : undefined,
   }),
+  beforeLoad: ({ search }) => {
+    if (search.item) {
+      throw redirect({ to: '/roadmap/$item', params: { item: search.item } });
+    }
+  },
   staticData: { layer: 'runtime' },
+});
+const roadmapItemRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/roadmap/$item',
+  component: RoadmapPage,
+  staticData: { layer: 'corpus' },
 });
 
 const inboxRoute = createRoute({
@@ -237,6 +248,7 @@ const routeTree = rootRoute.addChildren([
   logEntryRoute,
   chatRoute,
   roadmapRoute,
+  roadmapItemRoute,
   statsRoute,
   inboxRoute,
   gitRoute,

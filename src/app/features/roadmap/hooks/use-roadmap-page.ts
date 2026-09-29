@@ -8,7 +8,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { ResolvedRoadmapItem } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
-import { useSearch } from '@tanstack/react-router';
+import { useParams } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { filterHorizons } from '../helpers';
 
@@ -35,7 +35,8 @@ export const useRoadmapPage = () => {
   const filters = useAppStore((s) => s.roadmapFilters);
   const openEntity = useOpenEntity();
   const { toast } = useToast();
-  const { item: highlightedItem } = useSearch({ from: '/roadmap' });
+  const { item: itemParam } = useParams({ strict: false });
+  const highlightedItem = typeof itemParam === 'string' ? decodeURIComponent(itemParam) : undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const [promoting, setPromoting] = useState<Promoting | null>(null);
   const [addOpen, setAddOpen] = useState(false);

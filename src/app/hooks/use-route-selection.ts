@@ -1,5 +1,10 @@
 import { useAppStore } from '@/app/stores/app-store';
-import type { IdeaEntry, NightSuggestionEntry, PlanEntry } from '@/types/index';
+import type {
+  IdeaEntry,
+  NightSuggestionEntry,
+  PlanEntry,
+  ResolvedRoadmapItem,
+} from '@/types/index';
 import { useParams } from '@tanstack/react-router';
 
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
@@ -127,6 +132,26 @@ export function useActiveNightChunk(): ActiveNightChunk | null {
     passCount: match.group.passCount,
     costUsd: match.group.costUsd,
   };
+}
+
+export interface ActiveRoadmapItem {
+  item: ResolvedRoadmapItem;
+  horizonTitle: string | null;
+}
+
+/** Horizon items and standing concerns share `/roadmap/$item`; a concern resolves
+ *  with no horizon, which is how the breadcrumb knows to skip that segment. */
+export function useActiveRoadmapItem(): ActiveRoadmapItem | null {
+  const { item: itemParam } = useParams({ strict: false });
+  const roadmap = useAppStore((s) => s.roadmap);
+  if (typeof itemParam !== 'string' || !roadmap) return null;
+  const name = decodeURIComponent(itemParam);
+  for (const horizon of roadmap.horizons) {
+    const item = horizon.items.find((candidate) => candidate.name === name);
+    if (item) return { item, horizonTitle: horizon.title };
+  }
+  const concern = roadmap.standingConcerns.find((candidate) => candidate.name === name);
+  return concern ? { item: concern, horizonTitle: null } : null;
 }
 
 function useActiveDocSection(): DocSection | null {

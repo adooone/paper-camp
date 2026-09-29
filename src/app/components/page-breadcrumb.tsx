@@ -3,6 +3,7 @@ import {
   useActiveIdea,
   useActiveNightChunk,
   useActivePlan,
+  useActiveRoadmapItem,
   useResolvedDocSection,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -17,6 +18,7 @@ export const PageBreadcrumb = () => {
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
   const activeChunk = useActiveNightChunk();
+  const activeRoadmapItem = useActiveRoadmapItem();
   const plans = useAppStore((s) => s.plans);
   const activeDocSection = useResolvedDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
@@ -50,6 +52,15 @@ export const PageBreadcrumb = () => {
       return [
         { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
         { id: 'chunk', label: activeChunk.chunk },
+      ];
+    }
+    if (activeRoadmapItem) {
+      return [
+        { id: 'roadmap', label: 'Roadmap', onClick: () => navigate({ to: '/roadmap' }) },
+        ...(activeRoadmapItem.horizonTitle
+          ? [{ id: 'horizon', label: activeRoadmapItem.horizonTitle }]
+          : []),
+        { id: 'item', label: activeRoadmapItem.item.name },
       ];
     }
     const docLabel =

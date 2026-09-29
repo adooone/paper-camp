@@ -62,9 +62,10 @@ Editing a thought's text. Reordering ideas within a section. Anything
 the item's ideas themselves show.
 
 ### Phases
-- [ ] Add the `/roadmap/$item` route and breadcrumb
+- [x] Add the `/roadmap/$item` route and breadcrumb
       Render `RoadmapPage` at the new corpus-layer route, turn the `?item=`
       search param into a redirect to it, and derive the trail in `PageBreadcrumb`.
+      run: 2m32s · 72 in · 17.2k out · sonnet-5 · sess:9e70822c-5191-459a-804d-4703e0766a76
 - [ ] Build the item page shell and head card
       A view and hook that resolve the item or standing concern by name, with
       title, state stamp, counts, description and the facts line.
