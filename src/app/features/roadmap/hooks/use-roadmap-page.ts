@@ -8,8 +8,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { ResolvedRoadmapItem } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
-import { useParams } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { filterHorizons } from '../helpers';
 
 interface Promoting {
@@ -35,9 +34,6 @@ export const useRoadmapPage = () => {
   const filters = useAppStore((s) => s.roadmapFilters);
   const openEntity = useOpenEntity();
   const { toast } = useToast();
-  const { item: itemParam } = useParams({ strict: false });
-  const highlightedItem = typeof itemParam === 'string' ? decodeURIComponent(itemParam) : undefined;
-  const containerRef = useRef<HTMLDivElement>(null);
   const [promoting, setPromoting] = useState<Promoting | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -46,12 +42,6 @@ export const useRoadmapPage = () => {
   useEffect(() => {
     loadRoadmap();
   }, [loadRoadmap]);
-
-  useEffect(() => {
-    if (!highlightedItem || !roadmap) return;
-    const row = containerRef.current?.querySelector('[class*="highlighted"]');
-    row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [highlightedItem, roadmap]);
 
   const handleAddCandidate = async (horizonTitle: string, itemName: string, name: string) => {
     await addRoadmapCandidate(horizonTitle, itemName, name);
@@ -134,8 +124,6 @@ export const useRoadmapPage = () => {
     horizonTitles,
     addOpen,
     setAddOpen,
-    highlightedItem,
-    containerRef,
     promoting,
     setPromoting,
     editing,

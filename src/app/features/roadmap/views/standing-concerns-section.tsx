@@ -3,13 +3,10 @@ import { StandingConcernRow } from './standing-concern-row';
 
 interface StandingConcernsSectionProps {
   items: ResolvedRoadmapItem[];
-  onOpenGraduated: (id: string | undefined, title: string) => void;
+  onOpen: (item: ResolvedRoadmapItem) => void;
 }
 
-export const StandingConcernsSection = ({
-  items,
-  onOpenGraduated,
-}: StandingConcernsSectionProps) => {
+export const StandingConcernsSection = ({ items, onOpen }: StandingConcernsSectionProps) => {
   if (items.length === 0) return null;
 
   return (
@@ -19,7 +16,7 @@ export const StandingConcernsSection = ({
       </div>
       <div className="flex flex-col">
         {items.map((item) => (
-          <StandingConcernRow key={item.name} item={item} onOpen={onOpenGraduated} />
+          <StandingConcernRow key={item.name} item={item} onOpen={() => onOpen(item)} />
         ))}
       </div>
     </div>

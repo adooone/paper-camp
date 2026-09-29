@@ -9,34 +9,12 @@ const rollupLine = (horizon: ResolvedRoadmapHorizon) => {
 
 interface HorizonSectionProps {
   horizon: ResolvedRoadmapHorizon;
-  horizonTitles: string[];
-  highlightedItem: string | undefined;
-  onPromote: (item: ResolvedRoadmapItem, candidateName?: string) => void;
-  onAddCandidate: (itemName: string, name: string) => Promise<void>;
-  onOpenGraduated: (id: string | undefined, title: string) => void;
-  onEdit: (item: ResolvedRoadmapItem) => void;
-  onMove: (item: ResolvedRoadmapItem, toHorizon: string) => void;
-  onToggleShipped: (item: ResolvedRoadmapItem) => void;
-  onRemove: (item: ResolvedRoadmapItem) => void;
-  onRemoveCandidate: (item: ResolvedRoadmapItem, candidateName: string) => void;
+  onOpen: (item: ResolvedRoadmapItem) => void;
 }
 
-export const HorizonSection = ({
-  horizon,
-  horizonTitles,
-  highlightedItem,
-  onPromote,
-  onAddCandidate,
-  onOpenGraduated,
-  onEdit,
-  onMove,
-  onToggleShipped,
-  onRemove,
-  onRemoveCandidate,
-}: HorizonSectionProps) => {
+export const HorizonSection = ({ horizon, onOpen }: HorizonSectionProps) => {
   const openItems = horizon.items.filter((item) => item.state !== 'shipped');
   const shippedItems = horizon.items.filter((item) => item.state === 'shipped');
-  const otherHorizonTitles = horizonTitles.filter((title) => title !== horizon.title);
 
   return (
     <div className="flex flex-col gap-1">
@@ -56,35 +34,9 @@ export const HorizonSection = ({
       ) : (
         <div className="flex flex-col">
           {openItems.map((item) => (
-            <RoadmapItemRow
-              key={item.name}
-              item={item}
-              highlighted={item.name === highlightedItem}
-              otherHorizonTitles={otherHorizonTitles}
-              onPromote={() => onPromote(item)}
-              onPromoteCandidate={(candidateName) => onPromote(item, candidateName)}
-              onAddCandidate={(name) => onAddCandidate(item.name, name)}
-              onOpenGraduated={onOpenGraduated}
-              onEdit={() => onEdit(item)}
-              onMove={(toHorizon) => onMove(item, toHorizon)}
-              onToggleShipped={() => onToggleShipped(item)}
-              onRemove={() => onRemove(item)}
-              onRemoveCandidate={(candidateName) => onRemoveCandidate(item, candidateName)}
-            />
+            <RoadmapItemRow key={item.name} item={item} onOpen={() => onOpen(item)} />
           ))}
-          <ShippedFold
-            items={shippedItems}
-            otherHorizonTitles={otherHorizonTitles}
-            highlightedItem={highlightedItem}
-            onPromote={onPromote}
-            onAddCandidate={onAddCandidate}
-            onOpenGraduated={onOpenGraduated}
-            onEdit={onEdit}
-            onMove={onMove}
-            onToggleShipped={onToggleShipped}
-            onRemove={onRemove}
-            onRemoveCandidate={onRemoveCandidate}
-          />
+          <ShippedFold items={shippedItems} onOpen={onOpen} />
         </div>
       )}
     </div>

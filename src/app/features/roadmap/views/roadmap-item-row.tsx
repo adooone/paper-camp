@@ -1,158 +1,58 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion, Button, Menu, Row, Stamp, Text } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
-import { useEffect, useState } from 'react';
+import { Row, Stamp, Text } from '@dendelion/paper-ui';
 import { ITEM_STATE_STAMP } from '../constants';
-import { AddCandidateForm } from './add-candidate-form';
-import { CandidateRow } from './candidate-row';
-import { IdeaRow } from './idea-row';
 import { RoughProgressBar } from './rough-progress-bar';
-import { ShippedIdeasFold } from './shipped-ideas-fold';
 
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
-  highlighted: boolean;
-  otherHorizonTitles: string[];
-  onPromote: () => void;
-  onPromoteCandidate: (candidateName: string) => void;
-  onAddCandidate: (name: string) => Promise<void>;
-  onOpenGraduated: (id: string | undefined, title: string) => void;
-  onEdit: () => void;
-  onMove: (toHorizon: string) => void;
-  onToggleShipped: () => void;
-  onRemove: () => void;
-  onRemoveCandidate: (candidateName: string) => void;
+  onOpen: () => void;
 }
 
-export const RoadmapItemRow = ({
-  item,
-  highlighted,
-  otherHorizonTitles,
-  onPromote,
-  onPromoteCandidate,
-  onAddCandidate,
-  onOpenGraduated,
-  onEdit,
-  onMove,
-  onToggleShipped,
-  onRemove,
-  onRemoveCandidate,
-}: RoadmapItemRowProps) => {
-  const [expanded, setExpanded] = useState(highlighted);
+export const RoadmapItemRow = ({ item, onOpen }: RoadmapItemRowProps) => {
   const stateStamp = ITEM_STATE_STAMP[item.state];
-  const openIdeas = item.ideas.filter(
-    (idea) => idea.status !== 'done' && idea.status !== 'dropped',
-  );
-  const shippedIdeas = item.ideas.filter(
-    (idea) => idea.status === 'done' || idea.status === 'dropped',
-  );
-
-  useEffect(() => {
-    if (highlighted) setExpanded(true);
-  }, [highlighted]);
 
   return (
-    <div
-      className={`border-b border-black/10 last:border-b-0 ${highlighted ? 'rounded-[10px] outline outline-2 outline-offset-[-2px]' : ''}`}
-      style={highlighted ? { outlineColor: color.accentAmber } : undefined}
-    >
-      <Accordion
-        expanded={expanded}
-        onToggle={() => setExpanded((v) => !v)}
-        title={
-          <Row
-            surface="none"
-            className="px-0"
-            columns={{ title: 'minmax(0,1fr)', meta: '6rem', trailing: '8rem' }}
-            title={
-              <div className="min-w-0">
-                <div className="truncate">{item.name}</div>
-                <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">
-                  {item.description}
-                </div>
-              </div>
-            }
-            meta={
-              <Stamp size="small" variant={stateStamp.variant}>
-                {stateStamp.label}
-              </Stamp>
-            }
-            trailing={
-              item.rollup.total > 0 ? (
-                <div className="flex flex-col items-end gap-1">
-                  <Text face="handwritten" size="xs" tone="secondary" noWrap>
-                    {item.rollup.done} of {item.rollup.total} ·{' '}
-                    {item.state === 'in-progress' && item.readyToShip
-                      ? 'ready to ship'
-                      : `${item.rollup.open} open`}
-                  </Text>
-                  <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
-                </div>
-              ) : (
-                <Text face="handwritten" size="xs" tone="secondary">
-                  No ideas yet
-                </Text>
-              )
-            }
-          />
-        }
-      >
-        <div className="flex flex-col gap-1 pb-2">
-          <div className="flex flex-wrap items-center gap-2 border-black/10 border-b pb-2">
-            <Button type="button" variant="ghost" size="small" onClick={onEdit}>
-              Edit
-            </Button>
-            {otherHorizonTitles.length > 0 ? (
-              <Menu
-                trigger={
-                  <Button type="button" variant="ghost" size="small">
-                    Move
-                  </Button>
-                }
-                items={otherHorizonTitles.map((title) => ({
-                  id: title,
-                  label: title,
-                  onSelect: () => onMove(title),
-                }))}
-              />
-            ) : (
-              <Button type="button" variant="ghost" size="small" disabled>
-                Move
-              </Button>
-            )}
-            <Button type="button" variant="ghost" size="small" onClick={onToggleShipped}>
-              {item.shippedOn !== undefined ? 'Reopen' : 'Mark shipped'}
-            </Button>
-            <Button type="button" variant="danger" size="small" onClick={onRemove}>
-              Remove
-            </Button>
-          </div>
-          {openIdeas.map((idea) => (
-            <IdeaRow
-              key={idea.id}
-              idea={idea}
-              onOpen={() => onOpenGraduated(idea.id, idea.title)}
-            />
-          ))}
-          {item.candidates.map((candidateName) => (
-            <CandidateRow
-              key={candidateName}
-              name={candidateName}
-              onPromote={() => onPromoteCandidate(candidateName)}
-              onRemove={() => onRemoveCandidate(candidateName)}
-            />
-          ))}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <div className="min-w-48 flex-1">
-              <AddCandidateForm onAdd={onAddCandidate} />
-            </div>
-            <Button type="button" variant="ghost" size="small" onClick={onPromote}>
-              Promote to idea
-            </Button>
-          </div>
-          <ShippedIdeasFold ideas={shippedIdeas} onOpen={onOpenGraduated} />
+    <Row
+      surface="none"
+      className="border-b border-black/10 px-0 last:border-b-0"
+      columns={{ title: 'minmax(0,1fr)', meta: '6rem', trailing: '8rem' }}
+      onClick={onOpen}
+      ariaLabel={item.name}
+      title={
+        <div className="min-w-0">
+          <div className="truncate">{item.name}</div>
+          <div className="line-clamp-2 text-sm opacity-70 sm:line-clamp-1">{item.description}</div>
         </div>
-      </Accordion>
-    </div>
+      }
+      meta={
+        <div className="flex flex-col items-start gap-1">
+          <Stamp size="small" variant={stateStamp.variant}>
+            {stateStamp.label}
+          </Stamp>
+          {item.candidates.length > 0 && (
+            <Stamp size="small" variant="muted">
+              {item.candidates.length} thought{item.candidates.length === 1 ? '' : 's'}
+            </Stamp>
+          )}
+        </div>
+      }
+      trailing={
+        item.rollup.total > 0 ? (
+          <div className="flex flex-col items-end gap-1">
+            <Text face="handwritten" size="xs" tone="secondary" noWrap>
+              {item.rollup.done} of {item.rollup.total} ·{' '}
+              {item.state === 'in-progress' && item.readyToShip
+                ? 'ready to ship'
+                : `${item.rollup.open} open`}
+            </Text>
+            <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
+          </div>
+        ) : (
+          <Text face="handwritten" size="xs" tone="secondary">
+            No ideas yet
+          </Text>
+        )
+      }
+    />
   );
 };

@@ -1,4 +1,5 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
+import type { ResolvedRoadmapItem } from '@/types/index';
 import { Button, Divider, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { firstSentence } from './helpers';
@@ -19,8 +20,6 @@ export const RoadmapPage = () => {
     horizonTitles,
     addOpen,
     setAddOpen,
-    highlightedItem,
-    containerRef,
     promoting,
     setPromoting,
     editing,
@@ -36,6 +35,9 @@ export const RoadmapPage = () => {
     handleRemoveCandidate,
     onOpenGraduated,
   } = useRoadmapPage();
+
+  const handleOpenItem = (item: ResolvedRoadmapItem) =>
+    navigate({ to: '/roadmap', search: { item: item.name } });
 
   if (roadmapError) {
     return (
@@ -127,7 +129,7 @@ export const RoadmapPage = () => {
   }
 
   return (
-    <div ref={containerRef}>
+    <div>
       <div className="mb-2 flex flex-nowrap items-center gap-3">
         <PageTitle className="mb-0 shrink-0">Roadmap</PageTitle>
         <div className="flex-1" />
@@ -152,25 +154,7 @@ export const RoadmapPage = () => {
           {horizons.map((horizon, index) => (
             <div key={horizon.title}>
               {index > 0 && <Divider sketch className="my-6" />}
-              <HorizonSection
-                horizon={horizon}
-                horizonTitles={horizonTitles}
-                highlightedItem={highlightedItem}
-                onPromote={(item, candidateName) =>
-                  handlePromote(horizon.title, item, candidateName)
-                }
-                onAddCandidate={(itemName, name) =>
-                  handleAddCandidate(horizon.title, itemName, name)
-                }
-                onOpenGraduated={onOpenGraduated}
-                onEdit={(item) => handleEdit(horizon.title, item)}
-                onMove={(item, toHorizon) => handleMove(horizon.title, item, toHorizon)}
-                onToggleShipped={(item) => handleToggleShipped(horizon.title, item)}
-                onRemove={(item) => handleRemoveItem(horizon.title, item)}
-                onRemoveCandidate={(item, candidateName) =>
-                  handleRemoveCandidate(horizon.title, item, candidateName)
-                }
-              />
+              <HorizonSection horizon={horizon} onOpen={handleOpenItem} />
             </div>
           ))}
         </div>
@@ -178,10 +162,7 @@ export const RoadmapPage = () => {
       {roadmap.standingConcerns.length > 0 && (
         <>
           <Divider sketch className="my-6" />
-          <StandingConcernsSection
-            items={roadmap.standingConcerns}
-            onOpenGraduated={onOpenGraduated}
-          />
+          <StandingConcernsSection items={roadmap.standingConcerns} onOpen={handleOpenItem} />
         </>
       )}
       {roadmap.unfiled.length > 0 && (

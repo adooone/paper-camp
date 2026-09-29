@@ -2,7 +2,7 @@
 id: IDEA-284
 title: A page for a roadmap item
 type: feat
-status: idea
+status: review
 created: 2026-09-22
 tags:
   - app
@@ -78,6 +78,7 @@ the item's ideas themselves show.
       Edit, Move, Mark shipped/Reopen, Remove and Promote to idea, reusing the
       roadmap page's modals; Remove navigates back.
       run: 2m11s · 102 in · 22.4k out · sonnet-5 · sess:d12696dc-e6c9-4cbe-943e-9b743732749e
-- [ ] Strip the expanded state from the list rows
+- [x] Strip the expanded state from the list rows
       `RoadmapItemRow` drops the accordion, fold and highlight scroll and gains
       the thoughts stamp; `StandingConcernRow` links to the page.
+      run: 5m38s · 94 in · 23.8k out · sonnet-5 · sess:d12696dc-e6c9-4cbe-943e-9b743732749e
