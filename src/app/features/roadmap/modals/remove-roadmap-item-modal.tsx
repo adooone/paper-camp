@@ -8,12 +8,14 @@ interface RemoveRoadmapItemModalProps {
   horizonTitle: string | null;
   item: ResolvedRoadmapItem | null;
   onClose: () => void;
+  onRemoved?: () => void;
 }
 
 export const RemoveRoadmapItemModal = ({
   horizonTitle,
   item,
   onClose,
+  onRemoved,
 }: RemoveRoadmapItemModalProps) => {
   const loadRoadmap = useAppStore((s) => s.loadRoadmap);
   const [removing, setRemoving] = useState(false);
@@ -33,6 +35,7 @@ export const RemoveRoadmapItemModal = ({
     try {
       await deleteRoadmapItem(horizonTitle, item.name);
       await loadRoadmap();
+      onRemoved?.();
       onClose();
     } catch (err) {
       setError((err as Error).message);

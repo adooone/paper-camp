@@ -74,9 +74,10 @@ the item's ideas themselves show.
       Includes renaming candidates to thoughts in every user-facing string,
       the promote modal among them.
       run: 8m5s · 152 in · 45.9k out · sonnet-5 · sess:8279945c-d71b-4a07-84c1-2d26f7ad8e47
-- [ ] Wire the bottom action bar
+- [x] Wire the bottom action bar
       Edit, Move, Mark shipped/Reopen, Remove and Promote to idea, reusing the
       roadmap page's modals; Remove navigates back.
+      run: 2m11s · 102 in · 22.4k out · sonnet-5 · sess:d12696dc-e6c9-4cbe-943e-9b743732749e
 - [ ] Strip the expanded state from the list rows
       `RoadmapItemRow` drops the accordion, fold and highlight scroll and gains
       the thoughts stamp; `StandingConcernRow` links to the page.

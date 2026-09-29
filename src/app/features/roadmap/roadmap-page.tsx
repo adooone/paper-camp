@@ -1,11 +1,13 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { Button, Divider, EmptyState, PageTitle } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { firstSentence } from './helpers';
 import { useRoadmapItemPage, useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';
 import { HorizonSection, RoadmapItemPage, StandingConcernsSection, UnfiledSection } from './views';
 
 export const RoadmapPage = () => {
+  const navigate = useNavigate();
   const { isItemRoute, item, horizonTitle, dateRange } = useRoadmapItemPage();
   const {
     roadmap,
@@ -70,6 +72,7 @@ export const RoadmapPage = () => {
           item={item}
           horizonTitle={horizonTitle}
           dateRange={dateRange}
+          otherHorizonTitles={horizonTitles.filter((title) => title !== horizonTitle)}
           onOpenGraduated={onOpenGraduated}
           onAddCandidate={(name) => handleAddCandidate(horizonTitle ?? '', item.name, name)}
           onPromoteCandidate={(candidateName) =>
@@ -78,6 +81,11 @@ export const RoadmapPage = () => {
           onRemoveCandidate={(candidateName) =>
             handleRemoveCandidate(horizonTitle ?? '', item, candidateName)
           }
+          onEdit={() => handleEdit(horizonTitle ?? '', item)}
+          onMove={(toHorizon) => handleMove(horizonTitle ?? '', item, toHorizon)}
+          onToggleShipped={() => handleToggleShipped(horizonTitle ?? '', item)}
+          onRemove={() => handleRemoveItem(horizonTitle ?? '', item)}
+          onPromote={() => handlePromote(horizonTitle ?? '', item)}
         />
         <PromoteRoadmapItemModal
           horizonTitle={promoting?.horizonTitle ?? null}
@@ -85,6 +93,18 @@ export const RoadmapPage = () => {
           candidateName={promoting?.candidateName}
           onClose={() => setPromoting(null)}
           onPromoted={loadRoadmap}
+        />
+        <AddRoadmapItemModal
+          open={editing !== null}
+          horizonTitles={horizonTitles}
+          editing={editing}
+          onClose={() => setEditing(null)}
+        />
+        <RemoveRoadmapItemModal
+          horizonTitle={removing?.horizonTitle ?? null}
+          item={removing?.item ?? null}
+          onClose={() => setRemoving(null)}
+          onRemoved={() => navigate({ to: '/roadmap' })}
         />
       </>
     );
