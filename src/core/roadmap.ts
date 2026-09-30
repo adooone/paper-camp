@@ -349,13 +349,13 @@ export function deriveSubjectVocabulary(roadmap: Roadmap): string[] {
 // (dedup by id) — catches both subject-drifted ideas and unlinked ones.
 function resolveIdeas(
   item: RoadmapItem,
-  entities: PlanEntry[],
+  entitiesBySubject: Map<string, PlanEntry[]>,
   entityById: Map<string, PlanEntry>,
   changelog: string,
 ): ResolvedIdea[] {
   const byId = new Map<string, PlanEntry>();
-  for (const entity of entities) {
-    if (entity.id && entity.subject === item.name) byId.set(entity.id, entity);
+  for (const entity of entitiesBySubject.get(item.name) ?? []) {
+    if (entity.id) byId.set(entity.id, entity);
   }
   for (const id of item.linked) {
     const entity = entityById.get(id);
@@ -391,11 +391,11 @@ function deriveItemState(
 
 function resolveItem(
   item: RoadmapItem,
-  entities: PlanEntry[],
+  entitiesBySubject: Map<string, PlanEntry[]>,
   entityById: Map<string, PlanEntry>,
   changelog: string,
 ): ResolvedRoadmapItem {
-  const ideas = resolveIdeas(item, entities, entityById, changelog);
+  const ideas = resolveIdeas(item, entitiesBySubject, entityById, changelog);
   const rollup = rollupIdeas(ideas);
   const { state, readyToShip } = deriveItemState(item, rollup);
   return { ...item, ideas, rollup, state, readyToShip };
@@ -407,9 +407,18 @@ export function resolveRoadmap(
   changelog = '',
 ): ResolvedRoadmap {
   const entityById = new Map(entities.filter((e) => e.id).map((e) => [e.id as string, e]));
+  const entitiesBySubject = new Map<string, PlanEntry[]>();
+  for (const entity of entities) {
+    if (!entity.subject) continue;
+    const group = entitiesBySubject.get(entity.subject);
+    if (group) group.push(entity);
+    else entitiesBySubject.set(entity.subject, [entity]);
+  }
 
   const horizons = roadmap.horizons.map((horizon) => {
-    const items = horizon.items.map((item) => resolveItem(item, entities, entityById, changelog));
+    const items = horizon.items.map((item) =>
+      resolveItem(item, entitiesBySubject, entityById, changelog),
+    );
     const rollup = items.reduce(
       (acc, item) => ({
         total: acc.total + item.rollup.total,
@@ -422,7 +431,7 @@ export function resolveRoadmap(
   });
 
   const standingConcerns = roadmap.standingConcerns.map((item) =>
-    resolveItem(item, entities, entityById, changelog),
+    resolveItem(item, entitiesBySubject, entityById, changelog),
   );
 
   const subjectVocabulary = new Set(deriveSubjectVocabulary(roadmap));

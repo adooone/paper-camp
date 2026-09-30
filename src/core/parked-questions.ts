@@ -10,14 +10,15 @@ const isOpenQuestion = (kind: string, state: string | undefined): boolean =>
   kind === 'question' && (state ?? 'open') === 'open';
 
 // A question parked on an idea that has since closed was settled by the closing itself.
-export const isClosedEntity = (entity: Pick<EntityEntry, 'status' | 'archived'>): boolean =>
+// Unlike core/status's isClosedEntity (the fix/reopen boundary), 'dropped' settles too.
+const isEntitySettled = (entity: Pick<EntityEntry, 'status' | 'archived'>): boolean =>
   Boolean(entity.archived) || entity.status === 'done' || entity.status === 'dropped';
 
 /** Every open `question` thread message across the given entities, oldest-first —
  * the pull-based inbox of parked agent decisions (IDEA-118). */
 export function collectParkedQuestions(entities: EntityEntry[]): ParkedQuestion[] {
   return entities
-    .filter((entity) => !isClosedEntity(entity))
+    .filter((entity) => !isEntitySettled(entity))
     .flatMap((entity) =>
       (entity.thread ?? [])
         .filter((m) => isOpenQuestion(m.kind, m.state))
@@ -44,7 +45,7 @@ export function resolveClosedIdeaQuestions(
   thread: ThreadMessage[],
   entities: EntityEntry[],
 ): ThreadMessage[] {
-  const closed = new Set(entities.filter(isClosedEntity).map((entity) => entity.id));
+  const closed = new Set(entities.filter(isEntitySettled).map((entity) => entity.id));
   return thread.map((message) => {
     if (!isOpenQuestion(message.kind, message.state)) return message;
     return message.entityId && closed.has(message.entityId)

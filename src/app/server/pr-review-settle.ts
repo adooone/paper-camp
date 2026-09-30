@@ -117,8 +117,8 @@ export function renderReviewThreadMessage(result: PrReviewResult): string {
 }
 
 /** Closed by status or by living in ideas/archive/ — the same two signals
- *  `deriveStatus` treats as closed. */
-function isClosedEntity(entry: { status?: string }, file: string): boolean {
+ *  `deriveStatus` treats as closed. Distinct from core/status's isClosedEntity. */
+function isReviewTargetClosed(entry: { status?: string }, file: string): boolean {
   if (entry.status === 'done' || entry.status === 'dropped') return true;
   return file.includes(`${sep}archive${sep}`);
 }
@@ -141,7 +141,7 @@ async function appendReviewThreadMessage(
   if (!entry) return 'failed';
   // A review can land long after the PR merged and the entity closed; writing it then
   // would reopen a settled file for a verdict nothing can act on, so it's left alone.
-  if (isClosedEntity(entry, file)) return 'closed';
+  if (isReviewTargetClosed(entry, file)) return 'closed';
 
   await writeEntityFile(
     root,

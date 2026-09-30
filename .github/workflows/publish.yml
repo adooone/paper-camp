@@ -4,6 +4,12 @@ on:
   release:
     types: [published]
 
+# Trusted publishing: npm trusts this repository's publish.yml through OIDC, so the
+# job mints its own short-lived credential and no npm token can expire on us again.
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     name: Publish
@@ -21,9 +27,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: pnpm install
@@ -34,10 +39,13 @@ jobs:
       - name: Smoke test the packed tarball
         run: pnpm run smoke
 
+      # Trusted publishing needs npm 11.5+; Node 22 bundles npm 10. No registry-url on
+      # setup-node either: its placeholder auth token would be sent instead of the OIDC exchange.
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
 
       - name: Read published version
         id: version
