@@ -2,7 +2,7 @@
 id: IDEA-282
 title: Adopt paper-ui's sketch charts
 type: refactor
-status: in-progress
+status: review
 created: 2026-09-22
 updated: 2026-10-01
 tags:
@@ -46,8 +46,9 @@ Any change to what the numbers show.
       run: 1m59s · 44 in · 5.3k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 - [x] Swap the commit rail for `CommitRail`
       run: 1m42s · 38 in · 4.5k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
-- [ ] Delete `components/charts/` and the local generator
+- [x] Delete `components/charts/` and the local generator
       Only after nothing imports them; run the quality checks.
+      run: 1m18s · 28 in · 3k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 
 ### Thread
 - [x] 2026-09-30 [question] [agent] Run-all parked on phase 1 ("Bump paper-ui to the release that ships the charts") — the agent needs a decision: paper-ui's chart commits (ArcGauge, BarChart, StackedBar, CommitRail, Progress `sketch`) are merged to paper-ui's `main` but no release has been cut — npm's latest published `@dendelion/paper-ui` is still 0.22.6, identical to what paper-camp already has installed, and it does not contain these components. There is no newer release to bump to yet. Should I wait for paper-ui's release-please/CI to publish a new version, or is there another way you want this release cut before I proceed with this phase?
