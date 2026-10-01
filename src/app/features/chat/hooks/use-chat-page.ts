@@ -7,6 +7,39 @@ import { useEffect, useState } from 'react';
 const isUnansweredQuestion = (m: { kind: string; state?: string }) =>
   m.kind === 'question' && (m.state ?? 'open') === 'open';
 
+export async function sendChatText(
+  text: string,
+  { restoreOnFailure }: { restoreOnFailure: boolean },
+  deps: {
+    postChatMessage: (text: string) => Promise<{ error?: string }>;
+    loadChat: () => Promise<void>;
+    toast: ReturnType<typeof useToast>['toast'];
+    setInput: (updater: (current: string) => string) => void;
+  },
+): Promise<boolean> {
+  try {
+    const { error } = await deps.postChatMessage(text);
+    await deps.loadChat();
+    if (error) {
+      deps.toast({
+        title: 'Agent did not reply',
+        description: oneLineErrorSummary(error),
+        variant: 'error',
+      });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    deps.toast({
+      title: 'Message failed to send',
+      description: oneLineErrorSummary((err as Error).message),
+      variant: 'error',
+    });
+    if (restoreOnFailure) deps.setInput((current) => current || text);
+    return false;
+  }
+}
+
 export function useChatPage() {
   const thread = useAppStore((s) => s.chatThread) ?? [];
   const loading = useAppStore((s) => s.chatLoading);
@@ -23,34 +56,15 @@ export function useChatPage() {
     loadChat();
   }, [loadChat]);
 
-  const sendText = async (text: string, { restoreOnFailure }: { restoreOnFailure: boolean }) => {
+  const sendText = async (text: string, opts: { restoreOnFailure: boolean }) => {
     setSending(true);
     setPending(text);
-    let ok = true;
     try {
-      const { error } = await postChatMessage(text);
-      await loadChat();
-      if (error) {
-        ok = false;
-        toast({
-          title: 'Agent did not reply',
-          description: oneLineErrorSummary(error),
-          variant: 'error',
-        });
-      }
-    } catch (err) {
-      ok = false;
-      toast({
-        title: 'Message failed to send',
-        description: oneLineErrorSummary((err as Error).message),
-        variant: 'error',
-      });
-      if (restoreOnFailure) setInput((current) => current || text);
+      return await sendChatText(text, opts, { postChatMessage, loadChat, toast, setInput });
     } finally {
       setPending(null);
       setSending(false);
     }
-    return ok;
   };
 
   const handleSend = async () => {

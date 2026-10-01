@@ -9,6 +9,39 @@ interface QuestionCardProps {
   busy: boolean;
 }
 
+/** A failed send leaves chosen/reply untouched so the card stays retryable
+ * instead of looking answered. */
+export async function runPick(
+  option: ThreadMessageOption,
+  onAnswer: (text: string) => Promise<boolean>,
+  deps: { setSending: (v: boolean) => void; setChosen: (v: string) => void },
+): Promise<void> {
+  deps.setSending(true);
+  const ok = await onAnswer(option.label);
+  deps.setSending(false);
+  if (ok) deps.setChosen(option.label);
+}
+
+export async function runSendReply(
+  text: string,
+  onAnswer: (text: string) => Promise<boolean>,
+  deps: {
+    setSending: (v: boolean) => void;
+    setChosen: (v: string) => void;
+    setReply: (v: string) => void;
+  },
+): Promise<void> {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  deps.setSending(true);
+  const ok = await onAnswer(trimmed);
+  deps.setSending(false);
+  if (ok) {
+    deps.setChosen(trimmed);
+    deps.setReply('');
+  }
+}
+
 export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => {
   const [chosen, setChosen] = useState<string | null>(null);
   const [reply, setReply] = useState('');
@@ -18,24 +51,10 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
   const { phaseLine, question } = splitQuestionText(message.text);
   const answered = message.state === 'resolved' || chosen !== null;
 
-  const pick = async (option: ThreadMessageOption) => {
-    setSending(true);
-    const ok = await onAnswer(option.label);
-    setSending(false);
-    if (ok) setChosen(option.label);
-  };
+  const pick = (option: ThreadMessageOption) =>
+    runPick(option, onAnswer, { setSending, setChosen });
 
-  const sendReply = async () => {
-    const text = reply.trim();
-    if (!text) return;
-    setSending(true);
-    const ok = await onAnswer(text);
-    setSending(false);
-    if (ok) {
-      setChosen(text);
-      setReply('');
-    }
-  };
+  const sendReply = () => runSendReply(reply, onAnswer, { setSending, setChosen, setReply });
 
   return (
     <Card size="small" surface="paper" texture="kraft" shade accent accentColor="rose">

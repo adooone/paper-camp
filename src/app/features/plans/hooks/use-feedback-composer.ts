@@ -10,6 +10,17 @@ import { useEffect, useState } from 'react';
 import { useFeedbackQuietSummary } from './use-feedback-quiet-summary';
 import { usePromoteThreadMessage } from './use-promote-thread-message';
 
+export async function runHandleAnswer(
+  text: string,
+  onSend: (text: string) => Promise<boolean>,
+  setPending: (v: string | null) => void,
+): Promise<boolean> {
+  setPending(text);
+  const ok = await onSend(text);
+  setPending(null);
+  return ok;
+}
+
 export function useFeedbackComposer(plan: PlanEntry, onSend: (text: string) => Promise<boolean>) {
   const [input, setInput] = useState('');
   const [pending, setPending] = useState<string | null>(null);
@@ -44,12 +55,7 @@ export function useFeedbackComposer(plan: PlanEntry, onSend: (text: string) => P
 
   // A picked option or a question card's own reply field answers exactly like a
   // typed message, but never touches the composer's draft — it isn't that draft.
-  const handleAnswer = async (text: string) => {
-    setPending(text);
-    const ok = await onSend(text);
-    setPending(null);
-    return ok;
-  };
+  const handleAnswer = (text: string) => runHandleAnswer(text, onSend, setPending);
 
   const handlePromote = (index: number, target: PromoteTarget) => {
     if (target === 'idea') setIdeaPromptIndex(index);
