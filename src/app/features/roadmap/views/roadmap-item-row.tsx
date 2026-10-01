@@ -1,7 +1,7 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Row, Stamp, Text } from '@dendelion/paper-ui';
+import { Progress, Row, Stamp, Text } from '@dendelion/paper-ui';
+import { color } from '@dendelion/paper-ui/tokens';
 import { ITEM_STATE_STAMP } from '../constants';
-import { RoughProgressBar } from './rough-progress-bar';
 
 interface RoadmapItemRowProps {
   item: ResolvedRoadmapItem;
@@ -45,7 +45,14 @@ export const RoadmapItemRow = ({ item, onOpen }: RoadmapItemRowProps) => {
                 ? 'ready to ship'
                 : `${item.rollup.open} open`}
             </Text>
-            <RoughProgressBar done={item.rollup.done} total={item.rollup.total} />
+            <Progress
+              className="w-24"
+              value={item.rollup.done}
+              max={item.rollup.total}
+              height={7}
+              color={color.accentGreen}
+              sketch
+            />
           </div>
         ) : (
           <Text face="handwritten" size="xs" tone="secondary">

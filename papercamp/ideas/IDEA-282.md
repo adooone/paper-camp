@@ -41,8 +41,9 @@ Any change to what the numbers show.
       run: 45s · 16 in · 1.4k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 - [x] Render the library charts in `hub-numbers-column.tsx`
       run: 55s · 24 in · 2.6k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
-- [ ] Swap the roadmap bars for `Progress sketch`
+- [x] Swap the roadmap bars for `Progress sketch`
       Covers both the item row and the capacity row so they match.
+      run: 1m59s · 44 in · 5.3k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 - [ ] Swap the commit rail for `CommitRail`
 - [ ] Delete `components/charts/` and the local generator
       Only after nothing imports them; run the quality checks.

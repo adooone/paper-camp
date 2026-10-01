@@ -106,6 +106,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
             // The chalk *Text* tokens are the light marks that read on the board.
             color={levelText[level]}
             surface="chalkboard"
+            sketch
           />
           <span className="flex shrink-0 items-center gap-2">
             {snapshot?.overage && (
