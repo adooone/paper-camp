@@ -32,6 +32,15 @@ const collect = (node: unknown, predicate: (el: Elementish) => boolean, acc: Ele
   if (!isElementish(node)) return acc;
   if (predicate(node)) acc.push(node);
   collect(node.props.children, predicate, acc);
+  // OverflowToolbar's folded/visible items carry their content in `items`, not `children`.
+  const items = node.props.items;
+  if (Array.isArray(items)) {
+    collect(
+      items.map((item) => (item as { content?: ReactNode }).content),
+      predicate,
+      acc,
+    );
+  }
   return acc;
 };
 

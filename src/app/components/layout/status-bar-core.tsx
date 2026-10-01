@@ -5,15 +5,15 @@ import {
   ChatIcon,
   GitBranchIcon,
   IconButton,
-  Menu,
   type MenuEntry,
-  MoreIcon,
+  OverflowToolbar,
+  type OverflowToolbarItem,
   Spinner,
   Stamp,
   Tooltip,
   getTextureStyles,
 } from '@dendelion/paper-ui';
-import type { ReactNode, RefObject } from 'react';
+import type { ReactNode } from 'react';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];
@@ -32,8 +32,8 @@ const mutedClass = 'opacity-50';
 const branchNameClass = 'min-w-0 max-w-[40vw] truncate text-[var(--pui-text-primary)]';
 const secondaryClass = 'opacity-60';
 const spacerClass = 'flex-1';
-const rightGroupClass = 'flex items-center gap-2 shrink-0';
-const notificationButtonClass = 'relative inline-flex h-[32px] items-center';
+const rightGroupClass = 'flex min-w-0 items-center gap-2';
+const notificationButtonClass = 'relative inline-flex h-[32px] shrink-0 items-center';
 // Raw badge: paper-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
 const notificationBadgeClass =
   'pointer-events-none absolute top-0 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-watercolor-amber-dark px-1 font-handwritten text-xs font-semibold leading-none text-paper-50';
@@ -57,44 +57,6 @@ export interface StatusBarCoreProps {
   trailing?: ReactNode;
   /** How `trailing` appears once it has been folded into the "more" menu. */
   trailingEntry?: MenuEntry;
-  /** Measured by `useStatusBarOverflow` in the wrapper; absent means nothing hides. */
-  overflow?: {
-    hidden: ReadonlySet<string>;
-    barRef: RefObject<HTMLDivElement>;
-    registerFixed: (key: string) => (el: HTMLElement | null) => void;
-    registerItem: (key: string) => (el: HTMLElement | null) => void;
-  };
-}
-
-/** The foldable items a given set of props renders, lowest priority first to hide. */
-export function statusBarOverflowCandidates(
-  props: Pick<
-    StatusBarCoreProps,
-    | 'trailing'
-    | 'trailingEntry'
-    | 'gitAhead'
-    | 'rateLimit'
-    | 'capabilityGapCount'
-    | 'agentNotSignedIn'
-  >,
-): { key: string; priority: number }[] {
-  const keys: { key: string; priority: number }[] = [];
-  if (props.trailing && props.trailingEntry) keys.push({ key: 'refresh', priority: 1 });
-  keys.push({ key: 'git', priority: 2 });
-  if (props.gitAhead > 0) keys.push({ key: 'ahead', priority: 3 });
-  if (props.rateLimit && capacityLevel(props.rateLimit.status) !== 'allowed') {
-    keys.push({ key: 'capacity', priority: 4 });
-  }
-  if (props.capabilityGapCount > 0) keys.push({ key: 'setup', priority: 5 });
-  if (props.agentNotSignedIn) keys.push({ key: 'signin', priority: 6 });
-  return keys;
-}
-
-interface BarItem {
-  key: string;
-  priority: number;
-  node: ReactNode;
-  entry: MenuEntry;
 }
 
 // Ambient status only. Branch, change count, spinner, chat, and bell always show; the
@@ -117,19 +79,21 @@ export const StatusBarCore = ({
   onOpenChat,
   trailing,
   trailingEntry,
-  overflow,
 }: StatusBarCoreProps) => {
   const capacity = rateLimit ? capacityLevel(rateLimit.status) : 'allowed';
   const capacityLabel = capacity === 'rejected' ? 'Claude limit reached' : 'Claude usage warning';
 
-  const items: BarItem[] = [];
-  if (trailing && trailingEntry) {
-    items.push({ key: 'refresh', priority: 1, node: trailing, entry: trailingEntry });
+  const items: OverflowToolbarItem[] = [];
+  if (trailing && trailingEntry && 'label' in trailingEntry) {
+    items.push({ ...trailingEntry, priority: 1, content: trailing });
   }
   items.push({
-    key: 'git',
+    id: 'git',
     priority: 2,
-    node: (
+    label: 'Git',
+    icon: <GitBranchIcon size={16} />,
+    onSelect: onOpenGit,
+    content: (
       <Tooltip content="Git">
         <IconButton
           variant="ghost"
@@ -140,73 +104,65 @@ export const StatusBarCore = ({
         />
       </Tooltip>
     ),
-    entry: { id: 'git', label: 'Git', icon: <GitBranchIcon size={16} />, onSelect: onOpenGit },
   });
   if (gitAhead > 0) {
     items.push({
-      key: 'ahead',
+      id: 'ahead',
       priority: 3,
-      node: <span className={secondaryClass}>↑{gitAhead}</span>,
-      entry: { id: 'ahead', label: `↑${gitAhead} ahead of origin`, onSelect: onOpenGit },
+      label: `↑${gitAhead} ahead of origin`,
+      onSelect: onOpenGit,
+      content: <span className={secondaryClass}>↑{gitAhead}</span>,
     });
   }
   if (rateLimit && capacity !== 'allowed') {
     items.push({
-      key: 'capacity',
+      id: 'capacity',
       priority: 4,
-      node: (
+      label: capacityTooltip(rateLimit),
+      content: (
         <Tooltip content={capacityTooltip(rateLimit)}>
           <Stamp size="small" variant={capacity === 'rejected' ? 'error' : 'warning'}>
             {capacityLabel}
           </Stamp>
         </Tooltip>
       ),
-      entry: { id: 'capacity', label: capacityTooltip(rateLimit), onSelect: () => {} },
     });
   }
   if (capabilityGapCount > 0) {
     items.push({
-      key: 'setup',
+      id: 'setup',
       priority: 5,
-      node: (
+      label: `Setup (${capabilityGapCount})`,
+      onSelect: onOpenSetup,
+      content: (
         <Tooltip content="Some features are disabled — open Setup to fix">
           <Stamp size="small" variant="warning" onClick={onOpenSetup}>
             Setup ({capabilityGapCount})
           </Stamp>
         </Tooltip>
       ),
-      entry: { id: 'setup', label: `Setup (${capabilityGapCount})`, onSelect: onOpenSetup },
     });
   }
   if (agentNotSignedIn) {
     items.push({
-      key: 'signin',
+      id: 'signin',
       priority: 6,
-      node: (
+      label: 'Agent not signed in',
+      onSelect: onOpenSetup,
+      content: (
         <Tooltip content="Sign in from Settings → Connections so agent tasks can run">
           <Stamp size="small" variant="warning" onClick={onOpenSetup}>
             Agent not signed in
           </Stamp>
         </Tooltip>
       ),
-      entry: { id: 'signin', label: 'Agent not signed in', onSelect: onOpenSetup },
     });
   }
 
-  const hidden = overflow?.hidden ?? new Set<string>();
-  const barRef = overflow?.barRef;
-  const noRef = () => undefined;
-  const registerFixed = overflow?.registerFixed ?? (() => noRef);
-  const registerItem = overflow?.registerItem ?? (() => noRef);
-  const visible = (key: string) => !hidden.has(key);
-  const leftItems = items.filter((item) => !['refresh', 'git'].includes(item.key));
-  const rightItems = items.filter((item) => ['refresh', 'git'].includes(item.key));
-  const menuEntries = items.filter((item) => hidden.has(item.key)).map((item) => item.entry);
-
   return (
-    <div ref={barRef} className={barClass} style={getTextureStyles('kraft')}>
+    <div className={barClass} style={getTextureStyles('kraft')}>
       <div className={leftGroupClass}>
-        <span ref={registerFixed('branch')} className={branchClass}>
+        <span className={branchClass}>
           <span className={mutedClass}>
             <GitBranchIcon size={12} />
           </span>
@@ -214,60 +170,27 @@ export const StatusBarCore = ({
             {gitBranch ?? 'no branch'}
           </code>
         </span>
-        <span ref={registerFixed('changed')} className={secondaryClass}>
+        <span className={secondaryClass}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
         {failingCheckCount > 0 && (
           <Tooltip
             content={`${failingCheckCount} check${failingCheckCount === 1 ? '' : 's'} failing — open Git`}
           >
-            <span ref={registerFixed('failing')}>
-              <Stamp size="small" variant="error" onClick={onOpenGit}>
-                {failingCheckCount} failing
-              </Stamp>
-            </span>
+            <Stamp size="small" variant="error" onClick={onOpenGit}>
+              {failingCheckCount} failing
+            </Stamp>
           </Tooltip>
         )}
-        {agentActive && (
-          <span ref={registerFixed('spinner')}>
-            <Spinner size="small" label={`Agent ${activeTaskStatus}…`} />
-          </span>
-        )}
-        {leftItems.map((item) =>
-          visible(item.key) ? (
-            <span key={item.key} ref={registerItem(item.key)} className="inline-flex items-center">
-              {item.node}
-            </span>
-          ) : null,
-        )}
+        {agentActive && <Spinner size="small" label={`Agent ${activeTaskStatus}…`} />}
       </div>
 
       <div className={spacerClass} />
 
       <div className={rightGroupClass}>
-        {rightItems.map((item) =>
-          visible(item.key) ? (
-            <span key={item.key} ref={registerItem(item.key)} className="inline-flex items-center">
-              {item.node}
-            </span>
-          ) : null,
-        )}
-        {menuEntries.length > 0 && (
-          <Menu
-            align="end"
-            trigger={
-              <IconButton
-                variant="ghost"
-                size="small"
-                icon={<MoreIcon size={16} />}
-                label="More status"
-              />
-            }
-            items={menuEntries}
-          />
-        )}
+        <OverflowToolbar items={items} className="min-w-0" />
         <Tooltip content="Chat">
-          <span ref={registerFixed('chat')} className={notificationButtonClass}>
+          <span className={notificationButtonClass}>
             <IconButton
               variant="ghost"
               size="small"
@@ -286,7 +209,7 @@ export const StatusBarCore = ({
           </span>
         </Tooltip>
         <Tooltip content="Notifications">
-          <span ref={registerFixed('bell')} className={notificationButtonClass}>
+          <span className={notificationButtonClass}>
             <IconButton
               variant="ghost"
               size="small"
