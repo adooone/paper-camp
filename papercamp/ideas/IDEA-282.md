@@ -44,7 +44,8 @@ Any change to what the numbers show.
 - [x] Swap the roadmap bars for `Progress sketch`
       Covers both the item row and the capacity row so they match.
       run: 1m59s · 44 in · 5.3k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
-- [ ] Swap the commit rail for `CommitRail`
+- [x] Swap the commit rail for `CommitRail`
+      run: 1m42s · 38 in · 4.5k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 - [ ] Delete `components/charts/` and the local generator
       Only after nothing imports them; run the quality checks.
 
