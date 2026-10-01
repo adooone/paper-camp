@@ -43,7 +43,8 @@ absorb here.
 Anything in the stack panel's own layout.
 
 ### Phases
-- [ ] Bump `@dendelion/paper-ui` to the IDEA-7 release
+- [x] Bump `@dendelion/paper-ui` to the IDEA-7 release
+      run: 9m1s · 50 in · 6.3k out · sonnet-5 · sess:6eabcdd9-3216-405f-950b-b6d84d74541b
 - [ ] Render the shell's sidebar and phone drawer through the library
       `AppShell` mounts its sidebar in `Layout` and takes the phone `Drawer` from it, so `sidebar-shell.tsx` loses the scrim, focus trap, Escape handling and backdrop button.
 - [ ] Rebuild the status bar as an `OverflowToolbar`
