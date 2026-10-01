@@ -1,7 +1,5 @@
-import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
-import { useEffect, useRef } from 'react';
-
-const MOBILE_DRAWER_SHADOW = `2px 0 12px ${withAlpha(colors.sketchInk, 0.15)}`;
+import { Drawer } from '@dendelion/paper-ui';
+import { SIDEBAR_WIDTH } from './nav';
 
 interface SidebarShellProps {
   routeKey: string;
@@ -15,57 +13,22 @@ export const SidebarShell = ({
   children,
   mobileOpen,
   onMobileClose,
-}: SidebarShellProps) => {
-  const asideRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onMobileClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileOpen, onMobileClose]);
-
-  // Move focus into the drawer on open (it acts as a modal below lg); restore
-  // focus to the hamburger trigger on close.
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    asideRef.current?.focus();
-    return () => previouslyFocused?.focus?.();
-  }, [mobileOpen]);
-
-  return (
-    <>
-      {/* Raw <button>: invisible backdrop — a paper-ui Button draws its own visible chrome. */}
-      {mobileOpen && (
-        <button
-          type="button"
-          className="lg:hidden fixed inset-0 z-[290] cursor-default border-none p-0 bg-ink-900/[40%] backdrop-blur-sm"
-          onClick={onMobileClose}
-          aria-label="Close sidebar"
-          tabIndex={-1}
-        />
-      )}
-      <aside
-        ref={asideRef}
-        // Dialog semantics only as a mobile drawer — at lg+ it's an in-flow sidebar.
-        role={mobileOpen ? 'dialog' : undefined}
-        aria-modal={mobileOpen || undefined}
-        aria-label="Sidebar navigation"
-        tabIndex={-1}
-        // `self-start`: a row-stretched flex item is already full height, so sticky can't
-        // engage; sizing to content lets it pin while the page scrolls.
-        className={`fixed inset-y-0 left-0 z-[300] w-[224px] shrink-0 overflow-y-auto lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:flex lg:max-h-[calc(100dvh-var(--pc-header-h)-32px)] lg:flex-col lg:self-start lg:overflow-visible lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${mobileOpen ? 'bg-[var(--pui-bg-base)]' : 'bg-transparent'}`}
-        style={mobileOpen ? { boxShadow: MOBILE_DRAWER_SHADOW } : undefined}
-      >
-        <div key={routeKey} className="mt-8 mb-8 flex min-h-0 flex-col gap-8 overflow-y-auto">
-          {children}
-        </div>
-      </aside>
-    </>
-  );
-};
+}: SidebarShellProps) => (
+  <>
+    <aside
+      aria-label="Sidebar navigation"
+      // `self-start`: a row-stretched flex item is already full height, so sticky can't
+      // engage; sizing to content lets it pin while the page scrolls.
+      className="hidden w-[224px] shrink-0 overflow-y-auto lg:flex lg:sticky lg:top-0 lg:max-h-[calc(100dvh-var(--pc-header-h)-32px)] lg:flex-col lg:self-start lg:overflow-visible"
+    >
+      <div key={routeKey} className="mt-8 mb-8 flex min-h-0 flex-col gap-8 overflow-y-auto">
+        {children}
+      </div>
+    </aside>
+    <Drawer open={mobileOpen} onClose={onMobileClose} side="left" width={SIDEBAR_WIDTH}>
+      <div key={routeKey} className="flex min-h-0 flex-col gap-8 overflow-y-auto">
+        {children}
+      </div>
+    </Drawer>
+  </>
+);

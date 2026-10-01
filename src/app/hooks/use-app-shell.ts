@@ -1,4 +1,9 @@
-import { HUB_PATHS, LARGE_SCREEN_QUERY, navItems } from '@/app/components/layout/nav';
+import {
+  HUB_PATHS,
+  LARGE_SCREEN_QUERY,
+  SIDEBAR_BREAKPOINT_QUERY,
+  navItems,
+} from '@/app/components/layout/nav';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
@@ -118,6 +123,7 @@ export function useAppShell(): AppShellState {
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
+  const isAboveSidebarBreakpoint = useMediaQuery(SIDEBAR_BREAKPOINT_QUERY);
   const firstRunChecked = useRef(false);
   const openedOnRoot = useRef(pathname === '/');
   const pathnameRef = useRef(pathname);
@@ -174,6 +180,13 @@ export function useAppShell(): AppShellState {
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [pathname]);
+
+  // The desktop sidebar mounts independently of the drawer, so a resize past
+  // the sidebar breakpoint while the drawer is open would otherwise mount its
+  // content twice.
+  useEffect(() => {
+    if (isAboveSidebarBreakpoint) setMobileSidebarOpen(false);
+  }, [isAboveSidebarBreakpoint]);
 
   // The hub's own route is a project switcher, not part of any one project's
   // work, so it is never worth landing back on.

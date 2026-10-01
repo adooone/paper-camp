@@ -22,3 +22,6 @@ export const THREE_COLUMN_BREAKPOINT = SIDEBAR_WIDTH + MIN_READABLE_PAGE_WIDTH +
 
 // Keep in sync with the min-[1199px]:pr-[var(--pc-stack-width)] wrapper (Tailwind needs a literal).
 export const LARGE_SCREEN_QUERY = `(min-width: ${THREE_COLUMN_BREAKPOINT}px)`;
+
+// Tailwind's default `lg` breakpoint, used by sidebar-shell.tsx's lg: classes.
+export const SIDEBAR_BREAKPOINT_QUERY = '(min-width: 1024px)';
