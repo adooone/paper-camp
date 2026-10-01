@@ -2,7 +2,7 @@
 id: IDEA-282
 title: Adopt paper-ui's sketch charts
 type: refactor
-status: review
+status: done
 created: 2026-09-22
 updated: 2026-10-01
 tags:
