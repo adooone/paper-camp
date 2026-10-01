@@ -181,9 +181,8 @@ export function useAppShell(): AppShellState {
     setMobileSidebarOpen(false);
   }, [pathname]);
 
-  // The desktop sidebar mounts independently of the drawer, so a resize past
-  // the sidebar breakpoint while the drawer is open would otherwise mount its
-  // content twice.
+  // A resize past the sidebar breakpoint while the drawer is open would
+  // otherwise mount the sidebar content twice.
   useEffect(() => {
     if (isAboveSidebarBreakpoint) setMobileSidebarOpen(false);
   }, [isAboveSidebarBreakpoint]);
