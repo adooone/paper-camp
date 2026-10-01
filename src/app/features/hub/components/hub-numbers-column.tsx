@@ -1,7 +1,6 @@
-import { ArcGauge, BarChart, StackedBar } from '@/app/components';
 import { ENTITY_STATUS_LABEL, ENTITY_STATUS_ORDER } from '@/app/features/stats/constants';
 import { formatTokens } from '@/core/phase-run';
-import { Card, Spinner } from '@dendelion/paper-ui';
+import { ArcGauge, BarChart, Card, Spinner, StackedBar } from '@dendelion/paper-ui';
 import type { ReactNode } from 'react';
 import { ENTITY_STATUS_COLOR, SEVERITY_COLOR, SEVERITY_LABEL, SEVERITY_ORDER } from '../constants';
 import type { HubNumbers } from '../helpers/hub-numbers';

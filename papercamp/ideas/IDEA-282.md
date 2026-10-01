@@ -39,7 +39,8 @@ Any change to what the numbers show.
 ### Phases
 - [x] Bump paper-ui to the release that ships the charts
       run: 45s · 16 in · 1.4k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
-- [ ] Render the library charts in `hub-numbers-column.tsx`
+- [x] Render the library charts in `hub-numbers-column.tsx`
+      run: 55s · 24 in · 2.6k out · sonnet-5 · sess:1e923085-3b18-40b3-bf76-9394a50b6922
 - [ ] Swap the roadmap bars for `Progress sketch`
       Covers both the item row and the capacity row so they match.
 - [ ] Swap the commit rail for `CommitRail`
@@ -54,3 +55,4 @@ Any change to what the numbers show.
 - [x] 2026-09-30 [question] [agent] Run-all parked on phase 1 ("Bump paper-ui to the release that ships the charts") — the agent needs a decision: npm now lists `@dendelion/paper-ui@0.23.2` as the latest version (published moments ago via the new OIDC trusted-publishing pipeline), but the tarball itself 404s — `npm view` returns valid metadata (dist.tarball, shasum, integrity) while `npm install @dendelion/paper-ui@0.23.2` and a direct GET of that tarball URL both fail with "Not Found". This looks like a broken/incomplete publish from the OIDC switchover rather than a missing release, and I can't bump to a version that won't actually install. Should I wait for this to resolve (propagation lag) or does the paper-ui publish need to be re-run?
 - [x] 2026-10-01 [clarification] Decision: proceed. 0.23.2 is published through the new trusted-publishing pipeline and its tarball is fetchable now; the 404 you saw was npm's CDN propagating for a few minutes after publish. package.json is already bumped to ^0.23.2 and installed, types and tests pass, and the build exports ArcGauge, BarChart, StackedBar, CommitRail and Progress sketch. Treat phase 1 as done and continue with phase 2. If npm ever answers 404 for a tarball whose metadata exists, wait two minutes and retry before parking.
 - [x] 2026-10-01 [chat] [agent] Got it — treating phase 1 as done since 0.23.2's tarball is now fetchable and the bump/install/types/tests are confirmed. Continuing with phase 2: rendering ArcGauge/BarChart/StackedBar in hub-numbers-column.tsx.
+- [x] 2026-10-01 [log] [agent] Phase 1 (paper-ui 0.23.2 bump/install/types/tests) confirmed done; work moved to phase 2, rendering ArcGauge/BarChart/StackedBar in hub-numbers-column.tsx.
