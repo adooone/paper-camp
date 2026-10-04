@@ -65,8 +65,9 @@ IDEA-12, which the bump that follows its release picks up with no change
 here.
 
 ### Phases
-- [ ] Let the status bar toolbar own the free space
+- [x] Let the status bar toolbar own the free space
       Drop the `flex-1` spacer in `status-bar-core.tsx` and give `OverflowToolbar` `min-w-0 flex-1 justify-end`.
+      run: 37s · 20 in · 1.5k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
 - [ ] Move the Setup stamp back to the left group
       Render it beside the change count as a pressable `Stamp` with its tooltip, out of the toolbar's item list.
 - [ ] Pass `py-0` on the roadmap rows
