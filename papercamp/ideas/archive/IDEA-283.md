@@ -2,8 +2,9 @@
 id: IDEA-283
 title: Adopt paper-ui's drawer and overflow
 type: refactor
-status: review
+status: done
 created: 2026-09-22
+updated: 2026-10-02
 tags:
   - app
   - ui
