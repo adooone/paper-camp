@@ -12,7 +12,12 @@ export const ChatTitleActions = ({ unansweredCount, onClearChat }: ChatTitleActi
         {unansweredCount} unanswered
       </Stamp>
     )}
-    <Button variant="link" size="small" onClick={onClearChat}>
+    <Button
+      variant="link"
+      size="small"
+      className="font-handwritten text-sm opacity-70"
+      onClick={onClearChat}
+    >
       Clear chat
     </Button>
   </div>

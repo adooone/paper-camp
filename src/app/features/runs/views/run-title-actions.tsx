@@ -51,7 +51,12 @@ export const LogTitleActions = ({
           >
             {unreadCount} unread
           </Stamp>
-          <Button variant="link" size="small" onClick={() => void onMarkAllRead()}>
+          <Button
+            variant="link"
+            size="small"
+            className="font-handwritten text-sm opacity-70"
+            onClick={() => void onMarkAllRead()}
+          >
             Mark all read
           </Button>
         </>

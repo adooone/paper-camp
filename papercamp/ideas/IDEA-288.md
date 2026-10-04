@@ -74,7 +74,8 @@ here.
 - [x] Pass `py-0` on the roadmap rows
       In `roadmap-item-row.tsx` and `standing-concern-row.tsx`, leaving rule and horizontal inset alone.
       run: 29s · 16 in · 1.1k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
-- [ ] Restore the page title gaps and link button classes
+- [x] Restore the page title gaps and link button classes
       Drop `mb-0` from the Log, Chat and Roadmap pages; return `font-handwritten text-sm opacity-70` to the two title actions.
+      run: 56s · 28 in · 2.4k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
 - [ ] [manual] Compare production against the `7a58b8b7` deployment
       The 1440px pass over Plans, Roadmap, Log, Git, Settings and the stack panel, plus 420px once a narrow enough window can be had.

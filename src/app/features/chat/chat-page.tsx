@@ -26,7 +26,7 @@ export const ChatPage = () => {
   return (
     <div>
       <div className="mb-2 flex flex-nowrap items-center gap-3">
-        <PageTitle className="mb-0 shrink-0">Chat</PageTitle>
+        <PageTitle className="shrink-0">Chat</PageTitle>
         <div className="flex-1" />
         {thread.length > 0 && (
           <ChatTitleActions unansweredCount={unansweredCount} onClearChat={openConfirmClear} />
