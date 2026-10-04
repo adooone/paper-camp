@@ -1,6 +1,6 @@
 ---
 id: IDEA-288
-title: The status bar, roadmap rows and title gaps
+title: Status bar, roadmap rows, title gaps
 type: fix
 status: review
 created: 2026-10-02
