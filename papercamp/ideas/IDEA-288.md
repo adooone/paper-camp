@@ -2,8 +2,9 @@
 id: IDEA-288
 title: The status bar, roadmap rows and title gaps
 type: fix
-status: idea
+status: review
 created: 2026-10-02
+updated: 2026-10-04
 tags:
   - app
   - ui
