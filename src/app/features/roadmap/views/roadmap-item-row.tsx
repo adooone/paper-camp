@@ -14,7 +14,7 @@ export const RoadmapItemRow = ({ item, onOpen }: RoadmapItemRowProps) => {
   return (
     <Row
       surface="none"
-      className="border-b border-black/10 px-0 last:border-b-0"
+      className="border-b border-black/10 px-0 py-0 last:border-b-0"
       columns={{ title: 'minmax(0,1fr)', meta: '6rem', trailing: '8rem' }}
       onClick={onOpen}
       ariaLabel={item.name}

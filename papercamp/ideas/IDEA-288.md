@@ -71,8 +71,9 @@ here.
 - [x] Move the Setup stamp back to the left group
       Render it beside the change count as a pressable `Stamp` with its tooltip, out of the toolbar's item list.
       run: 31s · 14 in · 1.4k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
-- [ ] Pass `py-0` on the roadmap rows
+- [x] Pass `py-0` on the roadmap rows
       In `roadmap-item-row.tsx` and `standing-concern-row.tsx`, leaving rule and horizontal inset alone.
+      run: 29s · 16 in · 1.1k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
 - [ ] Restore the page title gaps and link button classes
       Drop `mb-0` from the Log, Chat and Roadmap pages; return `font-handwritten text-sm opacity-70` to the two title actions.
 - [ ] [manual] Compare production against the `7a58b8b7` deployment
