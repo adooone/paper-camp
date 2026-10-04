@@ -127,21 +127,6 @@ export const StatusBarCore = ({
       ),
     });
   }
-  if (capabilityGapCount > 0) {
-    items.push({
-      id: 'setup',
-      priority: 5,
-      label: `Setup (${capabilityGapCount})`,
-      onSelect: onOpenSetup,
-      content: (
-        <Tooltip content="Some features are disabled — open Setup to fix">
-          <Stamp size="small" variant="warning" onClick={onOpenSetup}>
-            Setup ({capabilityGapCount})
-          </Stamp>
-        </Tooltip>
-      ),
-    });
-  }
   if (agentNotSignedIn) {
     items.push({
       id: 'signin',
@@ -172,6 +157,13 @@ export const StatusBarCore = ({
         <span className={secondaryClass}>
           {changedFileCount > 0 ? `${changedFileCount} changed` : 'clean'}
         </span>
+        {capabilityGapCount > 0 && (
+          <Tooltip content="Some features are disabled — open Setup to fix">
+            <Stamp size="small" variant="warning" onClick={onOpenSetup}>
+              Setup ({capabilityGapCount})
+            </Stamp>
+          </Tooltip>
+        )}
         {failingCheckCount > 0 && (
           <Tooltip
             content={`${failingCheckCount} check${failingCheckCount === 1 ? '' : 's'} failing — open Git`}

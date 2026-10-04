@@ -68,8 +68,9 @@ here.
 - [x] Let the status bar toolbar own the free space
       Drop the `flex-1` spacer in `status-bar-core.tsx` and give `OverflowToolbar` `min-w-0 flex-1 justify-end`.
       run: 37s · 20 in · 1.5k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
-- [ ] Move the Setup stamp back to the left group
+- [x] Move the Setup stamp back to the left group
       Render it beside the change count as a pressable `Stamp` with its tooltip, out of the toolbar's item list.
+      run: 31s · 14 in · 1.4k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
 - [ ] Pass `py-0` on the roadmap rows
       In `roadmap-item-row.tsx` and `standing-concern-row.tsx`, leaving rule and horizontal inset alone.
 - [ ] Restore the page title gaps and link button classes
