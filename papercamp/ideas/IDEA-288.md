@@ -80,3 +80,4 @@ here.
       run: 56s · 28 in · 2.4k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
 - [x] [manual] Compare production against the `7a58b8b7` deployment
       The 1440px pass over Plans, Roadmap, Log, Git, Settings and the stack panel, plus 420px once a narrow enough window can be had.
+- [x] [manual] Let status bar right group fill remaining width

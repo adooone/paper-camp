@@ -31,7 +31,7 @@ const branchClass = 'flex items-center gap-1';
 const mutedClass = 'opacity-50';
 const branchNameClass = 'min-w-0 max-w-[40vw] truncate text-[var(--pui-text-primary)]';
 const secondaryClass = 'opacity-60';
-const rightGroupClass = 'flex min-w-0 items-center gap-2';
+const rightGroupClass = 'flex min-w-0 flex-1 items-center gap-2';
 const notificationButtonClass = 'relative inline-flex h-[32px] shrink-0 items-center';
 // Raw badge: paper-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
 const notificationBadgeClass =
