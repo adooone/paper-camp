@@ -4,7 +4,7 @@ title: Status bar, roadmap rows, title gaps
 type: fix
 status: review
 created: 2026-10-02
-updated: 2026-10-04
+updated: 2026-10-05
 tags:
   - app
   - ui
@@ -78,5 +78,5 @@ here.
 - [x] Restore the page title gaps and link button classes
       Drop `mb-0` from the Log, Chat and Roadmap pages; return `font-handwritten text-sm opacity-70` to the two title actions.
       run: 56s · 28 in · 2.4k out · sonnet-5 · sess:f525be77-9098-4300-91fc-259b0cb206f1
-- [ ] [manual] Compare production against the `7a58b8b7` deployment
+- [x] [manual] Compare production against the `7a58b8b7` deployment
       The 1440px pass over Plans, Roadmap, Log, Git, Settings and the stack panel, plus 420px once a narrow enough window can be had.
