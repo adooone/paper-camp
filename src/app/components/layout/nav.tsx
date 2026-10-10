@@ -2,13 +2,9 @@ export const HUB_PATH = '/projects';
 export const HUB_PATHS: string[] = [HUB_PATH];
 
 export const navItems = [
-  { id: 'plans', label: 'Plans', path: '/' },
-  { id: 'roadmap', label: 'Roadmap', path: '/roadmap' },
-  { id: 'docs', label: 'Docs', path: '/docs' },
-  { id: 'chat', label: 'Chat', path: '/chat' },
-  { id: 'log', label: 'Log', path: '/log' },
-  { id: 'stats', label: 'Stats', path: '/stats' },
-  { id: 'settings', label: 'Settings', path: '/settings' },
+  { id: 'plans', label: 'Ideas', path: '/' },
+  { id: 'activity', label: 'Activity', path: '/activity' },
+  { id: 'project', label: 'Project', path: '/project' },
 ];
 
 export const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (

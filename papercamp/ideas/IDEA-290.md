@@ -2,7 +2,7 @@
 id: IDEA-290
 title: Three pages instead of seven
 type: refactor
-status: planned
+status: review
 created: 2026-10-09
 tags:
   - app
@@ -101,6 +101,7 @@ The hub page. Any change to what a settings section or a stats card contains.
       as the landing, and redirects from `/docs`, `/stats`, `/settings` and their
       sub-paths.
       run: 6m23s · 120 in · 47.5k out · sonnet-5 · sess:837d3831-5b9b-4c64-a0c2-d8867de82528
-- [ ] Cut the header to three tabs and clear the dead code
+- [x] Cut the header to three tabs and clear the dead code
       `navItems`, the shell's area flags, skeleton prefixes and spinner labels;
       remove what only the old pages used; knip, depcruise and tests green.
+      run: 3m51s · 48 in · 14.6k out · sonnet-5 · sess:837d3831-5b9b-4c64-a0c2-d8867de82528

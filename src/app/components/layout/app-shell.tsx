@@ -44,9 +44,9 @@ const GitFileList = lazy(() =>
     default: m.GitFileList,
   })),
 );
-// Plans has its own skeleton; Roadmap/Project/Log share a generic one;
+// Plans has its own skeleton; a roadmap item and Project share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/log', '/chat'];
+const ROW_SKELETON_PREFIXES = ['/project', '/roadmap'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
 };
