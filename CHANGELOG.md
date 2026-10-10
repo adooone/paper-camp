@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.40.0](https://github.com/adooone/paper-camp/compare/v0.39.0...v0.40.0) (2026-10-10)
+
+
+### Features
+
+* **agent:** Park decisions with pickable options, not just text ([8e376e8](https://github.com/adooone/paper-camp/commit/8e376e8c01ed2b041f56e0afe0613db2821321f2))
+* **app:** Add `needs` to the entity grammar ([d4a295d](https://github.com/adooone/paper-camp/commit/d4a295d06f40c0e07a5814d37a09b190b7f6c64c))
+* **app:** Add the `/roadmap/$item` route and breadcrumb ([1c36114](https://github.com/adooone/paper-camp/commit/1c3611427c229d30f98a8c564886d498c6cf7598))
+* **app:** Add the scope model and per-runtime data ([4524d63](https://github.com/adooone/paper-camp/commit/4524d630bf2f3b1f44f73acf5ac239e2e54aafd0))
+* **app:** Build the item page shell and head card ([b5deceb](https://github.com/adooone/paper-camp/commit/b5deceb8599bd05a17bd99f0c04250e644077285))
+* **app:** Carry options and context through the thread ([c958311](https://github.com/adooone/paper-camp/commit/c9583118122bc159c9dd7c4cfcc1c57485ad8a8d))
+* **app:** Enforce needs and show what an idea waits for ([f723b71](https://github.com/adooone/paper-camp/commit/f723b71f5dcddc9d53aac790a02e0deb3292bb0f))
+* **app:** Parse the block in `extractDecision` ([39ad2bf](https://github.com/adooone/paper-camp/commit/39ad2bff2e79e1cb0ee4bd54629642551aba900e))
+* **app:** Render the Open, Thoughts and Shipped sections ([30ffe92](https://github.com/adooone/paper-camp/commit/30ffe9249ec18cd359c5c3c93ddad3473655fdf7))
+* **app:** Render the question card ([8d155ba](https://github.com/adooone/paper-camp/commit/8d155bac7dc2e360e9fdd5e6de666ccfb28e1491))
+* **app:** Replace chunk findings table with ruled rows ([ab21ed5](https://github.com/adooone/paper-camp/commit/ab21ed50f0811e13a13d88159b973129bfc832d5))
+* **app:** Show Activity and the Stack's agents across the scope ([76380b9](https://github.com/adooone/paper-camp/commit/76380b9f223558af20678378fb4cfe91eab17bfe))
+* **app:** Show Activity and the Stack's agents across the scope ([269e6a5](https://github.com/adooone/paper-camp/commit/269e6a5076c6bc3e7e1a630b6c046cfe9348b811))
+* **app:** Show Ideas across the scope ([89573fb](https://github.com/adooone/paper-camp/commit/89573fb696d4e080009d5320ddc690d7cf6d06f5))
+* **app:** Strip the expanded state from the list rows ([15b2570](https://github.com/adooone/paper-camp/commit/15b2570c19013d5a15f1cd73d3288f6b9504ce00))
+* **app:** Trim the bell to the question line ([eb111d9](https://github.com/adooone/paper-camp/commit/eb111d9ae195152ad95201444023c274d3367d4e))
+* **app:** Turn the sidebar into the scope list ([2d39b24](https://github.com/adooone/paper-camp/commit/2d39b24d0000c7642383efa459a9b6ded76462df))
+* **app:** Wire the bottom action bar ([799450c](https://github.com/adooone/paper-camp/commit/799450cd1d69f3d48e314d62119f63ddc71d1a6a))
+* **ci:** Phase 1 — The setting ([5db513f](https://github.com/adooone/paper-camp/commit/5db513f3e10c0b536469c25f9de227039191263a))
+* **ci:** Phase 2 — Bundled templates and the writer ([95ffa84](https://github.com/adooone/paper-camp/commit/95ffa849390ebaac4acd7f52dd6c8075edf31e3c))
+* **ci:** Phase 3 — Doctor check and fix ([1f525d8](https://github.com/adooone/paper-camp/commit/1f525d8c5c1c1985702bd2b215eb569d7f13cc4a))
+* **ci:** Phase 4 — Readiness on the CI card ([47b6b26](https://github.com/adooone/paper-camp/commit/47b6b265cc74cc6c2f3774bc52e4b27c86547cfa))
+* **ci:** Phase 5 — Roll out to the three projects ([e1f4c10](https://github.com/adooone/paper-camp/commit/e1f4c106487979e363b685aa39082492ebbb04d9))
+
+
+### Bug Fixes
+
+* **app:** cover failure-recovery boolean propagation in chat/feedback answer paths ([3540c48](https://github.com/adooone/paper-camp/commit/3540c48caf587080e138356212e33fe42842d35f))
+* **app:** Let status bar right group fill remaining width ([b75c829](https://github.com/adooone/paper-camp/commit/b75c8291e8159f673f3be3d08bace8a69b2c9705))
+* **app:** Let the status bar toolbar own the free space ([d2dd81b](https://github.com/adooone/paper-camp/commit/d2dd81bee1443daab4c67a02f5dedec35c59b97d))
+* **app:** lint ([1523116](https://github.com/adooone/paper-camp/commit/152311672f0b2ef8873f19f9b529469b2212a881))
+* **app:** lint, build ([7abb315](https://github.com/adooone/paper-camp/commit/7abb3157ff967f16e1d90df98d5e1a8ce19ad2bc))
+* **app:** lint, build ([b7938bf](https://github.com/adooone/paper-camp/commit/b7938bf1609588660e880b5232d865547455887c))
+* **app:** mark IDEA-288 review ([bfe651e](https://github.com/adooone/paper-camp/commit/bfe651e3cddb694a4fc6d8bbba5b4555af5636ba))
+* **app:** Move the Setup stamp back to the left group ([b704503](https://github.com/adooone/paper-camp/commit/b704503ca90e154fb0f4e6b1ef4a322b2a0cfc45))
+* **app:** Pass `py-0` on the roadmap rows ([ac33d3c](https://github.com/adooone/paper-camp/commit/ac33d3c24e054928e55f83ac1ba4ff770d04ac1b))
+* **app:** recover QuestionCard from failed sends, add candidate input label ([12263a5](https://github.com/adooone/paper-camp/commit/12263a5f57f2a5a501df379445a0358d53b8143c))
+* **app:** Restore the page title gaps and link button classes ([b93c5ee](https://github.com/adooone/paper-camp/commit/b93c5eed833363f4f3d16c9545725aa6b81a44c0))
+* **app:** Status bar, roadmap rows, title gaps ([4b9cb1a](https://github.com/adooone/paper-camp/commit/4b9cb1ae54506a65cb359d9d0dcafc4ea73f0659))
+* **ci:** Switch npm publish to OIDC trusted publishing ([2702c6d](https://github.com/adooone/paper-camp/commit/2702c6de5b427eaa22ba9634beafd3fb1e151b8b))
+* **docs:** shorten IDEA-288 title under the 40-char limit ([2ac06a2](https://github.com/adooone/paper-camp/commit/2ac06a2a8da9f91ab2a03f426a9255e99129056a))
+
 ## [0.39.0](https://github.com/adooone/paper-camp/compare/v0.38.0...v0.39.0) (2026-09-28)
 
 
