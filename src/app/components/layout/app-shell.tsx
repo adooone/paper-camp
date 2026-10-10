@@ -34,29 +34,21 @@ import { NavLabel, navItems } from './nav';
 
 const MOBILE_NAV_SHADOW = `0 -2px 8px ${withAlpha(colors.sketchInk, 0.08)}`;
 
-const DocsSidebar = lazy(() =>
-  importWithRecovery('DocsSidebar', () => import('@/app/features/docs/index')).then((m) => ({
-    default: m.DocsSidebar,
+const ProjectSidebar = lazy(() =>
+  importWithRecovery('ProjectSidebar', () => import('@/app/features/project/index')).then((m) => ({
+    default: m.ProjectSidebar,
   })),
-);
-const SettingsSidebar = lazy(() =>
-  importWithRecovery('SettingsSidebar', () => import('@/app/features/settings/index')).then(
-    (m) => ({
-      default: m.SettingsSidebar,
-    }),
-  ),
 );
 const GitFileList = lazy(() =>
   importWithRecovery('GitFileList', () => import('@/app/features/git/index')).then((m) => ({
     default: m.GitFileList,
   })),
 );
-// Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
+// Plans has its own skeleton; Roadmap/Project/Log share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log', '/chat'];
+const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/log', '/chat'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
-  '/stats': 'Stats',
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {
@@ -79,8 +71,7 @@ export const AppShell = () => {
     hasSidebar,
     sidebarAreaKey,
     isPlansArea,
-    isDocsArea,
-    isSettingsArea,
+    isProjectArea,
     isGitArea,
     isInHub,
     stackOpen,
@@ -166,14 +157,9 @@ export const AppShell = () => {
                   >
                     {isPlansArea && <PlanActionsColumn />}
                     {isPlansArea && <PlanActionsCommandsColumn />}
-                    {isDocsArea && (
+                    {isProjectArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
-                        <DocsSidebar />
-                      </Suspense>
-                    )}
-                    {isSettingsArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <SettingsSidebar />
+                        <ProjectSidebar />
                       </Suspense>
                     )}
                     {isGitArea && (

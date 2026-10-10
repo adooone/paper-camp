@@ -64,7 +64,7 @@ export function useStatusBar(): StatusBarState {
     rateLimit,
     unreadNotificationCount,
     unansweredChatQuestionCount,
-    onOpenSetup: () => navigate({ to: '/settings/$section', params: { section: 'setup' } }),
+    onOpenSetup: () => navigate({ to: '/project/settings/$section', params: { section: 'setup' } }),
     onOpenGit: () => navigate({ to: '/git' }),
     onOpenNotifications: () => navigate({ to: '/activity', search: { unread: '1' } }),
     onOpenChat: () => navigate({ to: '/activity', search: { kind: 'chat' } }),

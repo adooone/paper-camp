@@ -55,6 +55,7 @@ export interface AppShellState {
   isPlansArea: boolean;
   isDocsArea: boolean;
   isSettingsArea: boolean;
+  isProjectArea: boolean;
   isGitArea: boolean;
   isLogArea: boolean;
   isInHub: boolean;
@@ -99,6 +100,10 @@ export function useAppShell(): AppShellState {
     pathname.startsWith('/roadmap/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
+  // Docs, Stats and Settings now live together under /project (IDEA-290); the project
+  // sidebar picks its own active group from the fuller path, so the header tab just
+  // needs to know which of the three it's on.
+  const isProjectArea = pathname === '/project' || pathname.startsWith('/project/');
   const isGitArea = pathname === '/git';
   const isLogArea = pathname === '/log' || pathname.startsWith('/log/');
   const activeId = isPlansArea
@@ -107,7 +112,13 @@ export function useAppShell(): AppShellState {
       ? 'docs'
       : isSettingsArea
         ? 'settings'
-        : navItems.find((item) => item.path === pathname)?.id;
+        : isProjectArea
+          ? pathname.startsWith('/project/docs')
+            ? 'docs'
+            : pathname.startsWith('/project/settings')
+              ? 'settings'
+              : 'stats'
+          : navItems.find((item) => item.path === pathname)?.id;
   // The bare list route and a roadmap item both have no sidebar now that list
   // filters live in the toolbar and the item page needs no column of its own —
   // only a plan/idea/finding detail still has an actions column to show.
@@ -115,6 +126,7 @@ export function useAppShell(): AppShellState {
     (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
     isDocsArea ||
     isSettingsArea ||
+    isProjectArea ||
     isGitArea ||
     isLogArea;
   const sidebarAreaKey = isPlansArea
@@ -123,9 +135,11 @@ export function useAppShell(): AppShellState {
       ? 'docs'
       : isSettingsArea
         ? 'settings'
-        : isGitArea
-          ? 'git'
-          : 'log';
+        : isProjectArea
+          ? 'project'
+          : isGitArea
+            ? 'git'
+            : 'log';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -177,7 +191,7 @@ export function useAppShell(): AppShellState {
         );
         if (!shouldShow) return;
         setActiveDocTitle('USAGE.md');
-        navigate({ to: '/docs' });
+        navigate({ to: '/project/docs' });
       })
       .catch(() => {});
   }, [navigate, setActiveDocTitle]);
@@ -219,6 +233,7 @@ export function useAppShell(): AppShellState {
     isPlansArea,
     isDocsArea,
     isSettingsArea,
+    isProjectArea,
     isGitArea,
     isLogArea,
     isInHub: HUB_PATHS.includes(pathname),

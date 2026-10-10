@@ -75,7 +75,7 @@ export const PageBreadcrumb = () => {
           : null;
     if (docLabel) {
       return [
-        { id: 'docs', label: 'Docs', onClick: () => navigate({ to: '/docs' }) },
+        { id: 'docs', label: 'Docs', onClick: () => navigate({ to: '/project/docs' }) },
         { id: 'doc', label: docLabel },
       ];
     }

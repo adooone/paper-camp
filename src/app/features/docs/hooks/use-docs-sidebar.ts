@@ -28,12 +28,12 @@ export const useDocsSidebar = () => {
   }, [loadReleaseVersions]);
 
   const selectRepoDoc = (name: string) => {
-    navigate({ to: '/docs/$section', params: { section: 'repo-docs' } });
+    navigate({ to: '/project/docs/$section', params: { section: 'repo-docs' } });
     setActiveDocTitle(name);
   };
 
   const selectReleaseVersion = (version: string) => {
-    navigate({ to: '/docs/$section', params: { section: 'release-notes' } });
+    navigate({ to: '/project/docs/$section', params: { section: 'release-notes' } });
     setActiveReleaseVersion(version);
   };
 

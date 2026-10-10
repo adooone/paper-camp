@@ -182,7 +182,7 @@ const AgentTaskCard = ({
                   className="leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate({ to: '/settings/$section', params: { section: 'setup' } });
+                    navigate({ to: '/project/settings/$section', params: { section: 'setup' } });
                   }}
                 >
                   stopped — agent signed out

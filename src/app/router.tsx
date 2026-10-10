@@ -101,28 +101,68 @@ const findingChunkDetailRoute = createRoute({
   component: PlansPage,
   staticData: { layer: 'corpus' },
 });
+// `/docs`, `/stats` and `/settings` were the old addresses for the merged Project
+// page (IDEA-290) — kept as redirects so links already shared or bookmarked don't 404.
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
-  component: DocsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/project/docs' });
+  },
 });
 const docsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$section',
-  component: DocsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/project/docs/$section', params });
+  },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  component: SettingsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/project/settings' });
+  },
 });
 const settingsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/$section',
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/project/settings/$section', params });
+  },
+});
+
+// Project folds Docs, Stats and Settings into one sidebar (IDEA-290); `/project`
+// itself has no page of its own — it opens on Stats.
+const projectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project',
+  beforeLoad: () => {
+    throw redirect({ to: '/project/stats' });
+  },
+});
+const projectDocsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/docs',
+  component: DocsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectDocsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/docs/$section',
+  component: DocsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/settings',
+  component: SettingsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectSettingsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/settings/$section',
   component: SettingsPage,
   staticData: { layer: 'runtime' },
 });
@@ -160,6 +200,13 @@ const inboxRoute = createRoute({
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/stats',
+  beforeLoad: () => {
+    throw redirect({ to: '/project/stats' });
+  },
+});
+const projectStatsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/stats',
   component: StatsPage,
   staticData: { layer: 'runtime' },
 });
@@ -264,6 +311,12 @@ const routeTree = rootRoute.addChildren([
   docsSectionRoute,
   settingsRoute,
   settingsSectionRoute,
+  projectRoute,
+  projectDocsRoute,
+  projectDocsSectionRoute,
+  projectSettingsRoute,
+  projectSettingsSectionRoute,
+  projectStatsRoute,
   tasksRoute,
   issuesRoute,
   activityRoute,
