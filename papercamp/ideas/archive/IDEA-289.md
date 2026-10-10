@@ -2,8 +2,9 @@
 id: IDEA-289
 title: Draft-PR flow as a project setting
 type: feat
-status: review
+status: done
 created: 2026-10-09
+updated: 2026-10-10
 tags:
   - desk
   - ci
