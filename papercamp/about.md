@@ -373,6 +373,43 @@ own thread already cover that ground.
 
 ---
 
+## Draft PR flow
+
+`desk.ci.draftPr: boolean`, next to `releasePlease`, switches on writing
+`.github/workflows/draft-pr.yml` and `.github/pull_request_template.md` from the
+templates bundled in `templates.ts` (`DRAFT_PR_WORKFLOW_CONTENT`,
+`PULL_REQUEST_TEMPLATE_CONTENT`) via `scaffoldDraftPrIntegration` in `scaffold.ts`.
+On the first push to a `<type>/idea-N-…` branch the workflow opens a draft PR into
+main, titled and phase-checklisted from the idea file, authenticated as the Scout
+GitHub App.
+
+Each bundled copy opens with a `# paper-camp draft-pr template vN` (`<!-- ... -->`
+in the Markdown file) header stamping the template version, so drift is a
+version-number comparison (`draftPrTemplateVersion`) rather than a content diff —
+`writeTemplateIfOwned` only ever overwrites a file that already carries the
+header, so anything written under it survives future template bumps untouched
+unless it changes. A file without the header is treated as hand-written and left
+alone: `doctor` reports it (`draft-pr-template-unmanaged`) instead of touching it.
+A missing file or a stale header version is reported too
+(`draft-pr-template-outdated`) and is what `--fix` rewrites. Desk discovery
+proposes the setting on when `.github/workflows/draft-pr.yml` already exists.
+
+The flow's other half needs the owner's GitHub account for two things paper-camp
+cannot do from the CLI: installing the Scout GitHub App on the repo, and adding
+its `SCOUT_APP_ID`/`SCOUT_PRIVATE_KEY` secrets. The CI card shows whether those
+are in place — the two secret names (via `gh api repos/{repo}/actions/secrets`)
+and the conclusion of the latest *Draft PR* run — and spells out both manual
+steps when either secret is missing, instead of letting the first run fail
+silently at the token step.
+
+Rolled out to paper-camp's three consuming projects on 2026-10-10: paper-ui's
+stale copy (titled from the branch slug, pointing at a `paperplan/plans.md` that
+no longer exists) was replaced outright by the writer; radio's and func-ui's
+already-correct bodies, hand-copied from func-ui earlier, were stamped with the
+header in place rather than rewritten.
+
+---
+
 ## Where the code lives
 
 `AGENTS.md` holds the codebase map — `src/core/`, `src/app/server/`, `src/app/features/`,

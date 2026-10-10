@@ -2,7 +2,7 @@
 id: IDEA-289
 title: Draft-PR flow as a project setting
 type: feat
-status: planned
+status: review
 created: 2026-10-09
 tags:
   - desk
@@ -82,10 +82,11 @@ change to the branch naming or phase-per-commit convention itself.
       manual steps spelled out when either is missing. Cache like
       `ci-release.ts` does.
       run: 3m41s · 90 in · 14.3k out · sonnet-5 · sess:af963e09-b7ce-4150-a8b4-18a1040670db
-- [ ] Phase 5 — Roll out to the three projects
+- [x] Phase 5 — Roll out to the three projects
       Turn the setting on in radio, func-ui and paper-ui; let the writer
       replace paper-ui's stale copy and stamp the other two; document the
       setting and the manual half in `about.md`.
+      run: 7m2s · 124 in · 18.4k out · sonnet-5 · sess:af963e09-b7ce-4150-a8b4-18a1040670db
 
 ### Thread
 - [x] 2026-10-09 [decision] [user] The draft-PR flow belongs to every paper-camp project and is configured from Settings, not copied between repositories by hand.
