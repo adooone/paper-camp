@@ -35,7 +35,7 @@ const NO_RUN_STATE = {
 export interface UseHubMachinesResult {
   machines: HubMachine[];
   chosenRuntimeUrls: Set<string>;
-  openRow: (row: HubProjectRow, machineUrl: string) => void;
+  openRow: (row: HubProjectRow, machineUrl: string, path?: string) => void;
   renameRow: (runtimeUrl: string, label: string) => void;
   forgetRow: (runtimeUrl: string) => void;
   retryMachine: (machineUrl: string) => void;
@@ -96,16 +96,17 @@ export function useHubMachines(): UseHubMachinesResult {
   return {
     machines,
     chosenRuntimeUrls: chosenSet,
-    openRow: (row, machineUrl) => {
+    openRow: (row, machineUrl, path) => {
+      const destination = path || mountPrefix || '/';
       if (chosenSet.has(row.runtimeUrl)) {
         selectProject(row.runtimeUrl, storage);
-        window.location.assign(mountPrefix || '/');
+        window.location.assign(destination);
         return;
       }
       // Land on the project's own root, not on the hub path this click came from —
       // adopting the runtime there leaves the reload sitting on the hub again.
       window.location.assign(
-        runtimeAdditionUrl(mountPrefix || '/', row.runtimeUrl, machineToken(machineUrl)),
+        runtimeAdditionUrl(destination, row.runtimeUrl, machineToken(machineUrl)),
       );
     },
     renameRow: (runtimeUrl, label) => {

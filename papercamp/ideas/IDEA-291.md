@@ -116,9 +116,10 @@ projects. The embedded dev toolbar, which is always one project.
       the All machines link on Ideas, Activity and Project; the header loses
       Back to projects.
       run: 19m50s · 210 in · 88.2k out · sonnet-5 · sess:84741412-9bca-49fb-8576-0bf53176fb03
-- [ ] Show Ideas across the scope
+- [x] Show Ideas across the scope
       Project chips, Group by Project, Horizon per project, cross-mount
       navigation with the scope kept, per-project run order stamps.
+      run: 15m17s · 284 in · 86.4k out · sonnet-5 · sess:7fe8fb92-4c51-4f33-8aed-805bdd5a0851
 - [ ] Show Activity and the Stack's agents across the scope
       Merged stream with chips and per-project unread, the composer's *in*
       picker, and the Stack agent section listing every project in scope.

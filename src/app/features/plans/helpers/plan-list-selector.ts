@@ -1,3 +1,4 @@
+import type { ScopeRow } from '@/app/features/scope';
 import {
   type IdeaEntry,
   type IdeaStatus,
@@ -8,7 +9,7 @@ import {
 import { phasePercentage } from './helpers';
 
 export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress' | 'order';
-type SortDirection = 'asc' | 'desc';
+export type SortDirection = 'asc' | 'desc';
 
 export interface PlanListFilters {
   statuses: PlanStatus[];
@@ -201,11 +202,14 @@ const matchesIdeaSearch = (idea: IdeaEntry, search: string): boolean => {
 export interface NoteRow {
   type: 'note';
   idea: IdeaEntry;
+  /** Set by the scope merge when more than one project is in view (IDEA-291). */
+  project?: ScopeRow;
 }
 
 interface PlanRow {
   type: 'plan';
   plan: PlanEntry;
+  project?: ScopeRow;
 }
 
 export interface FixRow {
@@ -213,6 +217,7 @@ export interface FixRow {
   /** Its `subject` is the parent's, resolved by `selectWorklistRows` — a fix never
    * stores its own, so it can't drift from the idea it fixes. */
   fix: PlanEntry;
+  project?: ScopeRow;
 }
 
 export type WorklistRow = NoteRow | PlanRow | FixRow;
@@ -301,6 +306,40 @@ export const groupRowsBySubject = (
   return groups;
 };
 
+export interface ProjectGroup {
+  project: ScopeRow | undefined;
+  rows: WorklistRow[];
+}
+
+/** Groups already-merged worklist rows by the project tag the scope merge
+ * attached — current project first, then every other in the order rows
+ * arrived (scope order), each group's own rows keeping their relative order. */
+export const groupRowsByProject = (rows: WorklistRow[]): ProjectGroup[] => {
+  const order: string[] = [];
+  const byKey = new Map<string, ProjectGroup>();
+  for (const row of rows) {
+    const key = row.project?.key ?? '';
+    if (!byKey.has(key)) {
+      order.push(key);
+      byKey.set(key, { project: row.project, rows: [] });
+    }
+    byKey.get(key)?.rows.push(row);
+  }
+  return order.map((key) => byKey.get(key) as ProjectGroup);
+};
+
+/** Sorts already-built worklist rows the same way `selectWorklistRows` sorts its
+ * own — split out so the scope merge can re-sort rows gathered from several
+ * projects by the one set of filters (IDEA-291). */
+export const sortWorklistRows = (
+  rows: WorklistRow[],
+  sortKey: PlanSortKey,
+  sortDirection: SortDirection,
+): WorklistRow[] =>
+  [...rows].sort((a, b) =>
+    comparePlans(worklistSortProxy(a), worklistSortProxy(b), sortKey, sortDirection),
+  );
+
 export interface WorklistResult {
   rows: WorklistRow[];
   statusCounts: Record<PlanStatus, number>;
@@ -378,14 +417,10 @@ export const selectWorklistRows = (
     rows.push({ type: 'note', idea });
   }
 
-  rows.sort((a, b) =>
-    comparePlans(
-      worklistSortProxy(a),
-      worklistSortProxy(b),
-      filters.sortKey,
-      filters.sortDirection,
-    ),
-  );
-
-  return { rows, statusCounts, tagCounts, noteStatusCounts };
+  return {
+    rows: sortWorklistRows(rows, filters.sortKey, filters.sortDirection),
+    statusCounts,
+    tagCounts,
+    noteStatusCounts,
+  };
 };

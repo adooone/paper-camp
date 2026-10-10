@@ -4,6 +4,7 @@ export {
   bareId,
   chunkRouteParam,
   entityLink,
+  entityPath,
   entityRouteParam,
   useActiveIdea,
   useActiveNightChunk,

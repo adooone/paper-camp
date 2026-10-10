@@ -1,6 +1,6 @@
-export type GroupMode = 'plain' | 'subject' | 'horizon';
+export type GroupMode = 'plain' | 'subject' | 'horizon' | 'project';
 
-const GROUP_MODES: GroupMode[] = ['plain', 'subject', 'horizon'];
+const GROUP_MODES: GroupMode[] = ['plain', 'subject', 'horizon', 'project'];
 
 export const DEFAULT_GROUP_MODE: GroupMode = 'subject';
 

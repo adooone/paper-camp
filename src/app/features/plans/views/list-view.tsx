@@ -1,4 +1,5 @@
 import type { WorklistRow } from '@/app/features/plans/helpers';
+import type { ScopeRow } from '@/app/features/scope';
 import { useEffect, useRef } from 'react';
 import { WorklistRows } from './worklist-rows';
 
@@ -7,9 +8,16 @@ interface ListViewProps {
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
-export const ListView = ({ rows, activePlanTitle, onOpenPlan, onOpenIdea }: ListViewProps) => {
+export const ListView = ({
+  rows,
+  activePlanTitle,
+  onOpenPlan,
+  onOpenIdea,
+  onOpenCrossProject,
+}: ListViewProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,6 +34,7 @@ export const ListView = ({ rows, activePlanTitle, onOpenPlan, onOpenIdea }: List
           activePlanTitle={activePlanTitle}
           onOpenPlan={onOpenPlan}
           onOpenIdea={onOpenIdea}
+          onOpenCrossProject={onOpenCrossProject}
         />
       ) : (
         // PlansPage only handles the "no plans at all" case; this covers filters matching none.

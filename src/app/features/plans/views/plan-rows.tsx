@@ -1,4 +1,5 @@
-import { entityLink } from '@/app/hooks';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
+import { entityLink, entityPath } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { isBlockingNeed } from '@/core/needs';
 import type { PlanEntry } from '@/types/index';
@@ -23,6 +24,10 @@ interface PlanRowsProps {
   plans: PlanEntry[];
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
+  /** Set only on a single-plan row produced by the scope merge — chip + cross-mount
+   * navigation apply to that one plan (IDEA-291). */
+  project?: ScopeRow;
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
 interface RowMarkerProps {
@@ -74,9 +79,16 @@ export const PLAN_ROW_COLUMNS: RowColumns = {
   trailing: '154px',
 };
 
-export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
+export const PlanRows = ({
+  plans,
+  activePlanTitle,
+  onOpen,
+  project,
+  onOpenCrossProject,
+}: PlanRowsProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const navigate = useNavigate();
+  const foreign = project && !project.isCurrent ? project : undefined;
   return (
     <div className="flex flex-col gap-1">
       {plans.map((plan) => {
@@ -84,6 +96,12 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
         const status = effectiveStatus(plan, agentStatus);
         const blockingNeed = plan.resolvedNeeds?.find(isBlockingNeed);
         const deadNeed = blockingNeed ? undefined : plan.resolvedNeeds?.find((n) => !n.found);
+        const handleOpen =
+          foreign && onOpenCrossProject
+            ? () => onOpenCrossProject(foreign, entityPath(plan))
+            : onOpen
+              ? () => onOpen(plan.title)
+              : undefined;
         return (
           <div key={plan.title} className="flex items-center">
             <RowMarker
@@ -98,7 +116,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                 surface="card"
                 columns={PLAN_ROW_COLUMNS}
                 highlighted={plan.title === activePlanTitle}
-                onClick={onOpen ? () => onOpen(plan.title) : undefined}
+                onClick={handleOpen}
                 ariaLabel={plan.title}
                 id={<PlanIdStamp id={plan.id} fill />}
                 title={plan.title}
@@ -109,6 +127,7 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                 }
                 trailing={
                   <>
+                    {project && <ProjectChip project={project} />}
                     {progress ? (
                       <MetaLine className="whitespace-nowrap">
                         {progress.done}/{progress.total}

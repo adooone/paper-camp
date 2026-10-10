@@ -8,6 +8,8 @@ export * from './use-plan-status-patch';
 export * from './use-plans-page';
 export * from './use-promote-thread-message';
 export * from './use-running-phase-fill';
+export * from './use-scope-roadmaps';
+export * from './use-scope-worklist';
 export * from './use-send-feedback-message';
 export * from './use-trail';
 export * from './use-worklist-rows';

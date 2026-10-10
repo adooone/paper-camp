@@ -46,7 +46,7 @@ export interface UseScopeResult {
   toggle: (key: ScopeKey) => void;
   selectAll: () => void;
   clear: () => void;
-  openRow: (row: ScopeRow) => void;
+  openRow: (row: ScopeRow, path?: string) => void;
 }
 
 function withSyntheticCurrent(
@@ -180,10 +180,10 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
     },
     selectAll: () => setScope(hubOrderKeys),
     clear: () => setScope([current.key]),
-    openRow: (row) => {
+    openRow: (row, path) => {
       if (row.isCurrent) return;
       rememberScope(row.runtimeUrl, scope, storage);
-      openHubRow(row.project, row.machineUrl);
+      openHubRow(row.project, row.machineUrl, path);
     },
   };
 }

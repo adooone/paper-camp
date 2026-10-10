@@ -1,4 +1,6 @@
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
+import { entityPath } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { MetaLine, NoteIcon, Row, Stamp, Text } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
@@ -12,6 +14,9 @@ interface WorklistRowsProps {
   activePlanTitle?: string | null;
   onOpenPlan?: (title: string) => void;
   onOpenIdea?: (title: string) => void;
+  /** Opens an entity on another project's mount, scope kept — set only when the
+   * scope holds more than one project (IDEA-291). */
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
 const headerLabelClass = 'font-handwritten text-sm opacity-60 whitespace-nowrap';
@@ -31,6 +36,7 @@ export const WorklistRows = ({
   activePlanTitle,
   onOpenPlan,
   onOpenIdea,
+  onOpenCrossProject,
 }: WorklistRowsProps) => {
   const {
     roadmapItemNames,
@@ -40,6 +46,8 @@ export const WorklistRows = ({
     handleSort,
     groups,
     showSubjectHeaders,
+    projectGroups,
+    showProjectHeaders,
     sortReflectsRows,
   } = useWorklistRows(rows);
 
@@ -51,11 +59,20 @@ export const WorklistRows = ({
           plans={[row.plan]}
           activePlanTitle={activePlanTitle}
           onOpen={onOpenPlan}
+          project={row.project}
+          onOpenCrossProject={onOpenCrossProject}
         />
       );
     }
     if (row.type === 'note') {
-      return <NoteRowCard key={row.idea.title} row={row} onOpen={onOpenIdea} />;
+      return (
+        <NoteRowCard
+          key={row.idea.title}
+          row={row}
+          onOpen={onOpenIdea}
+          onOpenCrossProject={onOpenCrossProject}
+        />
+      );
     }
     return (
       <FixRowCard
@@ -63,6 +80,7 @@ export const WorklistRows = ({
         row={row}
         activePlanTitle={activePlanTitle}
         onOpen={onOpenPlan}
+        onOpenCrossProject={onOpenCrossProject}
       />
     );
   };
@@ -152,7 +170,20 @@ export const WorklistRows = ({
               </div>
             );
           })
-        : rows.map((row) => renderRow(row))}
+        : showProjectHeaders
+          ? projectGroups.map((group) => (
+              <div key={group.project?.key ?? '__current__'} className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  {group.project ? (
+                    <ProjectChip project={group.project} />
+                  ) : (
+                    <div className={subjectHeaderClass}>This project</div>
+                  )}
+                </div>
+                {group.rows.map((row) => renderRow(row))}
+              </div>
+            ))
+          : rows.map((row) => renderRow(row))}
     </div>
   );
 };
@@ -160,11 +191,19 @@ export const WorklistRows = ({
 interface NoteRowCardProps {
   row: NoteRow;
   onOpen?: (title: string) => void;
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
-const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
+const NoteRowCard = ({ row, onOpen, onOpenCrossProject }: NoteRowCardProps) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
+  const foreign = row.project && !row.project.isCurrent ? row.project : undefined;
+  const handleOpen =
+    foreign && onOpenCrossProject
+      ? () => onOpenCrossProject(foreign, entityPath({ id: idea.id, title: idea.title }))
+      : onOpen
+        ? () => onOpen(idea.title)
+        : undefined;
   return (
     <div className="flex items-center">
       <RowMarker order={idea.order} done={status === 'done'} status={status} />
@@ -172,7 +211,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
         <Row
           surface="card"
           columns={PLAN_ROW_COLUMNS}
-          onClick={onOpen ? () => onOpen(idea.title) : undefined}
+          onClick={handleOpen}
           ariaLabel={idea.title}
           id={idea.id ? <PlanIdStamp id={idea.id} fill /> : ''}
           title={
@@ -184,6 +223,7 @@ const NoteRowCard = ({ row, onOpen }: NoteRowCardProps) => {
           meta={<MetaLine>—</MetaLine>}
           trailing={
             <>
+              {row.project && <ProjectChip project={row.project} />}
               <Text face="serif" size="base" className="opacity-30">
                 —
               </Text>
@@ -202,12 +242,20 @@ interface FixRowCardProps {
   row: FixRow;
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
-const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
+const FixRowCard = ({ row, activePlanTitle, onOpen, onOpenCrossProject }: FixRowCardProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const fix = row.fix;
   const status = effectiveStatus(fix, agentStatus);
+  const foreign = row.project && !row.project.isCurrent ? row.project : undefined;
+  const handleOpen =
+    foreign && onOpenCrossProject
+      ? () => onOpenCrossProject(foreign, entityPath(fix))
+      : onOpen
+        ? () => onOpen(fix.title)
+        : undefined;
   return (
     <div className="flex items-center">
       <RowMarker
@@ -222,7 +270,7 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
           surface="card"
           columns={PLAN_ROW_COLUMNS}
           highlighted={fix.title === activePlanTitle}
-          onClick={onOpen ? () => onOpen(fix.title) : undefined}
+          onClick={handleOpen}
           ariaLabel={fix.title}
           id={<PlanIdStamp id={fix.id} fill />}
           title={
@@ -244,9 +292,12 @@ const FixRowCard = ({ row, activePlanTitle, onOpen }: FixRowCardProps) => {
             </MetaLine>
           }
           trailing={
-            <Stamp size="small" variant={STATUS_STAMP[status]}>
-              {STATUS_LABEL[status]}
-            </Stamp>
+            <>
+              {row.project && <ProjectChip project={row.project} />}
+              <Stamp size="small" variant={STATUS_STAMP[status]}>
+                {STATUS_LABEL[status]}
+              </Stamp>
+            </>
           }
         />
       </div>

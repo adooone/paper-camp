@@ -5,9 +5,10 @@ const GROUP_LABEL: Record<GroupMode, string> = {
   plain: 'Plain',
   subject: 'Subject',
   horizon: 'Horizon',
+  project: 'Project',
 };
 
-const GROUP_ORDER: GroupMode[] = ['plain', 'subject', 'horizon'];
+const GROUP_ORDER: GroupMode[] = ['plain', 'subject', 'horizon', 'project'];
 
 interface GroupByControlProps {
   group: GroupMode;

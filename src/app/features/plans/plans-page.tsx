@@ -1,13 +1,15 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { useRoadmapPage } from '@/app/features/roadmap';
+import { ProjectChip, useScope } from '@/app/features/scope';
 import { Card, EmptyState, PageTitle } from '@dendelion/paper-ui';
-import { selectWorklistRows } from './helpers';
-import { usePlansPage } from './hooks';
+import { selectWorklistRows, sortWorklistRows } from './helpers';
+import { usePlansPage, useScopeRoadmaps, useScopeWorklist } from './hooks';
 import { PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
   ChunkDetail,
   EntityDetail,
+  ForeignHorizonSection,
   HorizonGroupView,
   ListView,
   NightReportSection,
@@ -46,6 +48,14 @@ export const PlansPage = () => {
   } = usePlansPage();
   const roadmapPage = useRoadmapPage();
 
+  const scope = useScope(null);
+  const scopeRows = scope.groups.flatMap((g) => g.rows).filter((r) => r.checked);
+  const multiProject = scopeRows.length > 1;
+  const currentScopeRow = scopeRows.find((r) => r.isCurrent);
+  const otherScopeProjects = multiProject ? scopeRows.filter((r) => !r.isCurrent) : [];
+  const otherRows = useScopeWorklist(otherScopeProjects, planFilters);
+  const otherRoadmaps = useScopeRoadmaps(otherScopeProjects);
+
   if (plansError) {
     return (
       <div>
@@ -80,7 +90,17 @@ export const PlansPage = () => {
     );
   }
 
-  const { rows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
+  const { rows: ownRows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
+  const rows = multiProject
+    ? sortWorklistRows(
+        [
+          ...(currentScopeRow ? ownRows.map((r) => ({ ...r, project: currentScopeRow })) : ownRows),
+          ...otherRows,
+        ],
+        planFilters.sortKey,
+        planFilters.sortDirection,
+      )
+    : ownRows;
 
   // Driven by store state, not by which branch is active — render once above the
   // branching so it isn't duplicated across the plan/idea/list views.
@@ -109,7 +129,22 @@ export const PlansPage = () => {
           <PlansToolbar entries={plans.entries} group={group} onGroupChange={handleGroupChange} />
 
           {group === 'horizon' ? (
-            <HorizonGroupView roadmapPage={roadmapPage} />
+            <>
+              {multiProject && currentScopeRow && (
+                <div className="mb-3">
+                  <ProjectChip project={currentScopeRow} />
+                </div>
+              )}
+              <HorizonGroupView roadmapPage={roadmapPage} />
+              {multiProject &&
+                otherRoadmaps.map((entry) => (
+                  <ForeignHorizonSection
+                    key={entry.project.key}
+                    entry={entry}
+                    onOpenCrossProject={scope.openRow}
+                  />
+                ))}
+            </>
           ) : (
             <>
               <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
@@ -127,7 +162,7 @@ export const PlansPage = () => {
                 </Card>
               )}
 
-              {plans.entries.length === 0 ? (
+              {(multiProject ? rows.length === 0 : plans.entries.length === 0) ? (
                 <EmptyState
                   illustration={<DoodleIllustration name="empty-tray" />}
                   message={
@@ -143,6 +178,7 @@ export const PlansPage = () => {
                   activePlanTitle={null}
                   onOpenPlan={handleOpenPlan}
                   onOpenIdea={handleOpenIdea}
+                  onOpenCrossProject={scope.openRow}
                 />
               )}
 

@@ -80,6 +80,20 @@ export function entityLink(entity: {
   return { to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(entity.id, entity.title) } };
 }
 
+/** `entityLink`'s path as a plain string, for a `window.location.assign` to another
+ * project's mount rather than this router's own `navigate` (IDEA-291). */
+export function entityPath(entity: {
+  id?: string | null;
+  title: string;
+  entityKind?: string;
+  idea?: string;
+}): string {
+  const link = entityLink(entity);
+  return link.to === '/ideas/$ideaId/tickets/$ticketId'
+    ? `/ideas/${link.params.ideaId}/tickets/${link.params.ticketId}`
+    : `/ideas/${link.params.ideaId}`;
+}
+
 export function useActivePlan(): PlanEntry | null {
   const { planId, ideaId, ticketId } = useParams({ strict: false });
   const plans = useAppStore((s) => s.plans);

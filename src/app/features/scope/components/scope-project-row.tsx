@@ -1,15 +1,6 @@
-import type { ScopeColorToken } from '@/app/services/scope';
 import { Button, Checkbox, Stamp } from '@dendelion/paper-ui';
 import type { ScopeRow } from '../hooks/use-scope';
-
-const DOT_CLASS: Record<ScopeColorToken, string> = {
-  blue: 'bg-watercolor-blue',
-  green: 'bg-watercolor-green',
-  amber: 'bg-watercolor-amber',
-  rose: 'bg-watercolor-rose',
-  purple: 'bg-watercolor-purple',
-  slate: 'bg-watercolor-slate',
-};
+import { DOT_CLASS } from './dot-class';
 
 export interface ScopeProjectRowProps {
   row: ScopeRow;
