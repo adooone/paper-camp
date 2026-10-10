@@ -77,6 +77,10 @@ export const useActivityPage = () => {
   );
   const hasActiveFilters = Object.keys(serializeLogFilters(filters)).length > 0;
 
+  const totalEntryCount =
+    (activityKind === 'chat' ? 0 : allRows.length) +
+    (activityKind === 'runs' ? 0 : chat.thread.length);
+
   const markAllRead = async () => {
     for (const id of unreadIds) await markRead(id);
   };
@@ -88,8 +92,8 @@ export const useActivityPage = () => {
     loadMore: () => setVisibleCount((n) => n + LOG_PAGE_SIZE),
     hasAnyRows: allRows.length > 0 || chat.thread.length > 0,
     hasMatches: entries.length > 0,
-    totalCount: allRows.length,
-    matchedCount: matchedRows.length,
+    totalCount: totalEntryCount,
+    matchedCount: entries.length,
     runningRows,
     unreadCount: unreadIds.length,
     markAllRead,

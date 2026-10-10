@@ -46,6 +46,7 @@ export const ProjectSidebar = () => {
           onChange={(e) => setDocSearchQuery(e.target.value)}
         />
       </div>
+      <SidebarLabel>Repo Docs</SidebarLabel>
       <div className="flex flex-col">
         {repoDocsLoading && repoDocs.length === 0 ? (
           <span className="block px-3 py-1">
@@ -64,6 +65,9 @@ export const ProjectSidebar = () => {
         ) : (
           <EmptyState message="No repo docs found" />
         )}
+      </div>
+      <SidebarLabel>Releases</SidebarLabel>
+      <div className="flex flex-col">
         {releaseVersionsLoading && releaseVersions.length === 0 ? (
           <span className="block px-3 py-1">
             <Skeleton variant="text" width="60%" />

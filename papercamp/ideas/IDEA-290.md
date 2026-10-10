@@ -4,6 +4,7 @@ title: Three pages instead of seven
 type: refactor
 status: review
 created: 2026-10-09
+updated: 2026-10-10
 tags:
   - app
   - ui
@@ -105,6 +106,7 @@ The hub page. Any change to what a settings section or a stats card contains.
       `navItems`, the shell's area flags, skeleton prefixes and spinner labels;
       remove what only the old pages used; knip, depcruise and tests green.
       run: 3m51s · 48 in · 14.6k out · sonnet-5 · sess:837d3831-5b9b-4c64-a0c2-d8867de82528
+- [x] [manual] Address review feedback on the three-page merge
 
 ### Thread
 - [x] 2026-10-10 [review] [agent] Comments · 5 findings — The diff genuinely delivers all five phases: the header is three tabs, every old route redirects to its new home (including deep links with params and search), filters live in toolbars, and I verified tsc, knip, depcruise and all 1965 unit tests pass locally. Plan filter parity with the old PlanFilterColumn is exact (same chip order, counts, and Clear filters semantics), and the horizon view reproduces the Roadmap page's sections. The remaining issues are small: a missed skeleton registration for /activity, dead roadmap status-filter code the spec says should be deleted, and a few naming/count inconsistencies on the merged pages.
