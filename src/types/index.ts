@@ -250,6 +250,10 @@ export interface PlanEntry {
   tags: string[];
   /** See EntityEntry.needs. */
   needs: string[];
+  /** `needs` resolved against the current project and, for a cross-project ref, the
+   * machine registry — attached on read by `attachResolvedNeeds`, empty `needs` never
+   * populates it. */
+  resolvedNeeds?: ResolvedNeed[];
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
@@ -559,6 +563,20 @@ export interface ResolvedIdea {
   released: boolean;
   created: string;
   phases: PhaseItem[];
+}
+
+/** One `needs:` entry resolved against the current project or, for a `<slug>/IDEA-N`
+ * ref, another project on the same machine (see `resolveNeedsRefs`). `done`/`title`/
+ * `projectName` are only set when `found`; a cross-project ref also carries
+ * `projectSlug`/`projectName`. */
+export interface ResolvedNeed {
+  raw: string;
+  id: string;
+  projectSlug?: string;
+  found: boolean;
+  done?: boolean;
+  title?: string;
+  projectName?: string;
 }
 
 /** `shipped` only once the item carries the shipped marker a human writes (see IDEA-277);

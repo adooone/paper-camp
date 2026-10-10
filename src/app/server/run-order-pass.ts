@@ -1,3 +1,4 @@
+import { computeNeedsBlockedIds } from '@/core/needs';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
@@ -26,7 +27,11 @@ export async function runRunOrderPass(root: string): Promise<string[]> {
   const { entries } = await readEntities(ideasDir);
   // File-watcher-triggered, not a human ask: serve cache/disk only, never a live `gh` call.
   const { entries: work } = await readWorkEntries(ideasDir, Number.POSITIVE_INFINITY);
-  const classified = classifyRunOrderEntries(entries, work);
+  const blockedIds = await computeNeedsBlockedIds(root, entries);
+  const classified = classifyRunOrderEntries(
+    entries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),
+    work,
+  );
 
   return withRunOrderLock(async () => {
     const list = await readRunOrderFile(root);

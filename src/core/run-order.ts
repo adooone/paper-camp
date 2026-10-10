@@ -10,10 +10,13 @@ export interface RunOrderEntry {
   title: string;
   status?: string;
   created: string;
+  /** An unmet `needs:` ref keeps an otherwise-orderable entity out of the queue
+   * (IDEA-291) — see `computeNeedsBlockedIds`. */
+  blockedByNeeds?: boolean;
 }
 
-export function isRunOrdered(entry: Pick<RunOrderEntry, 'status'>): boolean {
-  return ORDERED_STATUSES.has(entry.status ?? '');
+export function isRunOrdered(entry: Pick<RunOrderEntry, 'status' | 'blockedByNeeds'>): boolean {
+  return ORDERED_STATUSES.has(entry.status ?? '') && !entry.blockedByNeeds;
 }
 
 /**
@@ -29,6 +32,7 @@ export function classifyRunOrderEntries(
     created: string;
     status?: string;
     kind?: EntityKind;
+    blockedByNeeds?: boolean;
   }[],
   work: { id?: string; status?: string }[],
   statusOverride?: (id: string) => { value: string | undefined } | undefined,
@@ -48,6 +52,7 @@ export function classifyRunOrderEntries(
           title: e.title,
           created: e.created,
           status: override ? override.value : (derived.get(e.id) ?? e.status),
+          blockedByNeeds: e.blockedByNeeds,
         };
       })
   );

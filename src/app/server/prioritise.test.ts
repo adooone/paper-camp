@@ -112,6 +112,20 @@ describe('getPrioritiseVerdict', () => {
     expect(call).toBe(2);
   });
 
+  it('excludes a plan with an unmet need from the active set (IDEA-291)', async () => {
+    const worklist = [
+      plan({ id: 'IDEA-1' }),
+      plan({
+        id: 'IDEA-2',
+        resolvedNeeds: [{ raw: 'IDEA-1', id: 'IDEA-1', found: true, done: false }],
+      }),
+    ];
+    const runPrompt = async () => JSON.stringify({ order: ['IDEA-1'], why: ['only one active'] });
+
+    const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
+    expect(verdict).toEqual({ order: ['IDEA-1'], why: ['only one active'] });
+  });
+
   it('rejects a verdict missing the order/why shape', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const runPrompt = async () => JSON.stringify({ order: ['IDEA-1', 'IDEA-2'] });

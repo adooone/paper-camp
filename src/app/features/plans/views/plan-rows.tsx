@@ -1,4 +1,6 @@
+import { entityLink } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
+import { isBlockingNeed } from '@/core/needs';
 import type { PlanEntry } from '@/types/index';
 import {
   LightbulbIcon,
@@ -12,6 +14,7 @@ import {
   Tooltip,
 } from '@dendelion/paper-ui';
 import { color, colors } from '@dendelion/paper-ui/tokens';
+import { useNavigate } from '@tanstack/react-router';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
@@ -73,11 +76,14 @@ export const PLAN_ROW_COLUMNS: RowColumns = {
 
 export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-1">
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
         const status = effectiveStatus(plan, agentStatus);
+        const blockingNeed = plan.resolvedNeeds?.find(isBlockingNeed);
+        const deadNeed = blockingNeed ? undefined : plan.resolvedNeeds?.find((n) => !n.found);
         return (
           <div key={plan.title} className="flex items-center">
             <RowMarker
@@ -115,6 +121,41 @@ export const PlanRows = ({ plans, activePlanTitle, onOpen }: PlanRowsProps) => {
                     <Stamp size="small" variant={STATUS_STAMP[status]}>
                       {STATUS_LABEL[status]}
                     </Stamp>
+                    {blockingNeed && (
+                      <Tooltip
+                        content={`Waits for ${blockingNeed.projectName ? `${blockingNeed.projectName} ` : ''}${blockingNeed.id}`}
+                      >
+                        <Stamp
+                          size="small"
+                          variant="warning"
+                          dot
+                          // A cross-project need has no mount to navigate to yet, so it
+                          // isn't a link — the tooltip still names it.
+                          onClick={
+                            blockingNeed.projectSlug
+                              ? undefined
+                              : (e) => {
+                                  e.stopPropagation();
+                                  navigate(
+                                    entityLink({
+                                      id: blockingNeed.id,
+                                      title: blockingNeed.title ?? blockingNeed.id,
+                                    }),
+                                  );
+                                }
+                          }
+                        >
+                          Waits
+                        </Stamp>
+                      </Tooltip>
+                    )}
+                    {deadNeed && (
+                      <Tooltip content={`Can't find ${deadNeed.raw}`}>
+                        <Stamp size="small" variant="error" dot>
+                          Needs
+                        </Stamp>
+                      </Tooltip>
+                    )}
                     {plan.statusFallback && (
                       <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
                         <Stamp size="small" variant="warning" dot>

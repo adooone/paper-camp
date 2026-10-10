@@ -8,6 +8,7 @@ export * from './fixes-section';
 export * from './group-by-control';
 export * from './horizon-group-view';
 export * from './list-view';
+export * from './needs-row';
 export * from './night-report-section';
 export * from './note-detail';
 export * from './parent-link-row';

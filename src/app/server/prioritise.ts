@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
+import { hasBlockingNeed } from '@/core/needs';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
@@ -76,7 +77,11 @@ export async function getPrioritiseVerdict(
   runPrompt: (prompt: string) => Promise<string>,
 ): Promise<PrioritiseVerdict> {
   const activeIds = worklist
-    .filter((p) => p.status === 'planned' || p.status === 'in-progress' || p.status === 'review')
+    .filter(
+      (p) =>
+        (p.status === 'planned' || p.status === 'in-progress' || p.status === 'review') &&
+        !hasBlockingNeed(p.resolvedNeeds),
+    )
     .map((p) => p.id)
     .filter((id): id is string => Boolean(id));
 

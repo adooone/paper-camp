@@ -1,6 +1,8 @@
 import { join } from 'node:path';
+import type { EntityEntry, PlanEntry, ResolvedNeed } from '../types/index';
 import { type MachineRegistry, defaultRegistryPath, loadRegistry } from './machine-registry';
-import { readEntities } from './readers';
+import { readEntitiesWithDerivedStatus } from './readers';
+import { isClosedEntity } from './status';
 
 export interface NeedsRef {
   raw: string;
@@ -15,15 +17,11 @@ export function parseNeedsRef(raw: string): NeedsRef {
   return { raw, projectSlug: raw.slice(0, slashIndex), id: raw.slice(slashIndex + 1) };
 }
 
-export interface ResolvedNeed {
-  raw: string;
-  found: boolean;
-}
-
 /** Resolves each `needs:` entry against the current project (`IDEA-N`) or, via the
  * machine registry, another project registered on the same machine (`<slug>/IDEA-N`).
  * A ref that can't be resolved comes back `found: false` rather than throwing — the
- * caller decides whether that's a write-time warning or a run-time block. */
+ * caller decides whether that's a write-time warning or a run-time block. `done`
+ * reads the DERIVED status (PR-aware), matching what the UI shows elsewhere. */
 export async function resolveNeedsRefs(
   root: string,
   needs: string[],
@@ -31,30 +29,95 @@ export async function resolveNeedsRefs(
 ): Promise<ResolvedNeed[]> {
   if (needs.length === 0) return [];
   const reg = registry ?? (await loadRegistry(defaultRegistryPath()));
-  const idsByRoot = new Map<string, Set<string>>();
+  const entriesByRoot = new Map<string, Map<string, EntityEntry>>();
 
-  async function idsForRoot(projectRoot: string): Promise<Set<string>> {
-    const cached = idsByRoot.get(projectRoot);
+  async function entriesForRoot(projectRoot: string): Promise<Map<string, EntityEntry>> {
+    const cached = entriesByRoot.get(projectRoot);
     if (cached) return cached;
-    const { entries } = await readEntities(join(projectRoot, 'papercamp', 'ideas'));
-    const ids = new Set(entries.map((entry) => entry.id));
-    idsByRoot.set(projectRoot, ids);
-    return ids;
+    const { entries } = await readEntitiesWithDerivedStatus(
+      join(projectRoot, 'papercamp', 'ideas'),
+    );
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    entriesByRoot.set(projectRoot, byId);
+    return byId;
   }
 
   const results: ResolvedNeed[] = [];
   for (const raw of needs) {
     const ref = parseNeedsRef(raw);
-    if (!ref.projectSlug) {
-      results.push({ raw, found: (await idsForRoot(root)).has(ref.id) });
+    const project = ref.projectSlug
+      ? reg.projects.find((p) => p.slug === ref.projectSlug)
+      : undefined;
+    if (ref.projectSlug && !project) {
+      results.push({ raw, id: ref.id, projectSlug: ref.projectSlug, found: false });
       continue;
     }
-    const project = reg.projects.find((p) => p.slug === ref.projectSlug);
-    if (!project) {
-      results.push({ raw, found: false });
+    const entry = (await entriesForRoot(project?.path ?? root)).get(ref.id);
+    if (!entry) {
+      results.push({ raw, id: ref.id, projectSlug: ref.projectSlug, found: false });
       continue;
     }
-    results.push({ raw, found: (await idsForRoot(project.path)).has(ref.id) });
+    results.push({
+      raw,
+      id: ref.id,
+      projectSlug: ref.projectSlug,
+      found: true,
+      done: isClosedEntity(entry),
+      title: entry.title,
+      projectName: project?.name,
+    });
   }
   return results;
+}
+
+/** A found-but-not-done need blocks a run; a not-found one (`found: false`) never
+ * does — it surfaces as "can't find" instead (IDEA-291). */
+export function isBlockingNeed(need: ResolvedNeed): boolean {
+  return need.found && !need.done;
+}
+
+/** Attaches `resolvedNeeds` to every plan that carries a `needs:` list, sharing one
+ * registry load and one set of per-project entity reads across the whole batch —
+ * called once per corpus read (see `cachedWorkEntries`), not per plan. */
+export async function attachResolvedNeeds(root: string, plans: PlanEntry[]): Promise<PlanEntry[]> {
+  if (plans.every((plan) => plan.needs.length === 0)) return plans;
+  const registry = await loadRegistry(defaultRegistryPath());
+  return Promise.all(
+    plans.map(async (plan) => {
+      if (plan.needs.length === 0) return plan;
+      return { ...plan, resolvedNeeds: await resolveNeedsRefs(root, plan.needs, registry) };
+    }),
+  );
+}
+
+export function hasBlockingNeed(resolvedNeeds?: ResolvedNeed[]): boolean {
+  return (resolvedNeeds ?? []).some(isBlockingNeed);
+}
+
+/** The ids among `entries` a run-order picker must skip — a blocking need keeps an
+ * otherwise-orderable entity out of the queue (IDEA-291). Shares one registry load
+ * across the whole corpus, like `attachResolvedNeeds`. */
+export async function computeNeedsBlockedIds(
+  root: string,
+  entries: { id: string; needs: string[] }[],
+): Promise<Set<string>> {
+  const withNeeds = entries.filter((e) => e.needs.length > 0);
+  if (withNeeds.length === 0) return new Set();
+  const registry = await loadRegistry(defaultRegistryPath());
+  const blocked = new Set<string>();
+  for (const entry of withNeeds) {
+    const resolved = await resolveNeedsRefs(root, entry.needs, registry);
+    if (resolved.some(isBlockingNeed)) blocked.add(entry.id);
+  }
+  return blocked;
+}
+
+/** Refuses a phase/run-all launch whose plan waits on an unmet need — the first
+ * blocking need wins when there's more than one. A ref that can't be resolved
+ * never blocks (see `isBlockingNeed`). */
+export async function checkNeedsForRun(root: string, needs: string[]): Promise<string | null> {
+  if (needs.length === 0) return null;
+  const blocking = (await resolveNeedsRefs(root, needs)).find(isBlockingNeed);
+  if (!blocking) return null;
+  return `waits for ${blocking.projectName ? `${blocking.projectName} ` : ''}${blocking.id}`;
 }

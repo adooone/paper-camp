@@ -23,6 +23,7 @@ import { ClarificationsSection } from './clarifications-section';
 import { DeliverSection } from './deliver-section';
 import { FeedbackSection } from './feedback-section';
 import { FixesSection } from './fixes-section';
+import { NeedsRow } from './needs-row';
 import { ParentLinkRow } from './parent-link-row';
 import { PhasesSection } from './phases-section';
 import { PlanBodySection } from './plan-body-section';
@@ -123,6 +124,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       </div>
 
       <ParentLinkRow plan={plan} otherPlans={otherPlans} />
+      <NeedsRow plan={plan} />
 
       {/* One strip, not three full-width bands — they all answer "where is this and
           what has it cost". Wraps to stacked rows when the column is too narrow. */}

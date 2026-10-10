@@ -101,10 +101,11 @@ projects. The embedded dev toolbar, which is always one project.
       resolve same-project refs and `<slug>/IDEA-N` through the machine
       registry, unknown refs reported, not thrown.
       run: 6m55s · 178 in · 34.5k out · sonnet-5 · sess:883f5254-b86a-4615-8a63-0610751d0578
-- [ ] Enforce needs and show what an idea waits for
+- [x] Enforce needs and show what an idea waits for
       Run all phases, single phase runs and run-order pickers refuse or skip a
       waiting idea; the list row and the idea page show the linked *waits for*
       line, and *can't find* for a dead ref.
+      run: 20m1s · 344 in · 83.9k out · sonnet-5 · sess:752419b5-deac-4e8c-843d-c919d7009439
 - [ ] Add the scope model and per-runtime data
       `?p=` keys, per-device memory, token colors, `fetchPlansAt`,
       `fetchRoadmapAt`, `fetchRunsAt`, `fetchChatAt`, one `EventSource` per

@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
+import { attachResolvedNeeds } from '@/core/needs';
 import { removeNightFindingLine } from '@/core/night-suggestions';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import {
@@ -599,8 +600,9 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           const { entries } = await readWorkEntries(campFile(root, 'ideas'));
+          const withNeeds = await attachResolvedNeeds(root, entries);
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
-          const verdict = await getPrioritiseVerdict(entries, roadmapText, agent.runPrioritise);
+          const verdict = await getPrioritiseVerdict(withNeeds, roadmapText, agent.runPrioritise);
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
           if (moved.length > 0) activity.notifyChanged();
           sendJson(res, 200, {

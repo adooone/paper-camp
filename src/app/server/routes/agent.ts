@@ -11,6 +11,7 @@ import { fetchCiReleaseState } from '@/core/ci';
 import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
+import { checkNeedsForRun } from '@/core/needs';
 import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import {
@@ -465,6 +466,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       async ({ planId, phaseIndex }) => {
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
+        const waits = await checkNeedsForRun(root, resolved.plan.needs);
+        if (waits) return { ok: false, error: waits };
         return agent.start(
           resolved.plan,
           phaseIndex,
@@ -592,6 +595,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         if (!resolved.ok) return resolved;
         const staleBase = await checkStaleBaseForRunAll(git, planId);
         if (staleBase) return { ok: false, error: staleBase };
+        const waits = await checkNeedsForRun(root, resolved.plan.needs);
+        if (waits) return { ok: false, error: waits };
         return agent.startRunAllPhases(
           resolved.plan,
           () => status.runChecksAndWait(),

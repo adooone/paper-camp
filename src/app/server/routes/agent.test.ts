@@ -55,6 +55,36 @@ Plan body.
 - [x] First phase
 `;
 
+const PLAN_WAITS_ON_OPEN = `---
+id: IDEA-4
+title: Waits on open work
+type: feat
+status: planned
+created: 2026-07-01
+needs:
+  - IDEA-2
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+`;
+
+const PLAN_WAITS_ON_DONE = `---
+id: IDEA-5
+title: Waits on shipped work
+type: feat
+status: planned
+created: 2026-07-01
+needs:
+  - IDEA-3
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+`;
+
 async function makeRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-route-test-'));
   roots.push(root);
@@ -62,6 +92,8 @@ async function makeRoot(): Promise<string> {
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), PLAN_WITH_OPEN_QUESTION);
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), PLAN_IN_REVIEW);
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-3.md'), PLAN_DONE);
+  await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-4.md'), PLAN_WAITS_ON_OPEN);
+  await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-5.md'), PLAN_WAITS_ON_DONE);
   await writeFile(
     join(root, 'papercamp', 'config.json'),
     JSON.stringify({ nextId: { idea: 100 } }),
@@ -524,6 +556,70 @@ describe('POST /api/agent/launch-run-all', () => {
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2' })), res);
 
     expect(startRunAllPhases).toHaveBeenCalledOnce();
+    expect(status()).toBe(202);
+    expect(json()).toMatchObject({ ok: true });
+  });
+
+  it('refuses to start while a needed idea is still open (IDEA-291)', async () => {
+    const root = await makeRoot();
+    const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch-run-all', {
+      agent: { startRunAllPhases } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      git: fakeGit({ findStaleBaseRef: vi.fn(async () => null) }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-4' })), res);
+
+    expect(startRunAllPhases).not.toHaveBeenCalled();
+    expect(status()).toBe(409);
+    expect(json()).toMatchObject({ error: 'waits for IDEA-2' });
+  });
+
+  it('starts run-all once the needed idea is done', async () => {
+    const root = await makeRoot();
+    const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch-run-all', {
+      agent: { startRunAllPhases } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      git: fakeGit({ findStaleBaseRef: vi.fn(async () => null) }),
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-5' })), res);
+
+    expect(startRunAllPhases).toHaveBeenCalledOnce();
+    expect(status()).toBe(202);
+    expect(json()).toMatchObject({ ok: true });
+  });
+});
+
+describe('POST /api/agent/launch', () => {
+  it('refuses to start a single phase while a needed idea is still open (IDEA-291)', async () => {
+    const root = await makeRoot();
+    const start = vi.fn(() => ({ ok: true }) as const);
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch', {
+      agent: { start } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-4', phaseIndex: 0 })), res);
+
+    expect(start).not.toHaveBeenCalled();
+    expect(status()).toBe(409);
+    expect(json()).toMatchObject({ error: 'waits for IDEA-2' });
+  });
+
+  it('starts the phase once the needed idea is done', async () => {
+    const root = await makeRoot();
+    const start = vi.fn(() => ({ ok: true }) as const);
+
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/agent/launch', {
+      agent: { start } as unknown as RouteContext['agent'],
+      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-5', phaseIndex: 0 })), res);
+
+    expect(start).toHaveBeenCalledOnce();
     expect(status()).toBe(202);
     expect(json()).toMatchObject({ ok: true });
   });

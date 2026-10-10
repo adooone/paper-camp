@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { describeFindings, runDoctor } from '@/core/doctor';
+import { attachResolvedNeeds } from '@/core/needs';
 import { buildNightReportGroups, readNightFindings } from '@/core/night-suggestions';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
@@ -25,7 +26,10 @@ import type { ReadRoute } from './types';
 const cachedWorkEntries = (root: string) =>
   cached(
     `work:${root}`,
-    () => readWorkEntries(campFile(root, 'ideas')),
+    async () => {
+      const { entries, warnings, resolved } = await readWorkEntries(campFile(root, 'ideas'));
+      return { entries: await attachResolvedNeeds(root, entries), warnings, resolved };
+    },
     (result) => result.resolved,
     () => corpusFingerprint(campFile(root, 'ideas')),
   );

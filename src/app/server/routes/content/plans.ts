@@ -1,5 +1,6 @@
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { computeNeedsBlockedIds } from '@/core/needs';
 import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { archiveEntityFile, todayDateString, unarchiveEntityFile } from '@/core/serialize';
@@ -196,10 +197,14 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
             typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
           const { entries: work } = await readWorkEntries(ideasDir);
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
-          const classified = classifyRunOrderEntries(nextEntries, work, (id) =>
-            id === target.id && updates.status !== undefined
-              ? { value: updates.status ?? undefined }
-              : undefined,
+          const blockedIds = await computeNeedsBlockedIds(root, nextEntries);
+          const classified = classifyRunOrderEntries(
+            nextEntries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),
+            work,
+            (id) =>
+              id === target.id && updates.status !== undefined
+                ? { value: updates.status ?? undefined }
+                : undefined,
           );
           await withRunOrderLock(async () => {
             const list = await readRunOrderFile(root);

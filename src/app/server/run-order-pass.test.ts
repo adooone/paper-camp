@@ -90,6 +90,32 @@ describe('runRunOrderPass', () => {
     ]);
   });
 
+  it('skips an entity whose needs are unmet, giving it no run-order slot (IDEA-291)', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'Blocks IDEA-2',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+      phases: [{ text: 'One', done: false }],
+    });
+    write(root, {
+      id: 'IDEA-2',
+      title: 'Waits on IDEA-1',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-02',
+      needs: ['IDEA-1'],
+      phases: [{ text: 'One', done: false }],
+    });
+
+    const changed = await runRunOrderPass(root);
+
+    expect(changed.sort()).toEqual(['IDEA-1']);
+    expect(readRunOrder(root)).toEqual(['IDEA-1 — Blocks IDEA-2']);
+  });
+
   it('leaves a matching ordering untouched', async () => {
     const root = tmpRoot();
     write(root, {
