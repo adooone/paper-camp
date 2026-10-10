@@ -15,7 +15,6 @@ import { HubShell } from '@/app/features/hub';
 import {
   PlanActionsColumn,
   PlanActionsCommandsColumn,
-  PlanFilterColumn,
   PlansListSkeleton,
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
@@ -181,7 +180,6 @@ export const AppShell = () => {
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={closeMobileSidebar}
                   >
-                    {isPlansArea && <PlanFilterColumn />}
                     {isPlansArea && <PlanActionsColumn />}
                     {isPlansArea && <PlanActionsCommandsColumn />}
                     {isDocsArea && (

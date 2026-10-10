@@ -13,6 +13,7 @@ import {
   NoteDetail,
   PlansHeader,
   PlansListSkeleton,
+  PlansToolbar,
   ReconcileQueueReview,
   SuggestionsSection,
 } from './views';
@@ -97,6 +98,7 @@ export const PlansPage = () => {
       ) : (
         <div>
           <PlansHeader showGroupingToggle={plans.entries.length > 0} />
+          <PlansToolbar entries={plans.entries} />
 
           <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
 

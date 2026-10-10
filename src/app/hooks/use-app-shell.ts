@@ -107,8 +107,15 @@ export function useAppShell(): AppShellState {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
+  // The bare list route has no sidebar now that its filters live in the toolbar —
+  // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
-    isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea || isLogArea;
+    (isPlansArea && pathname !== '/') ||
+    isDocsArea ||
+    isSettingsArea ||
+    isRoadmapArea ||
+    isGitArea ||
+    isLogArea;
   const sidebarAreaKey = isPlansArea
     ? 'plans'
     : isDocsArea

@@ -81,10 +81,11 @@ Showing several projects at once ([[IDEA-291]]). The embedded dev toolbar.
 The hub page. Any change to what a settings section or a stats card contains.
 
 ### Phases
-- [ ] Add the page toolbar and move the Plans filters into it
+- [x] Add the page toolbar and move the Plans filters into it
       `PageToolbar` in `src/app/components/`, any missing chip or segmented
       control added to paper-ui first. `PlanFilterColumn` deleted; search, status
       chips and Clear filters live in the toolbar on `/`.
+      run: 7m14s · 96 in · 19.4k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
 - [ ] Fold the Roadmap into Ideas as Group by Horizon
       Three-way Group by (Plain, Subject, Horizon) in `?group=`; Horizon renders
       the roadmap's sections with horizon chips and + Add item; `/roadmap`
