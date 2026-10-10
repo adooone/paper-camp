@@ -118,6 +118,18 @@ export const fetchRoadmap = async () => {
   return res.json() as Promise<ResolvedRoadmap | null>;
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchRoadmapAt = async (baseUrl: string): Promise<ResolvedRoadmap | null> => {
+  try {
+    const res = await fetch(`${baseUrl}/api/roadmap`);
+    if (!res.ok) return null;
+    return (await res.json()) as ResolvedRoadmap | null;
+  } catch {
+    return null;
+  }
+};
+
 export const promoteRoadmapItem = async (
   horizonTitle: string,
   item: RoadmapItem,

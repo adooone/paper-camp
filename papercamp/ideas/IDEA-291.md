@@ -106,10 +106,11 @@ projects. The embedded dev toolbar, which is always one project.
       waiting idea; the list row and the idea page show the linked *waits for*
       line, and *can't find* for a dead ref.
       run: 20m1s · 344 in · 83.9k out · sonnet-5 · sess:752419b5-deac-4e8c-843d-c919d7009439
-- [ ] Add the scope model and per-runtime data
+- [x] Add the scope model and per-runtime data
       `?p=` keys, per-device memory, token colors, `fetchPlansAt`,
       `fetchRoadmapAt`, `fetchRunsAt`, `fetchChatAt`, one `EventSource` per
       runtime in scope.
+      run: 9m33s · 132 in · 39.1k out · sonnet-5 · sess:84741412-9bca-49fb-8576-0bf53176fb03
 - [ ] Turn the sidebar into the scope list
       Machines and projects with checkboxes, counts, asleep rows, All/Clear and
       the All machines link on Ideas, Activity and Project; the header loses

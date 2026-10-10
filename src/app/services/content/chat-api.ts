@@ -8,6 +8,19 @@ export const fetchChat = async (): Promise<ThreadMessage[]> => {
   return data.thread as ThreadMessage[];
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchChatAt = async (baseUrl: string): Promise<ThreadMessage[] | null> => {
+  try {
+    const res = await fetch(`${baseUrl}/api/chat`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.thread as ThreadMessage[];
+  } catch {
+    return null;
+  }
+};
+
 export const postChatMessage = async (text: string): Promise<{ error?: string }> => {
   const res = await apiFetch(apiUrl('/api/chat'), {
     method: 'POST',

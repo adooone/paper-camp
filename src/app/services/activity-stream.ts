@@ -6,57 +6,74 @@ export type ActivityListener = (payload: ActivityMessage) => void;
 const MIN_RECONNECT_DELAY_MS = 1000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
 
-let source: EventSource | null = null;
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let reconnectDelay = MIN_RECONNECT_DELAY_MS;
-const listeners = new Set<ActivityListener>();
+interface Connection {
+  source: EventSource | null;
+  reconnectTimer: ReturnType<typeof setTimeout> | null;
+  reconnectDelay: number;
+  listeners: Set<ActivityListener>;
+}
 
-function handleMessage(event: MessageEvent<string>): void {
+// Keyed by runtime URL, '' meaning the current project — a bookmarked scope
+// opens one EventSource per runtime in scope instead of a single global one.
+const connections = new Map<string, Connection>();
+
+function streamUrl(runtimeUrl: string): string {
+  return runtimeUrl === '' ? apiUrl('/api/activity/stream') : `${runtimeUrl}/api/activity/stream`;
+}
+
+function handleMessage(connection: Connection, event: MessageEvent<string>): void {
   let payload: ActivityMessage;
   try {
     payload = JSON.parse(event.data);
   } catch {
     return;
   }
-  for (const listener of listeners) listener(payload);
+  for (const listener of connection.listeners) listener(payload);
 }
 
-function handleOpen(): void {
-  reconnectDelay = MIN_RECONNECT_DELAY_MS;
+function connect(runtimeUrl: string, connection: Connection): void {
+  const source = new EventSource(streamUrl(runtimeUrl));
+  source.onmessage = (event) => handleMessage(connection, event);
+  source.onopen = () => {
+    connection.reconnectDelay = MIN_RECONNECT_DELAY_MS;
+  };
+  source.onerror = () => {
+    connection.source?.close();
+    connection.source = null;
+    if (connection.listeners.size === 0) return;
+    connection.reconnectTimer = setTimeout(() => {
+      connection.reconnectTimer = null;
+      connect(runtimeUrl, connection);
+    }, connection.reconnectDelay);
+    connection.reconnectDelay = Math.min(connection.reconnectDelay * 2, MAX_RECONNECT_DELAY_MS);
+  };
+  connection.source = source;
 }
 
-function handleError(): void {
-  source?.close();
-  source = null;
-  if (listeners.size === 0) return;
-  reconnectTimer = setTimeout(() => {
-    reconnectTimer = null;
-    connect();
-  }, reconnectDelay);
-  reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY_MS);
-}
+export function subscribeToActivityStream(listener: ActivityListener, runtimeUrl = ''): () => void {
+  let connection = connections.get(runtimeUrl);
+  if (!connection) {
+    connection = {
+      source: null,
+      reconnectTimer: null,
+      reconnectDelay: MIN_RECONNECT_DELAY_MS,
+      listeners: new Set(),
+    };
+    connections.set(runtimeUrl, connection);
+  }
+  connection.listeners.add(listener);
+  if (!connection.source && !connection.reconnectTimer) connect(runtimeUrl, connection);
 
-function connect(): void {
-  source = new EventSource(apiUrl('/api/activity/stream'));
-  source.onmessage = handleMessage;
-  source.onopen = handleOpen;
-  source.onerror = handleError;
-}
-
-export function subscribeToActivityStream(listener: ActivityListener): () => void {
-  listeners.add(listener);
-  if (!source && !reconnectTimer) connect();
   return () => {
-    listeners.delete(listener);
-    if (listeners.size > 0) return;
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer);
-      reconnectTimer = null;
+    const current = connections.get(runtimeUrl);
+    if (!current) return;
+    current.listeners.delete(listener);
+    if (current.listeners.size > 0) return;
+    if (current.reconnectTimer) {
+      clearTimeout(current.reconnectTimer);
+      current.reconnectTimer = null;
     }
-    if (source) {
-      source.close();
-      source = null;
-    }
-    reconnectDelay = MIN_RECONNECT_DELAY_MS;
+    current.source?.close();
+    connections.delete(runtimeUrl);
   };
 }

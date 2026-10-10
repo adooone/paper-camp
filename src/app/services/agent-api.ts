@@ -23,6 +23,18 @@ export const fetchAgentStatus = async (): Promise<AgentTaskState[]> => {
   return response.json();
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchRunsAt = async (baseUrl: string): Promise<AgentTaskState[] | null> => {
+  try {
+    const response = await fetch(`${baseUrl}/api/agent/status`);
+    if (!response.ok) return null;
+    return (await response.json()) as AgentTaskState[];
+  } catch {
+    return null;
+  }
+};
+
 export const fetchReconcileQueue = async (): Promise<ReconcileQueueItem[] | null> => {
   const response = await apiFetch(apiUrl('/api/agent/reconcile-queue'));
   return response.json();
