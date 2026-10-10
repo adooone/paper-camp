@@ -2,12 +2,12 @@ import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/p
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { entityPath } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { MetaLine, NoteIcon, Row, Stamp, Text } from '@dendelion/paper-ui';
+import { MetaLine, NoteIcon, Row, Stamp, Text, Tooltip } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
-import { PLAN_ROW_COLUMNS, PlanRows, RowMarker } from './plan-rows';
+import { PLAN_ROW_COLUMNS, PlanRows, RowMarker, RowTitle, TrailingCells } from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -28,8 +28,6 @@ const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-non
 
 const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
-
-const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
 
 export const WorklistRows = ({
   rows,
@@ -109,7 +107,7 @@ export const WorklistRows = ({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
         <span
           role="columnheader"
@@ -139,10 +137,10 @@ export const WorklistRows = ({
             title={sortHeader('title', 'Title')}
             meta={sortHeader('updated', 'Updated')}
             trailing={
-              <span className="flex items-center gap-2">
-                {sortHeader('progress', 'Progress')}
-                {sortHeader('status', 'Status')}
-              </span>
+              <TrailingCells
+                progress={sortHeader('progress', 'Phases')}
+                status={sortHeader('status', 'Status')}
+              />
             }
           />
         </div>
@@ -217,20 +215,25 @@ const NoteRowCard = ({ row, onOpen, onOpenCrossProject }: NoteRowCardProps) => {
           title={
             <span className={titleButtonClass}>
               <NoteIcon opacity={0.55} />
-              <span className={titleTextClass}>{idea.title}</span>
+              <RowTitle extras={row.project && <ProjectChip project={row.project} />}>
+                {idea.title}
+              </RowTitle>
             </span>
           }
           meta={<MetaLine>—</MetaLine>}
           trailing={
-            <>
-              {row.project && <ProjectChip project={row.project} />}
-              <Text face="serif" size="base" className="opacity-30">
-                —
-              </Text>
-              <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
-                {IDEA_STATUS_LABEL[status]}
-              </Stamp>
-            </>
+            <TrailingCells
+              progress={
+                <Text face="serif" size="base" className="opacity-30">
+                  —
+                </Text>
+              }
+              status={
+                <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
+                  {IDEA_STATUS_LABEL[status]}
+                </Stamp>
+              }
+            />
           }
         />
       </div>
@@ -275,15 +278,14 @@ const FixRowCard = ({ row, activePlanTitle, onOpen, onOpenCrossProject }: FixRow
           id={<PlanIdStamp id={fix.id} fill />}
           title={
             <span className={titleButtonClass}>
-              <Stamp size="small" variant="warning">
-                fix
-              </Stamp>
-              <span className={`${titleTextClass} min-w-0 flex-1`}>{fix.title}</span>
-              {fix.idea && (
-                <Text face="mono" size="xs" tone="faint" noWrap>
-                  {fix.idea}
-                </Text>
-              )}
+              <Tooltip content={fix.idea ? `Fixes ${fix.idea}` : 'Fix'}>
+                <Stamp size="small" variant="warning">
+                  fix
+                </Stamp>
+              </Tooltip>
+              <RowTitle extras={row.project && <ProjectChip project={row.project} />}>
+                {fix.title}
+              </RowTitle>
             </span>
           }
           meta={
@@ -292,12 +294,14 @@ const FixRowCard = ({ row, activePlanTitle, onOpen, onOpenCrossProject }: FixRow
             </MetaLine>
           }
           trailing={
-            <>
-              {row.project && <ProjectChip project={row.project} />}
-              <Stamp size="small" variant={STATUS_STAMP[status]}>
-                {STATUS_LABEL[status]}
-              </Stamp>
-            </>
+            <TrailingCells
+              progress={null}
+              status={
+                <Stamp size="small" variant={STATUS_STAMP[status]}>
+                  {STATUS_LABEL[status]}
+                </Stamp>
+              }
+            />
           }
         />
       </div>

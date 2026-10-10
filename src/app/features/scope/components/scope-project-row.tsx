@@ -1,6 +1,5 @@
-import { Button, Checkbox, Stamp } from '@dendelion/paper-ui';
+import { SidebarItem, Stamp } from '@dendelion/paper-ui';
 import type { ScopeRow } from '../hooks/use-scope';
-import { DOT_CLASS } from './dot-class';
 
 export interface ScopeProjectRowProps {
   row: ScopeRow;
@@ -18,35 +17,34 @@ export const ScopeProjectRow = ({
   showCount,
   onToggle,
   onOpen,
-}: ScopeProjectRowProps) => (
-  <div
-    className={`flex items-center gap-2 px-3 py-1 ${asleep ? 'cursor-not-allowed opacity-50' : ''}`}
-  >
-    {mode === 'list' && (
-      <Checkbox
-        checked={row.checked}
-        disabled={row.isCurrent || asleep}
-        onChange={() => onToggle(row.key)}
-        aria-label={`Include ${row.name} in view`}
-      />
-    )}
-    <span className={`h-2 w-2 shrink-0 rounded-full ${DOT_CLASS[row.color]}`} />
-    <Button
-      variant="link"
-      size="small"
+}: ScopeProjectRowProps) => {
+  const isList = mode === 'list';
+  const onClick = asleep
+    ? undefined
+    : isList
+      ? row.isCurrent
+        ? undefined
+        : () => onToggle(row.key)
+      : row.isCurrent
+        ? undefined
+        : () => onOpen(row);
+
+  return (
+    <SidebarItem
+      active={isList ? row.checked : row.isCurrent}
       disabled={asleep}
-      onClick={() => onOpen(row)}
-      className="min-w-0 flex-1 truncate text-left font-handwritten !text-sm"
+      onClick={onClick}
+      ariaLabel={isList ? `${row.checked ? 'Hide' : 'Show'} ${row.name}` : `Open ${row.name}`}
+      count={!asleep && showCount && row.count !== null ? row.count : undefined}
+      action={
+        asleep ? (
+          <Stamp size="small" variant="neutral">
+            Asleep
+          </Stamp>
+        ) : undefined
+      }
     >
       {row.name}
-    </Button>
-    {asleep && (
-      <Stamp size="small" variant="neutral">
-        Asleep
-      </Stamp>
-    )}
-    {!asleep && showCount && row.count !== null && (
-      <span className="shrink-0 font-mono text-2xs opacity-60">{row.count}</span>
-    )}
-  </div>
-);
+    </SidebarItem>
+  );
+};

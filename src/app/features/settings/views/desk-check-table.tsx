@@ -25,6 +25,7 @@ export const DeskCheckTable = ({ checks, onAdd, onSave, onRemove }: DeskCheckTab
     columns={[
       {
         key: 'name',
+        width: 3,
         header: 'Name',
         cell: (row) => (
           <TextFieldCell value={row.name} onCommit={(v) => onSave(row.id, { ...row, name: v })} />
@@ -49,6 +50,7 @@ export const DeskCheckTable = ({ checks, onAdd, onSave, onRemove }: DeskCheckTab
       },
       {
         key: 'actions',
+        width: 1,
         header: '',
         align: 'end',
         cell: (row) => (

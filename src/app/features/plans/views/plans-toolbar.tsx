@@ -1,4 +1,4 @@
-import { PageToolbar } from '@/app/components';
+import { PageToolbar, PageToolbarRow } from '@/app/components';
 import { DEFAULT_PLAN_LIST_FILTERS, selectPlanRows } from '@/app/features/plans/helpers';
 import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
 import { useAppStore } from '@/app/stores/app-store';
@@ -59,58 +59,61 @@ export const PlansToolbar = ({ entries, group, onGroupChange }: PlansToolbarProp
 
   return (
     <PageToolbar>
-      <Input
-        type="search"
-        size="small"
-        placeholder={isHorizon ? 'Search roadmap…' : 'Search plans…'}
-        aria-label={isHorizon ? 'Search roadmap' : 'Search plans'}
-        value={isHorizon ? horizonFilters.search : filters.search}
-        onChange={(event) =>
-          isHorizon ? setRoadmapSearch(event.target.value) : setPlanSearch(event.target.value)
-        }
-        className="min-w-[200px] flex-[1_1_200px]"
-      />
+      <PageToolbarRow>
+        <Input
+          type="search"
+          size="small"
+          placeholder={isHorizon ? 'Search roadmap…' : 'Search ideas…'}
+          aria-label={isHorizon ? 'Search roadmap' : 'Search ideas'}
+          value={isHorizon ? horizonFilters.search : filters.search}
+          onChange={(event) =>
+            isHorizon ? setRoadmapSearch(event.target.value) : setPlanSearch(event.target.value)
+          }
+          className="min-w-[140px] flex-1"
+        />
+        <GroupByControl group={group} onChange={onGroupChange} />
+      </PageToolbarRow>
 
-      {isHorizon
-        ? horizonTitles.map((title) => (
-            <Stamp
-              key={title}
-              size="small"
-              variant="neutral"
-              onClick={() => toggleRoadmapHorizon(title)}
-              pressed={activeHorizons.has(title)}
-            >
-              {stripHorizonPrefix(title)} {horizonCounts[title] ?? 0}
-            </Stamp>
-          ))
-        : visibleStatuses.map((status) => (
-            <Stamp
-              key={status}
-              size="small"
-              variant={STATUS_STAMP[status]}
-              onClick={() => togglePlanStatus(status)}
-              pressed={activeStatuses.has(status)}
-            >
-              {STATUS_LABEL[status]} {statusCounts[status]}
-            </Stamp>
-          ))}
+      <PageToolbarRow chips>
+        {isHorizon
+          ? horizonTitles.map((title) => (
+              <Stamp
+                key={title}
+                size="small"
+                variant="neutral"
+                onClick={() => toggleRoadmapHorizon(title)}
+                pressed={activeHorizons.has(title)}
+              >
+                {stripHorizonPrefix(title)} {horizonCounts[title] ?? 0}
+              </Stamp>
+            ))
+          : visibleStatuses.map((status) => (
+              <Stamp
+                key={status}
+                size="small"
+                variant={STATUS_STAMP[status]}
+                onClick={() => togglePlanStatus(status)}
+                pressed={activeStatuses.has(status)}
+              >
+                {STATUS_LABEL[status]} {statusCounts[status]}
+              </Stamp>
+            ))}
 
-      {hasActiveFilters && (
-        <Button
-          variant="link"
-          data-testid="clear-plan-filters"
-          onClick={() => {
-            if (isHorizon) clearRoadmapFilters();
-            else clearPlanFilters();
-            navigate({ to: '/', search: { group } });
-          }}
-          className="text-2xs opacity-70"
-        >
-          Clear filters
-        </Button>
-      )}
-
-      <GroupByControl group={group} onChange={onGroupChange} />
+        {hasActiveFilters && (
+          <Button
+            variant="link"
+            data-testid="clear-plan-filters"
+            onClick={() => {
+              if (isHorizon) clearRoadmapFilters();
+              else clearPlanFilters();
+              navigate({ to: '/', search: { group } });
+            }}
+            className="ml-auto text-2xs opacity-70"
+          >
+            Clear filters
+          </Button>
+        )}
+      </PageToolbarRow>
     </PageToolbar>
   );
 };

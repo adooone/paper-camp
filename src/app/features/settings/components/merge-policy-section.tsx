@@ -86,7 +86,7 @@ export const MergePolicySection = () => {
       <SettingsHeader title="Merge Policy">
         {result?.status === 'ok' && (
           <>
-            <span className="font-medium">{result.repo}</span>
+            <span className="min-w-0 truncate font-medium">{result.repo}</span>
             <Stamp
               size="small"
               fillColor={
@@ -96,7 +96,7 @@ export const MergePolicySection = () => {
                 upToDate ? MERGE_POLICY_STAMP.upToDate.text : MERGE_POLICY_STAMP.outdated.text
               }
             >
-              {upToDate ? 'Matches recommended policy' : 'Differs from recommended policy'}
+              {upToDate ? 'Recommended' : 'Differs'}
             </Stamp>
             <Button size="small" onClick={handleApply} disabled={applying || upToDate}>
               {applying ? 'Applying…' : 'Apply recommended'}

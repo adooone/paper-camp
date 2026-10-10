@@ -16,8 +16,8 @@ interface GroupByControlProps {
 }
 
 export const GroupByControl = ({ group, onChange }: GroupByControlProps) => (
-  <div className="flex items-center gap-1">
-    <span className="font-handwritten text-xs font-semibold opacity-55 leading-none mr-1">
+  <div className="flex shrink-0 items-center gap-1">
+    <span className="font-handwritten text-xs font-semibold opacity-55 leading-none mr-1 whitespace-nowrap">
       Group by
     </span>
     {GROUP_ORDER.map((mode) => (

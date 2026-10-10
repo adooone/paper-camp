@@ -1,5 +1,6 @@
 import { RowSkeleton } from '@/app/components';
 import { Alert, Button, Divider, EmptyState, Input, PlusIcon, Switch } from '@dendelion/paper-ui';
+import { SettingsHeader } from '../components/settings-header';
 import { useNightSection } from '../hooks/use-night-section';
 import { NightCustomCheckRow } from './night-custom-check-row';
 
@@ -28,9 +29,9 @@ export const NightSection = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="m-0">Review passes</h2>
-        <p className="opacity-50 mt-1">
+      <SettingsHeader title="Review passes" />
+      <div className="-mt-4 mb-6">
+        <p className="m-0 opacity-50">
           Runs read-only health reviews against this project while the machine is otherwise idle.
         </p>
       </div>

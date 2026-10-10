@@ -1,5 +1,6 @@
 import { RowSkeleton } from '@/app/components';
 import { Alert, Divider, EmptyState, Stamp, Switch } from '@dendelion/paper-ui';
+import { SettingsHeader } from '../components/settings-header';
 import { NOTIFICATION_KIND_LABELS, PERMISSION_STAMP } from '../constants';
 import { useNotificationsSection } from '../hooks/use-notifications-section';
 import { NotificationDeviceRow } from './notification-device-row';
@@ -21,9 +22,9 @@ export const NotificationsSection = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="m-0">Notifications</h2>
-        <p className="opacity-50 mt-1">
+      <SettingsHeader title="Notifications" />
+      <div className="-mt-4 mb-6">
+        <p className="m-0 opacity-50">
           Choose which events interrupt you, and which devices hear about them.
         </p>
       </div>

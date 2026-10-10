@@ -40,9 +40,10 @@ export const ProjectSidebar = () => {
       <ProjectsInView mode="switcher" countKind={null} />
       <SidebarCard className="shrink-0">
         <SidebarLabel>Docs</SidebarLabel>
-        <div className="flex h-[64px] items-center">
+        <div className="px-1 pt-1 pb-2">
           <Input
             size="small"
+            className="w-full"
             aria-label="Search docs"
             placeholder="Search docs…"
             value={docSearchQuery}

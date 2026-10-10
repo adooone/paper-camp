@@ -7,8 +7,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';
 
+// The agent column only fits beside a readable title on a wide screen.
 const LOG_ROW_GRID_CLASS =
-  'grid grid-cols-[100px_128px_minmax(0,1fr)_100px_72px_84px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+  'grid grid-cols-[92px_112px_minmax(0,1fr)_60px_80px] min-[1440px]:grid-cols-[92px_112px_minmax(0,1fr)_96px_60px_80px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 export interface LogRowViewProps {
   row: LogRow;
@@ -40,10 +41,14 @@ export const LogRowView = ({ row, project, onOpenCrossProject }: LogRowViewProps
           </Stamp>
           <span className="flex min-w-0 items-center gap-2">
             {project && <ProjectChip project={project} />}
-            <PlanIdStamp id={row.entityId} />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.title}</span>
+            <span className="shrink-0">
+              <PlanIdStamp id={row.entityId} />
+            </span>
+            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+              {row.title}
+            </span>
           </span>
-          <Text face="handwritten" size="sm" tone="muted" truncate>
+          <Text face="handwritten" size="sm" tone="muted" truncate className="max-[1439px]:hidden">
             {row.agentId ? AGENT_LABELS[row.agentId] : '—'}
           </Text>
           <Text face="handwritten" size="sm" tone="muted" noWrap>

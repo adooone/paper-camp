@@ -140,16 +140,19 @@ export const AgentTaskTable = ({ defaultAgents, onSave }: AgentTaskTableProps) =
         },
         {
           key: 'agent',
+          width: 5,
           header: 'Agent',
           cell: (row) => <AgentCell row={row} onSave={onSave} />,
         },
         {
           key: 'model',
+          width: 3,
           header: 'Model',
           cell: (row) => <ModelCell row={row} onSave={onSave} />,
         },
         {
           key: 'effort',
+          width: 3,
           header: 'Effort',
           cell: (row) => <EffortCell row={row} onSave={onSave} />,
         },

@@ -16,6 +16,7 @@ import {
 } from '@dendelion/paper-ui';
 import { color, colors } from '@dendelion/paper-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';
@@ -76,8 +77,25 @@ export const PLAN_ROW_COLUMNS: RowColumns = {
   id: '76px',
   title: 'minmax(0,1fr)',
   meta: { width: '64px', hideBelow: 'lg' },
-  trailing: '154px',
+  trailing: '136px',
 };
+
+/** Progress and status sit in fixed slots so they line up down the list and
+ * under the header labels, whatever else a row carries. */
+export const TrailingCells = ({ progress, status }: { progress: ReactNode; status: ReactNode }) => (
+  <>
+    <span className="flex w-[48px] justify-end">{progress}</span>
+    <span className="flex w-[80px] justify-end">{status}</span>
+  </>
+);
+
+/** A title that truncates before the stamps beside it do. */
+export const RowTitle = ({ children, extras }: { children: ReactNode; extras?: ReactNode }) => (
+  <span className="flex min-w-0 items-center gap-2">
+    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{children}</span>
+    {extras && <span className="flex shrink-0 items-center gap-1.5">{extras}</span>}
+  </span>
+);
 
 export const PlanRows = ({
   plans,
@@ -119,77 +137,99 @@ export const PlanRows = ({
                 onClick={handleOpen}
                 ariaLabel={plan.title}
                 id={<PlanIdStamp id={plan.id} fill />}
-                title={plan.title}
+                title={
+                  <RowTitle
+                    extras={
+                      project ||
+                      blockingNeed ||
+                      deadNeed ||
+                      plan.statusFallback ||
+                      plan.pr?.state === 'merged' ? (
+                        <>
+                          {project && <ProjectChip project={project} />}
+                          {blockingNeed && (
+                            <Tooltip
+                              content={`Waits for ${blockingNeed.projectName ? `${blockingNeed.projectName} ` : ''}${blockingNeed.id}`}
+                            >
+                              <Stamp
+                                size="small"
+                                variant="warning"
+                                dot
+                                // A cross-project need has no mount to navigate to yet, so it
+                                // isn't a link — the tooltip still names it.
+                                onClick={
+                                  blockingNeed.projectSlug
+                                    ? undefined
+                                    : (e) => {
+                                        e.stopPropagation();
+                                        navigate(
+                                          entityLink({
+                                            id: blockingNeed.id,
+                                            title: blockingNeed.title ?? blockingNeed.id,
+                                          }),
+                                        );
+                                      }
+                                }
+                              >
+                                Waits
+                              </Stamp>
+                            </Tooltip>
+                          )}
+                          {deadNeed && (
+                            <Tooltip content={`Can't find ${deadNeed.raw}`}>
+                              <Stamp size="small" variant="error" dot>
+                                Needs
+                              </Stamp>
+                            </Tooltip>
+                          )}
+                          {plan.statusFallback && (
+                            <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
+                              <Stamp size="small" variant="warning" dot>
+                                Guess
+                              </Stamp>
+                            </Tooltip>
+                          )}
+                          {plan.pr?.state === 'merged' && (
+                            <Tooltip content={`Merged in #${plan.pr.number}`}>
+                              <span
+                                className="inline-flex"
+                                style={{ color: color.accentPurpleDark }}
+                              >
+                                <MergeIcon size={14} />
+                              </span>
+                            </Tooltip>
+                          )}
+                        </>
+                      ) : undefined
+                    }
+                  >
+                    {plan.title}
+                  </RowTitle>
+                }
                 meta={
                   <MetaLine className="whitespace-nowrap">
                     {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
                   </MetaLine>
                 }
                 trailing={
-                  <>
-                    {project && <ProjectChip project={project} />}
-                    {progress ? (
-                      <MetaLine className="whitespace-nowrap">
-                        {progress.done}/{progress.total}
-                      </MetaLine>
-                    ) : (
-                      <Text face="serif" size="base" className="opacity-30">
-                        —
-                      </Text>
-                    )}
-                    <Stamp size="small" variant={STATUS_STAMP[status]}>
-                      {STATUS_LABEL[status]}
-                    </Stamp>
-                    {blockingNeed && (
-                      <Tooltip
-                        content={`Waits for ${blockingNeed.projectName ? `${blockingNeed.projectName} ` : ''}${blockingNeed.id}`}
-                      >
-                        <Stamp
-                          size="small"
-                          variant="warning"
-                          dot
-                          // A cross-project need has no mount to navigate to yet, so it
-                          // isn't a link — the tooltip still names it.
-                          onClick={
-                            blockingNeed.projectSlug
-                              ? undefined
-                              : (e) => {
-                                  e.stopPropagation();
-                                  navigate(
-                                    entityLink({
-                                      id: blockingNeed.id,
-                                      title: blockingNeed.title ?? blockingNeed.id,
-                                    }),
-                                  );
-                                }
-                          }
-                        >
-                          Waits
-                        </Stamp>
-                      </Tooltip>
-                    )}
-                    {deadNeed && (
-                      <Tooltip content={`Can't find ${deadNeed.raw}`}>
-                        <Stamp size="small" variant="error" dot>
-                          Needs
-                        </Stamp>
-                      </Tooltip>
-                    )}
-                    {plan.statusFallback && (
-                      <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
-                        <Stamp size="small" variant="warning" dot>
-                          Guess
-                        </Stamp>
-                      </Tooltip>
-                    )}
-                    {plan.pr?.state === 'merged' && (
-                      <Tooltip content={`Merged in #${plan.pr.number}`}>
-                        <span className="inline-flex" style={{ color: color.accentPurpleDark }}>
-                          <MergeIcon size={14} />
-                        </span>
-                      </Tooltip>
-                    )}
-                  </>
+                  <TrailingCells
+                    progress={
+                      progress ? (
+                        <MetaLine className="whitespace-nowrap">
+                          {progress.done}/{progress.total}
+                        </MetaLine>
+                      ) : (
+                        <Text face="serif" size="base" className="opacity-30">
+                          —
+                        </Text>
+                      )
+                    }
+                    status={
+                      <Stamp size="small" variant={STATUS_STAMP[status]}>
+                        {STATUS_LABEL[status]}
+                      </Stamp>
+                    }
+                  />
                 }
               />
             </div>

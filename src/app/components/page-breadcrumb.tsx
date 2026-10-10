@@ -8,7 +8,7 @@ import {
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { Breadcrumb } from '@dendelion/paper-ui';
-import { useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 
 /** The one breadcrumb in the app: rendered once at the top of the sheet, for every
  *  route that has a trail. Each trail is derived here from route + store, so no page
@@ -25,6 +25,7 @@ export const PageBreadcrumb = () => {
   const activeReleaseVersion = useAppStore((s) => s.activeReleaseVersion);
   const activeLogEntryTitle = useAppStore((s) => s.activeLogEntryTitle);
   const { entryId } = useParams({ strict: false });
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const items = (() => {
     if (activePlan) {
@@ -35,7 +36,7 @@ export const PageBreadcrumb = () => {
           ? (plans?.entries ?? []).find((p) => p.id === activePlan.idea)
           : undefined;
       return [
-        { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
+        { id: 'ideas', label: 'Ideas', onClick: () => navigate({ to: '/' }) },
         ...(board
           ? [{ id: 'board', label: board.title, onClick: () => navigate(entityLink(board)) }]
           : []),
@@ -44,13 +45,13 @@ export const PageBreadcrumb = () => {
     }
     if (activeIdea) {
       return [
-        { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
+        { id: 'ideas', label: 'Ideas', onClick: () => navigate({ to: '/' }) },
         { id: 'idea', label: activeIdea.title },
       ];
     }
     if (activeChunk) {
       return [
-        { id: 'plans', label: 'Plans', onClick: () => navigate({ to: '/' }) },
+        { id: 'ideas', label: 'Ideas', onClick: () => navigate({ to: '/' }) },
         { id: 'chunk', label: activeChunk.chunk },
       ];
     }
@@ -67,8 +68,11 @@ export const PageBreadcrumb = () => {
         { id: 'item', label: activeRoadmapItem.item.name },
       ];
     }
-    const docLabel =
-      activeDocSection === 'repo-docs'
+    // The doc store outlives a visit to Docs, so Stats and Settings must not inherit its trail.
+    const onDocs = pathname.startsWith('/project/docs');
+    const docLabel = !onDocs
+      ? null
+      : activeDocSection === 'repo-docs'
         ? activeDocTitle
         : activeDocSection === 'release-notes'
           ? activeReleaseVersion

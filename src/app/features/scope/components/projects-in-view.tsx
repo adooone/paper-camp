@@ -11,45 +11,48 @@ export interface ProjectsInViewProps {
 export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
   const navigate = useNavigate();
   const { groups, toggle, selectAll, clear, openRow } = useScope(countKind);
+  const showHosts = groups.length > 1;
 
   return (
     <SidebarCard className="shrink-0">
-      <SidebarLabel>
-        <span className="flex items-center justify-between gap-2">
-          <span>Projects in view</span>
-          {mode === 'list' && (
-            <span className="flex gap-1">
-              <Button size="tiny" variant="ghost" onClick={selectAll}>
-                All
-              </Button>
-              <Button size="tiny" variant="ghost" onClick={clear}>
-                Clear
-              </Button>
-            </span>
-          )}
-        </span>
-      </SidebarLabel>
-      <div className="flex flex-col gap-3">
+      <div className="flex items-end justify-between gap-2">
+        <SidebarLabel>{mode === 'list' ? 'Projects in view' : 'Projects'}</SidebarLabel>
+        {mode === 'list' && (
+          <span className="flex items-center gap-2 pb-1">
+            <Button variant="link" onClick={selectAll} className="text-2xs opacity-70">
+              All
+            </Button>
+            <Button variant="link" onClick={clear} className="text-2xs opacity-70">
+              Clear
+            </Button>
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col">
         {groups.map((group) => (
-          <div key={group.machineUrl} className="flex flex-col gap-1">
-            <p className="m-0 px-3 font-handwritten text-2xs opacity-60">{group.host}</p>
-            <div className="flex flex-col">
-              {group.rows.map((row) => (
-                <ScopeProjectRow
-                  key={row.key}
-                  row={row}
-                  mode={mode}
-                  asleep={group.asleep}
-                  showCount={countKind !== null}
-                  onToggle={toggle}
-                  onOpen={openRow}
-                />
-              ))}
-            </div>
+          <div key={group.machineUrl} className="flex flex-col">
+            {showHosts && (
+              <p className="m-0 truncate px-2 pt-2 pb-1 font-mono text-2xs opacity-50">
+                {group.host}
+              </p>
+            )}
+            {group.rows.map((row) => (
+              <ScopeProjectRow
+                key={row.key}
+                row={row}
+                mode={mode}
+                asleep={group.asleep}
+                showCount={countKind !== null}
+                onToggle={toggle}
+                onOpen={openRow}
+              />
+            ))}
           </div>
         ))}
+        <SidebarItem onClick={() => navigate({ to: '/projects' })}>
+          <span className="opacity-70">All machines</span>
+        </SidebarItem>
       </div>
-      <SidebarItem onClick={() => navigate({ to: '/projects' })}>All machines</SidebarItem>
     </SidebarCard>
   );
 };

@@ -28,10 +28,7 @@ export const SetupSection = () => {
       {connections && (
         <div className="flex flex-col gap-1">
           {!allOk && (
-            <Alert variant="warning">
-              Some connections are incomplete — features that depend on them stay disabled until
-              fixed. Run the connect command below, then recheck.
-            </Alert>
+            <Alert variant="warning">Some connections need attention — fix them below.</Alert>
           )}
           {externalConnections.length > 0 && (
             <SettingGroup title="External services">

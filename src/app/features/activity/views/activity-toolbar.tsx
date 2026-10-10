@@ -1,4 +1,4 @@
-import { PageToolbar } from '@/app/components';
+import { PageToolbar, PageToolbarRow } from '@/app/components';
 import type { ActivityKind, LogDateRange, LogFilters, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS, type LogRowOutcome, type LogRowType } from '@/types/index';
 import { Button, Input, Select, Stamp, type StampVariant } from '@dendelion/paper-ui';
@@ -14,9 +14,9 @@ const RANGE_OPTIONS: { value: LogDateRange; label: string }[] = [
 ];
 
 const SORT_OPTIONS: { value: LogSort; label: string }[] = [
-  { value: 'time', label: 'Time' },
-  { value: 'duration', label: 'Duration' },
-  { value: 'cost', label: 'Cost' },
+  { value: 'time', label: 'By time' },
+  { value: 'duration', label: 'By duration' },
+  { value: 'cost', label: 'By cost' },
 ];
 
 const AGENT_OPTIONS = [
@@ -86,82 +86,89 @@ export const ActivityToolbar = ({
 
   return (
     <PageToolbar>
-      <Input
-        type="search"
-        size="small"
-        placeholder="Search title, entity, reason, or message…"
-        aria-label="Search activity"
-        value={filters.q}
-        onChange={(event) => onFiltersChange({ q: event.target.value })}
-        className="min-w-[200px] flex-[1_1_200px]"
-      />
+      <PageToolbarRow>
+        <Input
+          type="search"
+          size="small"
+          placeholder="Search activity…"
+          aria-label="Search activity"
+          value={filters.q}
+          onChange={(event) => onFiltersChange({ q: event.target.value })}
+          className="min-w-[140px] flex-1"
+        />
+        <Select
+          size="small"
+          value={filters.agent ?? ''}
+          options={AGENT_OPTIONS}
+          width={128}
+          className="shrink-0"
+          onChange={(value) =>
+            onFiltersChange({ agent: value ? (value as typeof filters.agent) : undefined })
+          }
+        />
+        <Select
+          size="small"
+          value={filters.range}
+          options={RANGE_OPTIONS}
+          width={108}
+          className="shrink-0"
+          onChange={(value) => onFiltersChange({ range: value as LogDateRange })}
+        />
+        <Select
+          size="small"
+          value={filters.sort}
+          options={SORT_OPTIONS}
+          width={120}
+          className="shrink-0"
+          onChange={(value) => onFiltersChange({ sort: value as LogSort })}
+        />
+      </PageToolbarRow>
 
-      {KIND_OPTIONS.map((opt) => (
-        <FilterChip
-          key={opt.value}
-          active={activityKind === opt.value}
-          onClick={() => onActivityKindChange(opt.value)}
-        >
-          {opt.label}
-        </FilterChip>
-      ))}
+      <PageToolbarRow chips>
+        {KIND_OPTIONS.map((opt) => (
+          <FilterChip
+            key={opt.value}
+            active={activityKind === opt.value}
+            onClick={() => onActivityKindChange(opt.value)}
+          >
+            {opt.label}
+          </FilterChip>
+        ))}
+        <span aria-hidden="true" className="mx-1 h-4 w-px bg-current opacity-20" />
+        {OUTCOME_OPTIONS.map((outcome) => (
+          <FilterChip
+            key={outcome}
+            active={filters.outcomes.includes(outcome)}
+            onClick={() => toggleOutcome(outcome)}
+            variant={LOG_OUTCOME_VARIANT[outcome]}
+          >
+            {outcome}
+          </FilterChip>
+        ))}
+      </PageToolbarRow>
 
-      {OUTCOME_OPTIONS.map((outcome) => (
-        <FilterChip
-          key={outcome}
-          active={filters.outcomes.includes(outcome)}
-          onClick={() => toggleOutcome(outcome)}
-          variant={LOG_OUTCOME_VARIANT[outcome]}
-        >
-          {outcome}
-        </FilterChip>
-      ))}
-      {availableTypes.map((type) => (
-        <FilterChip
-          key={type}
-          active={filters.types.includes(type)}
-          onClick={() => toggleType(type)}
-        >
-          {LOG_TYPE_LABELS[type]}
-        </FilterChip>
-      ))}
-
-      <Select
-        size="small"
-        label="Agent"
-        value={filters.agent ?? ''}
-        options={AGENT_OPTIONS}
-        width={140}
-        onChange={(value) =>
-          onFiltersChange({ agent: value ? (value as typeof filters.agent) : undefined })
-        }
-      />
-      <Select
-        size="small"
-        label="Range"
-        value={filters.range}
-        options={RANGE_OPTIONS}
-        width={120}
-        onChange={(value) => onFiltersChange({ range: value as LogDateRange })}
-      />
-      <Select
-        size="small"
-        label="Sort"
-        value={filters.sort}
-        options={SORT_OPTIONS}
-        width={120}
-        onChange={(value) => onFiltersChange({ sort: value as LogSort })}
-      />
-
-      {hasActiveFilters && (
-        <Button
-          variant="link"
-          data-testid="clear-activity-filters"
-          onClick={onClearFilters}
-          className="text-2xs opacity-70"
-        >
-          Clear filters
-        </Button>
+      {(availableTypes.length > 0 || hasActiveFilters) && (
+        <PageToolbarRow chips>
+          {availableTypes.map((type) => (
+            <FilterChip
+              key={type}
+              active={filters.types.includes(type)}
+              onClick={() => toggleType(type)}
+            >
+              {LOG_TYPE_LABELS[type]}
+            </FilterChip>
+          ))}
+          {hasActiveFilters && (
+            <Button
+              variant="link"
+              data-testid="clear-activity-filters"
+              onClick={onClearFilters}
+              className="ml-auto text-2xs opacity-70"
+            >
+              Clear filters
+            </Button>
+          )}
+        </PageToolbarRow>
       )}
     </PageToolbar>
   );

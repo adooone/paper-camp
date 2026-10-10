@@ -2,8 +2,9 @@
 id: IDEA-291
 title: Several projects in one view
 type: feat
-status: review
+status: done
 created: 2026-10-09
+updated: 2026-10-10
 tags:
   - app
   - ui
