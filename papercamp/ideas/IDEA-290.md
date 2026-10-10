@@ -86,10 +86,11 @@ The hub page. Any change to what a settings section or a stats card contains.
       control added to paper-ui first. `PlanFilterColumn` deleted; search, status
       chips and Clear filters live in the toolbar on `/`.
       run: 7m14s · 96 in · 19.4k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
-- [ ] Fold the Roadmap into Ideas as Group by Horizon
+- [x] Fold the Roadmap into Ideas as Group by Horizon
       Three-way Group by (Plain, Subject, Horizon) in `?group=`; Horizon renders
       the roadmap's sections with horizon chips and + Add item; `/roadmap`
       redirects; the item page sits under the Ideas tab; `RoadmapSidebar` deleted.
+      run: 18m19s · 210 in · 86.1k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
 - [ ] Merge Log and Chat into Activity
       `/activity` and `/activity/$entryId` with the composer card, chat entries
       in the stream, log filters and kind chips in the toolbar, the stats summary

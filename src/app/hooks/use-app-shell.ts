@@ -55,7 +55,6 @@ export interface AppShellState {
   isPlansArea: boolean;
   isDocsArea: boolean;
   isSettingsArea: boolean;
-  isRoadmapArea: boolean;
   isGitArea: boolean;
   isLogArea: boolean;
   isInHub: boolean;
@@ -90,14 +89,16 @@ export function useAppShell(): AppShellState {
     reachable: runtimeReachable,
     checking: runtimeChecking,
   });
+  // A roadmap item still lives at `/roadmap/$item`, but it's rendered under the
+  // Ideas tab now, so it counts toward the Plans area for nav and breadcrumb purposes.
   const isPlansArea =
     pathname === '/' ||
     pathname.startsWith('/plans/') ||
     pathname.startsWith('/ideas/') ||
-    pathname.startsWith('/findings/');
+    pathname.startsWith('/findings/') ||
+    pathname.startsWith('/roadmap/');
   const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
   const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
-  const isRoadmapArea = pathname === '/roadmap';
   const isGitArea = pathname === '/git';
   const isLogArea = pathname === '/log' || pathname.startsWith('/log/');
   const activeId = isPlansArea
@@ -107,13 +108,13 @@ export function useAppShell(): AppShellState {
       : isSettingsArea
         ? 'settings'
         : navItems.find((item) => item.path === pathname)?.id;
-  // The bare list route has no sidebar now that its filters live in the toolbar —
+  // The bare list route and a roadmap item both have no sidebar now that list
+  // filters live in the toolbar and the item page needs no column of its own —
   // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
-    (isPlansArea && pathname !== '/') ||
+    (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
     isDocsArea ||
     isSettingsArea ||
-    isRoadmapArea ||
     isGitArea ||
     isLogArea;
   const sidebarAreaKey = isPlansArea
@@ -122,11 +123,9 @@ export function useAppShell(): AppShellState {
       ? 'docs'
       : isSettingsArea
         ? 'settings'
-        : isRoadmapArea
-          ? 'roadmap'
-          : isGitArea
-            ? 'git'
-            : 'log';
+        : isGitArea
+          ? 'git'
+          : 'log';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -220,7 +219,6 @@ export function useAppShell(): AppShellState {
     isPlansArea,
     isDocsArea,
     isSettingsArea,
-    isRoadmapArea,
     isGitArea,
     isLogArea,
     isInHub: HUB_PATHS.includes(pathname),

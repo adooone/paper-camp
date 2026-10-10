@@ -1,25 +1,18 @@
-import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import type { ResolvedRoadmapItem } from '@/types/index';
-import { Button, Divider, EmptyState, PageTitle } from '@dendelion/paper-ui';
+import { RowSkeleton } from '@/app/components';
+import { PageTitle } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { firstSentence } from './helpers';
 import { useRoadmapItemPage, useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';
-import { HorizonSection, RoadmapItemPage, StandingConcernsSection, UnfiledSection } from './views';
+import { RoadmapItemPage } from './views';
 
 export const RoadmapPage = () => {
   const navigate = useNavigate();
-  const { isItemRoute, item, horizonTitle, dateRange } = useRoadmapItemPage();
+  const { item, horizonTitle, dateRange } = useRoadmapItemPage();
   const {
     roadmap,
     roadmapError,
     loadRoadmap,
-    horizons,
-    totalVisible,
-    hasActiveFilters,
     horizonTitles,
-    addOpen,
-    setAddOpen,
     promoting,
     setPromoting,
     editing,
@@ -35,9 +28,6 @@ export const RoadmapPage = () => {
     handleRemoveCandidate,
     onOpenGraduated,
   } = useRoadmapPage();
-
-  const handleOpenItem = (item: ResolvedRoadmapItem) =>
-    navigate({ to: '/roadmap', search: { item: item.name } });
 
   if (roadmapError) {
     return (
@@ -59,118 +49,36 @@ export const RoadmapPage = () => {
     );
   }
 
-  if (isItemRoute) {
-    if (!item) {
-      return (
-        <div>
-          <PageTitle className="mb-6">Roadmap</PageTitle>
-          <p className="opacity-50">Couldn't find that roadmap item.</p>
-        </div>
-      );
-    }
-    return (
-      <>
-        <RoadmapItemPage
-          item={item}
-          horizonTitle={horizonTitle}
-          dateRange={dateRange}
-          otherHorizonTitles={horizonTitles.filter((title) => title !== horizonTitle)}
-          onOpenGraduated={onOpenGraduated}
-          onAddCandidate={(name) => handleAddCandidate(horizonTitle ?? '', item.name, name)}
-          onPromoteCandidate={(candidateName) =>
-            handlePromote(horizonTitle ?? '', item, candidateName)
-          }
-          onRemoveCandidate={(candidateName) =>
-            handleRemoveCandidate(horizonTitle ?? '', item, candidateName)
-          }
-          onEdit={() => handleEdit(horizonTitle ?? '', item)}
-          onMove={(toHorizon) => handleMove(horizonTitle ?? '', item, toHorizon)}
-          onToggleShipped={() => handleToggleShipped(horizonTitle ?? '', item)}
-          onRemove={() => handleRemoveItem(horizonTitle ?? '', item)}
-          onPromote={() => handlePromote(horizonTitle ?? '', item)}
-        />
-        <PromoteRoadmapItemModal
-          horizonTitle={promoting?.horizonTitle ?? null}
-          item={promoting?.item ?? null}
-          candidateName={promoting?.candidateName}
-          onClose={() => setPromoting(null)}
-          onPromoted={loadRoadmap}
-        />
-        <AddRoadmapItemModal
-          open={editing !== null}
-          horizonTitles={horizonTitles}
-          editing={editing}
-          onClose={() => setEditing(null)}
-        />
-        <RemoveRoadmapItemModal
-          horizonTitle={removing?.horizonTitle ?? null}
-          item={removing?.item ?? null}
-          onClose={() => setRemoving(null)}
-          onRemoved={() => navigate({ to: '/roadmap' })}
-        />
-      </>
-    );
-  }
-
-  if (roadmap.horizons.length === 0) {
+  if (!item) {
     return (
       <div>
         <PageTitle className="mb-6">Roadmap</PageTitle>
-        <EmptyState
-          illustration={<DoodleIllustration name="empty-tray" />}
-          message={
-            <>
-              No <code>ROADMAP.md</code> found at the project root.
-            </>
-          }
-        />
+        <p className="opacity-50">Couldn't find that roadmap item.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-2 flex flex-nowrap items-center gap-3">
-        <PageTitle className="shrink-0">Roadmap</PageTitle>
-        <div className="flex-1" />
-        <Button
-          type="button"
-          variant="primary"
-          size="small"
-          onClick={() => setAddOpen(true)}
-          disabled={horizonTitles.length === 0}
-        >
-          + Add item
-        </Button>
-      </div>
-      <p className="mb-6 truncate text-sm opacity-60">{firstSentence(roadmap.goal)}</p>
-      {totalVisible === 0 && !hasActiveFilters ? (
-        <EmptyState
-          illustration={<DoodleIllustration name="empty-tray" />}
-          message="No roadmap items yet — add one from the sidebar."
-        />
-      ) : (
-        <div className="flex flex-col">
-          {horizons.map((horizon, index) => (
-            <div key={horizon.title}>
-              {index > 0 && <Divider sketch className="my-6" />}
-              <HorizonSection horizon={horizon} onOpen={handleOpenItem} />
-            </div>
-          ))}
-        </div>
-      )}
-      {roadmap.standingConcerns.length > 0 && (
-        <>
-          <Divider sketch className="my-6" />
-          <StandingConcernsSection items={roadmap.standingConcerns} onOpen={handleOpenItem} />
-        </>
-      )}
-      {roadmap.unfiled.length > 0 && (
-        <>
-          <Divider sketch className="my-6" />
-          <UnfiledSection entities={roadmap.unfiled} onOpenGraduated={onOpenGraduated} />
-        </>
-      )}
+    <>
+      <RoadmapItemPage
+        item={item}
+        horizonTitle={horizonTitle}
+        dateRange={dateRange}
+        otherHorizonTitles={horizonTitles.filter((title) => title !== horizonTitle)}
+        onOpenGraduated={onOpenGraduated}
+        onAddCandidate={(name) => handleAddCandidate(horizonTitle ?? '', item.name, name)}
+        onPromoteCandidate={(candidateName) =>
+          handlePromote(horizonTitle ?? '', item, candidateName)
+        }
+        onRemoveCandidate={(candidateName) =>
+          handleRemoveCandidate(horizonTitle ?? '', item, candidateName)
+        }
+        onEdit={() => handleEdit(horizonTitle ?? '', item)}
+        onMove={(toHorizon) => handleMove(horizonTitle ?? '', item, toHorizon)}
+        onToggleShipped={() => handleToggleShipped(horizonTitle ?? '', item)}
+        onRemove={() => handleRemoveItem(horizonTitle ?? '', item)}
+        onPromote={() => handlePromote(horizonTitle ?? '', item)}
+      />
       <PromoteRoadmapItemModal
         horizonTitle={promoting?.horizonTitle ?? null}
         item={promoting?.item ?? null}
@@ -179,19 +87,17 @@ export const RoadmapPage = () => {
         onPromoted={loadRoadmap}
       />
       <AddRoadmapItemModal
-        open={addOpen || editing !== null}
+        open={editing !== null}
         horizonTitles={horizonTitles}
         editing={editing}
-        onClose={() => {
-          setAddOpen(false);
-          setEditing(null);
-        }}
+        onClose={() => setEditing(null)}
       />
       <RemoveRoadmapItemModal
         horizonTitle={removing?.horizonTitle ?? null}
         item={removing?.item ?? null}
         onClose={() => setRemoving(null)}
+        onRemoved={() => navigate({ to: '/', search: { group: 'horizon' } })}
       />
-    </div>
+    </>
   );
 };

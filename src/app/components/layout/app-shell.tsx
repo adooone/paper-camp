@@ -46,11 +46,6 @@ const SettingsSidebar = lazy(() =>
     }),
   ),
 );
-const RoadmapSidebar = lazy(() =>
-  importWithRecovery('RoadmapSidebar', () => import('@/app/features/roadmap/index')).then((m) => ({
-    default: m.RoadmapSidebar,
-  })),
-);
 const GitFileList = lazy(() =>
   importWithRecovery('GitFileList', () => import('@/app/features/git/index')).then((m) => ({
     default: m.GitFileList,
@@ -76,7 +71,9 @@ const SPINNER_ROUTE_LABELS: Record<string, string> = {
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {
-  if (isPlansArea) return <PlansListSkeleton />;
+  // A roadmap item is part of the Plans area for nav purposes, but it isn't a list —
+  // it still gets the generic row skeleton below, not the worklist one.
+  if (isPlansArea && !pathname.startsWith('/roadmap/')) return <PlansListSkeleton />;
   if (ROW_SKELETON_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return <RowSkeleton />;
   }
@@ -95,7 +92,6 @@ export const AppShell = () => {
     isPlansArea,
     isDocsArea,
     isSettingsArea,
-    isRoadmapArea,
     isGitArea,
     isLogArea,
     isInHub,
@@ -190,11 +186,6 @@ export const AppShell = () => {
                     {isSettingsArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <SettingsSidebar />
-                      </Suspense>
-                    )}
-                    {isRoadmapArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <RoadmapSidebar />
                       </Suspense>
                     )}
                     {isGitArea && (

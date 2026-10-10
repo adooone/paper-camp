@@ -11,6 +11,7 @@ import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_GROUP_MODE, type GroupMode, isGroupMode } from '../helpers';
 
 export const usePlansPage = () => {
   const plans = useAppStore((s) => s.plans);
@@ -29,11 +30,19 @@ export const usePlansPage = () => {
   const navigate = useNavigate();
   const openEntity = useOpenEntity();
   const { toast } = useToast();
-  const { subject: subjectParam } = useSearch({ strict: false }) as { subject?: string };
+  const { subject: subjectParam, group: groupParam } = useSearch({ strict: false }) as {
+    subject?: string;
+    group?: string;
+  };
+  const group: GroupMode = isGroupMode(groupParam) ? groupParam : DEFAULT_GROUP_MODE;
 
   useEffect(() => {
     setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
+
+  const handleGroupChange = (next: GroupMode) => {
+    navigate({ to: '/', search: (prev) => ({ ...prev, group: next }) });
+  };
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
   // otherwise a reload would stomp the detailView restored from storage.
@@ -100,6 +109,8 @@ export const usePlansPage = () => {
     planId,
     ideaId,
     chunk,
+    group,
+    handleGroupChange,
     openSuggestion,
     setOpenSuggestion,
     handleBack,

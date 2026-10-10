@@ -56,7 +56,11 @@ export const PageBreadcrumb = () => {
     }
     if (activeRoadmapItem) {
       return [
-        { id: 'roadmap', label: 'Roadmap', onClick: () => navigate({ to: '/roadmap' }) },
+        {
+          id: 'ideas',
+          label: 'Ideas',
+          onClick: () => navigate({ to: '/', search: { group: 'horizon' } }),
+        },
         ...(activeRoadmapItem.horizonTitle
           ? [{ id: 'horizon', label: activeRoadmapItem.horizonTitle }]
           : []),

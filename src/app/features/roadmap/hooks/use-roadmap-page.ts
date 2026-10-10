@@ -140,3 +140,5 @@ export const useRoadmapPage = () => {
     onOpenGraduated: openEntity,
   };
 };
+
+export type RoadmapPageState = ReturnType<typeof useRoadmapPage>;

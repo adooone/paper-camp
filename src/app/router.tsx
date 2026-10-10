@@ -1,5 +1,6 @@
 import { AppShell } from '@/app/components/layout/app-shell';
 import { HubHome } from '@/app/features/hub';
+import { type GroupMode, isGroupMode } from '@/app/features/plans/helpers';
 import { PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { importWithRecovery } from '@/app/services/lazy-page';
@@ -67,8 +68,9 @@ const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: PlansPage,
-  validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { subject?: string; group?: GroupMode } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
+    group: isGroupMode(search.group) ? search.group : undefined,
   }),
   staticData: { layer: 'corpus' },
 });
@@ -128,10 +130,11 @@ const settingsSectionRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
+// Bare `/roadmap` has no page of its own any more — it only ever redirects, either
+// to the item it names or, with none, to the Ideas page's Horizon grouping.
 const roadmapRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap',
-  component: RoadmapPage,
   validateSearch: (search: Record<string, unknown>): { item?: string } => ({
     item: typeof search.item === 'string' ? search.item : undefined,
   }),
@@ -139,8 +142,8 @@ const roadmapRoute = createRoute({
     if (search.item) {
       throw redirect({ to: '/roadmap/$item', params: { item: search.item } });
     }
+    throw redirect({ to: '/', search: { group: 'horizon' } });
   },
-  staticData: { layer: 'runtime' },
 });
 const roadmapItemRoute = createRoute({
   getParentRoute: () => rootRoute,
