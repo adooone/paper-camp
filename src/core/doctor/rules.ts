@@ -97,6 +97,20 @@ export const DOCTOR_RULES = [
     summary:
       'config.json has no defaultAgents, so every run uses the built-in agent and model — choose them in Settings → General so a project never runs on a fallback it did not pick.',
   },
+  {
+    id: 'draft-pr-template-outdated',
+    category: 'tooling',
+    severity: 'warning',
+    summary:
+      'desk.ci.draftPr is on but .github/workflows/draft-pr.yml or .github/pull_request_template.md is missing or carries an older paper-camp template version — run `paper-camp doctor --fix` to rewrite it.',
+  },
+  {
+    id: 'draft-pr-template-unmanaged',
+    category: 'tooling',
+    severity: 'warning',
+    summary:
+      'desk.ci.draftPr is on but the workflow or PR template file has no paper-camp template header, so it looks hand-written — paper-camp will not overwrite it.',
+  },
 ] as const satisfies readonly DoctorRule[];
 
 export type DoctorRuleId = (typeof DOCTOR_RULES)[number]['id'];

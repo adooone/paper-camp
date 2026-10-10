@@ -189,6 +189,15 @@ export const DRAFT_PR_WORKFLOW_HEADER = `# paper-camp draft-pr template v${DRAFT
 
 export const PULL_REQUEST_TEMPLATE_HEADER = `<!-- paper-camp draft-pr template v${DRAFT_PR_TEMPLATE_VERSION} -->`;
 
+const DRAFT_PR_TEMPLATE_HEADER_RE = /paper-camp draft-pr template v(\d+)/;
+
+// Matches either comment style (`#` in YAML, `<!-- -->` in Markdown) by the shared
+// substring, so one function covers both bundled templates.
+export function draftPrTemplateVersion(content: string): number | null {
+  const match = content.split('\n', 1)[0].match(DRAFT_PR_TEMPLATE_HEADER_RE);
+  return match ? Number(match[1]) : null;
+}
+
 export const DRAFT_PR_WORKFLOW_CONTENT = `${DRAFT_PR_WORKFLOW_HEADER}
 name: Draft PR
 

@@ -82,3 +82,36 @@ describe('no-default-agents', () => {
     expect(withAgents).not.toContainEqual(expect.objectContaining({ rule: 'no-default-agents' }));
   });
 });
+
+describe('collectDoctorContext draft-pr templates', () => {
+  it('reports both files as missing (null) when neither exists', async () => {
+    const root = await makeTempDir('papercamp-doctor-draft-pr-missing-');
+    const paperCampDir = await makePaperCampDir(root);
+
+    const context = await collectDoctorContext(paperCampDir);
+
+    expect(context.draftPrWorkflowContent).toBeNull();
+    expect(context.pullRequestTemplateContent).toBeNull();
+  });
+
+  it('reads existing file contents', async () => {
+    const root = await makeTempDir('papercamp-doctor-draft-pr-present-');
+    const paperCampDir = await makePaperCampDir(root);
+    await mkdir(join(root, '.github', 'workflows'), { recursive: true });
+    await writeFile(
+      join(root, '.github', 'workflows', 'draft-pr.yml'),
+      '# paper-camp draft-pr template v1\nname: Draft PR\n',
+      'utf-8',
+    );
+    await writeFile(
+      join(root, '.github', 'pull_request_template.md'),
+      '<!-- paper-camp draft-pr template v1 -->\nbody\n',
+      'utf-8',
+    );
+
+    const context = await collectDoctorContext(paperCampDir);
+
+    expect(context.draftPrWorkflowContent).toContain('name: Draft PR');
+    expect(context.pullRequestTemplateContent).toContain('body');
+  });
+});

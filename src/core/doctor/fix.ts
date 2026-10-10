@@ -1,3 +1,4 @@
+import { DRAFT_PR_WORKFLOW_CONTENT, PULL_REQUEST_TEMPLATE_CONTENT } from '../scaffold/templates';
 import type { DoctorContext, DoctorEntityFile } from './doctor';
 import type { DoctorFinding } from './finding';
 import type { DoctorRuleId } from './rules';
@@ -8,21 +9,37 @@ export type DoctorFixAction =
 
 export interface DoctorFixer {
   rule: DoctorRuleId;
-  fix: (finding: DoctorFinding, file: DoctorEntityFile) => DoctorFixAction | null;
+  fix: (finding: DoctorFinding, file?: DoctorEntityFile) => DoctorFixAction | null;
 }
 
 const archivePlacementFixer: DoctorFixer = {
   rule: 'archive-placement',
-  fix: (_finding, file) => ({
-    kind: 'move',
-    from: file.path,
-    to: file.archived
-      ? file.path.replace('/archive/', '/')
-      : file.path.replace(/\/(?=[^/]+$)/, '/archive/'),
-  }),
+  fix: (_finding, file) =>
+    file
+      ? {
+          kind: 'move',
+          from: file.path,
+          to: file.archived
+            ? file.path.replace('/archive/', '/')
+            : file.path.replace(/\/(?=[^/]+$)/, '/archive/'),
+        }
+      : null,
 };
 
-export const DOCTOR_FIXERS: DoctorFixer[] = [archivePlacementFixer];
+const DRAFT_PR_TEMPLATE_CONTENT_BY_PATH: Record<string, string> = {
+  '.github/workflows/draft-pr.yml': DRAFT_PR_WORKFLOW_CONTENT,
+  '.github/pull_request_template.md': PULL_REQUEST_TEMPLATE_CONTENT,
+};
+
+const draftPrTemplateFixer: DoctorFixer = {
+  rule: 'draft-pr-template-outdated',
+  fix: (finding) => {
+    const content = DRAFT_PR_TEMPLATE_CONTENT_BY_PATH[finding.file];
+    return content ? { kind: 'rewrite', path: finding.file, content } : null;
+  },
+};
+
+export const DOCTOR_FIXERS: DoctorFixer[] = [archivePlacementFixer, draftPrTemplateFixer];
 
 const FIXERS_BY_RULE = new Map<DoctorRuleId, DoctorFixer>(
   DOCTOR_FIXERS.map((fixer) => [fixer.rule, fixer]),
@@ -45,7 +62,7 @@ export function planDoctorFixes(context: DoctorContext, findings: DoctorFinding[
   for (const finding of findings) {
     const fixer = FIXERS_BY_RULE.get(finding.rule);
     const file = fileByPath.get(finding.file);
-    const action = fixer && file ? fixer.fix(finding, file) : null;
+    const action = fixer ? fixer.fix(finding, file) : null;
     if (!action) {
       unfixable.push(finding);
       continue;

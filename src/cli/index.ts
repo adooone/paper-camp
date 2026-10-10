@@ -782,7 +782,7 @@ program
   )
   .option(
     '--fix',
-    'apply the automatic fixes doctor knows how to migrate (currently: archive placement)',
+    'apply the automatic fixes doctor knows how to migrate (currently: archive placement, draft PR template refresh)',
   )
   .option(
     '--bump-format',
@@ -821,6 +821,7 @@ program
         await rename(join(root, action.from), join(root, action.to));
         console.log(`  [moved]  ${action.from} -> ${action.to}`);
       } else {
+        await mkdir(dirname(join(root, action.path)), { recursive: true });
         await writeFile(join(root, action.path), action.content, 'utf-8');
         console.log(`  [fixed]  ${action.path}`);
       }

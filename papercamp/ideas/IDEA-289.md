@@ -70,11 +70,12 @@ change to the branch naming or phase-per-commit convention itself.
       writes both when the switch turns on (never overwriting a file that
       lacks the header), and wire it to the settings save.
       run: 5m33s · 60 in · 12.9k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
-- [ ] Phase 3 — Doctor check and fix
+- [x] Phase 3 — Doctor check and fix
       A doctor finding when `draftPr` is on and either file is missing or
       carries an older template version; `--fix` rewrites it through the
       existing write action. A finding, not a fix, when the file exists
       without the header, since that is a hand-written workflow.
+      run: 8m11s · 116 in · 23.5k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
 - [ ] Phase 4 — Readiness on the CI card
       Show whether the two Scout secrets exist on the repo and the
       conclusion of the latest *Draft PR* workflow run, with the two

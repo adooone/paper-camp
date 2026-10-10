@@ -73,4 +73,52 @@ describe('planDoctorFixes', () => {
     expect(plan.fixed).toEqual([]);
     expect(plan.unfixable).toHaveLength(1);
   });
+
+  it('rewrites a stale draft-pr workflow through the bundled template, with no entity file involved', () => {
+    const context: DoctorContext = { files: [], config: null };
+    const plan = planDoctorFixes(context, [
+      finding({
+        file: '.github/workflows/draft-pr.yml',
+        rule: 'draft-pr-template-outdated',
+      }),
+    ]);
+    expect(plan.actions).toEqual([
+      {
+        kind: 'rewrite',
+        path: '.github/workflows/draft-pr.yml',
+        content: expect.stringContaining('paper-camp draft-pr template v'),
+      },
+    ]);
+    expect(plan.fixed).toHaveLength(1);
+  });
+
+  it('rewrites a stale pull request template through the bundled template', () => {
+    const context: DoctorContext = { files: [], config: null };
+    const plan = planDoctorFixes(context, [
+      finding({
+        file: '.github/pull_request_template.md',
+        rule: 'draft-pr-template-outdated',
+      }),
+    ]);
+    expect(plan.actions).toEqual([
+      {
+        kind: 'rewrite',
+        path: '.github/pull_request_template.md',
+        content: expect.stringContaining('paper-camp draft-pr template v'),
+      },
+    ]);
+    expect(plan.fixed).toHaveLength(1);
+  });
+
+  it('leaves a hand-written draft-pr file for manual attention — it has no fixer', () => {
+    const context: DoctorContext = { files: [], config: null };
+    const plan = planDoctorFixes(context, [
+      finding({
+        file: '.github/workflows/draft-pr.yml',
+        rule: 'draft-pr-template-unmanaged',
+      }),
+    ]);
+    expect(plan.actions).toEqual([]);
+    expect(plan.unfixable).toHaveLength(1);
+  });
 });

@@ -17,6 +17,8 @@ export interface DoctorContext {
   files: DoctorEntityFile[];
   config: PaperCampConfig | null;
   hasPermissionsAllow?: boolean;
+  draftPrWorkflowContent?: string | null;
+  pullRequestTemplateContent?: string | null;
 }
 
 export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
@@ -73,6 +75,15 @@ async function readHasPermissionsAllow(root: string): Promise<boolean> {
   }
 }
 
+async function readFileOptional(path: string): Promise<string | null> {
+  try {
+    return await readFile(path, 'utf-8');
+  } catch (error) {
+    if (isEnoent(error)) return null;
+    throw error;
+  }
+}
+
 export async function collectDoctorContext(paperCampDir: string): Promise<DoctorContext> {
   const ideasDir = join(paperCampDir, 'ideas');
   const files: DoctorEntityFile[] = [];
@@ -98,10 +109,17 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
     }
   }
 
+  const root = dirname(paperCampDir);
   return {
     files,
     config: await readConfig(join(paperCampDir, 'config.json')),
-    hasPermissionsAllow: await readHasPermissionsAllow(dirname(paperCampDir)),
+    hasPermissionsAllow: await readHasPermissionsAllow(root),
+    draftPrWorkflowContent: await readFileOptional(
+      join(root, '.github', 'workflows', 'draft-pr.yml'),
+    ),
+    pullRequestTemplateContent: await readFileOptional(
+      join(root, '.github', 'pull_request_template.md'),
+    ),
   };
 }
 
