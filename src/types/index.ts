@@ -250,9 +250,8 @@ export interface PlanEntry {
   tags: string[];
   /** See EntityEntry.needs. */
   needs: string[];
-  /** `needs` resolved against the current project and, for a cross-project ref, the
-   * machine registry — attached on read by `attachResolvedNeeds`, empty `needs` never
-   * populates it. */
+  /** `needs` resolved against the current project and machine registry;
+   * attached on read by `attachResolvedNeeds`. */
   resolvedNeeds?: ResolvedNeed[];
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;

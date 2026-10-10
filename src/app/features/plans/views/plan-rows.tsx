@@ -1,7 +1,7 @@
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { entityLink, entityPath } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { isBlockingNeed } from '@/core/needs';
+import { isBlockingNeed } from '@/core/needs-status';
 import type { PlanEntry } from '@/types/index';
 import {
   LightbulbIcon,

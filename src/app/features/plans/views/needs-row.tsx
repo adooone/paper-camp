@@ -1,5 +1,5 @@
 import { entityLink } from '@/app/hooks';
-import { isBlockingNeed } from '@/core/needs';
+import { isBlockingNeed } from '@/core/needs-status';
 import type { PlanEntry } from '@/types/index';
 import { Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';

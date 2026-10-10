@@ -1,8 +1,11 @@
 import { join } from 'node:path';
 import type { EntityEntry, PlanEntry, ResolvedNeed } from '../types/index';
 import { type MachineRegistry, defaultRegistryPath, loadRegistry } from './machine-registry';
+import { isBlockingNeed } from './needs-status';
 import { readEntitiesWithDerivedStatus } from './readers';
 import { isClosedEntity } from './status';
+
+export { isBlockingNeed, hasBlockingNeed } from './needs-status';
 
 export interface NeedsRef {
   raw: string;
@@ -70,12 +73,6 @@ export async function resolveNeedsRefs(
   return results;
 }
 
-/** A found-but-not-done need blocks a run; a not-found one (`found: false`) never
- * does — it surfaces as "can't find" instead (IDEA-291). */
-export function isBlockingNeed(need: ResolvedNeed): boolean {
-  return need.found && !need.done;
-}
-
 /** Attaches `resolvedNeeds` to every plan that carries a `needs:` list, sharing one
  * registry load and one set of per-project entity reads across the whole batch —
  * called once per corpus read (see `cachedWorkEntries`), not per plan. */
@@ -88,10 +85,6 @@ export async function attachResolvedNeeds(root: string, plans: PlanEntry[]): Pro
       return { ...plan, resolvedNeeds: await resolveNeedsRefs(root, plan.needs, registry) };
     }),
   );
-}
-
-export function hasBlockingNeed(resolvedNeeds?: ResolvedNeed[]): boolean {
-  return (resolvedNeeds ?? []).some(isBlockingNeed);
 }
 
 /** The ids among `entries` a run-order picker must skip — a blocking need keeps an
