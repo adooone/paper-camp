@@ -182,3 +182,125 @@ than inventing a new shape).
 `;
 
 const PAPER_CAMP_BIN = '$CLAUDE_PROJECT_DIR/node_modules/.bin/paper-camp';
+
+export const DRAFT_PR_TEMPLATE_VERSION = 1;
+
+export const DRAFT_PR_WORKFLOW_HEADER = `# paper-camp draft-pr template v${DRAFT_PR_TEMPLATE_VERSION}`;
+
+export const PULL_REQUEST_TEMPLATE_HEADER = `<!-- paper-camp draft-pr template v${DRAFT_PR_TEMPLATE_VERSION} -->`;
+
+export const DRAFT_PR_WORKFLOW_CONTENT = `${DRAFT_PR_WORKFLOW_HEADER}
+name: Draft PR
+
+on:
+  push:
+    branches:
+      - feat/*
+      - fix/*
+      - refactor/*
+      - chore/*
+      - docs/*
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  draft-pr:
+    name: Draft PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Generate Scout app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: \${{ secrets.SCOUT_APP_ID }}
+          private-key: \${{ secrets.SCOUT_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
+      - name: Create draft PR if not exists
+        env:
+          GITHUB_TOKEN: \${{ steps.app-token.outputs.token }}
+          BRANCH: \${{ github.ref_name }}
+        run: |
+          PLAN_ID=$(echo "$BRANCH" | grep -oP '[a-z]+-\\d+' | head -1 || true)
+          if [ -z "$PLAN_ID" ]; then
+            echo "Branch '$BRANCH' does not match plan-ID pattern — skipping PR creation"
+            exit 0
+          fi
+
+          DISPLAY_ID=$(echo "$PLAN_ID" | sed 's/^\\([a-z]*\\)/\\U\\1/' | sed 's/\\-[a-z]/\\U&/')
+
+          TEMPLATE=".github/pull_request_template.md"
+          PLAN_FILE="papercamp/ideas/\${DISPLAY_ID}.md"
+          if [ ! -f "$PLAN_FILE" ] && [ -f "papercamp/ideas/archive/\${DISPLAY_ID}.md" ]; then
+            PLAN_FILE="papercamp/ideas/archive/\${DISPLAY_ID}.md"
+          fi
+
+          TITLE=$(awk '
+            /^---[[:space:]]*$/ { n++; next }
+            n == 1 && /^title:[[:space:]]/ {
+              sub(/^title:[[:space:]]*/, "")
+              gsub(/^["'\\'']|["'\\'']$/, "")
+              print
+              exit
+            }
+          ' "$PLAN_FILE" 2>/dev/null || true)
+
+          if [ -z "$TITLE" ]; then
+            echo "No title: in '$PLAN_FILE' — falling back to the branch slug"
+            TITLE=$(echo "$BRANCH" | sed 's|^[^/]*/||' | sed 's/^[a-z]*-[0-9]*-//' | sed 's/-/ /g')
+          fi
+
+          FULL_TITLE="\${DISPLAY_ID}: \${TITLE}"
+
+          PHASES=$(awk '/^### Phases/{f=1;next} /^### /{f=0} f' "$PLAN_FILE" 2>/dev/null \\
+            | grep -E '^- \\[[ x]\\] ' || true)
+          if [ -z "$PHASES" ]; then
+            PHASES="- [ ] _No phases listed in \\\`\${PLAN_FILE}\\\` yet._"
+          fi
+
+          EXISTING=$(gh pr list --head "$BRANCH" --state all --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+          if [ -z "$EXISTING" ]; then
+            BODY=$(awk -v id="$DISPLAY_ID" -v phases="$PHASES" '
+              /^- \\[ \\] _Phases go here/ { print phases; next }
+              { gsub(/IDEA-N/, id); print }
+            ' "$TEMPLATE")
+            if [ -z "$BODY" ]; then
+              BODY="**Idea:** \\\`\${DISPLAY_ID}\\\` — \\\`\${PLAN_FILE}\\\`"
+            fi
+            gh pr create \\
+              --title "$FULL_TITLE" \\
+              --body "$BODY" \\
+              --draft \\
+              --base main
+            echo "Created draft PR for $FULL_TITLE"
+          else
+            echo "PR #$EXISTING already exists for branch '$BRANCH' — skipping"
+          fi
+`;
+
+export const PULL_REQUEST_TEMPLATE_CONTENT = `${PULL_REQUEST_TEMPLATE_HEADER}
+**Idea:** \`IDEA-N\` — \`papercamp/ideas/IDEA-N.md\`
+
+_One or two lines on what this idea changes, for whoever reviews it._
+
+### Phases
+
+- [ ] _Phases go here, copied from the idea file — one commit each._
+
+### Before merge
+
+- [ ] Every phase above is checked and the idea's \`status:\` is \`review\`
+- [ ] CI is green
+- [ ] Owner has walked the affected components through the live showcase
+
+See [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) for the full flow.
+`;

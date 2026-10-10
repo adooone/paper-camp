@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { deskConfigSchema, nightConfigSchema, notificationsConfigSchema } from '@/core/parse';
+import { scaffoldDraftPrIntegration } from '@/core/scaffold/scaffold';
 import {
   AGENT_IDS,
   type AgentId,
@@ -259,6 +260,9 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           ...(resolvedNotifications && { notifications: resolvedNotifications }),
         };
         await writeFile(configPath, `${JSON.stringify(updated, null, 2)}\n`);
+        if (updated.desk?.ci?.draftPr) {
+          await scaffoldDraftPrIntegration(root);
+        }
         activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },

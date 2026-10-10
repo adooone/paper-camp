@@ -63,12 +63,13 @@ change to the branch naming or phase-per-commit convention itself.
       `desk-discovery.ts` propose it on when
       `.github/workflows/draft-pr.yml` exists in the repository.
       run: 5m58s · 76 in · 7.5k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
-- [ ] Phase 2 — Bundled templates and the writer
+- [x] Phase 2 — Bundled templates and the writer
       Vendor func-ui's `draft-pr.yml` and `pull_request_template.md` as
       package templates with a `# paper-camp draft-pr template vN` header;
       add a scaffold function beside `scaffoldClaudeCodeIntegration` that
       writes both when the switch turns on (never overwriting a file that
       lacks the header), and wire it to the settings save.
+      run: 5m33s · 60 in · 12.9k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
 - [ ] Phase 3 — Doctor check and fix
       A doctor finding when `draftPr` is on and either file is missing or
       carries an older template version; `--fix` rewrites it through the

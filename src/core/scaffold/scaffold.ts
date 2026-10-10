@@ -7,7 +7,15 @@ import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { addProject, defaultRegistryPath, loadRegistry, saveRegistry } from '../machine-registry';
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
-import { SKILL_MD_CONTENT, buildClaudeSettingsJson, mergeClaudeSettingsJson } from './templates';
+import {
+  DRAFT_PR_WORKFLOW_CONTENT,
+  DRAFT_PR_WORKFLOW_HEADER,
+  PULL_REQUEST_TEMPLATE_CONTENT,
+  PULL_REQUEST_TEMPLATE_HEADER,
+  SKILL_MD_CONTENT,
+  buildClaudeSettingsJson,
+  mergeClaudeSettingsJson,
+} from './templates';
 
 const PACKAGE_JSON_SEARCH_DEPTH = 5;
 
@@ -168,4 +176,29 @@ export async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<
   } else {
     await writeFile(settingsPath, buildClaudeSettingsJson(targetDir), 'utf-8');
   }
+}
+
+// A file without our header is either hand-written or predates this feature — either
+// way it's not ours to overwrite, so the switch only ever touches its own copies.
+async function writeTemplateIfOwned(path: string, content: string, header: string): Promise<void> {
+  if (await exists(path)) {
+    const existing = await readFile(path, 'utf-8');
+    if (!existing.startsWith(header)) return;
+    if (existing === content) return;
+  }
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content, 'utf-8');
+}
+
+export async function scaffoldDraftPrIntegration(targetDir: string): Promise<void> {
+  await writeTemplateIfOwned(
+    join(targetDir, '.github', 'workflows', 'draft-pr.yml'),
+    DRAFT_PR_WORKFLOW_CONTENT,
+    DRAFT_PR_WORKFLOW_HEADER,
+  );
+  await writeTemplateIfOwned(
+    join(targetDir, '.github', 'pull_request_template.md'),
+    PULL_REQUEST_TEMPLATE_CONTENT,
+    PULL_REQUEST_TEMPLATE_HEADER,
+  );
 }
