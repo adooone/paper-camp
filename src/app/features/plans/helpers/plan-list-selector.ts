@@ -328,6 +328,7 @@ const worklistSortProxy = (row: WorklistRow): PlanEntry => {
     status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
     created: row.idea.created ?? '',
     tags: [],
+    needs: [],
     body: row.idea.body,
     phases: [],
     order: row.idea.order,

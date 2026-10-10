@@ -9,6 +9,7 @@ const plan = (phases: PhaseItem[], fixes?: PhaseItem[]): PlanEntry => ({
   status: 'planned',
   created: '2026-01-01',
   tags: [],
+  needs: [],
   body: '',
   phases,
   ...(fixes ? { fixes } : {}),

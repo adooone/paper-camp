@@ -117,6 +117,7 @@ async function stampCliAuditDate(planFile: string, planId: string): Promise<void
     auditedHash: computePlanContentHash({ body: entry.body, phases: entry.phases }),
     released: entry.released,
     tags: entry.tags,
+    needs: entry.needs,
     body: entry.body,
     phases: entry.phases,
     thread: entry.thread,

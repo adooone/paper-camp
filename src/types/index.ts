@@ -248,6 +248,8 @@ export interface PlanEntry {
   /** Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train. */
   released?: string;
   tags: string[];
+  /** See EntityEntry.needs. */
+  needs: string[];
   /** Absent renders under the virtual "No subject" group. */
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. */
@@ -487,6 +489,9 @@ export interface EntityEntry {
   /** Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train. */
   released?: string;
   tags: string[];
+  /** Other entities this one waits on before it can run — IDEA-N for the same project,
+   * `<slug>/IDEA-N` for another project registered on the same machine. */
+  needs: string[];
   /** Absent renders as the virtual "No subject" group. */
   subject?: string;
   /** Absent means unordered — sorts after all ordered entries, by created date. Overlaid

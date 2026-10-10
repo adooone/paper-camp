@@ -28,6 +28,7 @@ export const planEntrySchema = z.object({
   audited: z.string().optional(),
   auditedHash: z.string().optional(),
   tags: z.array(z.string()),
+  needs: z.array(z.string()),
   body: z.string(),
   phases: z.array(phaseItemSchema),
   log: z.array(logEntrySchema).optional(),
@@ -41,9 +42,12 @@ export const parseWarningSchema = z.object({
 
 export const okResultSchema = z.object({
   ok: z.literal(true),
+  // Refs from a `needs:` edit that didn't resolve to a known entity — reported, not thrown.
+  unresolvedNeeds: z.array(z.string()).optional(),
 });
 
 export const idResultSchema = z.object({
   ok: z.literal(true),
   id: z.string(),
+  unresolvedNeeds: z.array(z.string()).optional(),
 });

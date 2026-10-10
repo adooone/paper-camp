@@ -95,6 +95,7 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   status: 'planned',
   created: '2026-07-01',
   tags: [],
+  needs: [],
   body: '',
   phases: [],
   ...overrides,

@@ -57,6 +57,7 @@ export function entityFileInput(
     auditedHash: entry.auditedHash,
     released: entry.released,
     tags: entry.tags,
+    needs: entry.needs,
     subject: entry.subject,
     order: entry.storedOrder ?? entry.order,
     issueSource: entry.issueSource,
@@ -82,7 +83,13 @@ export async function writeEntityFile(
 // project chat's "describe new work" move (IDEA-251) — one place assembles idea files.
 export async function createIdeaEntity(
   root: string,
-  input: { title: string; content?: string; type?: string; subject?: string },
+  input: {
+    title: string;
+    content?: string;
+    type?: string;
+    subject?: string;
+    needs?: string[];
+  },
 ): Promise<string> {
   const configPath = campFile(root, 'config.json');
   const id = await assignEntityId(configPath);
@@ -96,6 +103,7 @@ export async function createIdeaEntity(
     status: 'idea',
     created: todayDateString(),
     subject: input.subject,
+    needs: input.needs,
     body: input.content?.trim(),
   });
   await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');

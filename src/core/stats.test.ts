@@ -16,6 +16,7 @@ function entity(overrides: Partial<EntityEntry>): EntityEntry {
     title: 'Entity',
     created: '2026-07-01',
     tags: [],
+    needs: [],
     body: '',
     phases: [],
     ...overrides,

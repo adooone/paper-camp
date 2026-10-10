@@ -14,6 +14,7 @@ describe('entityFileInput', () => {
       title: 'Test',
       created: '2026-08-19',
       tags: [],
+      needs: [],
       body: '',
       phases: [],
       unknownFrontmatter: { formatVersion: 2 },

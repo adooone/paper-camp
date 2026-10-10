@@ -96,10 +96,11 @@ another machine. Stats compared side by side. The status bar across
 projects. The embedded dev toolbar, which is always one project.
 
 ### Phases
-- [ ] Add `needs` to the entity grammar
+- [x] Add `needs` to the entity grammar
       Parse, serialize, type and expose it through `add_idea`/`edit_idea`;
       resolve same-project refs and `<slug>/IDEA-N` through the machine
       registry, unknown refs reported, not thrown.
+      run: 6m55s · 178 in · 34.5k out · sonnet-5 · sess:883f5254-b86a-4615-8a63-0610751d0578
 - [ ] Enforce needs and show what an idea waits for
       Run all phases, single phase runs and run-order pickers refuse or skip a
       waiting idea; the list row and the idea page show the linked *waits for*

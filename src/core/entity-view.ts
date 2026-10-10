@@ -38,6 +38,7 @@ export function entityToPlan(
     auditedHash: e.auditedHash,
     released: e.released,
     tags: e.tags,
+    needs: e.needs,
     subject: e.subject,
     order: e.order,
     issueSource: e.issueSource,

@@ -158,6 +158,7 @@ interface NewEntityFileInput {
   auditedHash?: string;
   released?: string;
   tags?: string[];
+  needs?: string[];
   subject?: string;
   order?: number;
   issueSource?: string;
@@ -186,6 +187,7 @@ export function formatEntityFile(input: NewEntityFileInput): string {
   if (input.auditedHash) frontmatter['audited-hash'] = input.auditedHash;
   if (input.released) frontmatter.released = input.released;
   if (input.tags && input.tags.length > 0) frontmatter.tags = input.tags;
+  if (input.needs && input.needs.length > 0) frontmatter.needs = input.needs;
   if (input.subject) frontmatter.subject = input.subject;
   if (input.order !== undefined) frontmatter.order = input.order;
   if (input.issueSource) frontmatter.issueSource = input.issueSource;

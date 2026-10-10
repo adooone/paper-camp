@@ -10,6 +10,7 @@ import {
   readMaybe,
   writeEntityFile,
 } from '../app/server/helpers';
+import { resolveNeedsRefs } from '../core/needs';
 import { parseEntityFile, parseSuggestions } from '../core/parse';
 import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
 import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
@@ -100,6 +101,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     content?: string;
     type?: string;
     subject?: string;
+    needs?: string[];
   }): Promise<string> => createIdeaEntityFile(root, input);
 
   server.registerTool(
@@ -110,14 +112,27 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       inputSchema: {
         title: z.string().describe('Idea title'),
         content: z.string().optional().describe('Idea body (markdown)'),
+        needs: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'Entities this one waits on: IDEA-N for this project, <slug>/IDEA-N for another project on the same machine',
+          ),
       },
       outputSchema: idResultSchema.shape,
     },
-    ({ title, content }) =>
+    ({ title, content, needs }) =>
       guardedWrite(undefined, async () => {
         if (!title.trim()) throw new Error('title is required');
-        const id = await createIdeaEntity({ title, content });
-        return json({ ok: true, id });
+        const id = await createIdeaEntity({ title, content, needs });
+        const unresolvedNeeds = (await resolveNeedsRefs(root, needs ?? []))
+          .filter((r) => !r.found)
+          .map((r) => r.raw);
+        return json({
+          ok: true,
+          id,
+          ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }),
+        });
       }),
   );
 
@@ -217,17 +232,23 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     {
       title: 'Edit idea',
       description:
-        'Edit an existing entity in place — any of title, body, tags, or type. Omitted fields are left untouched.',
+        'Edit an existing entity in place — any of title, body, tags, type, or needs. Omitted fields are left untouched.',
       inputSchema: {
         id: z.string().describe('Entity id, e.g. IDEA-43'),
         title: z.string().optional().describe('New title'),
         content: z.string().optional().describe('New body (markdown), replacing the current body'),
         tags: z.array(z.string()).optional().describe('New tag list, replacing the current tags'),
         type: z.enum(PLAN_KINDS).optional().describe('New work type'),
+        needs: z
+          .array(z.string())
+          .optional()
+          .describe(
+            'New needs list, replacing the current one: IDEA-N for this project, <slug>/IDEA-N for another project on the same machine',
+          ),
       },
       outputSchema: okResultSchema.shape,
     },
-    ({ id, title, content, tags, type }) =>
+    ({ id, title, content, tags, type, needs }) =>
       guardedWrite(id, async () => {
         const ideasDir = campFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
@@ -250,11 +271,15 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (content !== undefined) overrides.body = content.trim();
         if (tags !== undefined) overrides.tags = tags;
         if (type !== undefined) overrides.type = type;
+        if (needs !== undefined) overrides.needs = needs;
 
         const updatedEntry = { ...entry, updated: todayDateString() };
         await writeEntityFile(root, targetFile, entityFileInput(updatedEntry, overrides));
 
-        return json({ ok: true });
+        const unresolvedNeeds = needs
+          ? (await resolveNeedsRefs(root, needs)).filter((r) => !r.found).map((r) => r.raw)
+          : [];
+        return json({ ok: true, ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }) });
       }),
   );
 

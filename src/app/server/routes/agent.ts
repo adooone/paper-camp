@@ -168,6 +168,7 @@ export async function applyFeedbackMessage(
           idea: entity.id,
           created: todayDateString(),
           tags: [],
+          needs: [],
           body: '',
           phases: spawnFix,
         };
@@ -738,6 +739,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           issueSource: issue.id,
           created: todayDateString(),
           tags: [],
+          needs: [],
           body: issue.reason,
           phases: parent ? [{ done: false, text: issue.title, description: issue.reason }] : [],
         };

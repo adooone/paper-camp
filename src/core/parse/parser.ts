@@ -160,6 +160,7 @@ export function parsePlans(markdown: string): ParseResult<PlanEntry> {
             .map((t) => t.trim())
             .filter(Boolean)
         : [],
+      needs: [],
       body: raw.body,
       phases: raw.phases,
       log: raw.log,
@@ -280,6 +281,7 @@ export function parseEntityFile(content: string): ParseResult<EntityEntry> {
     auditedHash: frontmatter['audited-hash'],
     released: frontmatter.released,
     tags: frontmatter.tags ?? [],
+    needs: frontmatter.needs ?? [],
     subject: frontmatter.subject,
     order: frontmatter.order,
     issueSource: frontmatter.issueSource,
@@ -320,6 +322,7 @@ export function parsePlanFile(content: string): ParseResult<PlanEntry> {
     audited: frontmatter.audited,
     auditedHash: frontmatter['audited-hash'],
     tags: frontmatter.tags ?? [],
+    needs: [],
     body,
     phases,
     log,

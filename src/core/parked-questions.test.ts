@@ -16,6 +16,7 @@ const entity = (overrides: Partial<EntityEntry>): EntityEntry => ({
   title: 'Untitled',
   created: '2026-01-01',
   tags: [],
+  needs: [],
   body: '',
   phases: [],
   ...overrides,

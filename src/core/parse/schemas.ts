@@ -116,6 +116,12 @@ const entityFrontmatterObjectSchema = z
         'Version tag (e.g. v0.13.1) that first shipped this idea, stamped from the release train',
       ),
     tags: z.array(z.string()).optional().describe('Tagging categories'),
+    needs: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'Other entities this one waits on before it can run: IDEA-N for the same project, <slug>/IDEA-N for another project registered on the same machine',
+      ),
     idea: z
       .string()
       .optional()

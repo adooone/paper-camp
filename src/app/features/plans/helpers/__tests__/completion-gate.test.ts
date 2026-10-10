@@ -17,6 +17,7 @@ const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
   status: 'review',
   created: '2026-01-01',
   tags: [],
+  needs: [],
   body: '',
   phases: [phase(true)],
   pr: approvedPr(),
