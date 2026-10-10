@@ -1,5 +1,6 @@
 import { AppShell } from '@/app/components/layout/app-shell';
 import { HubHome } from '@/app/features/hub';
+import { type GroupMode, isGroupMode } from '@/app/features/plans/helpers';
 import { PlansPage } from '@/app/features/plans/index';
 import { bareId } from '@/app/hooks';
 import { importWithRecovery } from '@/app/services/lazy-page';
@@ -36,20 +37,17 @@ const GitPage = lazy(() =>
     default: m.GitPage,
   })),
 );
-const LogPage = lazy(() =>
-  importWithRecovery('LogPage', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogPage,
+const ActivityPage = lazy(() =>
+  importWithRecovery('ActivityPage', () => import('@/app/features/activity/index')).then((m) => ({
+    default: m.ActivityPage,
   })),
 );
-const ChatPage = lazy(() =>
-  importWithRecovery('ChatPage', () => import('@/app/features/chat/index')).then((m) => ({
-    default: m.ChatPage,
-  })),
-);
-const LogEntryPage = lazy(() =>
-  importWithRecovery('LogEntryPage', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogEntryPage,
-  })),
+const ActivityEntryPage = lazy(() =>
+  importWithRecovery('ActivityEntryPage', () => import('@/app/features/activity/index')).then(
+    (m) => ({
+      default: m.ActivityEntryPage,
+    }),
+  ),
 );
 
 const rootRoute = createRootRoute({ component: AppShell });
@@ -67,8 +65,9 @@ const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: PlansPage,
-  validateSearch: (search: Record<string, unknown>): { subject?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { subject?: string; group?: GroupMode } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
+    group: isGroupMode(search.group) ? search.group : undefined,
   }),
   staticData: { layer: 'corpus' },
 });
@@ -102,36 +101,77 @@ const findingChunkDetailRoute = createRoute({
   component: PlansPage,
   staticData: { layer: 'corpus' },
 });
+// `/docs`, `/stats` and `/settings` were the old addresses for the merged Project
+// page (IDEA-290) — kept as redirects so links already shared or bookmarked don't 404.
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs',
-  component: DocsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/project/docs' });
+  },
 });
 const docsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$section',
-  component: DocsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/project/docs/$section', params });
+  },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  component: SettingsPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: () => {
+    throw redirect({ to: '/project/settings' });
+  },
 });
 const settingsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/$section',
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/project/settings/$section', params });
+  },
+});
+
+// Project folds Docs, Stats and Settings into one sidebar (IDEA-290); `/project`
+// itself has no page of its own — it opens on Stats.
+const projectRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project',
+  beforeLoad: () => {
+    throw redirect({ to: '/project/stats' });
+  },
+});
+const projectDocsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/docs',
+  component: DocsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectDocsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/docs/$section',
+  component: DocsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/settings',
+  component: SettingsPage,
+  staticData: { layer: 'runtime' },
+});
+const projectSettingsSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/settings/$section',
   component: SettingsPage,
   staticData: { layer: 'runtime' },
 });
 
+// Bare `/roadmap` has no page of its own any more — it only ever redirects, either
+// to the item it names or, with none, to the Ideas page's Horizon grouping.
 const roadmapRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap',
-  component: RoadmapPage,
   validateSearch: (search: Record<string, unknown>): { item?: string } => ({
     item: typeof search.item === 'string' ? search.item : undefined,
   }),
@@ -139,8 +179,8 @@ const roadmapRoute = createRoute({
     if (search.item) {
       throw redirect({ to: '/roadmap/$item', params: { item: search.item } });
     }
+    throw redirect({ to: '/', search: { group: 'horizon' } });
   },
-  staticData: { layer: 'runtime' },
 });
 const roadmapItemRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -153,13 +193,20 @@ const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
   beforeLoad: () => {
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
 const statsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/stats',
+  beforeLoad: () => {
+    throw redirect({ to: '/project/stats' });
+  },
+});
+const projectStatsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/stats',
   component: StatsPage,
   staticData: { layer: 'runtime' },
 });
@@ -183,11 +230,11 @@ const tasksRoute = createRoute({
   beforeLoad: ({ search }) => {
     if (search.taskId) {
       throw redirect({
-        to: '/log/$entryId',
+        to: '/activity/$entryId',
         params: { entryId: `task:${search.taskId}` },
       });
     }
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
@@ -195,40 +242,62 @@ const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
   beforeLoad: () => {
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
-const logRoute = createRoute({
+const activitySearchSchema = (search: Record<string, unknown>): LogSearchParams => ({
+  outcome: stringParam(search.outcome),
+  type: stringParam(search.type),
+  agent: stringParam(search.agent),
+  range: stringParam(search.range),
+  q: stringParam(search.q),
+  sort: stringParam(search.sort),
+  // `?unread=1` arrives as the number 1 through the router's search parser.
+  unread: search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
+  kind: stringParam(search.kind),
+});
+
+const activityRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/log',
-  component: LogPage,
-  validateSearch: (search: Record<string, unknown>): LogSearchParams => ({
-    outcome: stringParam(search.outcome),
-    type: stringParam(search.type),
-    agent: stringParam(search.agent),
-    range: stringParam(search.range),
-    q: stringParam(search.q),
-    sort: stringParam(search.sort),
-    // `?unread=1` arrives as the number 1 through the router's search parser.
-    unread:
-      search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
-  }),
+  path: '/activity',
+  component: ActivityPage,
+  validateSearch: activitySearchSchema,
   staticData: { layer: 'runtime' },
 });
 
-const chatRoute = createRoute({
+const activityEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/chat',
-  component: ChatPage,
+  path: '/activity/$entryId',
+  component: ActivityEntryPage,
   staticData: { layer: 'runtime' },
+});
+
+// `/log` and `/chat` were the old addresses for the merged Activity page
+// (IDEA-290) — kept as redirects so links already shared or bookmarked don't 404.
+const logRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/log',
+  validateSearch: activitySearchSchema,
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/activity', search });
+  },
 });
 
 const logEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log/$entryId',
-  component: LogEntryPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/activity/$entryId', params });
+  },
+});
+
+const chatRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/chat',
+  beforeLoad: () => {
+    throw redirect({ to: '/activity', search: { kind: 'chat' } });
+  },
 });
 
 const routeTree = rootRoute.addChildren([
@@ -242,8 +311,16 @@ const routeTree = rootRoute.addChildren([
   docsSectionRoute,
   settingsRoute,
   settingsSectionRoute,
+  projectRoute,
+  projectDocsRoute,
+  projectDocsSectionRoute,
+  projectSettingsRoute,
+  projectSettingsSectionRoute,
+  projectStatsRoute,
   tasksRoute,
   issuesRoute,
+  activityRoute,
+  activityEntryRoute,
   logRoute,
   logEntryRoute,
   chatRoute,

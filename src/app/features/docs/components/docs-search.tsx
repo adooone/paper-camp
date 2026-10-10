@@ -44,7 +44,7 @@ export const DocsSearch = ({ query }: DocsSearchProps) => {
   }
 
   const handleSelect = (title: string) => {
-    navigate({ to: '/docs/$section', params: { section: 'repo-docs' } });
+    navigate({ to: '/project/docs/$section', params: { section: 'repo-docs' } });
     setActiveDocTitle(title);
     setDocSearchQuery('');
   };

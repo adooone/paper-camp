@@ -110,8 +110,7 @@ export const useRoadmapPage = () => {
 
   const horizons = roadmap ? filterHorizons(roadmap, filters) : [];
   const totalVisible = horizons.reduce((count, horizon) => count + horizon.items.length, 0);
-  const hasActiveFilters =
-    filters.horizons.length > 0 || filters.statuses.length > 0 || filters.search !== '';
+  const hasActiveFilters = filters.horizons.length > 0 || filters.search !== '';
   const horizonTitles = roadmap?.horizons.map((horizon) => horizon.title) ?? [];
 
   return {
@@ -140,3 +139,5 @@ export const useRoadmapPage = () => {
     onOpenGraduated: openEntity,
   };
 };
+
+export type RoadmapPageState = ReturnType<typeof useRoadmapPage>;

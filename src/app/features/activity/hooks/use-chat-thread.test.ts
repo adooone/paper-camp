@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { sendChatText } from './use-chat-page';
+import { sendChatText } from './use-chat-thread';
 
 const deps = (overrides: Partial<Parameters<typeof sendChatText>[2]> = {}) => ({
   postChatMessage: vi.fn().mockResolvedValue({}),

@@ -2,8 +2,9 @@
 id: IDEA-290
 title: Three pages instead of seven
 type: refactor
-status: planned
+status: review
 created: 2026-10-09
+updated: 2026-10-10
 tags:
   - app
   - ui
@@ -81,22 +82,31 @@ Showing several projects at once ([[IDEA-291]]). The embedded dev toolbar.
 The hub page. Any change to what a settings section or a stats card contains.
 
 ### Phases
-- [ ] Add the page toolbar and move the Plans filters into it
+- [x] Add the page toolbar and move the Plans filters into it
       `PageToolbar` in `src/app/components/`, any missing chip or segmented
       control added to paper-ui first. `PlanFilterColumn` deleted; search, status
       chips and Clear filters live in the toolbar on `/`.
-- [ ] Fold the Roadmap into Ideas as Group by Horizon
+      run: 7m14s · 96 in · 19.4k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
+- [x] Fold the Roadmap into Ideas as Group by Horizon
       Three-way Group by (Plain, Subject, Horizon) in `?group=`; Horizon renders
       the roadmap's sections with horizon chips and + Add item; `/roadmap`
       redirects; the item page sits under the Ideas tab; `RoadmapSidebar` deleted.
-- [ ] Merge Log and Chat into Activity
+      run: 18m19s · 210 in · 86.1k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
+- [x] Merge Log and Chat into Activity
       `/activity` and `/activity/$entryId` with the composer card, chat entries
       in the stream, log filters and kind chips in the toolbar, the stats summary
       line, and the `/log`, `/chat`, `/inbox`, `/tasks`, `/issues` redirects.
-- [ ] Build the Project page from Docs, Stats and Settings
+      run: 14m58s · 218 in · 88.8k out · sonnet-5 · sess:34673854-ce47-4bd0-a633-ccb090ad5f2e
+- [x] Build the Project page from Docs, Stats and Settings
       One sidebar with Docs, Stats and Settings groups under `/project/…`, Stats
       as the landing, and redirects from `/docs`, `/stats`, `/settings` and their
       sub-paths.
-- [ ] Cut the header to three tabs and clear the dead code
+      run: 6m23s · 120 in · 47.5k out · sonnet-5 · sess:837d3831-5b9b-4c64-a0c2-d8867de82528
+- [x] Cut the header to three tabs and clear the dead code
       `navItems`, the shell's area flags, skeleton prefixes and spinner labels;
       remove what only the old pages used; knip, depcruise and tests green.
+      run: 3m51s · 48 in · 14.6k out · sonnet-5 · sess:837d3831-5b9b-4c64-a0c2-d8867de82528
+- [x] [manual] Address review feedback on the three-page merge
+
+### Thread
+- [x] 2026-10-10 [review] [agent] Comments · 5 findings — The diff genuinely delivers all five phases: the header is three tabs, every old route redirects to its new home (including deep links with params and search), filters live in toolbars, and I verified tsc, knip, depcruise and all 1965 unit tests pass locally. Plan filter parity with the old PlanFilterColumn is exact (same chip order, counts, and Clear filters semantics), and the horizon view reproduces the Roadmap page's sections. The remaining issues are small: a missed skeleton registration for /activity, dead roadmap status-filter code the spec says should be deleted, and a few naming/count inconsistencies on the merged pages.

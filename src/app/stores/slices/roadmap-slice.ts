@@ -2,7 +2,7 @@ import {
   DEFAULT_ROADMAP_FILTERS,
   type RoadmapFilters,
 } from '@/app/features/roadmap/helpers/roadmap-filters';
-import type { ResolvedRoadmap, RoadmapItemState } from '@/types/index';
+import type { ResolvedRoadmap } from '@/types/index';
 import { fetchRoadmap } from '../../services/content/docs-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
@@ -16,7 +16,6 @@ export type RoadmapSlice = {
   // Lifted here (not local page state) so the router-level sidebar and the list share one source.
   roadmapFilters: RoadmapFilters;
   toggleRoadmapHorizon: (title: string) => void;
-  toggleRoadmapStatus: (status: RoadmapItemState) => void;
   setRoadmapSearch: (search: string) => void;
   clearRoadmapFilters: () => void;
 };
@@ -42,15 +41,6 @@ export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice 
           horizons: s.roadmapFilters.horizons.includes(title)
             ? s.roadmapFilters.horizons.filter((x) => x !== title)
             : [...s.roadmapFilters.horizons, title],
-        },
-      })),
-    toggleRoadmapStatus: (status) =>
-      set((s) => ({
-        roadmapFilters: {
-          ...s.roadmapFilters,
-          statuses: s.roadmapFilters.statuses.includes(status)
-            ? s.roadmapFilters.statuses.filter((x) => x !== status)
-            : [...s.roadmapFilters.statuses, status],
         },
       })),
     setRoadmapSearch: (search) => set((s) => ({ roadmapFilters: { ...s.roadmapFilters, search } })),

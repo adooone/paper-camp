@@ -1,6 +1,6 @@
 import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { MetaLine, NoteIcon, Row, Stamp, Switch, Text } from '@dendelion/paper-ui';
+import { MetaLine, NoteIcon, Row, Stamp, Text } from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
@@ -19,31 +19,12 @@ const headerLabelClass = 'font-handwritten text-sm opacity-60 whitespace-nowrap'
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
-const groupToggleLabelClass = 'font-handwritten text-xs font-semibold opacity-55 leading-none';
-
 const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
 
 const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
 
 const titleTextClass = 'overflow-hidden text-ellipsis whitespace-nowrap';
-
-export const GroupBySubjectToggle = () => {
-  const groupBySubject = useAppStore((s) => s.planFilters.groupBySubject);
-  const toggleGroupBySubject = useAppStore((s) => s.toggleGroupBySubject);
-
-  return (
-    <div className="flex items-center gap-2">
-      <span className={groupToggleLabelClass}>Group by subject</span>
-      <Switch
-        size="small"
-        checked={groupBySubject}
-        onChange={toggleGroupBySubject}
-        aria-label="Group by subject"
-      />
-    </div>
-  );
-};
 
 export const WorklistRows = ({
   rows,

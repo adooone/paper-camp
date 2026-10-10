@@ -15,7 +15,6 @@ import { HubShell } from '@/app/features/hub';
 import {
   PlanActionsColumn,
   PlanActionsCommandsColumn,
-  PlanFilterColumn,
   PlansListSkeleton,
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
@@ -35,21 +34,9 @@ import { NavLabel, navItems } from './nav';
 
 const MOBILE_NAV_SHADOW = `0 -2px 8px ${withAlpha(colors.sketchInk, 0.08)}`;
 
-const DocsSidebar = lazy(() =>
-  importWithRecovery('DocsSidebar', () => import('@/app/features/docs/index')).then((m) => ({
-    default: m.DocsSidebar,
-  })),
-);
-const SettingsSidebar = lazy(() =>
-  importWithRecovery('SettingsSidebar', () => import('@/app/features/settings/index')).then(
-    (m) => ({
-      default: m.SettingsSidebar,
-    }),
-  ),
-);
-const RoadmapSidebar = lazy(() =>
-  importWithRecovery('RoadmapSidebar', () => import('@/app/features/roadmap/index')).then((m) => ({
-    default: m.RoadmapSidebar,
+const ProjectSidebar = lazy(() =>
+  importWithRecovery('ProjectSidebar', () => import('@/app/features/project/index')).then((m) => ({
+    default: m.ProjectSidebar,
   })),
 );
 const GitFileList = lazy(() =>
@@ -57,27 +44,17 @@ const GitFileList = lazy(() =>
     default: m.GitFileList,
   })),
 );
-const LogSidebar = lazy(() =>
-  importWithRecovery('LogSidebar', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogSidebar,
-  })),
-);
-const LogStatsSidebar = lazy(() =>
-  importWithRecovery('LogStatsSidebar', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogStatsSidebar,
-  })),
-);
-
-// Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
+// Plans has its own skeleton; a roadmap item and Project share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log', '/chat'];
+const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/activity'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
-  '/stats': 'Stats',
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {
-  if (isPlansArea) return <PlansListSkeleton />;
+  // A roadmap item is part of the Plans area for nav purposes, but it isn't a list —
+  // it still gets the generic row skeleton below, not the worklist one.
+  if (isPlansArea && !pathname.startsWith('/roadmap/')) return <PlansListSkeleton />;
   if (ROW_SKELETON_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return <RowSkeleton />;
   }
@@ -94,11 +71,8 @@ export const AppShell = () => {
     hasSidebar,
     sidebarAreaKey,
     isPlansArea,
-    isDocsArea,
-    isSettingsArea,
-    isRoadmapArea,
+    isProjectArea,
     isGitArea,
-    isLogArea,
     isInHub,
     stackOpen,
     toggleStack,
@@ -181,37 +155,16 @@ export const AppShell = () => {
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={closeMobileSidebar}
                   >
-                    {isPlansArea && <PlanFilterColumn />}
                     {isPlansArea && <PlanActionsColumn />}
                     {isPlansArea && <PlanActionsCommandsColumn />}
-                    {isDocsArea && (
+                    {isProjectArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
-                        <DocsSidebar />
-                      </Suspense>
-                    )}
-                    {isSettingsArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <SettingsSidebar />
-                      </Suspense>
-                    )}
-                    {isRoadmapArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <RoadmapSidebar />
+                        <ProjectSidebar />
                       </Suspense>
                     )}
                     {isGitArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <GitFileList />
-                      </Suspense>
-                    )}
-                    {isLogArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <LogSidebar />
-                      </Suspense>
-                    )}
-                    {isLogArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <LogStatsSidebar />
                       </Suspense>
                     )}
                   </SidebarShell>

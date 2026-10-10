@@ -1,5 +1,6 @@
 export * from './helpers';
 export * from './diff';
+export * from './group-mode';
 export * from './plan-list-selector';
 export * from './idea-similarity';
 export * from './review-findings';

@@ -10,9 +10,7 @@ import { describe, expect, it } from 'vitest';
 // A file may opt out ONLY for genuinely dynamic values that can't be a class — a
 // colour/size computed from data at render time. Add it here with a one-line reason.
 const DYNAMIC_STYLE_ALLOWLIST = new Set([
-  'features/roadmap/roadmap-sidebar.tsx', // status-dot colour from STATUS_STAMP
   'components/stack-panel/stack-panel.tsx', // open/closed slide toggled via `transform`
-  'features/plans/views/plan-filter-column.tsx', // status-dot colour from STATUS_COLOR
   'components/layout/app-shell.tsx', // paper-ui's Layout has no className prop, only style
   'components/layout/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
   'features/plans/views/plan-rows.tsx', // highlight outline / merged-PR colour from tokens

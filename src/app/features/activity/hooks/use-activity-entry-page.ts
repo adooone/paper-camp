@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { markReadIdFor } from '../helpers';
 import { useLogRows } from './use-run-rows';
 
-export const useLogEntryPage = (entryId: string) => {
+export const useActivityEntryPage = (entryId: string) => {
   const { loading, allRows, actions } = useLogRows();
   const markRead = useAppStore((s) => s.markRead);
   const setActiveLogEntryTitle = useAppStore((s) => s.setActiveLogEntryTitle);

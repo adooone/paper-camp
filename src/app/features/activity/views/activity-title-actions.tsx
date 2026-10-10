@@ -2,7 +2,7 @@ import type { LogRow } from '@/types/index';
 import { Button, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 
-export interface LogTitleActionsProps {
+export interface ActivityTitleActionsProps {
   runningRows: LogRow[];
   unreadCount: number;
   unreadFilterOn: boolean;
@@ -10,11 +10,14 @@ export interface LogTitleActionsProps {
   onMarkAllRead: () => Promise<void>;
   matchedCount: number;
   totalCount: number;
+  unansweredCount: number;
+  hasChatHistory: boolean;
+  onClearChat: () => void;
 }
 
 const countClass = 'font-handwritten text-sm opacity-[0.55] whitespace-nowrap';
 
-export const LogTitleActions = ({
+export const ActivityTitleActions = ({
   runningRows,
   unreadCount,
   unreadFilterOn,
@@ -22,7 +25,10 @@ export const LogTitleActions = ({
   onMarkAllRead,
   matchedCount,
   totalCount,
-}: LogTitleActionsProps) => {
+  unansweredCount,
+  hasChatHistory,
+  onClearChat,
+}: ActivityTitleActionsProps) => {
   const navigate = useNavigate();
   const running = runningRows[0];
   const hasActiveFilters = matchedCount !== totalCount;
@@ -34,7 +40,7 @@ export const LogTitleActions = ({
           size="small"
           variant="info"
           dot
-          onClick={() => navigate({ to: '/log/$entryId', params: { entryId: running.id } })}
+          onClick={() => navigate({ to: '/activity/$entryId', params: { entryId: running.id } })}
           ariaLabel={`Open the running task ${running.entityId ?? running.title}`}
         >
           {runningRows.length} running{running.entityId ? ` · ${running.entityId}` : ''}
@@ -61,9 +67,24 @@ export const LogTitleActions = ({
           </Button>
         </>
       )}
+      {unansweredCount > 0 && (
+        <Stamp size="small" variant="warning">
+          {unansweredCount} unanswered
+        </Stamp>
+      )}
       <span className={countClass}>
         {hasActiveFilters ? `${matchedCount} of ${totalCount} entries` : `${totalCount} entries`}
       </span>
+      {hasChatHistory && (
+        <Button
+          variant="link"
+          size="small"
+          className="font-handwritten text-sm opacity-70"
+          onClick={onClearChat}
+        >
+          Clear chat
+        </Button>
+      )}
     </div>
   );
 };

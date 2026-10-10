@@ -121,7 +121,7 @@ const AgentTaskCard = ({
   const { toast } = useToast();
   const openTaskPage = () =>
     navigate({
-      to: '/log/$entryId',
+      to: '/activity/$entryId',
       params: { entryId: logRowIdForTask(task) },
     });
 
@@ -182,7 +182,7 @@ const AgentTaskCard = ({
                   className="leading-none"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate({ to: '/settings/$section', params: { section: 'setup' } });
+                    navigate({ to: '/project/settings/$section', params: { section: 'setup' } });
                   }}
                 >
                   stopped — agent signed out
@@ -212,7 +212,9 @@ const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
       surface="chalkboard"
       size="small"
       className={TASK_CARD_HEIGHT_CLASS}
-      onClick={() => navigate({ to: '/log/$entryId', params: { entryId: `task:${entry.id}` } })}
+      onClick={() =>
+        navigate({ to: '/activity/$entryId', params: { entryId: `task:${entry.id}` } })
+      }
       ariaLabel={entry.planId ?? entry.planTitle}
     >
       <div className="flex h-full min-w-0 flex-col justify-center gap-1">
@@ -245,7 +247,7 @@ export const AgentSection = () => {
         {hiddenCount > 0 && (
           <Button
             variant="link"
-            onClick={() => navigate({ to: '/log' })}
+            onClick={() => navigate({ to: '/activity' })}
             className="font-handwritten text-xs text-desk-text-muted"
           >
             more

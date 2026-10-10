@@ -56,7 +56,11 @@ export const PageBreadcrumb = () => {
     }
     if (activeRoadmapItem) {
       return [
-        { id: 'roadmap', label: 'Roadmap', onClick: () => navigate({ to: '/roadmap' }) },
+        {
+          id: 'ideas',
+          label: 'Ideas',
+          onClick: () => navigate({ to: '/', search: { group: 'horizon' } }),
+        },
         ...(activeRoadmapItem.horizonTitle
           ? [{ id: 'horizon', label: activeRoadmapItem.horizonTitle }]
           : []),
@@ -71,13 +75,13 @@ export const PageBreadcrumb = () => {
           : null;
     if (docLabel) {
       return [
-        { id: 'docs', label: 'Docs', onClick: () => navigate({ to: '/docs' }) },
+        { id: 'docs', label: 'Docs', onClick: () => navigate({ to: '/project/docs' }) },
         { id: 'doc', label: docLabel },
       ];
     }
     if (typeof entryId === 'string') {
       return [
-        { id: 'log', label: 'Log', onClick: () => navigate({ to: '/log' }) },
+        { id: 'activity', label: 'Activity', onClick: () => navigate({ to: '/activity' }) },
         ...(activeLogEntryTitle ? [{ id: 'entry', label: activeLogEntryTitle }] : []),
       ];
     }

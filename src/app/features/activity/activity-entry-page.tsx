@@ -2,7 +2,7 @@ import { RowSkeleton } from '@/app/components';
 import type { LogRow } from '@/types/index';
 import { Button, EmptyState } from '@dendelion/paper-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { useLogEntryPage } from './hooks';
+import { useActivityEntryPage } from './hooks';
 import type { LogRowActions } from './hooks/use-run-rows';
 import { useTaskOutput } from './hooks/use-task-output';
 import { EntryDetailsCard, LogOutputPane } from './views';
@@ -48,9 +48,9 @@ const EntryView = ({ row, actions }: { row: LogRow; actions: LogRowActions }) =>
   );
 };
 
-export const LogEntryPage = () => {
-  const { entryId } = useParams({ from: '/log/$entryId' });
-  const { loading, row, actions } = useLogEntryPage(entryId);
+export const ActivityEntryPage = () => {
+  const { entryId } = useParams({ from: '/activity/$entryId' });
+  const { loading, row, actions } = useActivityEntryPage(entryId);
   const navigate = useNavigate();
 
   if (!row) {
@@ -59,8 +59,8 @@ export const LogEntryPage = () => {
       <EmptyState
         message="This entry doesn't exist."
         action={
-          <Button size="small" onClick={() => navigate({ to: '/log' })}>
-            Back to Log
+          <Button size="small" onClick={() => navigate({ to: '/activity' })}>
+            Back to Activity
           </Button>
         }
       />

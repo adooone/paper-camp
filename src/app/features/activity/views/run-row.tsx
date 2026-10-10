@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatTime } from '../helpers';
 
-export const LOG_ROW_GRID_CLASS =
+const LOG_ROW_GRID_CLASS =
   'grid grid-cols-[100px_128px_minmax(0,1fr)_100px_72px_84px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
 
 export interface LogRowViewProps {
@@ -20,7 +20,7 @@ export const LogRowView = ({ row }: LogRowViewProps) => {
     <Row
       surface="card"
       columns={{ title: 'minmax(0,1fr)' }}
-      onClick={() => navigate({ to: '/log/$entryId', params: { entryId: row.id } })}
+      onClick={() => navigate({ to: '/activity/$entryId', params: { entryId: row.id } })}
       ariaLabel={row.title}
       title={
         <div className={LOG_ROW_GRID_CLASS}>

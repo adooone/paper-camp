@@ -53,11 +53,8 @@ export interface AppShellState {
   hasSidebar: boolean;
   sidebarAreaKey: string;
   isPlansArea: boolean;
-  isDocsArea: boolean;
-  isSettingsArea: boolean;
-  isRoadmapArea: boolean;
+  isProjectArea: boolean;
   isGitArea: boolean;
-  isLogArea: boolean;
   isInHub: boolean;
   stackOpen: boolean;
   toggleStack: () => void;
@@ -90,36 +87,35 @@ export function useAppShell(): AppShellState {
     reachable: runtimeReachable,
     checking: runtimeChecking,
   });
+  // A roadmap item still lives at `/roadmap/$item`, but it's rendered under the
+  // Ideas tab now, so it counts toward the Plans area for nav and breadcrumb purposes.
   const isPlansArea =
     pathname === '/' ||
     pathname.startsWith('/plans/') ||
     pathname.startsWith('/ideas/') ||
-    pathname.startsWith('/findings/');
-  const isDocsArea = pathname === '/docs' || pathname.startsWith('/docs/');
-  const isSettingsArea = pathname === '/settings' || pathname.startsWith('/settings/');
-  const isRoadmapArea = pathname === '/roadmap';
+    pathname.startsWith('/findings/') ||
+    pathname.startsWith('/roadmap/');
+  // Docs, Stats and Settings live together under /project (IDEA-290); the project
+  // sidebar picks its own active group from the fuller path.
+  const isProjectArea = pathname === '/project' || pathname.startsWith('/project/');
+  // Log and Chat live together under /activity (IDEA-290); Activity has no sidebar
+  // of its own, so this only feeds the header tab, not hasSidebar below.
+  const isActivityArea = pathname === '/activity' || pathname.startsWith('/activity/');
   const isGitArea = pathname === '/git';
-  const isLogArea = pathname === '/log' || pathname.startsWith('/log/');
   const activeId = isPlansArea
     ? 'plans'
-    : isDocsArea
-      ? 'docs'
-      : isSettingsArea
-        ? 'settings'
+    : isProjectArea
+      ? 'project'
+      : isActivityArea
+        ? 'activity'
         : navItems.find((item) => item.path === pathname)?.id;
+  // List routes have no sidebar now that filters live in the toolbar;
+  // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
-    isPlansArea || isDocsArea || isSettingsArea || isRoadmapArea || isGitArea || isLogArea;
-  const sidebarAreaKey = isPlansArea
-    ? 'plans'
-    : isDocsArea
-      ? 'docs'
-      : isSettingsArea
-        ? 'settings'
-        : isRoadmapArea
-          ? 'roadmap'
-          : isGitArea
-            ? 'git'
-            : 'log';
+    (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
+    isProjectArea ||
+    isGitArea;
+  const sidebarAreaKey = isPlansArea ? 'plans' : isProjectArea ? 'project' : 'git';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -171,7 +167,7 @@ export function useAppShell(): AppShellState {
         );
         if (!shouldShow) return;
         setActiveDocTitle('USAGE.md');
-        navigate({ to: '/docs' });
+        navigate({ to: '/project/docs' });
       })
       .catch(() => {});
   }, [navigate, setActiveDocTitle]);
@@ -211,11 +207,8 @@ export function useAppShell(): AppShellState {
     hasSidebar,
     sidebarAreaKey,
     isPlansArea,
-    isDocsArea,
-    isSettingsArea,
-    isRoadmapArea,
+    isProjectArea,
     isGitArea,
-    isLogArea,
     isInHub: HUB_PATHS.includes(pathname),
     stackOpen,
     toggleStack,

@@ -1,5 +1,5 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import type { PlanEntry } from '@/types/index';
+import { useRoadmapPage } from '@/app/features/roadmap';
 import { Card, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { selectWorklistRows } from './helpers';
 import { usePlansPage } from './hooks';
@@ -8,11 +8,13 @@ import {
   ArchiveSection,
   ChunkDetail,
   EntityDetail,
+  HorizonGroupView,
   ListView,
   NightReportSection,
   NoteDetail,
   PlansHeader,
   PlansListSkeleton,
+  PlansToolbar,
   ReconcileQueueReview,
   SuggestionsSection,
 } from './views';
@@ -31,6 +33,8 @@ export const PlansPage = () => {
     planId,
     ideaId,
     chunk,
+    group,
+    handleGroupChange,
     openSuggestion,
     setOpenSuggestion,
     handleBack,
@@ -40,6 +44,7 @@ export const PlansPage = () => {
     handleOpenNightChunk,
     handleDismissSuggestion,
   } = usePlansPage();
+  const roadmapPage = useRoadmapPage();
 
   if (plansError) {
     return (
@@ -96,54 +101,65 @@ export const PlansPage = () => {
         </div>
       ) : (
         <div>
-          <PlansHeader showGroupingToggle={plans.entries.length > 0} />
+          <PlansHeader
+            group={group}
+            canAddItem={roadmapPage.horizonTitles.length > 0}
+            onAddItem={() => roadmapPage.setAddOpen(true)}
+          />
+          <PlansToolbar entries={plans.entries} group={group} onGroupChange={handleGroupChange} />
 
-          <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
-
-          {plans.warnings.length > 0 && (
-            <Card size="small" accent accentColor="amber">
-              <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
-              <ul className="m-0 pl-5">
-                {plans.warnings.map((w) => (
-                  <li key={w.title}>
-                    {w.title}: {w.message}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
-          {plans.entries.length === 0 ? (
-            <EmptyState
-              illustration={<DoodleIllustration name="empty-tray" />}
-              message={
-                <>
-                  No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
-                  <strong>Suggest ideas</strong> to have an agent propose some.
-                </>
-              }
-            />
+          {group === 'horizon' ? (
+            <HorizonGroupView roadmapPage={roadmapPage} />
           ) : (
-            <ListView
-              rows={rows}
-              activePlanTitle={null}
-              onOpenPlan={handleOpenPlan}
-              onOpenIdea={handleOpenIdea}
-            />
+            <>
+              <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
+
+              {plans.warnings.length > 0 && (
+                <Card size="small" accent accentColor="amber">
+                  <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
+                  <ul className="m-0 pl-5">
+                    {plans.warnings.map((w) => (
+                      <li key={w.title}>
+                        {w.title}: {w.message}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {plans.entries.length === 0 ? (
+                <EmptyState
+                  illustration={<DoodleIllustration name="empty-tray" />}
+                  message={
+                    <>
+                      No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
+                      <strong>Suggest ideas</strong> to have an agent propose some.
+                    </>
+                  }
+                />
+              ) : (
+                <ListView
+                  rows={rows}
+                  activePlanTitle={null}
+                  onOpenPlan={handleOpenPlan}
+                  onOpenIdea={handleOpenIdea}
+                />
+              )}
+
+              <ArchiveSection onOpen={handleOpenArchivable} />
+
+              <SuggestionsSection
+                suggestions={suggestions}
+                onOpen={setOpenSuggestion}
+                onDismiss={handleDismissSuggestion}
+              />
+
+              <PromoteSuggestionModal
+                suggestion={openSuggestion}
+                onClose={() => setOpenSuggestion(null)}
+              />
+            </>
           )}
-
-          <ArchiveSection onOpen={handleOpenArchivable} />
-
-          <SuggestionsSection
-            suggestions={suggestions}
-            onOpen={setOpenSuggestion}
-            onDismiss={handleDismissSuggestion}
-          />
-
-          <PromoteSuggestionModal
-            suggestion={openSuggestion}
-            onClose={() => setOpenSuggestion(null)}
-          />
         </div>
       )}
     </>
