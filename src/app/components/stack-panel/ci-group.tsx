@@ -1,6 +1,6 @@
 import { useCiRelease } from '@/app/hooks/use-ci-release';
 import { useAppStore } from '@/app/stores/app-store';
-import type { CiRun, CiRunStatus } from '@/types/index';
+import type { CiRun, CiRunStatus, DraftPrReadiness } from '@/types/index';
 import { Card, EmptyState } from '@dendelion/paper-ui';
 import { useEffect, useRef } from 'react';
 import { groupLabelClassName } from './shared';
@@ -39,6 +39,25 @@ const RunRow = ({ run }: { run: CiRun }) => {
     </a>
   ) : (
     label
+  );
+};
+
+const DraftPrSection = ({ draftPr }: { draftPr: DraftPrReadiness }) => {
+  const secretsReady = draftPr.scoutAppId && draftPr.scoutPrivateKey;
+  return (
+    <div className="flex flex-col gap-2 border-t border-desk-border pt-2">
+      {draftPr.lastRun ? (
+        <RunRow run={draftPr.lastRun} />
+      ) : (
+        <span className="text-2xs text-desk-text-muted opacity-70">No Draft PR runs yet.</span>
+      )}
+      {!secretsReady && (
+        <ol className="m-0 list-decimal pl-4 text-2xs text-desk-text-muted">
+          <li>Install the Scout GitHub App on this repo.</li>
+          <li>Add the SCOUT_APP_ID and SCOUT_PRIVATE_KEY secrets.</li>
+        </ol>
+      )}
+    </div>
   );
 };
 
@@ -100,6 +119,7 @@ export const CiGroup = () => {
               Open Actions
             </a>
           </div>
+          {ci.draftPr && <DraftPrSection draftPr={ci.draftPr} />}
         </div>
       </Card>
     );

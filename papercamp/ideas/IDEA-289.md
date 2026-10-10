@@ -76,11 +76,12 @@ change to the branch naming or phase-per-commit convention itself.
       existing write action. A finding, not a fix, when the file exists
       without the header, since that is a hand-written workflow.
       run: 8m11s · 116 in · 23.5k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
-- [ ] Phase 4 — Readiness on the CI card
+- [x] Phase 4 — Readiness on the CI card
       Show whether the two Scout secrets exist on the repo and the
       conclusion of the latest *Draft PR* workflow run, with the two
       manual steps spelled out when either is missing. Cache like
       `ci-release.ts` does.
+      run: 3m41s · 90 in · 14.3k out · sonnet-5 · sess:af963e09-b7ce-4150-a8b4-18a1040670db
 - [ ] Phase 5 — Roll out to the three projects
       Turn the setting on in radio, func-ui and paper-ui; let the writer
       replace paper-ui's stale copy and stamp the other two; document the

@@ -760,6 +760,14 @@ export interface ReleasePr {
   version: string | null;
 }
 
+/** Readiness of the GitHub half of the draft-PR flow (IDEA-289): the manual
+ * Scout secrets and the latest run of the workflow paper-camp wrote. */
+export interface DraftPrReadiness {
+  scoutAppId: boolean;
+  scoutPrivateKey: boolean;
+  lastRun: CiRun | null;
+}
+
 /** CI & release mirror for a declared repo (IDEA-119): latest Actions runs on the tracked
  * branch, the open release-please PR, and the released vs. queued version. */
 export interface CiReleaseState {
@@ -769,6 +777,7 @@ export interface CiReleaseState {
   runs: CiRun[];
   releasePr: ReleasePr | null;
   releasedVersion: string | null;
+  draftPr: DraftPrReadiness | null;
 }
 
 export interface NightWindow {

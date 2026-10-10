@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   failedJobNames,
+  hasSecret,
+  latestDraftPrRun,
   latestRunPerWorkflow,
   mapRunStatus,
   parseVersion,
@@ -121,5 +123,34 @@ describe('failedJobNames', () => {
         { name: 'Tests', conclusion: 'cancelled' },
       ]),
     ).toEqual(['Smoke']);
+  });
+});
+
+describe('latestDraftPrRun', () => {
+  it('takes the first row regardless of branch', () => {
+    const rows = [
+      {
+        workflowName: 'Draft PR',
+        status: 'completed',
+        conclusion: 'success',
+        url: 'u1',
+        headBranch: 'feat/idea-1-thing',
+      },
+    ];
+    expect(latestDraftPrRun(rows)).toEqual({ workflow: 'Draft PR', status: 'success', url: 'u1' });
+  });
+
+  it('returns null when there are no runs', () => {
+    expect(latestDraftPrRun([])).toBeNull();
+  });
+});
+
+describe('hasSecret', () => {
+  it('finds a secret by name', () => {
+    expect(hasSecret([{ name: 'SCOUT_APP_ID' }, { name: 'OTHER' }], 'SCOUT_APP_ID')).toBe(true);
+  });
+
+  it('returns false when the secret is absent', () => {
+    expect(hasSecret([{ name: 'OTHER' }], 'SCOUT_PRIVATE_KEY')).toBe(false);
   });
 });

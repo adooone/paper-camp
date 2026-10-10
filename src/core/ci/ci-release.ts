@@ -1,5 +1,14 @@
 import { spawn } from 'node:child_process';
-import type { CiReleaseState, CiRun, CiRunStatus, DeskCi, ReleasePr } from '../../types/index';
+import type {
+  CiReleaseState,
+  CiRun,
+  CiRunStatus,
+  DeskCi,
+  DraftPrReadiness,
+  ReleasePr,
+} from '../../types/index';
+
+const DRAFT_PR_WORKFLOW_FILE = 'draft-pr.yml';
 
 const GH_TIMEOUT_MS = 15_000;
 const CI_CACHE_TTL_MS = 60_000;
@@ -29,6 +38,10 @@ interface GhPrRow {
 interface GhReleaseRow {
   tagName: string;
   isLatest?: boolean;
+}
+
+interface GhSecretRow {
+  name: string;
 }
 
 function ghJson<T>(args: string[]): Promise<T | undefined> {
@@ -156,6 +169,22 @@ export function pickReleasePr(rows: GhPrRow[]): ReleasePr | null {
   };
 }
 
+// The Draft PR workflow runs on idea branches, not the tracked branch, so its latest
+// run is picked across all branches rather than filtered by `latestRunPerWorkflow`.
+export function latestDraftPrRun(rows: GhRunRow[]): CiRun | null {
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    workflow: row.workflowName,
+    status: mapRunStatus(row.status, row.conclusion),
+    url: row.url || null,
+  };
+}
+
+export function hasSecret(rows: GhSecretRow[], name: string): boolean {
+  return rows.some((row) => row.name === name);
+}
+
 const cache = new Map<string, { state: CiReleaseState; fetchedAt: number }>();
 
 export function clearCiCache(): void {
@@ -171,7 +200,7 @@ export async function fetchCiReleaseState(
   const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.state;
 
-  const [runRows, prRows, releaseRows] = await Promise.all([
+  const [runRows, prRows, releaseRows, draftPrRunRows, draftPrSecretRows] = await Promise.all([
     ghJson<GhRunRow[]>([
       'run',
       'list',
@@ -199,10 +228,35 @@ export async function fetchCiReleaseState(
         ])
       : Promise.resolve<GhPrRow[] | undefined>([]),
     ghJson<GhReleaseRow[]>(['release', 'list', '-R', ci.repo, '--limit', '1', '--json', 'tagName']),
+    ci.draftPr
+      ? ghJson<GhRunRow[]>([
+          'run',
+          'list',
+          '-R',
+          ci.repo,
+          '--workflow',
+          DRAFT_PR_WORKFLOW_FILE,
+          '--limit',
+          '1',
+          '--json',
+          'databaseId,workflowName,status,conclusion,url,headBranch',
+        ])
+      : Promise.resolve<GhRunRow[] | undefined>(undefined),
+    ci.draftPr
+      ? ghJson<{ secrets: GhSecretRow[] }>(['api', `repos/${ci.repo}/actions/secrets`])
+      : Promise.resolve<{ secrets: GhSecretRow[] } | undefined>(undefined),
   ]);
 
   const available = runRows !== undefined || prRows !== undefined || releaseRows !== undefined;
   const releasedTag = releaseRows?.[0]?.tagName ?? null;
+
+  const draftPr: DraftPrReadiness | null = ci.draftPr
+    ? {
+        scoutAppId: hasSecret(draftPrSecretRows?.secrets ?? [], 'SCOUT_APP_ID'),
+        scoutPrivateKey: hasSecret(draftPrSecretRows?.secrets ?? [], 'SCOUT_PRIVATE_KEY'),
+        lastRun: draftPrRunRows ? latestDraftPrRun(draftPrRunRows) : null,
+      }
+    : null;
 
   const state: CiReleaseState = {
     repo: ci.repo,
@@ -211,6 +265,7 @@ export async function fetchCiReleaseState(
     runs: runRows ? await withFailedJobs(ci.repo, latestRunPerWorkflow(runRows, branch)) : [],
     releasePr: prRows ? pickReleasePr(prRows) : null,
     releasedVersion: releasedTag ? releasedTag.replace(/^v/, '') : null,
+    draftPr,
   };
 
   if (available) cache.set(key, { state, fetchedAt: Date.now() });
