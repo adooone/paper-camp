@@ -34,6 +34,7 @@ export interface ProjectEvidence {
    *  commitlint over a PR range, say — can still be offered as a desk check. */
   ciSteps: CiStep[];
   hasReleasePlease: boolean;
+  hasDraftPrWorkflow: boolean;
   nonJsManifests: NonJsManifest[];
 }
 
@@ -214,6 +215,10 @@ function detectReleasePlease(root: string): boolean {
   return RELEASE_PLEASE_PATHS.some((path) => existsSync(join(root, path)));
 }
 
+function detectDraftPrWorkflow(root: string): boolean {
+  return existsSync(join(root, '.github', 'workflows', 'draft-pr.yml'));
+}
+
 function cargoTargets(content: string): string[] {
   return [...new Set([...content.matchAll(CARGO_NAME_RE)].map((m) => m[1]))];
 }
@@ -275,6 +280,7 @@ export async function gatherProjectEvidence(root: string): Promise<ProjectEviden
     hasCiWorkflows: detectCiWorkflows(root),
     ciSteps,
     hasReleasePlease: detectReleasePlease(root),
+    hasDraftPrWorkflow: detectDraftPrWorkflow(root),
     nonJsManifests,
   };
 }

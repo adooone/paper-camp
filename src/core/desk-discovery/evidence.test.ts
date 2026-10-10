@@ -42,6 +42,7 @@ describe('gatherProjectEvidence', () => {
       hasCiWorkflows: false,
       ciSteps: [],
       hasReleasePlease: false,
+      hasDraftPrWorkflow: false,
       nonJsManifests: [],
     });
   });
@@ -162,6 +163,24 @@ describe('gatherProjectEvidence', () => {
 
     expect(evidence.hasCiWorkflows).toBe(true);
     expect(evidence.hasReleasePlease).toBe(true);
+  });
+
+  it('detects a draft-pr workflow', async () => {
+    const root = await makeTempDir();
+    await mkdir(join(root, '.github', 'workflows'), { recursive: true });
+    await writeFile(join(root, '.github', 'workflows', 'draft-pr.yml'), 'name: Draft PR\n');
+
+    const evidence = await gatherProjectEvidence(root);
+
+    expect(evidence.hasDraftPrWorkflow).toBe(true);
+  });
+
+  it('treats a missing draft-pr workflow as absent', async () => {
+    const root = await makeTempDir();
+
+    const evidence = await gatherProjectEvidence(root);
+
+    expect(evidence.hasDraftPrWorkflow).toBe(false);
   });
 
   it('treats an empty workflows directory as absent', async () => {

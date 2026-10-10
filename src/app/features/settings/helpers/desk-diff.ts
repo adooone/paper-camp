@@ -24,7 +24,8 @@ export interface DeskDiff {
 const serviceKey = (s: DeskService) => `${s.cmd}`;
 const checkKey = (c: DeskCheck) => `${c.cmd}`;
 
-const ciKey = (c: DeskCi) => `${c.repo}|${c.branch ?? ''}|${c.releasePlease ? '1' : '0'}`;
+const ciKey = (c: DeskCi) =>
+  `${c.repo}|${c.branch ?? ''}|${c.releasePlease ? '1' : '0'}|${c.draftPr ? '1' : '0'}`;
 
 const sameService = (a: DeskService, b: DeskService) =>
   a.name === b.name &&

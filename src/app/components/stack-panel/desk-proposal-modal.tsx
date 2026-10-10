@@ -404,6 +404,13 @@ export const DeskProposalModal = ({
                   onChange={(e) => setCi({ ...ci, releasePlease: e.target.checked })}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Draft PR</span>
+                <Switch
+                  checked={ci.draftPr ?? false}
+                  onChange={(e) => setCi({ ...ci, draftPr: e.target.checked })}
+                />
+              </div>
             </div>
           )}
         </div>

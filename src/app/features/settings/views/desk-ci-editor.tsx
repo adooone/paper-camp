@@ -55,6 +55,20 @@ export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
           />
         }
       />
+      <SettingRow
+        label="Draft PR"
+        control={
+          <Switch
+            size="small"
+            checked={local.draftPr ?? false}
+            onChange={(e) => {
+              const next = { ...local, draftPr: e.target.checked };
+              setLocal(next);
+              onSave(next);
+            }}
+          />
+        }
+      />
     </>
   );
 };

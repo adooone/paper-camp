@@ -13,6 +13,7 @@ const EVIDENCE: ProjectEvidence = {
   hasCiWorkflows: true,
   ciSteps: [],
   hasReleasePlease: true,
+  hasDraftPrWorkflow: false,
   nonJsManifests: [],
 };
 

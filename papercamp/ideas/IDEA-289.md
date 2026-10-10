@@ -57,11 +57,12 @@ the other workflow and deserves its own entry once this one lands. Any
 change to the branch naming or phase-per-commit convention itself.
 
 ### Phases
-- [ ] Phase 1 — The setting
+- [x] Phase 1 — The setting
       Add `draftPr?: boolean` to `deskCiSchema` and `DeskCi`, a *Draft PR*
       switch in `desk-ci-editor.tsx` under *Release Please*, and have
       `desk-discovery.ts` propose it on when
       `.github/workflows/draft-pr.yml` exists in the repository.
+      run: 5m58s · 76 in · 7.5k out · sonnet-5 · sess:96646d62-a0b2-4ae5-b580-02cbc68ba6a0
 - [ ] Phase 2 — Bundled templates and the writer
       Vendor func-ui's `draft-pr.yml` and `pull_request_template.md` as
       package templates with a `# paper-camp draft-pr template vN` header;

@@ -187,6 +187,7 @@ export const deskCiSchema = z.object({
   repo: z.string(),
   branch: z.string().optional(),
   releasePlease: z.boolean().optional(),
+  draftPr: z.boolean().optional(),
 });
 
 export const deskConfigSchema = z.object({

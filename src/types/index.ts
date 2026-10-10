@@ -700,6 +700,7 @@ export interface DeskCi {
   repo: string;
   branch?: string;
   releasePlease?: boolean;
+  draftPr?: boolean;
 }
 
 /** Dev-loop manifest (IDEA-119): declared services, one-click checks, and CI/release sources. */
