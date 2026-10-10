@@ -109,8 +109,7 @@ export function useAppShell(): AppShellState {
       : isActivityArea
         ? 'activity'
         : navItems.find((item) => item.path === pathname)?.id;
-  // The bare list route and a roadmap item both have no sidebar now that list
-  // filters live in the toolbar and the item page needs no column of its own —
+  // List routes have no sidebar now that filters live in the toolbar;
   // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
     (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
