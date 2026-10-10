@@ -1,3 +1,5 @@
+import { useScopeRuns } from '@/app/features/activity/hooks';
+import { ProjectChip, type ScopeRow, useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { interruptedNotices, logRowIdForTask } from '@/core/run-rows';
@@ -112,18 +114,25 @@ const statusVariant: Record<AgentTaskStatus, StampVariant> = {
 
 const AgentTaskCard = ({
   task,
+  project,
+  onOpenCrossProject,
   onStop,
 }: {
   task: AgentTaskState;
+  project?: ScopeRow;
+  onOpenCrossProject: (project: ScopeRow, path: string) => void;
   onStop: (taskId: string) => Promise<void>;
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const foreign = project && !project.isCurrent ? project : undefined;
   const openTaskPage = () =>
-    navigate({
-      to: '/activity/$entryId',
-      params: { entryId: logRowIdForTask(task) },
-    });
+    foreign
+      ? onOpenCrossProject(foreign, `/activity/${logRowIdForTask(task)}`)
+      : navigate({
+          to: '/activity/$entryId',
+          params: { entryId: logRowIdForTask(task) },
+        });
 
   const handleStop = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -148,22 +157,24 @@ const AgentTaskCard = ({
     >
       <div className="flex h-full min-w-0 flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+          <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+            {project && <ProjectChip project={project} />}
             {taskCardTitle(task)}
           </span>
-          {(task.status === 'running' ||
-            task.status === 'starting' ||
-            task.status === 'stopping') && (
-            <IconButton
-              icon={<CloseIcon size={20} />}
-              variant="ghost"
-              size="tiny"
-              surface="chalkboard"
-              label="Stop agent"
-              onClick={handleStop}
-              disabled={task.status === 'stopping'}
-            />
-          )}
+          {!foreign &&
+            (task.status === 'running' ||
+              task.status === 'starting' ||
+              task.status === 'stopping') && (
+              <IconButton
+                icon={<CloseIcon size={20} />}
+                variant="ghost"
+                size="tiny"
+                surface="chalkboard"
+                label="Stop agent"
+                onClick={handleStop}
+                disabled={task.status === 'stopping'}
+              />
+            )}
         </div>
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="min-w-0 truncate whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
@@ -205,20 +216,32 @@ const AgentTaskCard = ({
   );
 };
 
-const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
+const InterruptedNoticeCard = ({
+  entry,
+  project,
+  onOpenCrossProject,
+}: {
+  entry: TaskLogEntry;
+  project?: ScopeRow;
+  onOpenCrossProject: (project: ScopeRow, path: string) => void;
+}) => {
   const navigate = useNavigate();
+  const foreign = project && !project.isCurrent ? project : undefined;
+  const openEntry = () =>
+    foreign
+      ? onOpenCrossProject(foreign, `/activity/task:${entry.id}`)
+      : navigate({ to: '/activity/$entryId', params: { entryId: `task:${entry.id}` } });
   return (
     <Card
       surface="chalkboard"
       size="small"
       className={TASK_CARD_HEIGHT_CLASS}
-      onClick={() =>
-        navigate({ to: '/activity/$entryId', params: { entryId: `task:${entry.id}` } })
-      }
+      onClick={openEntry}
       ariaLabel={entry.planId ?? entry.planTitle}
     >
       <div className="flex h-full min-w-0 flex-col justify-center gap-1">
-        <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+        <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+          {project && <ProjectChip project={project} />}
           {entry.planId ?? entry.planTitle}
         </span>
         <Tooltip content="Click to open the run and retry it." surface="chalkboard">
@@ -231,14 +254,44 @@ const InterruptedNoticeCard = ({ entry }: { entry: TaskLogEntry }) => {
   );
 };
 
+interface ScopedTask {
+  task: AgentTaskState;
+  project?: ScopeRow;
+}
+
+interface ScopedNotice {
+  entry: TaskLogEntry;
+  project?: ScopeRow;
+}
+
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const taskLog = useAppStore((s) => s.taskLog);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
   const navigate = useNavigate();
-  const visibleTasks = agentStatus.slice(0, MAX_VISIBLE_TASKS);
-  const hiddenCount = agentStatus.length - visibleTasks.length;
-  const notices = interruptedNotices(taskLog);
+  const scope = useScope(null);
+  const allScopeRows = scope.groups.flatMap((g) => g.rows);
+  const checkedScopeRows = allScopeRows.filter((r) => r.checked);
+  const currentScopeRow = allScopeRows.find((r) => r.isCurrent);
+  const multiProject = checkedScopeRows.length > 1;
+  const otherScopeProjects = multiProject ? checkedScopeRows.filter((r) => !r.isCurrent) : [];
+  const foreignRuns = useScopeRuns(otherScopeProjects);
+
+  const ownTask = multiProject ? currentScopeRow : undefined;
+  const allTasks: ScopedTask[] = [
+    ...agentStatus.map((task) => ({ task, project: ownTask })),
+    ...foreignRuns.flatMap(({ project, agentStatus: foreignStatus }) =>
+      foreignStatus.map((task) => ({ task, project })),
+    ),
+  ];
+  const visibleTasks = allTasks.slice(0, MAX_VISIBLE_TASKS);
+  const hiddenCount = allTasks.length - visibleTasks.length;
+  const notices: ScopedNotice[] = [
+    ...interruptedNotices(taskLog).map((entry) => ({ entry, project: ownTask })),
+    ...foreignRuns.flatMap(({ project, taskLog: foreignTaskLog }) =>
+      interruptedNotices(foreignTaskLog).map((entry) => ({ entry, project })),
+    ),
+  ];
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
@@ -258,8 +311,14 @@ export const AgentSection = () => {
         className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
         {visibleTasks.length > 0 ? (
-          visibleTasks.map((task) => (
-            <AgentTaskCard key={task.id} task={task} onStop={stopAgentTask} />
+          visibleTasks.map(({ task, project }) => (
+            <AgentTaskCard
+              key={task.id}
+              task={task}
+              project={project}
+              onOpenCrossProject={scope.openRow}
+              onStop={stopAgentTask}
+            />
           ))
         ) : notices.length === 0 ? (
           <Card surface="chalkboard" size="small" className={TASK_CARD_HEIGHT_CLASS}>
@@ -270,8 +329,13 @@ export const AgentSection = () => {
             </div>
           </Card>
         ) : null}
-        {notices.map((entry) => (
-          <InterruptedNoticeCard key={entry.id} entry={entry} />
+        {notices.map(({ entry, project }) => (
+          <InterruptedNoticeCard
+            key={entry.id}
+            entry={entry}
+            project={project}
+            onOpenCrossProject={scope.openRow}
+          />
         ))}
       </div>
       <div className="mt-2 shrink-0">

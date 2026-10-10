@@ -32,6 +32,20 @@ export const postChatMessage = async (text: string): Promise<{ error?: string }>
   return data as { error?: string };
 };
 
+export const postChatMessageAt = async (
+  baseUrl: string,
+  text: string,
+): Promise<{ error?: string }> => {
+  const res = await fetch(`${baseUrl}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Failed to send message');
+  return data as { error?: string };
+};
+
 export const clearChat = async (): Promise<void> => {
   const res = await apiFetch(apiUrl('/api/chat'), { method: 'DELETE' });
   if (!res.ok) throw new Error(`Failed to clear chat: ${res.status}`);

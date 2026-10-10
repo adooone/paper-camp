@@ -1,4 +1,5 @@
-import { clearChat, postChatMessage } from '@/app/services/content';
+import type { ScopeRow } from '@/app/features/scope';
+import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { useToast } from '@dendelion/paper-ui';
@@ -56,27 +57,36 @@ export function useChatThread() {
     loadChat();
   }, [loadChat]);
 
-  const sendText = async (text: string, opts: { restoreOnFailure: boolean }) => {
+  const sendText = async (text: string, opts: { restoreOnFailure: boolean }, target?: ScopeRow) => {
     setSending(true);
     setPending(text);
     try {
-      return await sendChatText(text, opts, { postChatMessage, loadChat, toast, setInput });
+      const toForeign = target && !target.isCurrent;
+      return await sendChatText(text, opts, {
+        postChatMessage: toForeign
+          ? (t) => postChatMessageAt(target.runtimeUrl, t)
+          : postChatMessage,
+        loadChat: toForeign ? async () => {} : loadChat,
+        toast,
+        setInput,
+      });
     } finally {
       setPending(null);
       setSending(false);
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (target?: ScopeRow) => {
     const text = input.trim();
     if (!text) return;
     setInput('');
-    await sendText(text, { restoreOnFailure: true });
+    return await sendText(text, { restoreOnFailure: true }, target);
   };
 
   // A picked option answers exactly like a typed message, but never touches the
   // composer's draft — it isn't that draft.
-  const handleAnswer = async (text: string) => sendText(text, { restoreOnFailure: false });
+  const handleAnswer = async (text: string, target?: ScopeRow) =>
+    sendText(text, { restoreOnFailure: false }, target);
 
   const openConfirmClear = () => setConfirmOpen(true);
   const closeConfirmClear = () => setConfirmOpen(false);

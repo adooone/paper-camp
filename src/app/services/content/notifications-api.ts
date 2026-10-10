@@ -27,3 +27,11 @@ export const markNotificationRead = async (id: string) => {
   });
   if (!res.ok) throw new Error(`Failed to mark notification read: ${res.status}`);
 };
+
+export const markNotificationReadAt = async (baseUrl: string, id: string): Promise<void> => {
+  await fetch(`${baseUrl}/api/notifications/mark-read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+};

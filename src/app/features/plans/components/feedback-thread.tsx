@@ -1,5 +1,6 @@
 import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
 import { QuestionCard } from '@/app/features/plans/components/question-card';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 import {
   Button,
@@ -39,6 +40,9 @@ interface FeedbackThreadProps {
    * field sends through here exactly as a typed message does (IDEA-287). */
   onAnswer?: (text: string) => Promise<boolean>;
   answering?: boolean;
+  /** Tags every message with the scope project it belongs to, when more than
+   * one project is in view (IDEA-291). */
+  project?: ScopeRow;
 }
 
 export const FeedbackThread = ({
@@ -50,6 +54,7 @@ export const FeedbackThread = ({
   promotingIndex,
   onAnswer,
   answering = false,
+  project,
 }: FeedbackThreadProps) => (
   <>
     {messages.map((message, i) => {
@@ -121,6 +126,7 @@ export const FeedbackThread = ({
                 </Button>
               </Tooltip>
             )}
+            {project && <ProjectChip project={project} />}
             {message.date && (
               <span className="text-sm font-semibold opacity-[0.45]">{message.date}</span>
             )}

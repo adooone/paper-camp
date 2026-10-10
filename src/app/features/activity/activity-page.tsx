@@ -33,6 +33,12 @@ export const ActivityPage = () => {
     activityKind,
     setActivityKind,
     chat,
+    handleSend,
+    handleAnswer,
+    projectOptions,
+    targetProject,
+    setTargetProjectKey,
+    onOpenCrossProject,
   } = useActivityPage();
 
   return (
@@ -74,7 +80,10 @@ export const ActivityPage = () => {
           input={chat.input}
           setInput={chat.setInput}
           sending={chat.sending}
-          onSend={chat.handleSend}
+          onSend={handleSend}
+          projectOptions={projectOptions}
+          targetProjectKey={targetProject?.key}
+          onTargetProjectChange={setTargetProjectKey}
         />
       )}
 
@@ -108,8 +117,9 @@ export const ActivityPage = () => {
             entries={entries}
             hasMore={hasMore}
             onLoadMore={loadMore}
-            onAnswer={chat.handleAnswer}
+            onAnswer={handleAnswer}
             answering={chat.sending}
+            onOpenCrossProject={onOpenCrossProject}
           />
         ) : (
           <p className="opacity-50">No entries match these filters.</p>

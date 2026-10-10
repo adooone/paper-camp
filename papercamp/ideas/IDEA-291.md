@@ -2,7 +2,7 @@
 id: IDEA-291
 title: Several projects in one view
 type: feat
-status: planned
+status: review
 created: 2026-10-09
 tags:
   - app
@@ -120,6 +120,7 @@ projects. The embedded dev toolbar, which is always one project.
       Project chips, Group by Project, Horizon per project, cross-mount
       navigation with the scope kept, per-project run order stamps.
       run: 15m17s · 284 in · 86.4k out · sonnet-5 · sess:7fe8fb92-4c51-4f33-8aed-805bdd5a0851
-- [ ] Show Activity and the Stack's agents across the scope
+- [x] Show Activity and the Stack's agents across the scope
       Merged stream with chips and per-project unread, the composer's *in*
       picker, and the Stack agent section listing every project in scope.
+      run: 12m50s · 212 in · 71.8k out · sonnet-5 · sess:810b58d2-87a2-49dd-b9d9-934e5c88ffb5

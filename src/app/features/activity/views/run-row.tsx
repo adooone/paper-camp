@@ -1,4 +1,5 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Row, Stamp, Text } from '@dendelion/paper-ui';
@@ -11,16 +12,23 @@ const LOG_ROW_GRID_CLASS =
 
 export interface LogRowViewProps {
   row: LogRow;
+  project?: ScopeRow;
+  onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
-export const LogRowView = ({ row }: LogRowViewProps) => {
+export const LogRowView = ({ row, project, onOpenCrossProject }: LogRowViewProps) => {
   const navigate = useNavigate();
+  const foreign = project && !project.isCurrent ? project : undefined;
+  const handleOpen =
+    foreign && onOpenCrossProject
+      ? () => onOpenCrossProject(foreign, `/activity/${row.id}`)
+      : () => navigate({ to: '/activity/$entryId', params: { entryId: row.id } });
 
   return (
     <Row
       surface="card"
       columns={{ title: 'minmax(0,1fr)' }}
-      onClick={() => navigate({ to: '/activity/$entryId', params: { entryId: row.id } })}
+      onClick={handleOpen}
       ariaLabel={row.title}
       title={
         <div className={LOG_ROW_GRID_CLASS}>
@@ -31,6 +39,7 @@ export const LogRowView = ({ row }: LogRowViewProps) => {
             {LOG_TYPE_LABELS[row.type]}
           </Stamp>
           <span className="flex min-w-0 items-center gap-2">
+            {project && <ProjectChip project={project} />}
             <PlanIdStamp id={row.entityId} />
             <span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.title}</span>
           </span>

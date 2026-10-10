@@ -1,3 +1,6 @@
+import type { ScopeRow } from '@/app/features/scope';
+import type { ActivityEntry } from '@/core/activity-entries';
+import type { LogSort } from '@/core/run-filters';
 import { isClosedEntity } from '@/core/status';
 import type { EntityStatus, Issue, LogRow } from '@/types/index';
 
@@ -30,6 +33,40 @@ export const markReadIdFor = (row: LogRow): string | undefined => {
   if (row.source.kind === 'reply') return row.source.notification.id;
   return undefined;
 };
+
+export interface ScopedActivityEntry {
+  entry: ActivityEntry;
+  project?: ScopeRow;
+}
+
+const isRunningEntry = (scoped: ScopedActivityEntry): boolean =>
+  scoped.entry.entryKind === 'run' && scoped.entry.row.outcome === 'running';
+
+const byNewestEntry = (a: ScopedActivityEntry, b: ScopedActivityEntry) =>
+  b.entry.timestamp.localeCompare(a.entry.timestamp);
+
+/** Merges the current project's entries with every other scope project's by
+ * time (IDEA-291) — running tasks across all of them stay pinned above the
+ * rest, the same way `buildActivityEntries` pins a single project's own. A
+ * non-time sort has no cross-project ordering to honor, so projects keep
+ * their own already-sorted order, current project first. */
+export function mergeScopedActivityEntries(
+  own: ActivityEntry[],
+  foreign: { project: ScopeRow; entries: ActivityEntry[] }[],
+  sort: LogSort,
+  ownProject: ScopeRow | undefined,
+): ScopedActivityEntry[] {
+  const ownScoped = own.map((entry) => ({ entry, project: ownProject }));
+  const foreignScoped = foreign.flatMap(({ project, entries }) =>
+    entries.map((entry) => ({ entry, project })),
+  );
+  const all = [...ownScoped, ...foreignScoped];
+  if (sort !== 'time') return all;
+
+  const running = all.filter(isRunningEntry).sort(byNewestEntry);
+  const rest = all.filter((scoped) => !isRunningEntry(scoped)).sort(byNewestEntry);
+  return [...running, ...rest];
+}
 
 export const promoteLabel = (
   issue: Issue,
