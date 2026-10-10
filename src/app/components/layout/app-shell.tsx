@@ -51,17 +51,6 @@ const GitFileList = lazy(() =>
     default: m.GitFileList,
   })),
 );
-const LogSidebar = lazy(() =>
-  importWithRecovery('LogSidebar', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogSidebar,
-  })),
-);
-const LogStatsSidebar = lazy(() =>
-  importWithRecovery('LogStatsSidebar', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogStatsSidebar,
-  })),
-);
-
 // Plans has its own skeleton; Docs/Roadmap/Settings/Log share a generic one;
 // everything else falls back to a named spinner.
 const ROW_SKELETON_PREFIXES = ['/docs', '/roadmap', '/settings', '/log', '/chat'];
@@ -93,7 +82,6 @@ export const AppShell = () => {
     isDocsArea,
     isSettingsArea,
     isGitArea,
-    isLogArea,
     isInHub,
     stackOpen,
     toggleStack,
@@ -191,16 +179,6 @@ export const AppShell = () => {
                     {isGitArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <GitFileList />
-                      </Suspense>
-                    )}
-                    {isLogArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <LogSidebar />
-                      </Suspense>
-                    )}
-                    {isLogArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <LogStatsSidebar />
                       </Suspense>
                     )}
                   </SidebarShell>

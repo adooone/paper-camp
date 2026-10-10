@@ -40,7 +40,7 @@ export async function sendChatText(
   }
 }
 
-export function useChatPage() {
+export function useChatThread() {
   const thread = useAppStore((s) => s.chatThread) ?? [];
   const loading = useAppStore((s) => s.chatLoading);
   const loadChat = useAppStore((s) => s.loadChat);

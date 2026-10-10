@@ -41,6 +41,15 @@ export interface LogSearchParams {
   q?: string;
   sort?: string;
   unread?: string;
+  kind?: string;
+}
+
+export type ActivityKind = 'all' | 'runs' | 'chat';
+
+const ACTIVITY_KINDS: ActivityKind[] = ['all', 'runs', 'chat'];
+
+export function parseActivityKind(value: string | undefined): ActivityKind {
+  return ACTIVITY_KINDS.includes(value as ActivityKind) ? (value as ActivityKind) : 'all';
 }
 
 export function parseLogFilters(search: LogSearchParams): LogFilters {
@@ -74,6 +83,10 @@ const RANGE_WINDOW_MS: Record<Exclude<LogDateRange, 'all'>, number> = {
   '30d': 30 * 24 * 60 * 60 * 1000,
 };
 
+export function rangeCutoffMs(range: LogDateRange, now: number = Date.now()): number {
+  return range === 'all' ? 0 : now - RANGE_WINDOW_MS[range];
+}
+
 function reasonFor(row: LogRow): string {
   if (row.source.kind === 'task') return row.source.entry.reason ?? '';
   if (row.source.kind === 'issue') return row.source.issue.reason;
@@ -102,7 +115,7 @@ export function filterLogRows(
   filters: LogFilters,
   now: number = Date.now(),
 ): LogRow[] {
-  const cutoff = filters.range === 'all' ? 0 : now - RANGE_WINDOW_MS[filters.range];
+  const cutoff = rangeCutoffMs(filters.range, now);
   const matched = rows.filter((row) => matchesFilters(row, filters, cutoff));
   if (filters.sort === 'time') return matched;
   const running = matched.filter((row) => row.outcome === 'running');

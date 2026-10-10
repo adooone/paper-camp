@@ -91,10 +91,11 @@ The hub page. Any change to what a settings section or a stats card contains.
       the roadmap's sections with horizon chips and + Add item; `/roadmap`
       redirects; the item page sits under the Ideas tab; `RoadmapSidebar` deleted.
       run: 18m19s · 210 in · 86.1k out · sonnet-5 · sess:926e42c1-f8fe-456e-93bc-1254057c9c01
-- [ ] Merge Log and Chat into Activity
+- [x] Merge Log and Chat into Activity
       `/activity` and `/activity/$entryId` with the composer card, chat entries
       in the stream, log filters and kind chips in the toolbar, the stats summary
       line, and the `/log`, `/chat`, `/inbox`, `/tasks`, `/issues` redirects.
+      run: 14m58s · 218 in · 88.8k out · sonnet-5 · sess:34673854-ce47-4bd0-a633-ccb090ad5f2e
 - [ ] Build the Project page from Docs, Stats and Settings
       One sidebar with Docs, Stats and Settings groups under `/project/…`, Stats
       as the landing, and redirects from `/docs`, `/stats`, `/settings` and their

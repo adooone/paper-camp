@@ -37,20 +37,17 @@ const GitPage = lazy(() =>
     default: m.GitPage,
   })),
 );
-const LogPage = lazy(() =>
-  importWithRecovery('LogPage', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogPage,
+const ActivityPage = lazy(() =>
+  importWithRecovery('ActivityPage', () => import('@/app/features/activity/index')).then((m) => ({
+    default: m.ActivityPage,
   })),
 );
-const ChatPage = lazy(() =>
-  importWithRecovery('ChatPage', () => import('@/app/features/chat/index')).then((m) => ({
-    default: m.ChatPage,
-  })),
-);
-const LogEntryPage = lazy(() =>
-  importWithRecovery('LogEntryPage', () => import('@/app/features/runs/index')).then((m) => ({
-    default: m.LogEntryPage,
-  })),
+const ActivityEntryPage = lazy(() =>
+  importWithRecovery('ActivityEntryPage', () => import('@/app/features/activity/index')).then(
+    (m) => ({
+      default: m.ActivityEntryPage,
+    }),
+  ),
 );
 
 const rootRoute = createRootRoute({ component: AppShell });
@@ -156,7 +153,7 @@ const inboxRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/inbox',
   beforeLoad: () => {
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
@@ -186,11 +183,11 @@ const tasksRoute = createRoute({
   beforeLoad: ({ search }) => {
     if (search.taskId) {
       throw redirect({
-        to: '/log/$entryId',
+        to: '/activity/$entryId',
         params: { entryId: `task:${search.taskId}` },
       });
     }
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
@@ -198,40 +195,62 @@ const issuesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/issues',
   beforeLoad: () => {
-    throw redirect({ to: '/log' });
+    throw redirect({ to: '/activity' });
   },
 });
 
-const logRoute = createRoute({
+const activitySearchSchema = (search: Record<string, unknown>): LogSearchParams => ({
+  outcome: stringParam(search.outcome),
+  type: stringParam(search.type),
+  agent: stringParam(search.agent),
+  range: stringParam(search.range),
+  q: stringParam(search.q),
+  sort: stringParam(search.sort),
+  // `?unread=1` arrives as the number 1 through the router's search parser.
+  unread: search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
+  kind: stringParam(search.kind),
+});
+
+const activityRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/log',
-  component: LogPage,
-  validateSearch: (search: Record<string, unknown>): LogSearchParams => ({
-    outcome: stringParam(search.outcome),
-    type: stringParam(search.type),
-    agent: stringParam(search.agent),
-    range: stringParam(search.range),
-    q: stringParam(search.q),
-    sort: stringParam(search.sort),
-    // `?unread=1` arrives as the number 1 through the router's search parser.
-    unread:
-      search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
-  }),
+  path: '/activity',
+  component: ActivityPage,
+  validateSearch: activitySearchSchema,
   staticData: { layer: 'runtime' },
 });
 
-const chatRoute = createRoute({
+const activityEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/chat',
-  component: ChatPage,
+  path: '/activity/$entryId',
+  component: ActivityEntryPage,
   staticData: { layer: 'runtime' },
+});
+
+// `/log` and `/chat` were the old addresses for the merged Activity page
+// (IDEA-290) — kept as redirects so links already shared or bookmarked don't 404.
+const logRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/log',
+  validateSearch: activitySearchSchema,
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/activity', search });
+  },
 });
 
 const logEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log/$entryId',
-  component: LogEntryPage,
-  staticData: { layer: 'runtime' },
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/activity/$entryId', params });
+  },
+});
+
+const chatRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/chat',
+  beforeLoad: () => {
+    throw redirect({ to: '/activity', search: { kind: 'chat' } });
+  },
 });
 
 const routeTree = rootRoute.addChildren([
@@ -247,6 +266,8 @@ const routeTree = rootRoute.addChildren([
   settingsSectionRoute,
   tasksRoute,
   issuesRoute,
+  activityRoute,
+  activityEntryRoute,
   logRoute,
   logEntryRoute,
   chatRoute,

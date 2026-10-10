@@ -81,7 +81,7 @@ export const PageBreadcrumb = () => {
     }
     if (typeof entryId === 'string') {
       return [
-        { id: 'log', label: 'Log', onClick: () => navigate({ to: '/log' }) },
+        { id: 'activity', label: 'Activity', onClick: () => navigate({ to: '/activity' }) },
         ...(activeLogEntryTitle ? [{ id: 'entry', label: activeLogEntryTitle }] : []),
       ];
     }
