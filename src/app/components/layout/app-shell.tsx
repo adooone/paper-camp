@@ -39,6 +39,11 @@ const ProjectSidebar = lazy(() =>
     default: m.ProjectSidebar,
   })),
 );
+const ProjectsInView = lazy(() =>
+  importWithRecovery('ProjectsInView', () => import('@/app/features/scope/index')).then((m) => ({
+    default: m.ProjectsInView,
+  })),
+);
 const GitFileList = lazy(() =>
   importWithRecovery('GitFileList', () => import('@/app/features/git/index')).then((m) => ({
     default: m.GitFileList,
@@ -71,6 +76,8 @@ export const AppShell = () => {
     hasSidebar,
     sidebarAreaKey,
     isPlansArea,
+    isIdeasListArea,
+    isActivityListArea,
     isProjectArea,
     isGitArea,
     isInHub,
@@ -155,8 +162,18 @@ export const AppShell = () => {
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={closeMobileSidebar}
                   >
-                    {isPlansArea && <PlanActionsColumn />}
-                    {isPlansArea && <PlanActionsCommandsColumn />}
+                    {isPlansArea && !isIdeasListArea && <PlanActionsColumn />}
+                    {isPlansArea && !isIdeasListArea && <PlanActionsCommandsColumn />}
+                    {isIdeasListArea && (
+                      <Suspense fallback={<SidebarSkeleton />}>
+                        <ProjectsInView mode="list" countKind="ideas" />
+                      </Suspense>
+                    )}
+                    {isActivityListArea && (
+                      <Suspense fallback={<SidebarSkeleton />}>
+                        <ProjectsInView mode="list" countKind="activity" />
+                      </Suspense>
+                    )}
                     {isProjectArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <ProjectSidebar />

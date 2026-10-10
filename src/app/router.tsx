@@ -50,6 +50,16 @@ const ActivityEntryPage = lazy(() =>
   ),
 );
 
+const stringParam = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value : undefined;
+
+// `?p=` carries the project scope (IDEA-291) across the pages that show a
+// "Projects in view" sidebar — Ideas, Activity and Project.
+const scopeParam = (value: unknown): string | undefined => stringParam(value);
+const scopeSearchSchema = (search: Record<string, unknown>): { p?: string } => ({
+  p: scopeParam(search.p),
+});
+
 const rootRoute = createRootRoute({ component: AppShell });
 
 // The hub's own page, reachable whether or not a project is open. Registry state
@@ -65,9 +75,12 @@ const plansRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   component: PlansPage,
-  validateSearch: (search: Record<string, unknown>): { subject?: string; group?: GroupMode } => ({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { subject?: string; group?: GroupMode; p?: string } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
     group: isGroupMode(search.group) ? search.group : undefined,
+    p: scopeParam(search.p),
   }),
   staticData: { layer: 'corpus' },
 });
@@ -146,24 +159,28 @@ const projectDocsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/docs',
   component: DocsPage,
+  validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
 });
 const projectDocsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/docs/$section',
   component: DocsPage,
+  validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
 });
 const projectSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/settings',
   component: SettingsPage,
+  validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
 });
 const projectSettingsSectionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/settings/$section',
   component: SettingsPage,
+  validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
 });
 
@@ -208,6 +225,7 @@ const projectStatsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/project/stats',
   component: StatsPage,
+  validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
 });
 
@@ -217,9 +235,6 @@ const gitRoute = createRoute({
   component: GitPage,
   staticData: { layer: 'runtime' },
 });
-
-const stringParam = (value: unknown): string | undefined =>
-  typeof value === 'string' ? value : undefined;
 
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -246,7 +261,9 @@ const issuesRoute = createRoute({
   },
 });
 
-const activitySearchSchema = (search: Record<string, unknown>): LogSearchParams => ({
+const activitySearchSchema = (
+  search: Record<string, unknown>,
+): LogSearchParams & { p?: string } => ({
   outcome: stringParam(search.outcome),
   type: stringParam(search.type),
   agent: stringParam(search.agent),
@@ -256,6 +273,7 @@ const activitySearchSchema = (search: Record<string, unknown>): LogSearchParams 
   // `?unread=1` arrives as the number 1 through the router's search parser.
   unread: search.unread === '1' || search.unread === 1 || search.unread === true ? '1' : undefined,
   kind: stringParam(search.kind),
+  p: scopeParam(search.p),
 });
 
 const activityRoute = createRoute({

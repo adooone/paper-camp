@@ -7,6 +7,18 @@ export const fetchNotifications = async () => {
   return res.json() as Promise<Notification[]>;
 };
 
+// The registry holds runtimes this client is not currently pointed at, so the base
+// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
+export const fetchNotificationsAt = async (baseUrl: string): Promise<Notification[] | null> => {
+  try {
+    const res = await fetch(`${baseUrl}/api/notifications`);
+    if (!res.ok) return null;
+    return (await res.json()) as Notification[];
+  } catch {
+    return null;
+  }
+};
+
 export const markNotificationRead = async (id: string) => {
   const res = await fetch(apiUrl('/api/notifications/mark-read'), {
     method: 'POST',

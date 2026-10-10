@@ -53,6 +53,8 @@ export interface AppShellState {
   hasSidebar: boolean;
   sidebarAreaKey: string;
   isPlansArea: boolean;
+  isIdeasListArea: boolean;
+  isActivityListArea: boolean;
   isProjectArea: boolean;
   isGitArea: boolean;
   isInHub: boolean;
@@ -98,8 +100,8 @@ export function useAppShell(): AppShellState {
   // Docs, Stats and Settings live together under /project (IDEA-290); the project
   // sidebar picks its own active group from the fuller path.
   const isProjectArea = pathname === '/project' || pathname.startsWith('/project/');
-  // Log and Chat live together under /activity (IDEA-290); Activity has no sidebar
-  // of its own, so this only feeds the header tab, not hasSidebar below.
+  // Log and Chat live together under /activity (IDEA-290); the entry detail has no
+  // sidebar of its own, only the list does — see isActivityListArea below.
   const isActivityArea = pathname === '/activity' || pathname.startsWith('/activity/');
   const isGitArea = pathname === '/git';
   const activeId = isPlansArea
@@ -109,13 +111,25 @@ export function useAppShell(): AppShellState {
       : isActivityArea
         ? 'activity'
         : navItems.find((item) => item.path === pathname)?.id;
-  // List routes have no sidebar now that filters live in the toolbar;
+  // The Ideas list and Activity list gained a sidebar of their own (IDEA-291): the
+  // scope list of projects in view. Their own detail routes still have none.
+  const isIdeasListArea = pathname === '/';
+  const isActivityListArea = pathname === '/activity';
+  // List routes otherwise have no sidebar now that filters live in the toolbar;
   // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
     (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
+    isIdeasListArea ||
+    isActivityListArea ||
     isProjectArea ||
     isGitArea;
-  const sidebarAreaKey = isPlansArea ? 'plans' : isProjectArea ? 'project' : 'git';
+  const sidebarAreaKey = isPlansArea
+    ? 'plans'
+    : isActivityListArea
+      ? 'activity'
+      : isProjectArea
+        ? 'project'
+        : 'git';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -207,6 +221,8 @@ export function useAppShell(): AppShellState {
     hasSidebar,
     sidebarAreaKey,
     isPlansArea,
+    isIdeasListArea,
+    isActivityListArea,
     isProjectArea,
     isGitArea,
     isInHub: HUB_PATHS.includes(pathname),

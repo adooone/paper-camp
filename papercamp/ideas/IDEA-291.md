@@ -111,10 +111,11 @@ projects. The embedded dev toolbar, which is always one project.
       `fetchRoadmapAt`, `fetchRunsAt`, `fetchChatAt`, one `EventSource` per
       runtime in scope.
       run: 9m33s · 132 in · 39.1k out · sonnet-5 · sess:84741412-9bca-49fb-8576-0bf53176fb03
-- [ ] Turn the sidebar into the scope list
+- [x] Turn the sidebar into the scope list
       Machines and projects with checkboxes, counts, asleep rows, All/Clear and
       the All machines link on Ideas, Activity and Project; the header loses
       Back to projects.
+      run: 19m50s · 210 in · 88.2k out · sonnet-5 · sess:84741412-9bca-49fb-8576-0bf53176fb03
 - [ ] Show Ideas across the scope
       Project chips, Group by Project, Horizon per project, cross-mount
       navigation with the scope kept, per-project run order stamps.
