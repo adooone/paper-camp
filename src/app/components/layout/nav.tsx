@@ -1,14 +1,30 @@
+import { Stamp } from '@dendelion/paper-ui';
+
 export const HUB_PATH = '/projects';
 export const HUB_PATHS: string[] = [HUB_PATH];
 
 export const navItems = [
   { id: 'plans', label: 'Ideas', path: '/' },
   { id: 'activity', label: 'Activity', path: '/activity' },
+  { id: 'chat', label: 'Chat', path: '/chat' },
   { id: 'project', label: 'Project', path: '/project' },
 ];
 
-export const NavLabel = ({ item }: { item: (typeof navItems)[number] }) => (
-  <span className="inline-flex items-center gap-1.5">{item.label}</span>
+export const NavLabel = ({
+  item,
+  chatUnansweredCount = 0,
+}: {
+  item: (typeof navItems)[number];
+  chatUnansweredCount?: number;
+}) => (
+  <span className="inline-flex items-center gap-1.5">
+    {item.label}
+    {item.id === 'chat' && chatUnansweredCount > 0 && (
+      <Stamp size="small" variant="warning">
+        {chatUnansweredCount}
+      </Stamp>
+    )}
+  </span>
 );
 
 export const SIDEBAR_WIDTH = 224;

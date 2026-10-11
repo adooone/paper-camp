@@ -4,6 +4,7 @@ import {
   SIDEBAR_BREAKPOINT_QUERY,
   navItems,
 } from '@/app/components/layout/nav';
+import { useScope } from '@/app/features/scope';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
@@ -55,9 +56,11 @@ export interface AppShellState {
   isPlansArea: boolean;
   isIdeasListArea: boolean;
   isActivityListArea: boolean;
+  isChatArea: boolean;
   isProjectArea: boolean;
   isGitArea: boolean;
   isInHub: boolean;
+  chatUnansweredCount: number;
   stackOpen: boolean;
   toggleStack: () => void;
   isLarge: boolean;
@@ -103,6 +106,7 @@ export function useAppShell(): AppShellState {
   // Log and Chat live together under /activity (IDEA-290); the entry detail has no
   // sidebar of its own, only the list does — see isActivityListArea below.
   const isActivityArea = pathname === '/activity' || pathname.startsWith('/activity/');
+  const isChatArea = pathname === '/chat';
   const isGitArea = pathname === '/git';
   const activeId = isPlansArea
     ? 'plans'
@@ -115,6 +119,11 @@ export function useAppShell(): AppShellState {
   // scope list of projects in view. Their own detail routes still have none.
   const isIdeasListArea = pathname === '/';
   const isActivityListArea = pathname === '/activity';
+  const scopeChat = useScope('chat');
+  const chatUnansweredCount = scopeChat.groups
+    .flatMap((g) => g.rows)
+    .filter((r) => r.checked)
+    .reduce((sum, r) => sum + (r.count ?? 0), 0);
   // List routes otherwise have no sidebar now that filters live in the toolbar;
   // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
@@ -127,9 +136,11 @@ export function useAppShell(): AppShellState {
     ? 'plans'
     : isActivityListArea
       ? 'activity'
-      : isProjectArea
-        ? 'project'
-        : 'git';
+      : isChatArea
+        ? 'chat'
+        : isProjectArea
+          ? 'project'
+          : 'git';
   const [stackOpen, setStackOpen] = useState(readStoredStackOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isLarge = useMediaQuery(LARGE_SCREEN_QUERY);
@@ -223,9 +234,11 @@ export function useAppShell(): AppShellState {
     isPlansArea,
     isIdeasListArea,
     isActivityListArea,
+    isChatArea,
     isProjectArea,
     isGitArea,
     isInHub: HUB_PATHS.includes(pathname),
+    chatUnansweredCount,
     stackOpen,
     toggleStack,
     isLarge,

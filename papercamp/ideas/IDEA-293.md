@@ -77,9 +77,10 @@ The embedded dev toolbar.
       project chips, answers routed to the asking project, Clear chat scoped to
       the current project.
       run: 4m53s · 72 in · 22.4k out · sonnet-5 · sess:44cd8bdb-911e-43f1-ae8c-a94b6b82774e
-- [ ] Add the Chat tab to the header
+- [x] Add the Chat tab to the header
       `navItems` entry with the unanswered stamp, shell area flag, sidebar key,
       skeleton prefix.
+      run: 2m50s · 58 in · 10k out · sonnet-5 · sess:ab45bc2c-553e-4d5b-add7-5b761bcece57
 - [ ] Strip chat out of Activity
       Composer, chat entries, kind chips, `kind` param, Clear chat and the
       unanswered stamp removed; `?kind=chat` redirects to `/chat`; reply

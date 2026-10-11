@@ -51,7 +51,7 @@ const GitFileList = lazy(() =>
 );
 // Plans has its own skeleton; a roadmap item and Project share a generic one;
 // everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/activity'];
+const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/activity', '/chat'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
 };
@@ -81,6 +81,7 @@ export const AppShell = () => {
     isProjectArea,
     isGitArea,
     isInHub,
+    chatUnansweredCount,
     stackOpen,
     toggleStack,
     isLarge,
@@ -136,7 +137,7 @@ export const AppShell = () => {
                   onClick={() => navigate({ to: item.path })}
                   aria-current={item.id === activeId ? 'page' : undefined}
                 >
-                  <NavLabel item={item} />
+                  <NavLabel item={item} chatUnansweredCount={chatUnansweredCount} />
                 </Button>
               ))}
             </nav>
@@ -231,7 +232,7 @@ export const AppShell = () => {
             aria-current={item.id === activeId ? 'page' : undefined}
             className="min-h-11"
           >
-            <NavLabel item={item} />
+            <NavLabel item={item} chatUnansweredCount={chatUnansweredCount} />
           </Button>
         ))}
       </nav>
