@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildMachineLink,
+  hostLabel,
   loadMachineConnection,
+  pairMachine,
+  parsePairCode,
   readMachineConnection,
-  rehostPairingLink,
+  readPairCodeFromHash,
 } from './machine-connection';
-import { listMachines } from './machine-store';
+import { listMachines, machineToken } from './machine-store';
 
 class FakeLocalStorage {
   private store = new Map<string, string>();
@@ -70,26 +74,118 @@ describe('loadMachineConnection', () => {
   });
 });
 
-describe('rehostPairingLink', () => {
-  it('carries machine and token onto the pasting origin instead of the link’s own', () => {
-    expect(
-      rehostPairingLink(
-        'https://paper.adoo.one/?machine=https%3A%2F%2Fdeimos.example%2F&token=abc',
-        'https://preview.example',
-        '',
-      ),
-    ).toBe('https://preview.example/?machine=https%3A%2F%2Fdeimos.example%2F&token=abc');
+describe('parsePairCode', () => {
+  it('splits the code from the tailnet host', () => {
+    expect(parsePairCode('7KQ4-M9XZ@deimos.pitta-ray.ts.net')).toEqual({
+      code: '7KQ4-M9XZ',
+      host: 'deimos.pitta-ray.ts.net',
+      machineUrl: 'https://deimos.pitta-ray.ts.net',
+    });
   });
 
-  it('keeps a mount prefix and rejects text that is not a machine link', () => {
+  it('trims surrounding whitespace from a pasted code', () => {
+    expect(parsePairCode('  7KQ4-M9XZ@deimos.pitta-ray.ts.net  ')?.host).toBe(
+      'deimos.pitta-ray.ts.net',
+    );
+  });
+
+  it('rejects text with no @ or nothing on either side of it', () => {
+    expect(parsePairCode('not a code')).toBeNull();
+    expect(parsePairCode('@deimos.pitta-ray.ts.net')).toBeNull();
+    expect(parsePairCode('7KQ4-M9XZ@')).toBeNull();
+  });
+});
+
+describe('hostLabel', () => {
+  it('is the first label of a tailnet hostname', () => {
+    expect(hostLabel('deimos.pitta-ray.ts.net')).toBe('deimos');
+  });
+});
+
+describe('readPairCodeFromHash', () => {
+  it('reads a code out of the #pair= fragment', () => {
+    expect(readPairCodeFromHash('#pair=7KQ4-M9XZ%40deimos.pitta-ray.ts.net')).toEqual({
+      code: '7KQ4-M9XZ',
+      host: 'deimos.pitta-ray.ts.net',
+      machineUrl: 'https://deimos.pitta-ray.ts.net',
+    });
+  });
+
+  it('is null with no #pair= fragment at all', () => {
+    expect(readPairCodeFromHash('')).toBeNull();
+    expect(readPairCodeFromHash('#other=1')).toBeNull();
+  });
+});
+
+describe('pairMachine', () => {
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', new FakeLocalStorage());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('stores the token it gets back, exactly as a link pairing does', async () => {
+    const probeMachine = vi.fn().mockResolvedValue({ projects: [], pendingUpdateVersion: null });
+    const redeemCode = vi.fn().mockResolvedValue({ token: 'abc', origin: 'https://preview.test' });
+
+    const outcome = await pairMachine(
+      'https://deimos.pitta-ray.ts.net',
+      '7KQ4-M9XZ',
+      probeMachine,
+      redeemCode,
+    );
+
+    expect(outcome).toEqual({
+      ok: true,
+      machineUrl: 'https://deimos.pitta-ray.ts.net',
+      pairingToken: 'abc',
+    });
+    expect(machineToken('https://deimos.pitta-ray.ts.net')).toBe('abc');
+    expect(redeemCode).toHaveBeenCalledWith('https://deimos.pitta-ray.ts.net', '7KQ4-M9XZ');
+  });
+
+  it('reports unreachable without ever redeeming the code', async () => {
+    const probeMachine = vi.fn().mockResolvedValue(null);
+    const redeemCode = vi.fn();
+
+    const outcome = await pairMachine(
+      'https://deimos.pitta-ray.ts.net',
+      '7KQ4-M9XZ',
+      probeMachine,
+      redeemCode,
+    );
+
+    expect(outcome).toEqual({ ok: false, reason: 'unreachable' });
+    expect(redeemCode).not.toHaveBeenCalled();
+  });
+
+  it('reports rejected for an expired or already-used code', async () => {
+    const probeMachine = vi.fn().mockResolvedValue({ projects: [], pendingUpdateVersion: null });
+    const redeemCode = vi.fn().mockResolvedValue(null);
+
+    const outcome = await pairMachine(
+      'https://deimos.pitta-ray.ts.net',
+      '7KQ4-M9XZ',
+      probeMachine,
+      redeemCode,
+    );
+
+    expect(outcome).toEqual({ ok: false, reason: 'rejected' });
+  });
+});
+
+describe('buildMachineLink', () => {
+  it('carries machine and token onto the pairing origin', () => {
     expect(
-      rehostPairingLink(
-        'https://paper.adoo.one/?machine=http%3A%2F%2Flocalhost%3A4333',
-        'http://app.test',
-        '/paper-camp',
-      ),
-    ).toBe('http://app.test/paper-camp?machine=http%3A%2F%2Flocalhost%3A4333');
-    expect(rehostPairingLink('not a link', 'http://app.test', '')).toBeNull();
-    expect(rehostPairingLink('https://paper.adoo.one/roadmap', 'http://app.test', '')).toBeNull();
+      buildMachineLink('https://deimos.pitta-ray.ts.net', 'abc', 'https://preview.example', ''),
+    ).toBe('https://preview.example/?machine=https%3A%2F%2Fdeimos.pitta-ray.ts.net&token=abc');
+  });
+
+  it('keeps a mount prefix and omits a missing token', () => {
+    expect(
+      buildMachineLink('https://deimos.pitta-ray.ts.net', '', 'http://app.test', '/paper-camp'),
+    ).toBe('http://app.test/paper-camp?machine=https%3A%2F%2Fdeimos.pitta-ray.ts.net');
   });
 });

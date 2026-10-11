@@ -106,10 +106,11 @@ The `--share` tunnel, which pairing no longer uses. Revoking a paired origin.
       Mint a code, print the QR code on a TTY and the code line, wait for the
       outcome, cancel on Ctrl-C, refuse without a tailnet name.
       run: 5m13s · 136 in · 38.4k out · sonnet-5 · sess:b580123d-2f78-44f5-b3cb-b32b0e2742e0
-- [ ] Pair from a code in the web app
+- [x] Pair from a code in the web app
       `#pair=` on load, the Add a machine card taking a code, the reachability
       probe with its Tailscale message, the expired-code message, and
       `rehostPairingLink` deleted.
+      run: 7m47s · 108 in · 43.6k out · sonnet-5 · sess:b580123d-2f78-44f5-b3cb-b32b0e2742e0
 - [ ] Remove the printed links
       Banner and `status` print the tailnet name and the `pair` hint; drop
       `status --qr` and the `?machine=`/`?token=` handling, keeping the loopback
