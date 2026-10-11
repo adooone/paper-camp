@@ -2,7 +2,7 @@ import type { ScopeRow } from '@/app/features/scope';
 import { Button, Card, Select, Textarea } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 
-export interface ActivityComposerProps {
+export interface ChatComposerProps {
   input: string;
   setInput: (value: string) => void;
   sending: boolean;
@@ -12,7 +12,7 @@ export interface ActivityComposerProps {
   onTargetProjectChange?: (key: string) => void;
 }
 
-export const ActivityComposer = ({
+export const ChatComposer = ({
   input,
   setInput,
   sending,
@@ -20,7 +20,7 @@ export const ActivityComposer = ({
   projectOptions,
   targetProjectKey,
   onTargetProjectChange,
-}: ActivityComposerProps) => (
+}: ChatComposerProps) => (
   <Card size="small" accent accentColor="slate" texture={surface.card} className="mb-4">
     <div className="flex flex-col gap-2">
       <Textarea

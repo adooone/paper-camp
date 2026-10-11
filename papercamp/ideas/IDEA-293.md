@@ -66,11 +66,12 @@ Chat threads per idea. Message search. Editing or deleting a single message.
 The embedded dev toolbar.
 
 ### Phases
-- [ ] Move the chat pieces into a Chat feature
+- [x] Move the chat pieces into a Chat feature
       `features/chat/` with the thread hook, `ChatComposer` and
       `ClearChatModal` moved from Activity; the `/chat` route renders the page
       with title actions, the thread oldest first, the composer under it and
       scroll to the newest message.
+      run: 4m2s · 80 in · 16.9k out · sonnet-5 · sess:44cd8bdb-911e-43f1-ae8c-a94b6b82774e
 - [ ] Merge chat across the scope
       Scope list sidebar with unanswered counts, the thread merged by time with
       project chips, answers routed to the asking project, Clear chat scoped to

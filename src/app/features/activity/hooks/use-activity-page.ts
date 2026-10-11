@@ -1,3 +1,4 @@
+import { useChatThread } from '@/app/features/chat/hooks';
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
 import { buildActivityEntries } from '@/core/activity-entries';
@@ -17,7 +18,6 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
 import { markReadIdFor, mergeScopedActivityEntries } from '../helpers';
-import { useChatThread } from './use-chat-thread';
 import { useLogRows } from './use-run-rows';
 import { useScopeActivity } from './use-scope-activity';
 

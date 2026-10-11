@@ -1,15 +1,9 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
+import { ChatComposer, ClearChatModal } from '@/app/features/chat/views';
 import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useActivityPage } from './hooks';
-import {
-  ActivityComposer,
-  ActivityStatsLine,
-  ActivityStream,
-  ActivityTitleActions,
-  ActivityToolbar,
-  ClearChatModal,
-} from './views';
+import { ActivityStatsLine, ActivityStream, ActivityTitleActions, ActivityToolbar } from './views';
 
 export const ActivityPage = () => {
   const {
@@ -76,7 +70,7 @@ export const ActivityPage = () => {
       {chat.loading && chat.thread.length === 0 ? (
         <RowSkeleton />
       ) : (
-        <ActivityComposer
+        <ChatComposer
           input={chat.input}
           setInput={chat.setInput}
           sending={chat.sending}

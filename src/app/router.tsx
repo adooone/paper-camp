@@ -49,6 +49,11 @@ const ActivityEntryPage = lazy(() =>
     }),
   ),
 );
+const ChatPage = lazy(() =>
+  importWithRecovery('ChatPage', () => import('@/app/features/chat/index')).then((m) => ({
+    default: m.ChatPage,
+  })),
+);
 
 const stringParam = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
@@ -291,8 +296,8 @@ const activityEntryRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
-// `/log` and `/chat` were the old addresses for the merged Activity page
-// (IDEA-290) — kept as redirects so links already shared or bookmarked don't 404.
+// `/log` was the old address for the merged Activity page (IDEA-290) — kept as a
+// redirect so links already shared or bookmarked don't 404.
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
@@ -313,9 +318,8 @@ const logEntryRoute = createRoute({
 const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/chat',
-  beforeLoad: () => {
-    throw redirect({ to: '/activity', search: { kind: 'chat' } });
-  },
+  component: ChatPage,
+  staticData: { layer: 'runtime' },
 });
 
 const routeTree = rootRoute.addChildren([
