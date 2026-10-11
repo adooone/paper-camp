@@ -2,8 +2,9 @@
 id: IDEA-293
 title: Chat gets its own page
 type: feat
-status: review
+status: done
 created: 2026-10-11
+updated: 2026-10-11
 tags:
   - app
   - ui
