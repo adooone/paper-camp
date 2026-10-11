@@ -2,11 +2,9 @@ import type { ScopeRow } from '@/app/features/scope';
 import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { isUnansweredQuestion } from '@/core/chat-file';
 import { useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
-
-const isUnansweredQuestion = (m: { kind: string; state?: string }) =>
-  m.kind === 'question' && (m.state ?? 'open') === 'open';
 
 export async function sendChatText(
   text: string,

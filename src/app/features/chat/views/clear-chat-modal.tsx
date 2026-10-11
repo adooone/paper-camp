@@ -5,13 +5,26 @@ interface ClearChatModalProps {
   onClose: () => void;
   onConfirm: () => void;
   confirming: boolean;
+  projectName?: string;
 }
 
-export const ClearChatModal = ({ open, onClose, onConfirm, confirming }: ClearChatModalProps) => (
-  <Modal open={open} onClose={onClose} title="Clear chat?" size="small">
+export const ClearChatModal = ({
+  open,
+  onClose,
+  onConfirm,
+  confirming,
+  projectName,
+}: ClearChatModalProps) => (
+  <Modal
+    open={open}
+    onClose={onClose}
+    title={projectName ? `Clear ${projectName}'s chat?` : 'Clear chat?'}
+    size="small"
+  >
     <div className="flex flex-col gap-4">
       <p className="m-0 text-sm">
-        This empties the thread except any unanswered question. There's no export or undo.
+        This empties {projectName ? `${projectName}'s thread` : 'the thread'} except any unanswered
+        question. There's no export or undo.
       </p>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onClose} disabled={confirming}>

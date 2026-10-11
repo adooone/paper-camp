@@ -3,18 +3,37 @@ import { FeedbackThread } from '@/app/features/plans/components';
 import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useEffect, useRef } from 'react';
-import { useChatThread } from './hooks';
+import { useChatPage } from './hooks';
 import { ChatComposer, ChatTitleActions, ClearChatModal } from './views';
 
 export const ChatPage = () => {
-  const chat = useChatThread();
+  const {
+    loading,
+    messages,
+    pending,
+    sending,
+    input,
+    setInput,
+    handleSend,
+    handleAnswer,
+    unansweredCount,
+    confirmOpen,
+    openConfirmClear,
+    closeConfirmClear,
+    handleClear,
+    clearing,
+    projectOptions,
+    targetProject,
+    setTargetProjectKey,
+    currentScopeRow,
+  } = useChatPage();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!chat.loading) bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [chat.loading]);
+    if (!loading) bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [loading]);
 
-  const hasChatHistory = chat.thread.length > 0;
+  const hasChatHistory = messages.length > 0;
 
   return (
     <div>
@@ -23,42 +42,44 @@ export const ChatPage = () => {
         <div className="flex-1" />
         {hasChatHistory && (
           <ChatTitleActions
-            unansweredCount={chat.unansweredCount}
+            unansweredCount={unansweredCount}
             hasChatHistory={hasChatHistory}
-            onClearChat={chat.openConfirmClear}
+            onClearChat={openConfirmClear}
           />
         )}
       </div>
 
-      {chat.loading && !hasChatHistory && <RowSkeleton />}
-      {!chat.loading && !hasChatHistory && (
+      {loading && !hasChatHistory && <RowSkeleton />}
+      {!loading && !hasChatHistory && (
         <EmptyState
           illustration={<DoodleIllustration name="resting-pen" />}
           message="No messages yet."
         />
       )}
 
-      {hasChatHistory && (
+      {messages.map(({ message, index, project }) => (
         <FeedbackThread
-          messages={chat.thread}
+          key={`chat-${project?.key ?? 'own'}-${index}`}
+          messages={[message]}
           undo={null}
           undoing={false}
           onUndo={() => {}}
-          onAnswer={chat.handleAnswer}
-          answering={chat.sending}
+          onAnswer={(text) => handleAnswer(text, project)}
+          answering={sending}
+          project={project}
         />
-      )}
+      ))}
 
-      {chat.pending && (
+      {pending && (
         <div className="flex flex-col gap-1 items-end mb-3">
           <div className="max-w-[85%]">
             <Card size="small" surface="paper" texture="parchment" accent accentColor="blue">
-              {chat.pending}
+              {pending}
             </Card>
           </div>
         </div>
       )}
-      {chat.sending && (
+      {sending && (
         <div className="flex flex-col gap-1 items-start mb-3">
           <Card size="small" texture={surface.nestedCard}>
             <Spinner size="small" label="Agent thinking…" />
@@ -69,17 +90,21 @@ export const ChatPage = () => {
       <div ref={bottomRef} />
 
       <ChatComposer
-        input={chat.input}
-        setInput={chat.setInput}
-        sending={chat.sending}
-        onSend={() => chat.handleSend()}
+        input={input}
+        setInput={setInput}
+        sending={sending}
+        onSend={handleSend}
+        projectOptions={projectOptions}
+        targetProjectKey={targetProject?.key}
+        onTargetProjectChange={setTargetProjectKey}
       />
 
       <ClearChatModal
-        open={chat.confirmOpen}
-        onClose={chat.closeConfirmClear}
-        onConfirm={chat.handleClear}
-        confirming={chat.clearing}
+        open={confirmOpen}
+        onClose={closeConfirmClear}
+        onConfirm={handleClear}
+        confirming={clearing}
+        projectName={currentScopeRow?.name}
       />
     </div>
   );

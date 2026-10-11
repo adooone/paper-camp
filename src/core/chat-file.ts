@@ -14,7 +14,7 @@ export function formatChatFile(messages: ThreadMessage[]): string {
   return `${THREAD_SECTION.formatLines(messages).join('\n')}\n`;
 }
 
-function isUnansweredQuestion(message: ThreadMessage): boolean {
+export function isUnansweredQuestion(message: ThreadMessage): boolean {
   return message.kind === 'question' && message.state === 'open';
 }
 

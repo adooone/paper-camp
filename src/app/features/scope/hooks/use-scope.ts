@@ -11,7 +11,11 @@ import {
   scopeKey,
   serializeScopeParam,
 } from '@/app/services/scope';
-import { openIdeasCount, unreadActivityCount } from '@/app/services/scope-counts';
+import {
+  openIdeasCount,
+  unansweredChatCount,
+  unreadActivityCount,
+} from '@/app/services/scope-counts';
 import { lastScopeFor, rememberScope } from '@/app/services/scope-store';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -19,7 +23,7 @@ import { resolveCurrentProject } from '../current-project';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
-export type ScopeCountKind = 'ideas' | 'activity' | null;
+export type ScopeCountKind = 'ideas' | 'activity' | 'chat' | null;
 
 export interface ScopeRow {
   key: ScopeKey;
@@ -129,7 +133,9 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
         const count =
           countKind === 'ideas'
             ? await openIdeasCount(url, isCurrent)
-            : await unreadActivityCount(url, isCurrent);
+            : countKind === 'chat'
+              ? await unansweredChatCount(url, isCurrent)
+              : await unreadActivityCount(url, isCurrent);
         return [url, count] as const;
       }),
     ).then((entries) => {
