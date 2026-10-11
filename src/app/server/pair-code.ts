@@ -80,10 +80,8 @@ export function createPairCodeManager(now: () => number = Date.now): PairCodeMan
       }
 
       failures.push(now());
-      // A failed guess can't be attributed to the code it was a guess at — it
-      // never matched one — so every still-outstanding code counts it as a
-      // strike against itself, and a code under apparent brute force is
-      // cancelled before its own ten minutes are up.
+      // A failed guess can't be attributed to one code, so every
+      // still-pending code counts it as a strike against itself.
       for (const [pendingCode, pendingRecord] of codes) {
         if (pendingRecord.outcome.status !== 'pending') continue;
         pendingRecord.attempts += 1;
