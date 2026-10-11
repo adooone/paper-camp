@@ -1101,6 +1101,20 @@ export interface MachineUpdateResponse {
   output?: string;
 }
 
+/** Minted by `paper-camp pair` on loopback, bearer-authorised the same as
+ *  `MACHINE_UPDATE_PATH`; `/:code` suffixed for the long-poll read (IDEA-292). */
+export const MACHINE_PAIR_CODE_PATH = '/api/machine/pair-code' as const;
+
+export interface MachinePairCodeMintResponse {
+  code: string;
+  expiresAt: string;
+}
+
+export type MachinePairCodeOutcome =
+  | { status: 'pending' }
+  | { status: 'paired'; origin: string }
+  | { status: 'expired' };
+
 export interface MergePolicy {
   allowSquashMerge: boolean;
   allowMergeCommit: boolean;

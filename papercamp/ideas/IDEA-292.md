@@ -97,10 +97,11 @@ The native app in `paper-camp-mobile` and its scanner. A non-Tailscale way in.
 The `--share` tunnel, which pairing no longer uses. Revoking a paired origin.
 
 ### Phases
-- [ ] Mint and redeem pairing codes in the daemon
+- [x] Mint and redeem pairing codes in the daemon
       `POST`/`GET /api/machine/pair-code` behind the update-token bearer on
       loopback, in-memory codes with expiry, single use and the attempt limits,
       and `/api/pair` accepting `{ code }` and returning the long token.
+      run: 14m27s · 210 in · 69.8k out · sonnet-5 · sess:0e246132-76dc-4334-8647-88838b6780bc
 - [ ] Add the `paper-camp pair` command
       Mint a code, print the QR code on a TTY and the code line, wait for the
       outcome, cancel on Ctrl-C, refuse without a tailnet name.

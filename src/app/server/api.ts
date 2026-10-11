@@ -16,6 +16,7 @@ import {
 } from './desk-services';
 import { createGitManager } from './git';
 import { sendJson } from './http';
+import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
 import { buildRoutes, readRoutes } from './routes/index';
 import { type StatusManagerState, createStatusManager } from './status';
@@ -177,6 +178,7 @@ export function createApiMiddleware(
   pairingState?: PairingManagerState,
   onPaired?: (origin: string) => void,
   isMachineBusy?: () => boolean,
+  pairCode?: PairCodeManager,
 ): ApiMiddleware {
   const git = createGitManager(root);
   const services = createDeskServiceManager(root, serviceState);
@@ -199,7 +201,17 @@ export function createApiMiddleware(
     isMachineBusy,
   );
 
-  const routes = buildRoutes({ root, activity, agent, git, status, services, checks, pairing });
+  const routes = buildRoutes({
+    root,
+    activity,
+    agent,
+    git,
+    status,
+    services,
+    checks,
+    pairing,
+    pairCode,
+  });
 
   let lastRequestAt: number | null = null;
 

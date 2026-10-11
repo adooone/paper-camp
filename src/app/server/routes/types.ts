@@ -4,6 +4,7 @@ import type { AgentManager } from '../agent';
 import type { DeskCheckManager } from '../desk-checks';
 import type { DeskServiceManager } from '../desk-services';
 import type { GitManager } from '../git';
+import type { PairCodeManager } from '../pair-code';
 import type { PairingManager } from '../pairing';
 import type { StatusManager } from '../status';
 
@@ -17,6 +18,9 @@ export interface RouteContext {
   services: DeskServiceManager;
   checks: DeskCheckManager;
   pairing: PairingManager;
+  /** Undefined outside the daemon (e.g. `dev-server.ts`'s single-project mode),
+   *  which has no pairing-code flow — `/api/pair` there stays token-only. */
+  pairCode?: PairCodeManager;
 }
 
 /** Exact method + pathname match. An error thrown from handle becomes a 500 JSON reply. */

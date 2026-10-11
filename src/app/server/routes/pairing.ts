@@ -2,7 +2,7 @@ import { hostedClientUrl } from '@/core/hosted-client';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-export function pairingRoutes({ pairing }: RouteContext): Route[] {
+export function pairingRoutes({ pairing, pairCode }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -21,7 +21,18 @@ export function pairingRoutes({ pairing }: RouteContext): Route[] {
           return;
         }
         const body = await readBody(req);
-        const { token } = JSON.parse(body || '{}') as { token?: string };
+        const { token, code } = JSON.parse(body || '{}') as { token?: string; code?: string };
+        // A pairing code (IDEA-292) stands in for the long token the caller doesn't
+        // have yet — redeeming it pairs the same way, then hands the token back.
+        if (code !== undefined) {
+          if (!pairCode?.redeem(code, origin)) {
+            sendJson(res, 403, { error: 'Invalid or expired pairing code' });
+            return;
+          }
+          pairing.pair(pairing.token, origin);
+          sendJson(res, 200, { token: pairing.token, origin });
+          return;
+        }
         if (!token || !pairing.pair(token, origin)) {
           sendJson(res, 403, { error: 'Invalid pairing token' });
           return;

@@ -1,11 +1,12 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
+import { createPairCodeManager } from '../pair-code';
 import { createPairingManager } from '../pairing';
 import { pairingRoutes } from './pairing';
 import type { RouteContext } from './types';
 
-function route(pairing: RouteContext['pairing']) {
-  const found = pairingRoutes({ pairing } as RouteContext).find(
+function route(pairing: RouteContext['pairing'], pairCode?: RouteContext['pairCode']) {
+  const found = pairingRoutes({ pairing, pairCode } as RouteContext).find(
     (r) => r.path === '/api/pair' && r.method === 'POST',
   );
   if (!found) throw new Error('no route registered for POST /api/pair');
@@ -106,5 +107,41 @@ describe('POST /api/pair', () => {
     const { res, status } = fakeRes();
     await route(pairing).handle(fakeReq(JSON.stringify({ token: pairing.token }), undefined), res);
     expect(status()).toBe(400);
+  });
+
+  it('pairs the request Origin and returns the long token when the code redeems', async () => {
+    const pairing = createPairingManager();
+    const pairCode = createPairCodeManager();
+    const { code } = pairCode.mint();
+    const { res, status, json } = fakeRes();
+    await route(pairing, pairCode).handle(
+      fakeReq(JSON.stringify({ code }), 'https://app.papercamp.dev'),
+      res,
+    );
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ token: pairing.token, origin: 'https://app.papercamp.dev' });
+    expect(pairing.isPairedOrigin('https://app.papercamp.dev')).toBe(true);
+  });
+
+  it('rejects an unknown code with 403', async () => {
+    const pairing = createPairingManager();
+    const pairCode = createPairCodeManager();
+    const { res, status } = fakeRes();
+    await route(pairing, pairCode).handle(
+      fakeReq(JSON.stringify({ code: 'NOPE' }), 'https://app.papercamp.dev'),
+      res,
+    );
+    expect(status()).toBe(403);
+    expect(pairing.isPairedOrigin('https://app.papercamp.dev')).toBe(false);
+  });
+
+  it('rejects a code when no pair-code manager is wired (dev-server mode)', async () => {
+    const pairing = createPairingManager();
+    const { res, status } = fakeRes();
+    await route(pairing).handle(
+      fakeReq(JSON.stringify({ code: 'ANYTHING' }), 'https://app.papercamp.dev'),
+      res,
+    );
+    expect(status()).toBe(403);
   });
 });

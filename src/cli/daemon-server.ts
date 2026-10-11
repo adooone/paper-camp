@@ -12,6 +12,7 @@ import {
   isTrustedHost,
 } from '../app/server/api';
 import { readBody, sendJson } from '../app/server/http';
+import { type PairCodeManager, createPairCodeManager } from '../app/server/pair-code';
 import {
   type PairingManagerState,
   loadOrMintPairingState,
@@ -45,9 +46,11 @@ import { readTailnetStatus } from '../core/tailnet';
 import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import {
   MACHINE_NIGHT_PATH,
+  MACHINE_PAIR_CODE_PATH,
   MACHINE_PROJECTS_PATH,
   MACHINE_UPDATE_PATH,
   type MachineNightGateResponse,
+  type MachinePairCodeMintResponse,
   type MachineProjectSummary,
   type MachineUpdateRequest,
   type MachineUpdateResponse,
@@ -188,6 +191,7 @@ export async function createProjectApi(
   pairingState: PairingManagerState,
   onPaired: () => void,
   checkMachineBusy: () => boolean,
+  pairCodeManager: PairCodeManager,
 ): Promise<ApiMiddleware> {
   return createApiMiddleware(
     project.path,
@@ -198,6 +202,7 @@ export async function createProjectApi(
     pairingState,
     onPaired,
     checkMachineBusy,
+    pairCodeManager,
   );
 }
 
@@ -309,6 +314,11 @@ function isValidUpdateToken(bearer: string, updateToken: string): boolean {
   return bearerBuffer.length === tokenBuffer.length && timingSafeEqual(bearerBuffer, tokenBuffer);
 }
 
+function hasValidUpdateBearer(req: IncomingMessage, updateToken: string): boolean {
+  const bearer = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
+  return Boolean(bearer) && isValidUpdateToken(bearer as string, updateToken);
+}
+
 export function createMachineUpdateHandler(
   updateToken: string,
   applyUpdate: (version: string) => Promise<MachineUpdateResponse>,
@@ -336,6 +346,42 @@ export function createMachineUpdateHandler(
   };
 }
 
+/** Mint (`POST`) and long-poll read (`GET .../:code`) for a pairing code — loopback
+ *  only, since only `paper-camp pair` running on this machine talks to it, never a
+ *  browser (IDEA-292). */
+export function createMachinePairCodeHandler(
+  updateToken: string,
+  pairCodeManager: PairCodeManager,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  return async (req, res) => {
+    if (!isLoopbackHost(hostOf(req.headers.host)) || !hasValidUpdateBearer(req, updateToken)) {
+      sendJson(res, 403, {
+        error: 'Forbidden: loopback request with a valid update token required',
+      });
+      return;
+    }
+
+    const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+    if (pathname === MACHINE_PAIR_CODE_PATH && req.method === 'POST') {
+      const { code, expiresAt } = pairCodeManager.mint();
+      const response: MachinePairCodeMintResponse = {
+        code,
+        expiresAt: new Date(expiresAt).toISOString(),
+      };
+      sendJson(res, 200, response);
+      return;
+    }
+
+    const codeMatch = pathname.match(/^\/api\/machine\/pair-code\/([^/]+)$/);
+    if (codeMatch && req.method === 'GET') {
+      sendJson(res, 200, await pairCodeManager.waitForOutcome(codeMatch[1]));
+      return;
+    }
+
+    sendJson(res, 404, { error: 'no such pair-code route' });
+  };
+}
+
 /** The daemon's routing decision, isolated from `startDaemonServer`'s process
  * lifecycle (signal handlers, tunnel, tailnet) so it can be driven by a real
  * `http.Server` in tests without spinning any of that up. */
@@ -348,6 +394,10 @@ export function createDaemonRequestHandler(
   // A seam for tests to serve a fake toolbar bundle without a real dist/toolbar on disk.
   serveToolbar: (req: IncomingMessage, res: ServerResponse) => Promise<boolean> = serveToolbarAsset,
   handleMachineUpdate: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (
+    _req,
+    res,
+  ) => sendJson(res, 403, { error: 'Forbidden: invalid update token' }),
+  handleMachinePairCode: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (
     _req,
     res,
   ) => sendJson(res, 403, { error: 'Forbidden: invalid update token' }),
@@ -407,6 +457,11 @@ export function createDaemonRequestHandler(
         return;
       }
       await handleMachineUpdate(req, res);
+      return;
+    }
+
+    if (pathname === MACHINE_PAIR_CODE_PATH || pathname.startsWith(`${MACHINE_PAIR_CODE_PATH}/`)) {
+      await handleMachinePairCode(req, res);
       return;
     }
 
@@ -501,12 +556,14 @@ export async function startDaemonServer({
 
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const updateToken = await loadOrMintUpdateToken(updateTokenPath());
+  const pairCodeManager = createPairCodeManager();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
   let pendingUpdateVersion: string | null = null;
   const { mount } = createProjectMounter(
     defaultRegistryPath(),
-    (project) => createProjectApi(project, pairingState, persistPairing, checkMachineBusy),
+    (project) =>
+      createProjectApi(project, pairingState, persistPairing, checkMachineBusy, pairCodeManager),
     mounted,
   );
 
@@ -545,6 +602,7 @@ export async function startDaemonServer({
     await recordUpdateOutcome('hooked', version, result);
     return result;
   });
+  const handleMachinePairCode = createMachinePairCodeHandler(updateToken, pairCodeManager);
 
   const localLink = buildRegistrationLinkForMachine(`http://localhost:${port}`, pairingState.token);
   const handleRequest = createDaemonRequestHandler(
@@ -555,6 +613,7 @@ export async function startDaemonServer({
     () => pendingUpdateVersion,
     undefined,
     handleMachineUpdate,
+    handleMachinePairCode,
   );
 
   const server = createServer((req, res) => {

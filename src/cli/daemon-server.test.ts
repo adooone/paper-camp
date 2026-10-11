@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
+import { createPairCodeManager } from '../app/server/pair-code';
 import type { PairingManagerState } from '../app/server/pairing';
 import {
   type MachineRegistry,
@@ -17,6 +18,7 @@ import { appendNightFindings } from '../core/night-suggestions';
 import {
   buildNightGateResponse,
   createDaemonRequestHandler,
+  createMachinePairCodeHandler,
   createMachineUpdateHandler,
   createProjectApi,
   createProjectMounter,
@@ -485,17 +487,20 @@ describe('createProjectApi', () => {
     const pairingState: PairingManagerState = { token: 'shared-token', origins: new Set() };
     const onPaired = vi.fn();
 
+    const pairCodeManager = createPairCodeManager();
     const apiAlpha = await createProjectApi(
       { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
       pairingState,
       onPaired,
       () => false,
+      pairCodeManager,
     );
     const apiBeta = await createProjectApi(
       { slug: 'beta', path: '/some/beta', name: 'Beta' },
       pairingState,
       onPaired,
       () => false,
+      pairCodeManager,
     );
 
     expect(apiAlpha.pairing.token).toBe('shared-token');
@@ -711,6 +716,99 @@ describe('createMachineUpdateHandler', () => {
   });
 });
 
+describe('createMachinePairCodeHandler', () => {
+  const servers: Server[] = [];
+
+  afterEach(async () => {
+    await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
+  });
+
+  async function startHandler(updateToken: string) {
+    const pairCodeManager = createPairCodeManager();
+    const handler = createMachinePairCodeHandler(updateToken, pairCodeManager);
+    const server = createServer((req, res) => {
+      handler(req, res).catch((error) => {
+        res.statusCode = 500;
+        res.end(String(error));
+      });
+    });
+    servers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    return { port, pairCodeManager };
+  }
+
+  it('403s a mint request with a missing or wrong bearer token', async () => {
+    const { port } = await startHandler('secret');
+
+    const missing = await fetch(`http://127.0.0.1:${port}/api/machine/pair-code`, {
+      method: 'POST',
+    });
+    const wrong = await fetch(`http://127.0.0.1:${port}/api/machine/pair-code`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer nope' },
+    });
+
+    expect(missing.status).toBe(403);
+    expect(wrong.status).toBe(403);
+  });
+
+  it('mints a fresh code for a loopback request with a correct bearer token', async () => {
+    const { port } = await startHandler('secret');
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/machine/pair-code`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer secret' },
+    });
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { code: string; expiresAt: string };
+    expect(body.code).toMatch(/^[0-9A-HJKMNP-TV-Z]{8}$/);
+    expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('long-polls the outcome of a minted code until it is redeemed', async () => {
+    const { port, pairCodeManager } = await startHandler('secret');
+    const { code } = pairCodeManager.mint();
+
+    const pending = fetch(`http://127.0.0.1:${port}/api/machine/pair-code/${code}`, {
+      headers: { Authorization: 'Bearer secret' },
+    });
+    pairCodeManager.redeem(code, 'https://app.papercamp.dev');
+
+    const response = await pending;
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: 'paired',
+      origin: 'https://app.papercamp.dev',
+    });
+  });
+
+  it('403s a pair-code request on a non-loopback host even with the right bearer token', async () => {
+    const handler = createMachinePairCodeHandler('secret', createPairCodeManager());
+    const req = {
+      url: '/api/machine/pair-code',
+      method: 'POST',
+      headers: { host: 'deimos.pitta-ray.ts.net', authorization: 'Bearer secret' },
+    } as unknown as IncomingMessage;
+    let statusCode = 0;
+    const res = {
+      setHeader: () => {},
+      end: () => {},
+      set statusCode(code: number) {
+        statusCode = code;
+      },
+      get statusCode() {
+        return statusCode;
+      },
+    } as unknown as ServerResponse;
+
+    await handler(req, res);
+    expect(statusCode).toBe(403);
+  });
+});
+
 describe('watchForIdleRestart', () => {
   it('does not restart while busy, then restarts on the first idle tick', () => {
     vi.useFakeTimers();
@@ -862,6 +960,7 @@ describe('createDaemonRequestHandler', () => {
     serveToolbar?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>,
     getPendingUpdateVersion?: () => string | null,
     handleMachineUpdate?: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
+    handleMachinePairCode?: (req: IncomingMessage, res: ServerResponse) => Promise<void>,
   ): Promise<{ port: number; seenUrls: string[] }> {
     const seenUrls: string[] = [];
     const mockedApi = Object.assign(
@@ -881,6 +980,7 @@ describe('createDaemonRequestHandler', () => {
       getPendingUpdateVersion,
       serveToolbar,
       handleMachineUpdate,
+      handleMachinePairCode,
     );
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
@@ -965,6 +1065,29 @@ describe('createDaemonRequestHandler', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ outcome: 'installed' });
     expect(handleMachineUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('delegates /api/machine/pair-code and its /:code suffix to the injected handler', async () => {
+    const registryPath = await makeRegistryFile({ version: 1, projects: [] });
+    const handleMachinePairCode = vi.fn(async (_req: IncomingMessage, res: ServerResponse) => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
+    });
+    const { port } = await startHandler(
+      registryPath,
+      undefined,
+      undefined,
+      undefined,
+      handleMachinePairCode,
+    );
+
+    const mint = await fetch(`http://127.0.0.1:${port}/api/machine/pair-code`, { method: 'POST' });
+    const read = await fetch(`http://127.0.0.1:${port}/api/machine/pair-code/ABCD1234`);
+
+    expect(mint.status).toBe(200);
+    expect(read.status).toBe(200);
+    expect(handleMachinePairCode).toHaveBeenCalledTimes(2);
   });
 
   it('reports a project as mounted after a request has built its middleware', async () => {
