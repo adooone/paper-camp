@@ -1,5 +1,4 @@
 import type { ScopeRow } from '@/app/features/scope';
-import type { ActivityEntry } from '@/core/activity-entries';
 import type { LogSort } from '@/core/run-filters';
 import { isClosedEntity } from '@/core/status';
 import type { EntityStatus, Issue, LogRow } from '@/types/index';
@@ -35,30 +34,28 @@ export const markReadIdFor = (row: LogRow): string | undefined => {
 };
 
 export interface ScopedActivityEntry {
-  entry: ActivityEntry;
+  row: LogRow;
   project?: ScopeRow;
 }
 
-const isRunningEntry = (scoped: ScopedActivityEntry): boolean =>
-  scoped.entry.entryKind === 'run' && scoped.entry.row.outcome === 'running';
+const isRunningEntry = (scoped: ScopedActivityEntry): boolean => scoped.row.outcome === 'running';
 
 const byNewestEntry = (a: ScopedActivityEntry, b: ScopedActivityEntry) =>
-  b.entry.timestamp.localeCompare(a.entry.timestamp);
+  b.row.timestamp.localeCompare(a.row.timestamp);
 
-/** Merges the current project's entries with every other scope project's by
- * time (IDEA-291) — running tasks across all of them stay pinned above the
- * rest, the same way `buildActivityEntries` pins a single project's own. A
+/** Merges the current project's rows with every other scope project's by time
+ * (IDEA-291) — running tasks across all of them stay pinned above the rest. A
  * non-time sort has no cross-project ordering to honor, so projects keep
  * their own already-sorted order, current project first. */
 export function mergeScopedActivityEntries(
-  own: ActivityEntry[],
-  foreign: { project: ScopeRow; entries: ActivityEntry[] }[],
+  own: LogRow[],
+  foreign: { project: ScopeRow; rows: LogRow[] }[],
   sort: LogSort,
   ownProject: ScopeRow | undefined,
 ): ScopedActivityEntry[] {
-  const ownScoped = own.map((entry) => ({ entry, project: ownProject }));
-  const foreignScoped = foreign.flatMap(({ project, entries }) =>
-    entries.map((entry) => ({ entry, project })),
+  const ownScoped = own.map((row) => ({ row, project: ownProject }));
+  const foreignScoped = foreign.flatMap(({ project, rows }) =>
+    rows.map((row) => ({ row, project })),
   );
   const all = [...ownScoped, ...foreignScoped];
   if (sort !== 'time') return all;

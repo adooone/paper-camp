@@ -1,7 +1,5 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import { ChatComposer, ClearChatModal } from '@/app/features/chat/views';
-import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { useActivityPage } from './hooks';
 import { ActivityStatsLine, ActivityStream, ActivityTitleActions, ActivityToolbar } from './views';
 
@@ -24,14 +22,6 @@ export const ActivityPage = () => {
     hasActiveFilters,
     clearFilters,
     stats,
-    activityKind,
-    setActivityKind,
-    chat,
-    handleSend,
-    handleAnswer,
-    projectOptions,
-    targetProject,
-    setTargetProjectKey,
     onOpenCrossProject,
   } = useActivityPage();
 
@@ -40,7 +30,7 @@ export const ActivityPage = () => {
       <div className="mb-2 flex flex-nowrap items-center gap-3">
         <PageTitle className="shrink-0">Activity</PageTitle>
         <div className="flex-1" />
-        {(hasAnyRows || chat.thread.length > 0) && (
+        {hasAnyRows && (
           <ActivityTitleActions
             runningRows={runningRows}
             unreadCount={unreadCount}
@@ -49,9 +39,6 @@ export const ActivityPage = () => {
             onMarkAllRead={markAllRead}
             matchedCount={matchedCount}
             totalCount={totalCount}
-            unansweredCount={chat.unansweredCount}
-            hasChatHistory={chat.thread.length > 0}
-            onClearChat={chat.openConfirmClear}
           />
         )}
       </div>
@@ -62,41 +49,8 @@ export const ActivityPage = () => {
         onFiltersChange={setFilters}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
-        activityKind={activityKind}
-        onActivityKindChange={setActivityKind}
       />
       <ActivityStatsLine stats={stats} />
-
-      {chat.loading && chat.thread.length === 0 ? (
-        <RowSkeleton />
-      ) : (
-        <ChatComposer
-          input={chat.input}
-          setInput={chat.setInput}
-          sending={chat.sending}
-          onSend={handleSend}
-          projectOptions={projectOptions}
-          targetProjectKey={targetProject?.key}
-          onTargetProjectChange={setTargetProjectKey}
-        />
-      )}
-
-      {chat.pending && (
-        <div className="flex flex-col gap-1 items-end mb-3">
-          <div className="max-w-[85%]">
-            <Card size="small" surface="paper" texture="parchment" accent accentColor="blue">
-              {chat.pending}
-            </Card>
-          </div>
-        </div>
-      )}
-      {chat.sending && (
-        <div className="flex flex-col gap-1 items-start mb-3">
-          <Card size="small" texture={surface.nestedCard}>
-            <Spinner size="small" label="Agent thinking…" />
-          </Card>
-        </div>
-      )}
 
       {loading && !hasAnyRows && <RowSkeleton />}
       {!loading && !hasAnyRows && (
@@ -111,20 +65,11 @@ export const ActivityPage = () => {
             entries={entries}
             hasMore={hasMore}
             onLoadMore={loadMore}
-            onAnswer={handleAnswer}
-            answering={chat.sending}
             onOpenCrossProject={onOpenCrossProject}
           />
         ) : (
           <p className="opacity-50">No entries match these filters.</p>
         ))}
-
-      <ClearChatModal
-        open={chat.confirmOpen}
-        onClose={chat.closeConfirmClear}
-        onConfirm={chat.handleClear}
-        confirming={chat.clearing}
-      />
     </div>
   );
 };

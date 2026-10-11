@@ -23,8 +23,10 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const payload = event.notification.data;
   if (!payload?.id) return;
-  const entryId = payload.kind === 'reply' ? `notification:${payload.id}` : `task:${payload.id}`;
-  const url = new URL(`log/${entryId}`, self.registration.scope).href;
+  const url = new URL(
+    payload.kind === 'reply' ? 'chat' : `log/task:${payload.id}`,
+    self.registration.scope,
+  ).href;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       const existing = clientList.find((client) => client.url === url);

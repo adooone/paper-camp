@@ -1,5 +1,5 @@
 import { PageToolbar, PageToolbarRow } from '@/app/components';
-import type { ActivityKind, LogDateRange, LogFilters, LogSort } from '@/core/run-filters';
+import type { LogDateRange, LogFilters, LogSort } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS, type LogRowOutcome, type LogRowType } from '@/types/index';
 import { Button, Input, Select, Stamp, type StampVariant } from '@dendelion/paper-ui';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
@@ -22,12 +22,6 @@ const SORT_OPTIONS: { value: LogSort; label: string }[] = [
 const AGENT_OPTIONS = [
   { value: '', label: 'Any agent' },
   ...AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] })),
-];
-
-const KIND_OPTIONS: { value: ActivityKind; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'runs', label: 'Runs' },
-  { value: 'chat', label: 'Chat' },
 ];
 
 interface FilterChipProps {
@@ -55,8 +49,6 @@ export interface ActivityToolbarProps {
   onFiltersChange: (patch: Partial<LogFilters>) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
-  activityKind: ActivityKind;
-  onActivityKindChange: (kind: ActivityKind) => void;
 }
 
 export const ActivityToolbar = ({
@@ -65,8 +57,6 @@ export const ActivityToolbar = ({
   onFiltersChange,
   hasActiveFilters,
   onClearFilters,
-  activityKind,
-  onActivityKindChange,
 }: ActivityToolbarProps) => {
   const toggleOutcome = (outcome: LogRowOutcome) => {
     const active = filters.outcomes.includes(outcome);
@@ -125,16 +115,6 @@ export const ActivityToolbar = ({
       </PageToolbarRow>
 
       <PageToolbarRow chips>
-        {KIND_OPTIONS.map((opt) => (
-          <FilterChip
-            key={opt.value}
-            active={activityKind === opt.value}
-            onClick={() => onActivityKindChange(opt.value)}
-          >
-            {opt.label}
-          </FilterChip>
-        ))}
-        <span aria-hidden="true" className="mx-1 h-4 w-px bg-current opacity-20" />
         {OUTCOME_OPTIONS.map((outcome) => (
           <FilterChip
             key={outcome}

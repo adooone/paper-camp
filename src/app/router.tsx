@@ -287,6 +287,11 @@ const activityRoute = createRoute({
   component: ActivityPage,
   validateSearch: activitySearchSchema,
   staticData: { layer: 'runtime' },
+  // Chat left Activity for its own page (IDEA-293); an old `?kind=chat` link still
+  // needs somewhere to land, while `?kind=runs` (now the only kind) is just dropped.
+  beforeLoad: ({ search }) => {
+    if (search.kind === 'chat') throw redirect({ to: '/chat' });
+  },
 });
 
 const activityEntryRoute = createRoute({
@@ -294,6 +299,11 @@ const activityEntryRoute = createRoute({
   path: '/activity/$entryId',
   component: ActivityEntryPage,
   staticData: { layer: 'runtime' },
+  // A `notification:<id>` entry is a reply notification — its conversation now
+  // lives on the Chat page, not in an Activity entry detail (IDEA-293).
+  beforeLoad: ({ params }) => {
+    if (params.entryId.startsWith('notification:')) throw redirect({ to: '/chat' });
+  },
 });
 
 // `/log` was the old address for the merged Activity page (IDEA-290) — kept as a

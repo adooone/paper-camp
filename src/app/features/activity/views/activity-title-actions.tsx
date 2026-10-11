@@ -10,9 +10,6 @@ export interface ActivityTitleActionsProps {
   onMarkAllRead: () => Promise<void>;
   matchedCount: number;
   totalCount: number;
-  unansweredCount: number;
-  hasChatHistory: boolean;
-  onClearChat: () => void;
 }
 
 const countClass = 'font-handwritten text-sm opacity-[0.55] whitespace-nowrap';
@@ -25,9 +22,6 @@ export const ActivityTitleActions = ({
   onMarkAllRead,
   matchedCount,
   totalCount,
-  unansweredCount,
-  hasChatHistory,
-  onClearChat,
 }: ActivityTitleActionsProps) => {
   const navigate = useNavigate();
   const running = runningRows[0];
@@ -67,24 +61,9 @@ export const ActivityTitleActions = ({
           </Button>
         </>
       )}
-      {unansweredCount > 0 && (
-        <Stamp size="small" variant="warning">
-          {unansweredCount} unanswered
-        </Stamp>
-      )}
       <span className={countClass}>
         {hasActiveFilters ? `${matchedCount} of ${totalCount} entries` : `${totalCount} entries`}
       </span>
-      {hasChatHistory && (
-        <Button
-          variant="link"
-          size="small"
-          className="font-handwritten text-sm opacity-70"
-          onClick={onClearChat}
-        >
-          Clear chat
-        </Button>
-      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@
 id: IDEA-293
 title: Chat gets its own page
 type: feat
-status: planned
+status: review
 created: 2026-10-11
 tags:
   - app
@@ -81,7 +81,8 @@ The embedded dev toolbar.
       `navItems` entry with the unanswered stamp, shell area flag, sidebar key,
       skeleton prefix.
       run: 2m50s · 58 in · 10k out · sonnet-5 · sess:ab45bc2c-553e-4d5b-add7-5b761bcece57
-- [ ] Strip chat out of Activity
+- [x] Strip chat out of Activity
       Composer, chat entries, kind chips, `kind` param, Clear chat and the
       unanswered stamp removed; `?kind=chat` redirects to `/chat`; reply
       notifications open `/chat`; tests updated.
+      run: 7m46s · 140 in · 33.5k out · sonnet-5 · sess:ab45bc2c-553e-4d5b-add7-5b761bcece57

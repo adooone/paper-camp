@@ -67,6 +67,6 @@ export function useStatusBar(): StatusBarState {
     onOpenSetup: () => navigate({ to: '/project/settings/$section', params: { section: 'setup' } }),
     onOpenGit: () => navigate({ to: '/git' }),
     onOpenNotifications: () => navigate({ to: '/activity', search: { unread: '1' } }),
-    onOpenChat: () => navigate({ to: '/activity', search: { kind: 'chat' } }),
+    onOpenChat: () => navigate({ to: '/chat' }),
   };
 }

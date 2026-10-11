@@ -44,14 +44,6 @@ export interface LogSearchParams {
   kind?: string;
 }
 
-export type ActivityKind = 'all' | 'runs' | 'chat';
-
-const ACTIVITY_KINDS: ActivityKind[] = ['all', 'runs', 'chat'];
-
-export function parseActivityKind(value: string | undefined): ActivityKind {
-  return ACTIVITY_KINDS.includes(value as ActivityKind) ? (value as ActivityKind) : 'all';
-}
-
 export function parseLogFilters(search: LogSearchParams): LogFilters {
   const outcomes = (search.outcome ?? '')
     .split(',')
