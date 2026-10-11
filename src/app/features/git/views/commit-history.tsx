@@ -17,6 +17,12 @@ function formatRelativeTime(iso: string): string {
   return diffYear === 1 ? '1 year ago' : `${diffYear} years ago`;
 }
 
+/** `docs(papercamp)!` → type `docs`, scope `papercamp`: the type fits the stamp column, the scope rides with the subject. */
+function splitPrefix(prefix: string): { type: string; scope: string | null } {
+  const match = /^([^(!]+)(?:\(([^)]*)\))?!?$/.exec(prefix);
+  return match ? { type: match[1], scope: match[2] || null } : { type: prefix, scope: null };
+}
+
 interface CommitRowProps {
   commit: GitLogCommit;
   upstream: string | null;
@@ -26,6 +32,7 @@ interface CommitRowProps {
 
 const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
   const openEntity = useOpenEntity();
+  const prefix = commit.prefix ? splitPrefix(commit.prefix) : null;
 
   return (
     <div className="flex min-w-0 items-stretch gap-3">
@@ -37,17 +44,22 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
           surface="none"
           columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: 'auto', trailing: 'auto' }}
           id={
-            commit.prefix ? (
+            prefix ? (
               <span className="hidden sm:inline-flex">
                 <Stamp size="small" variant="neutral">
-                  {commit.prefix}
+                  {prefix.type}
                 </Stamp>
               </span>
             ) : (
               ''
             )
           }
-          title={<div className="truncate">{commit.subject}</div>}
+          title={
+            <div className="truncate">
+              {prefix?.scope && <span className="mr-1.5 opacity-50">{prefix.scope}</span>}
+              {commit.subject}
+            </div>
+          }
           meta={
             <MetaLine className="flex flex-wrap items-baseline gap-x-1.5">
               <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
