@@ -2,7 +2,7 @@
 id: IDEA-292
 title: Pair with a code from the terminal
 type: feat
-status: planned
+status: review
 created: 2026-10-10
 tags:
   - cli
@@ -111,7 +111,8 @@ The `--share` tunnel, which pairing no longer uses. Revoking a paired origin.
       probe with its Tailscale message, the expired-code message, and
       `rehostPairingLink` deleted.
       run: 7m47s · 108 in · 43.6k out · sonnet-5 · sess:b580123d-2f78-44f5-b3cb-b32b0e2742e0
-- [ ] Remove the printed links
+- [x] Remove the printed links
       Banner and `status` print the tailnet name and the `pair` hint; drop
       `status --qr` and the `?machine=`/`?token=` handling, keeping the loopback
       redirect; tests updated.
+      run: 10m11s · 182 in · 57.2k out · sonnet-5 · sess:32a5edc3-9e88-490f-8338-4cc11efee4fd

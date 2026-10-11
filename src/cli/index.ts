@@ -314,9 +314,8 @@ program
 program
   .command('status')
   .description("Show whether the daemon is running and each registered project's STATE")
-  .option('--qr', 'print the QR code for the Tailnet or Tunnel link')
-  .action(async (opts: { qr?: boolean }) => {
-    await runStatus(opts);
+  .action(async () => {
+    await runStatus();
   });
 
 program

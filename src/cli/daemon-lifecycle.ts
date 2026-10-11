@@ -8,12 +8,11 @@ import {
   daemonLogPath,
   daemonStatePath,
   fetchMachineProjects,
-  formatDaemonLinks,
   formatDaemonStatusLine,
+  formatDaemonTailnetLine,
   formatUpdateStatusLine,
   isProcessAlive,
   probeMachineEndpoint,
-  qrEligibleLink,
   readRunningDaemonState,
   removeDaemonState,
 } from '../core/daemon-state';
@@ -30,7 +29,6 @@ import type { MachineProjectSummary } from '../types/index';
 import { installedVersionAt, runNpmInstall } from './auto-update';
 import { DEFAULT_DAEMON_PORT } from './daemon-server';
 import { linkifyUrls } from './dev-banner';
-import { formatLinkQrCode } from './link-qr-code';
 
 export interface StartOptions {
   port?: number;
@@ -112,16 +110,6 @@ async function printLog(logPath: string): Promise<void> {
   console.log(process.stdout.isTTY && !process.env.NO_COLOR ? linkifyUrls(text) : text);
 }
 
-/** The daemon writes its banner to the log with no QR code — its own stdout
- * is a file, never a TTY — so `start` draws one itself for its own terminal,
- * from the same Tailnet-over-Tunnel link the banner would have picked. */
-export async function printQrCode(statePath: string): Promise<void> {
-  if (!(process.stdout.isTTY && !process.env.NO_COLOR)) return;
-  const state = await readRunningDaemonState(statePath);
-  const link = state?.links && qrEligibleLink(state.links);
-  if (link) console.log(formatLinkQrCode(link));
-}
-
 /** Spawns `paper-camp daemon` by re-invoking this same process's own entry
  * point with different argv — whatever ran `start` (bun on a `.ts` file, node
  * on the built `dist/cli/index.js`) is what spawns the daemon too. */
@@ -165,7 +153,6 @@ export async function runStart(opts: StartOptions): Promise<boolean> {
 
   await waitForBannerLines(logPath, pendingBannerMarkers(), child, BANNER_POLL_TIMEOUT_MS);
   await printLog(logPath);
-  await printQrCode(statePath);
   return true;
 }
 
@@ -330,24 +317,12 @@ export async function runLs(): Promise<void> {
   console.log(await formatProjectTable(listProjects(registry), liveProjects));
 }
 
-export interface StatusOptions {
-  qr?: boolean;
-}
-
-export async function runStatus(opts: StatusOptions = {}): Promise<void> {
+export async function runStatus(): Promise<void> {
   const { state, projects: liveProjects } = await fetchLiveProjects();
   console.log(state ? formatDaemonStatusLine(state) : 'paper-camp: daemon is not running');
-  if (state) console.log(formatUpdateStatusLine(state));
-  if (state?.links) {
-    const clickable = process.stdout.isTTY && !process.env.NO_COLOR;
-    const links = formatDaemonLinks(state.links);
-    console.log(clickable ? linkifyUrls(links) : links);
-  }
-  if (opts.qr) {
-    const link = state?.links && qrEligibleLink(state.links);
-    console.log(
-      link ? formatLinkQrCode(link) : 'paper-camp: no Tailnet or Tunnel link to print as a QR code',
-    );
+  if (state) {
+    console.log(formatUpdateStatusLine(state));
+    console.log(formatDaemonTailnetLine(state.tailnetName));
   }
   const registry = await loadRegistry(defaultRegistryPath());
   console.log(await formatProjectTable(listProjects(registry), liveProjects));

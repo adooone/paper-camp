@@ -24,6 +24,7 @@ import {
   type UpdateEvent,
   daemonLogPath,
   daemonStatePath,
+  formatDaemonTailnetLine,
   removeDaemonState,
   writeDaemonState,
 } from '../core/daemon-state';
@@ -64,14 +65,10 @@ import {
   skipsUpdateCheck,
   spawnRestart,
 } from './auto-update';
-import { formatDevBanner } from './dev-banner';
+import { palette } from './dev-banner';
 import { portInUseMessage } from './dev-port';
 import { readNightConfig, resolveNightConfig, runNightPass } from './night-command';
-import {
-  type NetworkRegistration,
-  buildRegistrationLinkForMachine,
-  networkRegistrationLink,
-} from './registration-link';
+import { buildRegistrationLinkForMachine } from './registration-link';
 import {
   TAILNET_NOT_RUNNING_MESSAGE,
   runTailnetServe,
@@ -516,33 +513,14 @@ export function createDaemonRequestHandler(
   };
 }
 
-/** The HTTPS remedy is for a run without one — with `--tailnet` or `--share`
- * asked for, its own line reports the outcome instead. */
-export function withRequestedNetwork(
-  network: NetworkRegistration,
-  requested: boolean,
-): NetworkRegistration {
-  return requested ? { ...network, blocked: false } : network;
-}
-
-export function formatDaemonBanner(
-  localLink: string,
-  network: NetworkRegistration,
-  tailnetLink: string | undefined,
-  tunnelLink: string | undefined,
-  color: boolean,
-  tty: boolean,
-): string {
-  return formatDevBanner({
-    version: PAPER_CAMP_VERSION,
-    localUrl: localLink,
-    networkLink: network.link,
-    networkBlocked: network.blocked,
-    tailnetLink,
-    tunnelLink,
-    color,
-    tty,
-  });
+export function formatDaemonBanner(tailnetName: string | undefined, color: boolean): string {
+  const { dim, yellow } = palette(color);
+  const lines = [
+    `${yellow('⛺ Paper Camp')} ${dim(`v${PAPER_CAMP_VERSION}`)}`,
+    '',
+    dim(formatDaemonTailnetLine(tailnetName)),
+  ];
+  return lines.join('\n');
 }
 
 export async function startDaemonServer({
@@ -661,10 +639,9 @@ export async function startDaemonServer({
     server.listen(port, resolve);
   });
 
-  const tty = process.stdout.isTTY === true;
-  const color = tty && !process.env.NO_COLOR;
+  const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
 
-  let tailnetLink: string | undefined;
+  let tailnetName: string | undefined;
   if (tailnet) {
     const tailnetStatus = await readTailnetStatus();
     if (!tailnetStatus) {
@@ -672,40 +649,21 @@ export async function startDaemonServer({
     } else {
       const result = await runTailnetServe(port);
       if (result.ok) {
-        tailnetLink = buildRegistrationLinkForMachine(
-          `https://${tailnetStatus.selfDnsName}/`,
-          pairingState.token,
-        );
+        tailnetName = tailnetStatus.selfDnsName;
       } else {
         console.error(tailnetFailureMessage(result.output));
       }
     }
   }
 
-  let tunnelLink: string | undefined;
   if (share) {
     tunnel = await startQuickTunnel(port);
     const tunnelHost = new URL(tunnel.url).hostname;
     const existing = process.env.PAPERCAMP_ALLOWED_HOSTS;
     process.env.PAPERCAMP_ALLOWED_HOSTS = existing ? `${existing},${tunnelHost}` : tunnelHost;
-    tunnelLink = buildRegistrationLinkForMachine(tunnel.url, pairingState.token);
   }
 
-  const network = await networkRegistrationLink(
-    port,
-    pairingState.token,
-    buildRegistrationLinkForMachine,
-  );
-
-  daemonState = {
-    ...daemonState,
-    links: {
-      host: localLink,
-      network: network.link,
-      tailnet: tailnetLink,
-      tunnel: tunnelLink,
-    },
-  };
+  daemonState = { ...daemonState, tailnetName };
   await writeDaemonState(statePath, daemonState);
 
   if (skipsUpdateCheck())
@@ -719,14 +677,5 @@ export async function startDaemonServer({
       ),
     );
 
-  console.log(
-    formatDaemonBanner(
-      localLink,
-      withRequestedNetwork(network, Boolean(tailnet || share)),
-      tailnetLink,
-      tunnelLink,
-      color,
-      tty,
-    ),
-  );
+  console.log(formatDaemonBanner(tailnetName, color));
 }

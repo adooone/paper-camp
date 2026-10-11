@@ -7,14 +7,12 @@ import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { MACHINE_NIGHT_PATH, MACHINE_PROJECTS_PATH } from '../../types/index';
 import {
-  type DaemonLinks,
   type DaemonState,
   fetchMachineNightGate,
   fetchMachineProjects,
-  formatDaemonLinks,
   formatDaemonStatusLine,
+  formatDaemonTailnetLine,
   formatUpdateStatusLine,
-  qrEligibleLink,
   readRunningDaemonState,
   removeDaemonState,
   writeDaemonState,
@@ -173,7 +171,7 @@ describe('readRunningDaemonState', () => {
       ...baseState,
       pid: process.pid,
       port,
-      links: { host: 'http://localhost:1234' },
+      tailnetName: 'deimos.pitta-ray.ts.net',
     };
     await writeDaemonState(path, state);
 
@@ -396,71 +394,14 @@ describe('formatUpdateStatusLine', () => {
   });
 });
 
-describe('formatDaemonLinks', () => {
-  const localLink =
-    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
-  const networkLink =
-    'https://paper-camp.vercel.app/?machine=http://192.168.1.5:4333&token=shared-token';
-  const tailnetLink =
-    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
-  const tunnelLink =
-    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
-
-  it('lists only the host link when nothing else was found', () => {
-    const links: DaemonLinks = { host: localLink };
-    expect(formatDaemonLinks(links)).toBe(`This host  ${localLink}`);
-  });
-
-  it('lists every link the daemon has, in This host / Network / Tailnet / Tunnel order', () => {
-    const links: DaemonLinks = {
-      host: localLink,
-      network: networkLink,
-      tailnet: tailnetLink,
-      tunnel: tunnelLink,
-    };
-
-    const formatted = formatDaemonLinks(links);
-    const lines = formatted.split('\n');
-    expect(lines[0]).toContain('This host');
-    expect(lines[0]).toContain(localLink);
-    expect(lines[1]).toContain('Network');
-    expect(lines[1]).toContain(networkLink);
-    expect(lines[2]).toContain('Tailnet');
-    expect(lines[2]).toContain(tailnetLink);
-    expect(lines[3]).toContain('Tunnel');
-    expect(lines[3]).toContain(tunnelLink);
-  });
-
-  it('omits a row for a link the daemon does not have', () => {
-    const links: DaemonLinks = { host: localLink, tailnet: tailnetLink };
-    const formatted = formatDaemonLinks(links);
-    expect(formatted).not.toContain('Network');
-    expect(formatted).not.toContain('Tunnel');
-  });
-});
-
-describe('qrEligibleLink', () => {
-  const localLink =
-    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
-  const networkLink =
-    'https://paper-camp.vercel.app/?machine=http://192.168.1.5:4333&token=shared-token';
-  const tailnetLink =
-    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
-  const tunnelLink =
-    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
-
-  it('prefers the Tailnet link over the Tunnel link', () => {
-    expect(qrEligibleLink({ host: localLink, tailnet: tailnetLink, tunnel: tunnelLink })).toBe(
-      tailnetLink,
+describe('formatDaemonTailnetLine', () => {
+  it('prints the tailnet name above the pair hint when the daemon has one', () => {
+    expect(formatDaemonTailnetLine('deimos.pitta-ray.ts.net')).toBe(
+      'Tailnet  deimos.pitta-ray.ts.net\nRun `paper-camp pair` to connect a device.',
     );
   });
 
-  it('falls back to the Tunnel link when there is no Tailnet link', () => {
-    expect(qrEligibleLink({ host: localLink, tunnel: tunnelLink })).toBe(tunnelLink);
-  });
-
-  it('is undefined for a host-only or Network-only link, neither reachable from a phone', () => {
-    expect(qrEligibleLink({ host: localLink })).toBeUndefined();
-    expect(qrEligibleLink({ host: localLink, network: networkLink })).toBeUndefined();
+  it('prints only the pair hint without a tailnet name', () => {
+    expect(formatDaemonTailnetLine(undefined)).toBe('Run `paper-camp pair` to connect a device.');
   });
 });

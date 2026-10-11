@@ -10,17 +10,6 @@ import {
 import { machineConfigDir } from '../machine-registry';
 import { formatDuration } from '../phase-run';
 
-export interface DaemonLinks {
-  host: string;
-  network?: string;
-  tailnet?: string;
-  tunnel?: string;
-}
-
-export function qrEligibleLink(links: DaemonLinks): string | undefined {
-  return links.tailnet ?? links.tunnel;
-}
-
 export type UpdateEvent =
   | { kind: 'hooked'; version: string; at: string }
   | { kind: 'boot check current' }
@@ -35,7 +24,7 @@ export interface DaemonState {
   tailnet: boolean;
   updateEvent?: UpdateEvent;
   updatePendingVersion?: string | null;
-  links?: DaemonLinks;
+  tailnetName?: string;
 }
 
 export function daemonStatePath(): string {
@@ -48,18 +37,6 @@ export function daemonLogPath(): string {
 
 function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === 'string';
-}
-
-function isDaemonLinks(value: unknown): value is DaemonLinks {
-  const v = value as Partial<DaemonLinks> | null;
-  return (
-    typeof v === 'object' &&
-    v !== null &&
-    typeof v.host === 'string' &&
-    isOptionalString(v.network) &&
-    isOptionalString(v.tailnet) &&
-    isOptionalString(v.tunnel)
-  );
 }
 
 function isUpdateEvent(value: unknown): value is UpdateEvent {
@@ -92,7 +69,7 @@ function isDaemonState(value: unknown): value is DaemonState {
     (v.updatePendingVersion === undefined ||
       v.updatePendingVersion === null ||
       typeof v.updatePendingVersion === 'string') &&
-    (v.links === undefined || isDaemonLinks(v.links))
+    isOptionalString(v.tailnetName)
   );
 }
 
@@ -202,18 +179,12 @@ export function formatUpdateStatusLine(state: DaemonState): string {
   }
 }
 
-/** Unlike the daemon banner, which prints only the single best way in, status
- * lists every link this machine has on offer. */
-export function formatDaemonLinks(links: DaemonLinks): string {
-  const rows: [string, string | undefined][] = [
-    ['This host', links.host],
-    ['Network', links.network],
-    ['Tailnet', links.tailnet],
-    ['Tunnel', links.tunnel],
-  ];
-  const present = rows.filter((row): row is [string, string] => row[1] !== undefined);
-  const width = Math.max(...present.map(([label]) => label.length));
-  return present.map(([label, url]) => `${label.padEnd(width)}  ${url}`).join('\n');
+export const PAIR_HINT = 'Run `paper-camp pair` to connect a device.';
+
+export function formatDaemonTailnetLine(tailnetName: string | undefined): string {
+  const lines = tailnetName ? [`Tailnet  ${tailnetName}`] : [];
+  lines.push(PAIR_HINT);
+  return lines.join('\n');
 }
 
 /** Written to a sibling temp path and renamed into place, so a crash mid-write

@@ -6,7 +6,7 @@ const paint = (code: string, text: string) => `\x1b[${code}m${text}\x1b[0m`;
 // across lines stays clickable, which plain auto-detection cannot manage.
 const hyperlink = (url: string) => `\x1b]8;;${url}\x1b\\${url}\x1b]8;;\x1b\\`;
 
-function palette(color: boolean) {
+export function palette(color: boolean) {
   if (!color) {
     const plain = (text: string) => text;
     return { bold: plain, dim: plain, green: plain, yellow: plain, link: plain };

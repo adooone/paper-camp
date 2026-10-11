@@ -29,7 +29,6 @@ import {
   parseMountRequest,
   readMachineProjectSummaries,
   watchForIdleRestart,
-  withRequestedNetwork,
 } from './daemon-server';
 
 describe('parseMountRequest', () => {
@@ -842,85 +841,36 @@ describe('watchForIdleRestart', () => {
 });
 
 describe('formatDaemonBanner', () => {
-  const localLink =
-    'https://paper-camp.vercel.app/?machine=http://localhost:4333&token=shared-token';
-  const networkLink =
-    'https://paper-camp.vercel.app/?runtime=http://100.80.79.13:4333&token=shared-token';
-  const tailnetLink =
-    'https://paper-camp.vercel.app/?machine=https://box.tailnet.ts.net/&token=shared-token';
-  const tunnelLink =
-    'https://paper-camp.vercel.app/?machine=https://foo.trycloudflare.com&token=shared-token';
-  const reachable = { link: networkLink, blocked: false };
-
-  it('carries the resolved Network link over the loopback link', () => {
-    const banner = formatDaemonBanner(localLink, reachable, undefined, undefined, false, false);
-    expect(banner).toContain(`Network\n  ${networkLink}`);
-    expect(banner).not.toContain('This host');
+  it('greets with the version and the pair hint, with no link of any kind', () => {
+    const banner = formatDaemonBanner(undefined, false);
+    expect(banner).toContain('Paper Camp');
+    expect(banner).toContain('Run `paper-camp pair` to connect a device.');
+    expect(banner).not.toContain('http');
   });
 
   it('never prints the pairing token as its own bare line', () => {
-    const banner = formatDaemonBanner(localLink, reachable, undefined, undefined, false, false);
+    const banner = formatDaemonBanner(undefined, false);
     expect(banner).not.toMatch(/^Pairing token:/m);
   });
 
-  it('falls back to the loopback link when the machine has no reachable address', () => {
-    const banner = formatDaemonBanner(
-      localLink,
-      { blocked: false },
-      undefined,
-      undefined,
-      false,
-      false,
+  it('prints the tailnet name above the pair hint once --tailnet is up', () => {
+    const banner = formatDaemonBanner('deimos.pitta-ray.ts.net', false);
+    expect(banner).toContain('Tailnet  deimos.pitta-ray.ts.net');
+    expect(banner).toContain('Run `paper-camp pair` to connect a device.');
+  });
+
+  it('emits no escape codes without color, so piped output stays clean', () => {
+    expect(formatDaemonBanner('deimos.pitta-ray.ts.net', false)).not.toContain('\x1b[');
+  });
+
+  it('colorizes when asked, still carrying the same text', () => {
+    const banner = formatDaemonBanner('deimos.pitta-ray.ts.net', true);
+    expect(banner).toContain('\x1b[');
+    const esc = String.fromCharCode(27);
+    const colorCode = new RegExp(`${esc}\\[[0-9;]*m`, 'g');
+    expect(banner.replaceAll(colorCode, '')).toBe(
+      formatDaemonBanner('deimos.pitta-ray.ts.net', false),
     );
-    expect(banner).toContain(`This host\n  ${localLink}`);
-    expect(banner).not.toContain('Network\n');
-  });
-
-  it('drops the HTTPS remedy once --tailnet or --share was asked for', () => {
-    expect(withRequestedNetwork({ blocked: true }, true)).toEqual({ blocked: false });
-    expect(withRequestedNetwork({ blocked: true }, false)).toEqual({ blocked: true });
-    const banner = formatDaemonBanner(
-      localLink,
-      withRequestedNetwork({ blocked: true }, true),
-      undefined,
-      undefined,
-      false,
-      false,
-    );
-    expect(banner).not.toContain('add --tailnet or --share');
-  });
-
-  it('prints the remedy alongside the loopback link when the pair is blocked', () => {
-    const banner = formatDaemonBanner(
-      localLink,
-      { blocked: true },
-      undefined,
-      undefined,
-      false,
-      false,
-    );
-    expect(banner).not.toContain('Network\n');
-    expect(banner).toContain('add --tailnet or --share');
-  });
-
-  it('prefers the Tailnet link over the Tunnel link, Network link, and loopback link', () => {
-    const banner = formatDaemonBanner(localLink, reachable, tailnetLink, tunnelLink, false, false);
-    expect(banner).toContain(`Tailnet\n  ${tailnetLink}`);
-    expect(banner).not.toContain('Network');
-    expect(banner).not.toContain('Tunnel\n');
-    expect(banner).not.toContain('This host');
-  });
-
-  it('prefers the Tunnel link over the Network link and loopback link when there is no Tailnet link', () => {
-    const banner = formatDaemonBanner(localLink, reachable, undefined, tunnelLink, false, false);
-    expect(banner).toContain(`Tunnel\n  ${tunnelLink}`);
-    expect(banner).not.toContain('Network');
-  });
-
-  it('prints exactly one link entry', () => {
-    const banner = formatDaemonBanner(localLink, reachable, tailnetLink, tunnelLink, false, false);
-    const linkLines = banner.split('\n').filter((line) => line.startsWith('  http'));
-    expect(linkLines).toHaveLength(1);
   });
 });
 
