@@ -102,9 +102,10 @@ The `--share` tunnel, which pairing no longer uses. Revoking a paired origin.
       loopback, in-memory codes with expiry, single use and the attempt limits,
       and `/api/pair` accepting `{ code }` and returning the long token.
       run: 14m27s · 210 in · 69.8k out · sonnet-5 · sess:0e246132-76dc-4334-8647-88838b6780bc
-- [ ] Add the `paper-camp pair` command
+- [x] Add the `paper-camp pair` command
       Mint a code, print the QR code on a TTY and the code line, wait for the
       outcome, cancel on Ctrl-C, refuse without a tailnet name.
+      run: 5m13s · 136 in · 38.4k out · sonnet-5 · sess:b580123d-2f78-44f5-b3cb-b32b0e2742e0
 - [ ] Pair from a code in the web app
       `#pair=` on load, the Add a machine card taking a code, the reachability
       probe with its Tailscale message, the expired-code message, and

@@ -71,6 +71,7 @@ import { DEFAULT_DAEMON_PORT, startDaemonServer } from './daemon-server';
 import { readConfigPort, resolveDevPort } from './dev-port';
 import { startDevServer } from './dev-server';
 import { runNight } from './night-command';
+import { runPair } from './pair-command';
 import { buildSessionFocus } from './session-focus';
 
 function fail(message: string): void {
@@ -316,6 +317,13 @@ program
   .option('--qr', 'print the QR code for the Tailnet or Tunnel link')
   .action(async (opts: { qr?: boolean }) => {
     await runStatus(opts);
+  });
+
+program
+  .command('pair')
+  .description('Mint a pairing code and wait for a device to use it to connect to this machine')
+  .action(async () => {
+    if (!(await runPair())) process.exitCode = 1;
   });
 
 program
