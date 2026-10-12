@@ -5,14 +5,15 @@ import { useAppStore } from '@/app/stores/app-store';
 import { Button, Input, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import type { GroupMode } from '../helpers';
-import { GroupByControl } from './group-by-control';
+import { GroupSelect } from './group-select';
 
 interface PlansToolbarProps {
   group: GroupMode;
   onGroupChange: (group: GroupMode) => void;
+  multiProject: boolean;
 }
 
-export const PlansToolbar = ({ group, onGroupChange }: PlansToolbarProps) => {
+export const PlansToolbar = ({ group, onGroupChange, multiProject }: PlansToolbarProps) => {
   const filters = useAppStore((s) => s.planFilters);
   const setPlanSearch = useAppStore((s) => s.setPlanSearch);
   const clearPlanFilters = useAppStore((s) => s.clearPlanFilters);
@@ -50,7 +51,7 @@ export const PlansToolbar = ({ group, onGroupChange }: PlansToolbarProps) => {
           }
           className="min-w-[140px] flex-1"
         />
-        <GroupByControl group={group} onChange={onGroupChange} />
+        <GroupSelect group={group} onChange={onGroupChange} showProject={multiProject} />
       </PageToolbarRow>
 
       {(isHorizon || hasActiveFilters) && (

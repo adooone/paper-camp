@@ -6,7 +6,7 @@ export * from './entity-detail';
 export * from './feedback-section';
 export * from './fixes-section';
 export * from './foreign-horizon-section';
-export * from './group-by-control';
+export * from './group-select';
 export * from './horizon-group-view';
 export * from './list-view';
 export * from './needs-row';

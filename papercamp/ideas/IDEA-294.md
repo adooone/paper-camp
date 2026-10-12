@@ -91,9 +91,10 @@ Sorting the roadmap. Filters on Activity. The Stack panel.
       section with counts and Clear on the Ideas list; status stamps leave the
       toolbar.
       run: 6m13s · 128 in · 26.7k out · sonnet-5 · sess:48a04593-fd30-4a41-9118-1e2ded5be1f4
-- [ ] Cut the Ideas toolbar to one row
+- [x] Cut the Ideas toolbar to one row
       Search plus the Group select (Plain, Subject, Project when scoped);
       Horizon leaves grouping; GroupByControl deleted.
+      run: 5m2s · 106 in · 32.8k out · sonnet-5 · sess:54bf0597-5357-4243-8f02-d85cdd6789c7
 - [ ] Move the roadmap to the Project page
       `/project/roadmap` and its item route, the sidebar Roadmap section with
       horizon checkboxes, the one-row page toolbar, breadcrumbs, and redirects
