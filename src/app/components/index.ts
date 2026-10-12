@@ -1,3 +1,4 @@
+export { CheckboxFilterRow } from './checkbox-filter-row';
 export { CommitMessageFields } from './git/commit-message-fields';
 export type { CommitMessageFieldsState } from './git/commit-message-fields';
 export { GitStashSurface } from './git/git-stash-surface';

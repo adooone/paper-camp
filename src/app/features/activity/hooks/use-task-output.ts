@@ -9,11 +9,16 @@ export interface TaskOutput {
   retry: () => void;
 }
 
+interface Loaded {
+  id: string;
+  lines: string[];
+  failed: boolean;
+}
+
 /** A run's output file. While `live`, it is re-read every 1.5s — the server appends each
  *  streamed line to it — and the lines already shown stay up between reads. */
 export const useTaskOutput = (id: string, live = false): TaskOutput => {
-  const [lines, setLines] = useState<string[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState<Loaded | null>(null);
   const restartRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -24,8 +29,7 @@ export const useTaskOutput = (id: string, live = false): TaskOutput => {
       fetchTaskLogLines(id)
         .then((data) => {
           if (cancelled) return;
-          setFailed(false);
-          setLines(data.lines ?? []);
+          setLoaded({ id, lines: data.lines ?? [], failed: false });
           if (live) timer = setTimeout(() => run(3), LIVE_POLL_MS);
         })
         .catch(() => {
@@ -34,14 +38,16 @@ export const useTaskOutput = (id: string, live = false): TaskOutput => {
             timer = setTimeout(() => run(remaining - 1), 700);
             return;
           }
-          setFailed(true);
-          setLines((current) => current ?? []);
+          setLoaded((current) => ({
+            id,
+            lines: current?.id === id ? current.lines : [],
+            failed: true,
+          }));
         });
     };
 
     restartRef.current = () => {
       if (timer) clearTimeout(timer);
-      setFailed(false);
       run(3);
     };
     run(3);
@@ -52,10 +58,10 @@ export const useTaskOutput = (id: string, live = false): TaskOutput => {
     };
   }, [id, live]);
 
-  useEffect(() => {
-    setLines(null);
-    setFailed(false);
-  }, [id]);
-
-  return { lines, failed, retry: () => restartRef.current() };
+  const current = loaded?.id === id ? loaded : null;
+  return {
+    lines: current ? current.lines : null,
+    failed: current?.failed ?? false,
+    retry: () => restartRef.current(),
+  };
 };

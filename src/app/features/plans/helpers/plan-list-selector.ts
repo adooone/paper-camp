@@ -39,6 +39,20 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   subject: null,
 };
 
+/** The sidebar's Status section and the old toolbar chips share this order. */
+export const STATUS_FILTER_ORDER: PlanStatus[] = [
+  'in-progress',
+  'review',
+  'planned',
+  'idea',
+  'done',
+  'dropped',
+];
+
+export const isDefaultStatusFilter = (statuses: PlanStatus[]): boolean =>
+  statuses.length === DEFAULT_PLAN_LIST_FILTERS.statuses.length &&
+  DEFAULT_PLAN_LIST_FILTERS.statuses.every((status) => statuses.includes(status));
+
 const STATUS_ORDER: Record<PlanStatus, number> = {
   'in-progress': 0,
   review: 1,

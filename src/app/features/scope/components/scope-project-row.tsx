@@ -1,3 +1,4 @@
+import { CheckboxFilterRow } from '@/app/components';
 import { SidebarItem, Stamp } from '@dendelion/paper-ui';
 import type { ScopeRow } from '../hooks/use-scope';
 
@@ -18,23 +19,34 @@ export const ScopeProjectRow = ({
   onToggle,
   onOpen,
 }: ScopeProjectRowProps) => {
-  const isList = mode === 'list';
-  const onClick = asleep
-    ? undefined
-    : isList
-      ? row.isCurrent
-        ? undefined
-        : () => onToggle(row.key)
-      : row.isCurrent
-        ? undefined
-        : () => onOpen(row);
+  if (mode === 'list') {
+    return (
+      <CheckboxFilterRow
+        label={row.name}
+        checked={row.checked}
+        disabled={asleep || row.isCurrent}
+        count={!asleep && showCount && row.count !== null ? row.count : null}
+        ariaLabel={`${row.checked ? 'Hide' : 'Show'} ${row.name}`}
+        onChange={() => onToggle(row.key)}
+        trailing={
+          asleep ? (
+            <Stamp size="small" variant="neutral">
+              Asleep
+            </Stamp>
+          ) : undefined
+        }
+      />
+    );
+  }
+
+  const onClick = asleep || row.isCurrent ? undefined : () => onOpen(row);
 
   return (
     <SidebarItem
-      active={isList ? row.checked : row.isCurrent}
+      active={row.isCurrent}
       disabled={asleep}
       onClick={onClick}
-      ariaLabel={isList ? `${row.checked ? 'Hide' : 'Show'} ${row.name}` : `Open ${row.name}`}
+      ariaLabel={`Open ${row.name}`}
       count={!asleep && showCount && row.count !== null ? row.count : undefined}
       action={
         asleep ? (

@@ -41,6 +41,7 @@ export type PlansSlice = {
   setPlanSearch: (search: string) => void;
   setSubjectFilter: (subject: string | null) => void;
   clearPlanFilters: () => void;
+  clearPlanStatusFilter: () => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
 
@@ -101,6 +102,13 @@ export function createPlansSlice(set: SetState): PlansSlice {
           ...s.planFilters,
           search: '',
           subject: null,
+          statuses: DEFAULT_PLAN_LIST_FILTERS.statuses,
+        }),
+      })),
+    clearPlanStatusFilter: () =>
+      set((s) => ({
+        planFilters: storePlanFilters({
+          ...s.planFilters,
           statuses: DEFAULT_PLAN_LIST_FILTERS.statuses,
         }),
       })),

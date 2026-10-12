@@ -126,7 +126,7 @@ export const PlansPage = () => {
             canAddItem={roadmapPage.horizonTitles.length > 0}
             onAddItem={() => roadmapPage.setAddOpen(true)}
           />
-          <PlansToolbar entries={plans.entries} group={group} onGroupChange={handleGroupChange} />
+          <PlansToolbar group={group} onGroupChange={handleGroupChange} />
 
           {group === 'horizon' ? (
             <>

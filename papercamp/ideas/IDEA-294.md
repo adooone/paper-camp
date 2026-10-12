@@ -86,10 +86,11 @@ Sorting the roadmap. Filters on Activity. The Stack panel.
       Raise the `@dendelion/paper-ui` range to the version that ships
       IDEA-13 and install it.
       run: 2m27s · 38 in · 3.7k out · sonnet-5 · sess:48a04593-fd30-4a41-9118-1e2ded5be1f4
-- [ ] Turn sidebar filters into checkbox rows
+- [x] Turn sidebar filters into checkbox rows
       Small-checkbox rows for Projects in view in list mode, and a Status
       section with counts and Clear on the Ideas list; status stamps leave the
       toolbar.
+      run: 6m13s · 128 in · 26.7k out · sonnet-5 · sess:48a04593-fd30-4a41-9118-1e2ded5be1f4
 - [ ] Cut the Ideas toolbar to one row
       Search plus the Group select (Plain, Subject, Project when scoped);
       Horizon leaves grouping; GroupByControl deleted.

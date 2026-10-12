@@ -16,6 +16,7 @@ import {
   PlanActionsColumn,
   PlanActionsCommandsColumn,
   PlansListSkeleton,
+  StatusFilters,
 } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
@@ -168,6 +169,7 @@ export const AppShell = () => {
                     {isIdeasListArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <ProjectsInView mode="list" countKind="ideas" />
+                        <StatusFilters />
                       </Suspense>
                     )}
                     {isActivityListArea && (

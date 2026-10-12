@@ -1,5 +1,6 @@
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { formatDuration, shortModel } from '@/core/phase-run';
 import { usageForEntry } from '@/core/run-rows';
@@ -28,7 +29,12 @@ const factsFor = (row: LogRow): Fact[] => {
   const durationMs = usage?.durationMs ?? row.durationMs;
   const startedAt = row.source.kind === 'task' ? row.source.entry.startedAt : row.timestamp;
   const facts: Fact[] = [{ label: 'Started', value: formatTime(startedAt) }];
-  if (durationMs != null) facts.push({ label: 'Duration', value: formatDuration(durationMs) });
+  if (row.source.kind === 'running') {
+    const elapsed = Date.now() - Date.parse(startedAt);
+    if (Number.isFinite(elapsed)) facts.push({ label: 'Elapsed', value: formatDuration(elapsed) });
+    if (row.source.task.status === 'stopping') facts.push({ label: 'Status', value: 'Stopping…' });
+  } else if (durationMs != null)
+    facts.push({ label: 'Duration', value: formatDuration(durationMs) });
   if (usage) {
     facts.push({ label: 'Turns', value: String(usage.numTurns) });
     facts.push({ label: 'Cost', value: formatCost(usage.costUsd) });
@@ -264,7 +270,31 @@ const hasBody = (row: LogRow, lines: string[] | null): boolean => {
   return Boolean(lines && summaryLine(lines));
 };
 
+export const StopRunButton = ({ taskId, className }: { taskId: string; className?: string }) => {
+  const stopAgent = useAppStore((s) => s.stopAgent);
+  const [stopping, setStopping] = useState(false);
+  return (
+    <Button
+      size="small"
+      variant="danger"
+      className={className}
+      disabled={stopping}
+      onClick={async () => {
+        setStopping(true);
+        try {
+          await stopAgent(taskId);
+        } finally {
+          setStopping(false);
+        }
+      }}
+    >
+      {stopping ? 'Stopping…' : 'Stop'}
+    </Button>
+  );
+};
+
 export const EntryDetailsCard = ({ row, actions, lines }: EntryDetailsCardProps) => {
+  const runningTask = row.source.kind === 'running' ? row.source.task : null;
   return (
     <Card size="small" texture={surface.card} className="shrink-0">
       <div className="flex flex-col gap-3">
@@ -277,6 +307,9 @@ export const EntryDetailsCard = ({ row, actions, lines }: EntryDetailsCardProps)
           <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]}>
             {row.outcome}
           </Stamp>
+          {runningTask && runningTask.status !== 'stopping' && (
+            <StopRunButton taskId={runningTask.id} className="ml-auto" />
+          )}
         </div>
         <FactsGrid items={factsFor(row)} />
         {hasBody(row, lines) && (

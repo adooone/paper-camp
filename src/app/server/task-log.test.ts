@@ -3,7 +3,12 @@ import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { logTaskCompletion, logTaskStart, reconcileInterruptedTasks } from './task-log';
+import {
+  appendTaskOutput,
+  logTaskCompletion,
+  logTaskStart,
+  reconcileInterruptedTasks,
+} from './task-log';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -300,5 +305,38 @@ describe('logTaskCompletion retention', () => {
     expect(readFileSync(join(root, 'papercamp', '.task-logs', `${id}.log`), 'utf-8')).toBe(
       'line one',
     );
+  });
+});
+
+describe('appendTaskOutput', () => {
+  const outputOf = (root: string, id: string) =>
+    readFileSync(join(root, 'papercamp', '.task-logs', `${id}.log`), 'utf-8');
+
+  it('streams every line in order, past the in-memory tail', async () => {
+    const root = makeRoot();
+    const id = 'eeeeeeee-0000-0000-0000-000000000006';
+    const task = { id, taskKind: 'run-all' as const };
+    const all = Array.from({ length: 80 }, (_, i) => `line ${i + 1}`);
+    await Promise.all(all.map((line) => appendTaskOutput(root, task, line)));
+
+    expect(outputOf(root, id)).toBe(`${all.join('\n')}\n`);
+  });
+
+  it('completion keeps the streamed file instead of overwriting it with the tail', async () => {
+    const root = makeRoot();
+    const id = 'ffffffff-0000-0000-0000-000000000007';
+    void appendTaskOutput(root, { id, taskKind: 'phase' }, 'first');
+    void appendTaskOutput(root, { id, taskKind: 'phase' }, 'second');
+    await logTaskCompletion(root, { ...completed(id), lines: ['second'] }, 'done');
+
+    expect(outputOf(root, id)).toBe('first\nsecond\n');
+  });
+
+  it('skips unlogged task kinds', async () => {
+    const root = makeRoot();
+    const id = '11111111-0000-0000-0000-000000000008';
+    await appendTaskOutput(root, { id, taskKind: 'commit-suggest' }, 'quiet');
+
+    expect(existsSync(join(root, 'papercamp', '.task-logs', `${id}.log`))).toBe(false);
   });
 });

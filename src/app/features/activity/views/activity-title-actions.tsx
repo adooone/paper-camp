@@ -1,6 +1,7 @@
 import type { LogRow } from '@/types/index';
 import { Button, Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { StopRunButton } from './run-row-detail';
 
 export interface ActivityTitleActionsProps {
   runningRows: LogRow[];
@@ -39,6 +40,9 @@ export const ActivityTitleActions = ({
         >
           {runningRows.length} running{running.entityId ? ` · ${running.entityId}` : ''}
         </Stamp>
+      )}
+      {running?.source.kind === 'running' && running.source.task.status !== 'stopping' && (
+        <StopRunButton taskId={running.source.task.id} />
       )}
       {unreadCount > 0 && (
         <>

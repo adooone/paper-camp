@@ -117,6 +117,11 @@ describe('buildLogRows', () => {
     expect(rows[1]).toMatchObject({ type: 'phase', outcome: 'done', entityId: 'IDEA-1' });
   });
 
+  it('falls back to wall-clock time for a run that recorded no agent usage', () => {
+    const [row] = buildLogRows([taskLogEntry()], [], [], []);
+    expect(row.durationMs).toBe(5 * 60 * 1000);
+  });
+
   it('turns a failure with no run behind it into a row of its own type', () => {
     const rows = buildLogRows([], [issue({ sourceKind: 'sync' })], [], []);
     expect(rows).toEqual([

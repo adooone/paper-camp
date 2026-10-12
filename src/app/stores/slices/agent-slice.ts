@@ -105,15 +105,14 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
         const prev = get().agentStatus;
         set({ agentStatus: data });
 
-        // Issues page derives each issue's thread from tasks.log (IDEA-192) rather
-        // than polling itself, so a "fix it here" run needs this nudge to appear.
-        const finishedIssueFix = data.some((t) => {
-          if (t.taskKind !== 'issue-fix') return false;
+        // Activity and issue threads read finished runs from tasks.log rather than
+        // polling it, so a run that just ended needs this nudge to show as finished.
+        const finishedRun = data.some((t) => {
           if (t.status !== 'done' && t.status !== 'error') return false;
           const before = prev.find((p) => p.id === t.id);
           return before && before.status !== 'done' && before.status !== 'error';
         });
-        if (finishedIssueFix) get().loadTaskLog();
+        if (finishedRun) get().loadTaskLog();
 
         const completedRun = data.find((t) => {
           if (t.status !== 'done') return false;
