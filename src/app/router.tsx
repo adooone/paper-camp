@@ -203,9 +203,8 @@ const projectSettingsSectionRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
-// `/roadmap` and `/roadmap/$item` were the old addresses for the roadmap, now its
-// own page under Project (IDEA-294) — kept as redirects so links already shared or
-// bookmarked don't 404.
+// `/roadmap` and `/roadmap/$item` were the old addresses, now under Project (IDEA-294) —
+// kept as redirects so links already shared or bookmarked don't 404.
 const roadmapRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap',
