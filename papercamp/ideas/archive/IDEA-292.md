@@ -2,8 +2,9 @@
 id: IDEA-292
 title: Pair with a code from the terminal
 type: feat
-status: review
+status: done
 created: 2026-10-10
+updated: 2026-10-11
 tags:
   - cli
   - app
