@@ -2,9 +2,9 @@
 id: IDEA-290
 title: Three pages instead of seven
 type: refactor
-status: review
+status: done
 created: 2026-10-09
-updated: 2026-10-10
+updated: 2026-10-12
 tags:
   - app
   - ui

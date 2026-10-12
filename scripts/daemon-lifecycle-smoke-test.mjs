@@ -72,11 +72,10 @@ async function main() {
     const start = runCli(['start', '-p', String(port)], env);
     if (start.status !== 0) throw new Error(`\`start\` failed:\n${start.stdout}\n${start.stderr}`);
     assertIncludes(start.stdout, 'Paper Camp v', '`start` should print the daemon banner');
-    // The link carries the daemon origin as a readable `?machine=` value.
     assertIncludes(
       start.stdout,
-      `machine=http://localhost:${port}&`,
-      '`start` should print the Local link carrying the daemon origin',
+      'paper-camp pair',
+      '`start` should point at `paper-camp pair` for connecting a device',
     );
 
     const statusRunning = runCli(['status'], env);
@@ -120,13 +119,12 @@ async function main() {
       'paper-camp: daemon stopped',
       '`restart` should stop the old daemon',
     );
+    const statusAfterRestart = runCli(['status'], env);
     assertIncludes(
-      restart.stdout,
-      `machine=http://localhost:${port}&`,
+      statusAfterRestart.stdout,
+      `port ${port}`,
       '`restart` should reuse the recorded port',
     );
-
-    const statusAfterRestart = runCli(['status'], env);
     const pidAfterRestart = /pid (\d+)/.exec(statusAfterRestart.stdout)?.[1];
     if (!pidAfterRestart || pidAfterRestart === pidBeforeRestart) {
       throw new Error(
