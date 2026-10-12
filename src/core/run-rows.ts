@@ -67,6 +67,13 @@ function unreadCompletedIds(notifications: Notification[]): Set<string> {
   );
 }
 
+// A run with no agent usage (stopped during its baseline, a no-op) still took real time.
+function wallClockMs(entry: TaskLogEntry): number | undefined {
+  if (!entry.endedAt) return undefined;
+  const ms = Date.parse(entry.endedAt) - Date.parse(entry.startedAt);
+  return Number.isFinite(ms) && ms >= 0 ? ms : undefined;
+}
+
 function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
   const usage = usageForEntry(entry);
   return {
@@ -77,7 +84,7 @@ function taskRow(entry: TaskLogEntry, unreadIds: Set<string>): LogRow {
     entityTitle: entry.planTitle,
     title: entry.planTitle,
     agentId: entry.agentId,
-    durationMs: usage?.durationMs,
+    durationMs: usage?.durationMs ?? wallClockMs(entry),
     costUsd: usage?.costUsd,
     outcome: entry.outcome ?? 'running',
     unread: unreadIds.has(entry.id),

@@ -13,16 +13,18 @@ const TaskEntry = ({
   row,
   taskId,
   actions,
+  live = false,
 }: {
   row: LogRow;
   taskId: string;
   actions: LogRowActions;
+  live?: boolean;
 }) => {
-  const { lines, failed, retry } = useTaskOutput(taskId);
+  const { lines, failed, retry } = useTaskOutput(taskId, live);
   return (
     <div className={pageClass}>
       <EntryDetailsCard row={row} actions={actions} lines={lines} />
-      <LogOutputPane lines={lines} failed={failed} onRetry={retry} />
+      <LogOutputPane lines={lines} failed={failed} onRetry={retry} live={live} />
     </div>
   );
 };
@@ -31,13 +33,11 @@ const EntryView = ({ row, actions }: { row: LogRow; actions: LogRowActions }) =>
   const { source } = row;
   if (source.kind === 'task')
     return <TaskEntry row={row} taskId={source.entry.id} actions={actions} />;
+  if (source.kind === 'running')
+    return <TaskEntry row={row} taskId={source.task.id} actions={actions} live />;
 
   const output =
-    source.kind === 'running'
-      ? source.task.lines
-      : source.kind === 'issue' && source.issue.output
-        ? source.issue.output.split('\n')
-        : null;
+    source.kind === 'issue' && source.issue.output ? source.issue.output.split('\n') : null;
 
   if (!output) return <EntryDetailsCard row={row} actions={actions} lines={null} />;
   return (

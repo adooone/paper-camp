@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { access, appendFile, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { readTaskLog } from '@/core/parse';
 import type {
@@ -131,6 +131,36 @@ export function reconcileInterruptedTasks(root: string, bootedAt: string): Promi
   return run;
 }
 
+// Per-task, so lines land in order without serialising every run behind every other.
+const outputChains = new Map<string, Promise<void>>();
+
+/** Appends one streamed line to the run's output file as it happens, so the full log
+ *  survives a restart and can be tailed while the run is still going. Best-effort. */
+export function appendTaskOutput(
+  root: string,
+  task: { id: string; taskKind: TaskKind },
+  line: string,
+): Promise<void> {
+  if (UNLOGGED_TASK_KINDS.has(task.taskKind)) return Promise.resolve();
+  const file = taskLogFile(root, task.id);
+  const next = (outputChains.get(task.id) ?? Promise.resolve())
+    .then(async () => {
+      await mkdir(dirname(file), { recursive: true });
+      await appendFile(file, `${line}\n`, 'utf-8');
+    })
+    .catch((err) => {
+      console.error(`papercamp: could not append task output for ${task.id}:`, err);
+    });
+  outputChains.set(task.id, next);
+  return next;
+}
+
+const fileExists = (path: string) =>
+  access(path).then(
+    () => true,
+    () => false,
+  );
+
 // Best-effort: a log write failure must never take down the task it's recording.
 export function logTaskCompletion(
   root: string,
@@ -156,9 +186,12 @@ export function logTaskCompletion(
     };
     // Output file before the row: a visible row with no output file reads as "No output recorded".
     const file = taskLogFile(root, task.id);
+    await outputChains.get(task.id);
+    outputChains.delete(task.id);
     try {
       await mkdir(dirname(file), { recursive: true });
-      await writeFile(file, task.lines.join('\n'), 'utf-8');
+      // A streamed file is the whole run; the in-memory lines are only its tail.
+      if (!(await fileExists(file))) await writeFile(file, task.lines.join('\n'), 'utf-8');
     } catch (err) {
       console.error(`papercamp: could not write task output for ${task.id}:`, err);
       return;

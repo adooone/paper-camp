@@ -18,7 +18,7 @@ export function taskRoutes({ root }: RouteContext): Route[] {
           return;
         }
         const raw = await readMaybe(taskLogFile(root, id));
-        sendJson(res, 200, { lines: raw ? raw.split('\n') : [] });
+        sendJson(res, 200, { lines: raw ? raw.replace(/\n$/, '').split('\n') : [] });
       },
     },
   ];

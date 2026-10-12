@@ -82,9 +82,10 @@ checkbox row.
 Sorting the roadmap. Filters on Activity. The Stack panel.
 
 ### Phases
-- [ ] Bump paper-ui to the small checkbox and row texture release
+- [x] Bump paper-ui to the small checkbox and row texture release
       Raise the `@dendelion/paper-ui` range to the version that ships
       IDEA-13 and install it.
+      run: 2m27s · 38 in · 3.7k out · sonnet-5 · sess:48a04593-fd30-4a41-9118-1e2ded5be1f4
 - [ ] Turn sidebar filters into checkbox rows
       Small-checkbox rows for Projects in view in list mode, and a Status
       section with counts and Clear on the Ideas list; status stamps leave the

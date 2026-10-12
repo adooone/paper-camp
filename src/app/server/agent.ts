@@ -65,6 +65,7 @@ import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
 import {
   UNLOGGED_TASK_KINDS,
+  appendTaskOutput,
   logTaskCompletion,
   logTaskStart,
   reconcileInterruptedTasks,
@@ -229,6 +230,8 @@ export interface AgentTask {
   agentId: AgentId;
   adapter: AgentAdapter;
   proc: ChildProcess;
+  /** Wakes a run waiting on something other than its agent process (the baseline checks). */
+  onStop?: () => void;
   lines: string[];
   phaseAnchor?: PhaseMilestone;
   anchorEnteredAt?: number;
@@ -575,6 +578,7 @@ export function createAgentManager(
   }
 
   function pushLine(task: AgentTask, text: string) {
+    void appendTaskOutput(root, task, text);
     task.lines.push(text);
     if (task.lines.length > MAX_LINES) task.lines.shift();
     broadcast(text, task.id);
@@ -1896,11 +1900,25 @@ export function createAgentManager(
           return;
         }
 
-        let toleratedRed = await readBaseline(task, getBaselineChecks ?? runProjectChecks);
+        pushLine(task, '[baseline] running project checks before the first phase');
+        const stopped = new Promise<'stopped'>((resolve) => {
+          task.onStop = () => resolve('stopped');
+        });
+        const baseline = await Promise.race([
+          readBaseline(task, getBaselineChecks ?? runProjectChecks),
+          stopped,
+        ]);
+        task.onStop = undefined;
         if (isSuperseded(task)) {
           finalizeSuperseded(task);
           return;
         }
+        if (baseline === 'stopped') {
+          pushLine(task, 'Stopped before the first phase');
+          void setStatus(task, 'done');
+          return;
+        }
+        let toleratedRed = baseline;
 
         const phaseResult = await runQueue(
           task,
@@ -1921,6 +1939,7 @@ export function createAgentManager(
           return;
         }
         if (phaseResult.exit === 'stopping') {
+          pushLine(task, `Stopped after ${phaseResult.completed} phase(s) completed`);
           void setStatus(task, 'done');
           return;
         }
@@ -1961,6 +1980,10 @@ export function createAgentManager(
             return;
           }
           if (fixResult.exit === 'stopping') {
+            pushLine(
+              task,
+              `Stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed`,
+            );
             void setStatus(task, 'done');
             return;
           }
@@ -2180,8 +2203,10 @@ export function createAgentManager(
     if (!task || isTaskDone(task)) {
       return { ok: false, error: 'No agent task running' };
     }
+    pushLine(task, 'Stop requested — ending after the current step');
     void setStatus(task, 'stopping');
     killWithEscalation(task.proc);
+    task.onStop?.();
     return { ok: true };
   }
 
