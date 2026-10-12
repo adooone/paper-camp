@@ -61,8 +61,9 @@ renders them today. The item page's breadcrumb reads *Roadmap › <horizon> ›
 the roadmap shows the current project's only. `/?group=horizon`, `/roadmap`
 and `/roadmap/$item` redirect to the new addresses.
 
-**A kraft header that sorts.** The list's header is a `Row surface="kraft"`,
-one fixed 32px band on the darker paper, using the same `PLAN_ROW_COLUMNS`
+**A kraft header that sorts.** The list's header is a
+`<Row surface="card" texture="kraft">`, using paper-ui's new `Row` texture
+prop, one fixed 32px band on the darker paper, using the same `PLAN_ROW_COLUMNS`
 as the rows. The run-order `#` becomes its first cell, over the run-order
 stamps, instead of floating in the gutter. Every label is the sort button for
 its column. The active column's label is semibold and carries a 12px arrow
@@ -80,7 +81,7 @@ checkbox row.
 Sorting the roadmap. Filters on Activity. The Stack panel.
 
 ### Phases
-- [ ] Bump paper-ui to the small checkbox and kraft row release
+- [ ] Bump paper-ui to the small checkbox and row texture release
       Raise the `@dendelion/paper-ui` range to the version that ships
       IDEA-13 and install it.
 - [ ] Turn sidebar filters into checkbox rows
@@ -95,5 +96,5 @@ Sorting the roadmap. Filters on Activity. The Stack panel.
       horizon checkboxes, the one-row page toolbar, breadcrumbs, and redirects
       from `/?group=horizon` and `/roadmap/…`.
 - [ ] Put the list header on kraft and sort from its labels
-      Kraft `Row` header with the `#` cell inside, label buttons with the
-      arrow icon on the active column, aria-sort kept.
+      `Row surface="card" texture="kraft"` header with the `#` cell inside,
+      label buttons with the arrow icon on the active column, aria-sort kept.
