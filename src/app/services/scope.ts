@@ -1,6 +1,3 @@
-export const SCOPE_COLOR_TOKENS = ['blue', 'green', 'amber', 'rose', 'purple', 'slate'] as const;
-export type ScopeColorToken = (typeof SCOPE_COLOR_TOKENS)[number];
-
 /** `<slug>@<machine>`, e.g. `paper-ui@deimos` — the hub's project slug and
  * machine name, not a runtime URL (IDEA-291). */
 export type ScopeKey = string;
@@ -35,15 +32,4 @@ export function serializeScopeParam(keys: readonly ScopeKey[]): string | undefin
 export function resolveScope(current: ScopeKey, requested: readonly ScopeKey[]): ScopeKey[] {
   const rest = Array.from(new Set(requested.filter((key) => key !== current)));
   return [current, ...rest];
-}
-
-/** Assigns each key in `hubOrder` a color from the fixed sequence by its position
- * in the whole hub listing, so a project's color stays the same regardless of
- * which other projects are ticked into scope alongside it. */
-export function assignScopeColors(hubOrder: readonly ScopeKey[]): Map<ScopeKey, ScopeColorToken> {
-  const colors = new Map<ScopeKey, ScopeColorToken>();
-  hubOrder.forEach((key, index) => {
-    colors.set(key, SCOPE_COLOR_TOKENS[index % SCOPE_COLOR_TOKENS.length]);
-  });
-  return colors;
 }

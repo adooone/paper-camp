@@ -158,7 +158,7 @@ const AgentTaskCard = ({
       <div className="flex h-full min-w-0 flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-            {project && <ProjectChip project={project} />}
+            {project && <ProjectChip project={project} surface="chalkboard" />}
             {taskCardTitle(task)}
           </span>
           {!foreign &&
@@ -241,7 +241,7 @@ const InterruptedNoticeCard = ({
     >
       <div className="flex h-full min-w-0 flex-col justify-center gap-1">
         <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-          {project && <ProjectChip project={project} />}
+          {project && <ProjectChip project={project} surface="chalkboard" />}
           {entry.planId ?? entry.planTitle}
         </span>
         <Tooltip content="Click to open the run and retry it." surface="chalkboard">

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  assignScopeColors,
   parseScopeKey,
   parseScopeParam,
   resolveScope,
@@ -55,26 +54,5 @@ describe('resolveScope', () => {
         'paper-ui@deimos',
       ]),
     ).toEqual(['paper-camp@deimos', 'paper-ui@deimos']);
-  });
-});
-
-describe('assignScopeColors', () => {
-  it('assigns the fixed sequence by position in hub order', () => {
-    const colors = assignScopeColors(['a@m', 'b@m', 'c@m']);
-    expect(colors.get('a@m')).toBe('blue');
-    expect(colors.get('b@m')).toBe('green');
-    expect(colors.get('c@m')).toBe('amber');
-  });
-
-  it('cycles the sequence past six projects', () => {
-    const hubOrder = Array.from({ length: 7 }, (_, i) => `p${i}@m`);
-    const colors = assignScopeColors(hubOrder);
-    expect(colors.get('p0@m')).toBe('blue');
-    expect(colors.get('p6@m')).toBe('blue');
-  });
-
-  it("a project's color is stable regardless of what else is in scope, since it comes from hub position", () => {
-    const hubOrder = ['a@m', 'b@m', 'c@m'];
-    expect(assignScopeColors(hubOrder).get('c@m')).toBe(assignScopeColors(hubOrder).get('c@m'));
   });
 });

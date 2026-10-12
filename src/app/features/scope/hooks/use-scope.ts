@@ -3,9 +3,7 @@ import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { runtimeConnection } from '@/app/services/runtime-connection';
 import {
-  type ScopeColorToken,
   type ScopeKey,
-  assignScopeColors,
   parseScopeParam,
   resolveScope,
   scopeKey,
@@ -30,7 +28,6 @@ export interface ScopeRow {
   runtimeUrl: string;
   slug: string;
   name: string;
-  color: ScopeColorToken;
   isCurrent: boolean;
   checked: boolean;
   count: number | null;
@@ -97,7 +94,6 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
     () => allMachines.flatMap((m) => m.projects.map((p) => scopeKey(p.slug, m.host))),
     [allMachines],
   );
-  const colors = useMemo(() => assignScopeColors(hubOrderKeys), [hubOrderKeys]);
 
   const requested = useMemo(
     () =>
@@ -157,7 +153,6 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
         runtimeUrl: project.runtimeUrl,
         slug: project.slug,
         name: project.packageName ?? project.label ?? project.slug,
-        color: colors.get(key) ?? 'slate',
         isCurrent: project.runtimeUrl === currentRuntimeUrl,
         checked: scopeSet.has(key),
         count: counts[project.runtimeUrl] ?? null,
