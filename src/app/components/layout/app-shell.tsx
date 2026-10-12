@@ -50,17 +50,15 @@ const GitFileList = lazy(() =>
     default: m.GitFileList,
   })),
 );
-// Plans has its own skeleton; a roadmap item and Project share a generic one;
-// everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/project', '/roadmap', '/activity', '/chat'];
+// Plans has its own skeleton; Project (including its Roadmap pages) shares a
+// generic one; everything else falls back to a named spinner.
+const ROW_SKELETON_PREFIXES = ['/project', '/activity', '/chat'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {
-  // A roadmap item is part of the Plans area for nav purposes, but it isn't a list —
-  // it still gets the generic row skeleton below, not the worklist one.
-  if (isPlansArea && !pathname.startsWith('/roadmap/')) return <PlansListSkeleton />;
+  if (isPlansArea) return <PlansListSkeleton />;
   if (ROW_SKELETON_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return <RowSkeleton />;
   }

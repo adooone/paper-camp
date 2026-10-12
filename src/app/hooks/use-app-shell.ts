@@ -92,16 +92,13 @@ export function useAppShell(): AppShellState {
     reachable: runtimeReachable,
     checking: runtimeChecking,
   });
-  // A roadmap item still lives at `/roadmap/$item`, but it's rendered under the
-  // Ideas tab now, so it counts toward the Plans area for nav and breadcrumb purposes.
   const isPlansArea =
     pathname === '/' ||
     pathname.startsWith('/plans/') ||
     pathname.startsWith('/ideas/') ||
-    pathname.startsWith('/findings/') ||
-    pathname.startsWith('/roadmap/');
-  // Docs, Stats and Settings live together under /project (IDEA-290); the project
-  // sidebar picks its own active group from the fuller path.
+    pathname.startsWith('/findings/');
+  // Docs, Stats, Settings and Roadmap live together under /project (IDEA-290,
+  // IDEA-294); the project sidebar picks its own active group from the fuller path.
   const isProjectArea = pathname === '/project' || pathname.startsWith('/project/');
   // Log and Chat live together under /activity (IDEA-290); the entry detail has no
   // sidebar of its own, only the list does — see isActivityListArea below.
@@ -127,7 +124,7 @@ export function useAppShell(): AppShellState {
   // List routes otherwise have no sidebar now that filters live in the toolbar;
   // only a plan/idea/finding detail still has an actions column to show.
   const hasSidebar =
-    (isPlansArea && pathname !== '/' && !pathname.startsWith('/roadmap/')) ||
+    (isPlansArea && pathname !== '/') ||
     isIdeasListArea ||
     isActivityListArea ||
     isProjectArea ||

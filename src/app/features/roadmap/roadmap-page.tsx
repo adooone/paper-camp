@@ -96,7 +96,7 @@ export const RoadmapPage = () => {
         horizonTitle={removing?.horizonTitle ?? null}
         item={removing?.item ?? null}
         onClose={() => setRemoving(null)}
-        onRemoved={() => navigate({ to: '/', search: { group: 'horizon' } })}
+        onRemoved={() => navigate({ to: '/project/roadmap' })}
       />
     </>
   );

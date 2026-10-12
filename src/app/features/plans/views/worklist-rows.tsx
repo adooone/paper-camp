@@ -156,7 +156,9 @@ export const WorklistRows = ({
                       type="button"
                       className={`${subjectHeaderClass} bg-none bg-transparent border-none cursor-pointer text-left hover:underline`}
                       title="View in roadmap"
-                      onClick={() => navigate({ to: '/roadmap', search: { item: subject } })}
+                      onClick={() =>
+                        navigate({ to: '/project/roadmap/$item', params: { item: subject } })
+                      }
                     >
                       {subject}
                     </button>

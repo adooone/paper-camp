@@ -27,6 +27,11 @@ const RoadmapPage = lazy(() =>
     default: m.RoadmapPage,
   })),
 );
+const RoadmapListPage = lazy(() =>
+  importWithRecovery('RoadmapListPage', () => import('@/app/features/roadmap/index')).then((m) => ({
+    default: m.RoadmapListPage,
+  })),
+);
 const StatsPage = lazy(() =>
   importWithRecovery('StatsPage', () => import('@/app/features/stats/index')).then((m) => ({
     default: m.StatsPage,
@@ -82,11 +87,20 @@ const plansRoute = createRoute({
   component: PlansPage,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { subject?: string; group?: GroupMode; p?: string } => ({
+  ): { subject?: string; group?: GroupMode | 'horizon'; p?: string } => ({
     subject: typeof search.subject === 'string' ? search.subject : undefined,
-    group: isGroupMode(search.group) ? search.group : undefined,
+    group: isGroupMode(search.group)
+      ? search.group
+      : search.group === 'horizon'
+        ? 'horizon'
+        : undefined,
     p: scopeParam(search.p),
   }),
+  // `?group=horizon` was the Ideas page's old address for the roadmap, now its own
+  // page under Project (IDEA-294).
+  beforeLoad: ({ search }) => {
+    if (search.group === 'horizon') throw redirect({ to: '/project/roadmap' });
+  },
   staticData: { layer: 'corpus' },
 });
 // `/plans/:id` was the old address for the same page. Kept as a redirect so links
@@ -189,8 +203,9 @@ const projectSettingsSectionRoute = createRoute({
   staticData: { layer: 'runtime' },
 });
 
-// Bare `/roadmap` has no page of its own any more — it only ever redirects, either
-// to the item it names or, with none, to the Ideas page's Horizon grouping.
+// `/roadmap` and `/roadmap/$item` were the old addresses for the roadmap, now its
+// own page under Project (IDEA-294) — kept as redirects so links already shared or
+// bookmarked don't 404.
 const roadmapRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap',
@@ -199,16 +214,17 @@ const roadmapRoute = createRoute({
   }),
   beforeLoad: ({ search }) => {
     if (search.item) {
-      throw redirect({ to: '/roadmap/$item', params: { item: search.item } });
+      throw redirect({ to: '/project/roadmap/$item', params: { item: search.item } });
     }
-    throw redirect({ to: '/', search: { group: 'horizon' } });
+    throw redirect({ to: '/project/roadmap' });
   },
 });
 const roadmapItemRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/roadmap/$item',
-  component: RoadmapPage,
-  staticData: { layer: 'corpus' },
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/project/roadmap/$item', params });
+  },
 });
 
 const inboxRoute = createRoute({
@@ -232,6 +248,19 @@ const projectStatsRoute = createRoute({
   component: StatsPage,
   validateSearch: scopeSearchSchema,
   staticData: { layer: 'runtime' },
+});
+
+const projectRoadmapRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/roadmap',
+  component: RoadmapListPage,
+  staticData: { layer: 'corpus' },
+});
+const projectRoadmapItemRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/project/roadmap/$item',
+  component: RoadmapPage,
+  staticData: { layer: 'corpus' },
 });
 
 const gitRoute = createRoute({
@@ -349,6 +378,8 @@ const routeTree = rootRoute.addChildren([
   projectSettingsRoute,
   projectSettingsSectionRoute,
   projectStatsRoute,
+  projectRoadmapRoute,
+  projectRoadmapItemRoute,
   tasksRoute,
   issuesRoute,
   activityRoute,

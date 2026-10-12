@@ -1,4 +1,6 @@
+import { CheckboxFilterRow } from '@/app/components';
 import { useDocsSidebar } from '@/app/features/docs/hooks';
+import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
 import { ProjectsInView } from '@/app/features/scope/index';
 import { useActiveSettingsSection } from '@/app/hooks';
 import {
@@ -34,10 +36,31 @@ export const ProjectSidebar = () => {
   const isDocsPath = pathname.startsWith('/project/docs');
   const isSettingsPath = pathname.startsWith('/project/settings');
   const isStatsPath = pathname === '/project' || pathname.startsWith('/project/stats');
+  const isRoadmapPath = pathname.startsWith('/project/roadmap');
+  const { horizonTitles, horizonCounts, activeHorizons, toggleRoadmapHorizon } =
+    useRoadmapSidebar();
 
   return (
     <>
       <ProjectsInView mode="switcher" countKind={null} />
+      <SidebarCard className="shrink-0">
+        <SidebarLabel>Roadmap</SidebarLabel>
+        <div className="flex flex-col">
+          <SidebarItem active={isRoadmapPath} onClick={() => navigate({ to: '/project/roadmap' })}>
+            Overview
+          </SidebarItem>
+          {horizonTitles.map((title) => (
+            <CheckboxFilterRow
+              key={title}
+              label={stripHorizonPrefix(title)}
+              checked={activeHorizons.has(title)}
+              count={horizonCounts[title] ?? 0}
+              ariaLabel={`${activeHorizons.has(title) ? 'Hide' : 'Show'} ${stripHorizonPrefix(title)}`}
+              onChange={() => toggleRoadmapHorizon(title)}
+            />
+          ))}
+        </div>
+      </SidebarCard>
       <SidebarCard className="shrink-0">
         <SidebarLabel>Docs</SidebarLabel>
         <div className="px-1 pt-1 pb-2">

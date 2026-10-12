@@ -95,10 +95,11 @@ Sorting the roadmap. Filters on Activity. The Stack panel.
       Search plus the Group select (Plain, Subject, Project when scoped);
       Horizon leaves grouping; GroupByControl deleted.
       run: 5m2s · 106 in · 32.8k out · sonnet-5 · sess:54bf0597-5357-4243-8f02-d85cdd6789c7
-- [ ] Move the roadmap to the Project page
+- [x] Move the roadmap to the Project page
       `/project/roadmap` and its item route, the sidebar Roadmap section with
       horizon checkboxes, the one-row page toolbar, breadcrumbs, and redirects
       from `/?group=horizon` and `/roadmap/…`.
+      run: 10m35s · 180 in · 62.2k out · sonnet-5 · sess:54bf0597-5357-4243-8f02-d85cdd6789c7
 - [ ] Put the list header on kraft and sort from its labels
       `Row surface="card" texture="kraft"` header with the `#` cell inside,
       label buttons with the arrow icon on the active column, aria-sort kept.

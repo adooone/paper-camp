@@ -25,7 +25,7 @@ export const GroupSelect = ({ group, onChange, showProject }: GroupSelectProps) 
       </span>
       <Select
         size="small"
-        value={group === 'horizon' ? 'subject' : group}
+        value={group}
         options={options}
         width={116}
         onChange={(value) => onChange(value as GroupMode)}

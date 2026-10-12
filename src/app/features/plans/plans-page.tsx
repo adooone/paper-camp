@@ -1,16 +1,13 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import { useRoadmapPage } from '@/app/features/roadmap';
-import { ProjectChip, useScope } from '@/app/features/scope';
+import { useScope } from '@/app/features/scope';
 import { Card, EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { selectWorklistRows, sortWorklistRows } from './helpers';
-import { usePlansPage, useScopeRoadmaps, useScopeWorklist } from './hooks';
+import { usePlansPage, useScopeWorklist } from './hooks';
 import { PromoteSuggestionModal } from './modals';
 import {
   ArchiveSection,
   ChunkDetail,
   EntityDetail,
-  ForeignHorizonSection,
-  HorizonGroupView,
   ListView,
   NightReportSection,
   NoteDetail,
@@ -46,7 +43,6 @@ export const PlansPage = () => {
     handleOpenNightChunk,
     handleDismissSuggestion,
   } = usePlansPage();
-  const roadmapPage = useRoadmapPage();
 
   const scope = useScope(null);
   const scopeRows = scope.groups.flatMap((g) => g.rows).filter((r) => r.checked);
@@ -54,7 +50,6 @@ export const PlansPage = () => {
   const currentScopeRow = scopeRows.find((r) => r.isCurrent);
   const otherScopeProjects = multiProject ? scopeRows.filter((r) => !r.isCurrent) : [];
   const otherRows = useScopeWorklist(otherScopeProjects, planFilters);
-  const otherRoadmaps = useScopeRoadmaps(otherScopeProjects);
 
   if (plansError) {
     return (
@@ -121,85 +116,60 @@ export const PlansPage = () => {
         </div>
       ) : (
         <div>
-          <PlansHeader
-            group={group}
-            canAddItem={roadmapPage.horizonTitles.length > 0}
-            onAddItem={() => roadmapPage.setAddOpen(true)}
-          />
+          <PlansHeader />
           <PlansToolbar
             group={group}
             onGroupChange={handleGroupChange}
             multiProject={multiProject}
           />
 
-          {group === 'horizon' ? (
-            <>
-              {multiProject && currentScopeRow && (
-                <div className="mb-3">
-                  <ProjectChip project={currentScopeRow} />
-                </div>
-              )}
-              <HorizonGroupView roadmapPage={roadmapPage} />
-              {multiProject &&
-                otherRoadmaps.map((entry) => (
-                  <ForeignHorizonSection
-                    key={entry.project.key}
-                    entry={entry}
-                    onOpenCrossProject={scope.openRow}
-                  />
+          <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
+
+          {plans.warnings.length > 0 && (
+            <Card size="small" accent accentColor="amber">
+              <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
+              <ul className="m-0 pl-5">
+                {plans.warnings.map((w) => (
+                  <li key={w.title}>
+                    {w.title}: {w.message}
+                  </li>
                 ))}
-            </>
-          ) : (
-            <>
-              <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
-
-              {plans.warnings.length > 0 && (
-                <Card size="small" accent accentColor="amber">
-                  <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
-                  <ul className="m-0 pl-5">
-                    {plans.warnings.map((w) => (
-                      <li key={w.title}>
-                        {w.title}: {w.message}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {(multiProject ? rows.length === 0 : plans.entries.length === 0) ? (
-                <EmptyState
-                  illustration={<DoodleIllustration name="empty-tray" />}
-                  message={
-                    <>
-                      No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
-                      <strong>Suggest ideas</strong> to have an agent propose some.
-                    </>
-                  }
-                />
-              ) : (
-                <ListView
-                  rows={rows}
-                  activePlanTitle={null}
-                  onOpenPlan={handleOpenPlan}
-                  onOpenIdea={handleOpenIdea}
-                  onOpenCrossProject={scope.openRow}
-                />
-              )}
-
-              <ArchiveSection onOpen={handleOpenArchivable} />
-
-              <SuggestionsSection
-                suggestions={suggestions}
-                onOpen={setOpenSuggestion}
-                onDismiss={handleDismissSuggestion}
-              />
-
-              <PromoteSuggestionModal
-                suggestion={openSuggestion}
-                onClose={() => setOpenSuggestion(null)}
-              />
-            </>
+              </ul>
+            </Card>
           )}
+
+          {(multiProject ? rows.length === 0 : plans.entries.length === 0) ? (
+            <EmptyState
+              illustration={<DoodleIllustration name="empty-tray" />}
+              message={
+                <>
+                  No ideas yet — capture one with <strong>New idea</strong> above, or click{' '}
+                  <strong>Suggest ideas</strong> to have an agent propose some.
+                </>
+              }
+            />
+          ) : (
+            <ListView
+              rows={rows}
+              activePlanTitle={null}
+              onOpenPlan={handleOpenPlan}
+              onOpenIdea={handleOpenIdea}
+              onOpenCrossProject={scope.openRow}
+            />
+          )}
+
+          <ArchiveSection onOpen={handleOpenArchivable} />
+
+          <SuggestionsSection
+            suggestions={suggestions}
+            onOpen={setOpenSuggestion}
+            onDismiss={handleDismissSuggestion}
+          />
+
+          <PromoteSuggestionModal
+            suggestion={openSuggestion}
+            onClose={() => setOpenSuggestion(null)}
+          />
         </div>
       )}
     </>
