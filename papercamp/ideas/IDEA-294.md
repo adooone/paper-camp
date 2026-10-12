@@ -2,17 +2,18 @@
 id: IDEA-294
 title: A compact Ideas toolbar and list
 type: feat
-status: planned
+status: in-progress
 created: 2026-10-12
+updated: 2026-10-12
 tags:
   - app
   - ui
   - plans
   - roadmap
-needs:
-  - paper-ui/IDEA-13
 subject: App UI
 order: 3
+needs:
+  - paper-ui/IDEA-13
 ---
 
 The Ideas page header doesn't hold still. Under the title sit three
@@ -98,3 +99,8 @@ Sorting the roadmap. Filters on Activity. The Stack panel.
 - [ ] Put the list header on kraft and sort from its labels
       `Row surface="card" texture="kraft"` header with the `#` cell inside,
       label buttons with the arrow icon on the active column, aria-sort kept.
+
+### Thread
+- [x] 2026-10-12 [question] [agent] Run-all parked on phase 1 ("Bump paper-ui to the small checkbox and row texture release") — the agent needs a decision: paper-ui's IDEA-13 work (checkbox small size, row texture/fill/shade) lives only on open PR #46 (`feat/small-checkbox-row-textures`) in the sibling repo — it hasn't been merged to main or released, so no npm version ships it yet (latest published is 0.23.2, same as unmerged). I can't raise the dependency range to a version that doesn't exist. Do you want me to (a) wait for you to merge/release that PR first, or (b) point paper-camp's dependency at the branch directly (e.g. a git/workspace reference) as an interim measure?
+- [x] 2026-10-12 [clarification] a
+- [x] 2026-10-12 [chat] [agent] Got it — I'll point paper-camp's paper-ui dependency at the branch directly (git ref to feat/small-checkbox-row-textures) as an interim measure for phase 1, then swap to the published version once that PR merges and releases.
