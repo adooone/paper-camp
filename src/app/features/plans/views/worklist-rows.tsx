@@ -2,7 +2,16 @@ import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/p
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { entityPath } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { MetaLine, NoteIcon, Row, Stamp, Text, Tooltip } from '@dendelion/paper-ui';
+import {
+  ChevronRightIcon,
+  MetaLine,
+  NoteIcon,
+  Row,
+  type RowColumns,
+  Stamp,
+  Text,
+  Tooltip,
+} from '@dendelion/paper-ui';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
@@ -24,7 +33,9 @@ const headerLabelClass = 'font-handwritten text-sm opacity-60 whitespace-nowrap'
 const subjectHeaderClass =
   'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
 
-const headerButtonClass = `${headerLabelClass} bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
+const headerButtonClass = `${headerLabelClass} flex items-center gap-1 bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
+
+const HEADER_COLUMNS: RowColumns = { ...PLAN_ROW_COLUMNS, id: '112px' };
 
 const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
@@ -83,7 +94,7 @@ export const WorklistRows = ({
     );
   };
 
-  const sortHeader = (key: PlanSortKey, label: string) => {
+  const sortHeader = (key: PlanSortKey, label: string, ariaLabel?: string) => {
     const active = key === sortKey;
     return (
       // biome-ignore lint/a11y/useSemanticElements: this grid cell is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
@@ -97,9 +108,18 @@ export const WorklistRows = ({
             : undefined
         }
       >
-        <button type="button" className={headerButtonClass} onClick={() => handleSort(key)}>
+        <button
+          type="button"
+          className={`${headerButtonClass} ${active ? 'font-semibold' : ''}`}
+          aria-label={ariaLabel}
+          onClick={() => handleSort(key)}
+        >
           {label}
-          {active && (sortDirection === 'asc' ? ' ▲' : ' ▼')}
+          {active && (
+            <span className={`flex ${sortDirection === 'asc' ? '-rotate-90' : 'rotate-90'}`}>
+              <ChevronRightIcon size={12} />
+            </span>
+          )}
         </button>
       </span>
     );
@@ -107,44 +127,29 @@ export const WorklistRows = ({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center">
-        {/* biome-ignore lint/a11y/useSemanticElements: this gutter sits outside the row grid, not inside a <table>; a real <th> would need a <tr>/<table> ancestor. */}
-        <span
-          role="columnheader"
-          className="flex-[0_0_36px] flex justify-center"
-          aria-sort={
-            sortReflectsRows && sortKey === 'order'
-              ? sortDirection === 'asc'
-                ? 'ascending'
-                : 'descending'
-              : undefined
-          }
-        >
-          <button
-            type="button"
-            className={headerButtonClass}
-            aria-label="Sort by run order"
-            onClick={() => handleSort('order')}
-          >
-            #{sortKey === 'order' && (sortDirection === 'asc' ? '▲' : '▼')}
-          </button>
-        </span>
-        <div className="flex-1 min-w-0">
-          <Row
-            surface="card"
-            columns={PLAN_ROW_COLUMNS}
-            id={sortHeader('id', 'Id')}
-            title={sortHeader('title', 'Title')}
-            meta={sortHeader('updated', 'Updated')}
-            trailing={
-              <TrailingCells
-                progress={sortHeader('progress', 'Phases')}
-                status={sortHeader('status', 'Status')}
-              />
-            }
+      <Row
+        surface="card"
+        texture="kraft"
+        columns={HEADER_COLUMNS}
+        className="h-8"
+        style={{ padding: '0 14px' }}
+        id={
+          <span className="flex items-center gap-2 w-full">
+            <span className="flex-[0_0_36px] flex justify-center">
+              {sortHeader('order', '#', 'Sort by run order')}
+            </span>
+            {sortHeader('id', 'Id')}
+          </span>
+        }
+        title={sortHeader('title', 'Title')}
+        meta={sortHeader('updated', 'Updated')}
+        trailing={
+          <TrailingCells
+            progress={sortHeader('progress', 'Phases')}
+            status={sortHeader('status', 'Status')}
           />
-        </div>
-      </div>
+        }
+      />
       {showSubjectHeaders
         ? groups.map((group) => {
             const subject = group.subject;
