@@ -2,10 +2,10 @@ import { PlanIdStamp } from '@/app/features/plans/components';
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
-import { Row, Stamp, Text } from '@dendelion/paper-ui';
+import { Row, Stamp, Text, Tooltip } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
-import { formatCost, formatTime } from '../helpers';
+import { formatCost, formatFullTimestamp, formatTime } from '../helpers';
 
 // Agent and cost only fit beside a readable title on a wide screen.
 export const LOG_ROW_GRID_CLASS =
@@ -35,9 +35,11 @@ export const LogRowView = ({ row, project, onOpenCrossProject }: LogRowViewProps
       ariaLabel={row.title}
       title={
         <div className={LOG_ROW_GRID_CLASS}>
-          <Text face="handwritten" size="sm" tone="muted" noWrap>
-            {formatTime(row.timestamp)}
-          </Text>
+          <Tooltip content={formatFullTimestamp(row.timestamp)}>
+            <Text face="handwritten" size="sm" tone="muted" noWrap>
+              {formatTime(row.timestamp)}
+            </Text>
+          </Tooltip>
           <Stamp size="small" variant="neutral">
             {LOG_TYPE_LABELS[row.type]}
           </Stamp>

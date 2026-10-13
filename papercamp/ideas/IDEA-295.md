@@ -110,10 +110,11 @@ date in the sidebar.
       Outcome and Type sections with counts and Clear on the existing URL
       params; the toolbar becomes search, Agent and Range on one row; kind
       chips and stamp rows removed.
-- [ ] Shorten the list's times
+- [x] Shorten the list's times
       The kraft header, its Time/Took/Cost sort labels and the Cost column
       (wide screens) already landed with phase 2; what remains is `HH:MM` for
       today and `Oct 12` before that, with the full timestamp in a tooltip.
+      run: 3m9s · 66 in · 7.3k out · sonnet-5 · sess:a274f777-07a8-4e1d-8247-838eb93bd26b
 - [ ] Lay out the entry page around its actions
       Title row with Open idea, Stop or the failure actions; the one-line facts
       replacing the FactsGrid card; the body card only when there is a body.

@@ -5,6 +5,8 @@ import type { EntityStatus, Issue, LogRow } from '@/types/index';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 const isSameDay = (a: Date, b: Date): boolean =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
@@ -12,8 +14,14 @@ const isSameDay = (a: Date, b: Date): boolean =>
 
 export const formatTime = (iso: string) => {
   const d = new Date(iso);
-  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  return isSameDay(d, new Date()) ? time : `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${time}`;
+  return isSameDay(d, new Date())
+    ? `${pad(d.getHours())}:${pad(d.getMinutes())}`
+    : `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+};
+
+export const formatFullTimestamp = (iso: string) => {
+  const d = new Date(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 export const summaryLine = (lines: string[]): string | undefined => {

@@ -16,7 +16,7 @@ import { Button, Card, FactsGrid, Spinner, Stamp, Textarea, useToast } from '@de
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
-import { formatCost, formatTime, promoteLabel, summaryLine } from '../helpers';
+import { formatCost, formatFullTimestamp, promoteLabel, summaryLine } from '../helpers';
 import type { LogRowActions } from '../hooks/use-run-rows';
 
 interface Fact {
@@ -28,7 +28,7 @@ const factsFor = (row: LogRow): Fact[] => {
   const usage = row.source.kind === 'task' ? usageForEntry(row.source.entry) : undefined;
   const durationMs = usage?.durationMs ?? row.durationMs;
   const startedAt = row.source.kind === 'task' ? row.source.entry.startedAt : row.timestamp;
-  const facts: Fact[] = [{ label: 'Started', value: formatTime(startedAt) }];
+  const facts: Fact[] = [{ label: 'Started', value: formatFullTimestamp(startedAt) }];
   if (row.source.kind === 'running') {
     const elapsed = Date.now() - Date.parse(startedAt);
     if (Number.isFinite(elapsed)) facts.push({ label: 'Elapsed', value: formatDuration(elapsed) });
