@@ -6,3 +6,4 @@ export * from './activity-toolbar';
 export * from './run-output-pane';
 export * from './run-row';
 export * from './run-row-detail';
+export * from './running-run-card';

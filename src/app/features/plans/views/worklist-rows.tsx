@@ -18,7 +18,10 @@ import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from
 import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
 import {
+  PLAN_LIST_GRID,
   PLAN_ROW_COLUMNS,
+  PLAN_ROW_HOST,
+  PLAN_SUBGRID,
   PlanRows,
   RowIdCell,
   RowMarker,
@@ -41,7 +44,7 @@ const headerLabelClass = 'text-xs whitespace-nowrap';
 const groupHeadingClass = 'font-handwritten text-base leading-none';
 
 const GroupHeading = ({ children, count }: { children: ReactNode; count: number }) => (
-  <div className="flex items-baseline gap-2 px-1 pt-3 pb-1">
+  <div className="col-span-full flex items-baseline gap-2 px-1 pt-3 pb-1">
     {children}
     <span className="font-handwritten text-sm leading-none opacity-50">{count}</span>
   </div>
@@ -141,36 +144,38 @@ export const WorklistRows = ({
   };
 
   return (
-    <div className="flex flex-col gap-1">
-      <Row
-        surface="card"
-        texture="kraft"
-        columns={PLAN_ROW_COLUMNS}
-        className="h-8"
-        id={
-          <RowIdCell
-            marker={
-              <span className="flex w-6 shrink-0 justify-center">
-                {sortHeader('order', '#', 'Sort by run order')}
-              </span>
-            }
-            id={sortHeader('id', 'Id')}
-          />
-        }
-        title={sortHeader('title', 'Title')}
-        meta={sortHeader('updated', 'Updated')}
-        trailing={
-          <TrailingCells
-            progress={sortHeader('progress', 'Phases')}
-            status={sortHeader('status', 'Status')}
-          />
-        }
-      />
+    <div className={PLAN_LIST_GRID}>
+      <div className={PLAN_ROW_HOST}>
+        <Row
+          surface="card"
+          texture="kraft"
+          columns={PLAN_ROW_COLUMNS}
+          className="h-8"
+          id={
+            <RowIdCell
+              marker={
+                <span className="flex w-6 shrink-0 justify-center">
+                  {sortHeader('order', '#', 'Sort by run order')}
+                </span>
+              }
+              id={sortHeader('id', 'Id')}
+            />
+          }
+          title={sortHeader('title', 'Title')}
+          meta={sortHeader('updated', 'Updated')}
+          trailing={
+            <TrailingCells
+              progress={sortHeader('progress', 'Phases')}
+              status={sortHeader('status', 'Status')}
+            />
+          }
+        />
+      </div>
       {showSubjectHeaders
         ? groups.map((group) => {
             const subject = group.subject;
             return (
-              <div key={subject ?? '__no-subject__'} className="flex flex-col gap-1">
+              <div key={subject ?? '__no-subject__'} className={PLAN_SUBGRID}>
                 <GroupHeading count={group.rows.length}>
                   {subject && roadmapItemNames.has(subject) ? (
                     <button
@@ -193,7 +198,7 @@ export const WorklistRows = ({
           })
         : showProjectHeaders
           ? projectGroups.map((group) => (
-              <div key={group.project?.key ?? '__current__'} className="flex flex-col gap-1">
+              <div key={group.project?.key ?? '__current__'} className={PLAN_SUBGRID}>
                 <GroupHeading count={group.rows.length}>
                   <span className={groupHeadingClass}>{group.project?.name ?? 'This project'}</span>
                 </GroupHeading>
@@ -223,7 +228,7 @@ const NoteRowCard = ({ row, onOpen, onOpenCrossProject, showProjectChip }: NoteR
         ? () => onOpen(idea.title)
         : undefined;
   return (
-    <div className="min-w-0">
+    <div className={PLAN_ROW_HOST}>
       <Row
         surface="card"
         columns={PLAN_ROW_COLUMNS}
@@ -291,7 +296,7 @@ const FixRowCard = ({
         ? () => onOpen(fix.title)
         : undefined;
   return (
-    <div className="min-w-0">
+    <div className={PLAN_ROW_HOST}>
       <Row
         surface="card"
         columns={PLAN_ROW_COLUMNS}

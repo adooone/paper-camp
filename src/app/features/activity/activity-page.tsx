@@ -1,7 +1,13 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { useActivityPage } from './hooks';
-import { ActivityStatsLine, ActivityStream, ActivityTitleActions, ActivityToolbar } from './views';
+import {
+  ActivityStatsLine,
+  ActivityStream,
+  ActivityTitleActions,
+  ActivityToolbar,
+  RunningRunsSection,
+} from './views';
 
 export const ActivityPage = () => {
   const {
@@ -45,7 +51,6 @@ export const ActivityPage = () => {
         actions={
           hasAnyRows && (
             <ActivityTitleActions
-              runningRows={runningRows}
               unreadCount={unreadCount}
               unreadFilterOn={filters.unread}
               onToggleUnread={() => setFilters({ unread: !filters.unread })}
@@ -55,6 +60,7 @@ export const ActivityPage = () => {
         }
       />
       <ActivityStatsLine stats={stats} />
+      <RunningRunsSection rows={runningRows} />
 
       {loading && !hasAnyRows && <RowSkeleton />}
       {!loading && !hasAnyRows && (

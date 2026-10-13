@@ -3,7 +3,7 @@ import type { ArchivableIdea } from '@/types/index';
 import { Button, MetaLine, Row, useToast } from '@dendelion/paper-ui';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
-import { PLAN_ROW_COLUMNS, RowIdCell, RowMarker } from './plan-rows';
+import { PLAN_LIST_GRID, PLAN_ROW_COLUMNS, PLAN_ROW_HOST, RowIdCell, RowMarker } from './plan-rows';
 
 interface ArchiveSectionProps {
   /** Takes the entity, not its title: these are work entities whose id is already
@@ -71,9 +71,9 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
           {archivingAll ? 'Archiving…' : 'Archive all'}
         </Button>
       </div>
-      <div className="flex flex-col gap-1">
+      <div className={PLAN_LIST_GRID}>
         {visibleIdeas.map((idea) => (
-          <div key={idea.id} className="min-w-0">
+          <div key={idea.id} className={PLAN_ROW_HOST}>
             <Row
               surface="nestedCard"
               columns={PLAN_ROW_COLUMNS}
@@ -86,7 +86,7 @@ export const ArchiveSection = ({ onOpen }: ArchiveSectionProps) => {
                 <Button
                   variant="ghost"
                   size="small"
-                  className="archive-row-action"
+                  className="archive-row-action ml-auto"
                   disabled={archivingId === idea.id || archivingAll}
                   onClick={(e) => {
                     e.stopPropagation();

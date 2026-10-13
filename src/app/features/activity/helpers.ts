@@ -38,15 +38,14 @@ export interface ScopedActivityEntry {
   project?: ScopeRow;
 }
 
-const isRunningEntry = (scoped: ScopedActivityEntry): boolean => scoped.row.outcome === 'running';
-
 const byNewestEntry = (a: ScopedActivityEntry, b: ScopedActivityEntry) =>
   b.row.timestamp.localeCompare(a.row.timestamp);
 
 /** Merges the current project's rows with every other scope project's by time
- * (IDEA-291) — running tasks across all of them stay pinned above the rest. A
- * non-time sort has no cross-project ordering to honor, so projects keep
- * their own already-sorted order, current project first. */
+ * (IDEA-291). Running tasks get their own pinned card above the list instead
+ * of a row here, so they're excluded. A non-time sort has no cross-project
+ * ordering to honor, so projects keep their own already-sorted order, current
+ * project first. */
 export function mergeScopedActivityEntries(
   own: LogRow[],
   foreign: { project: ScopeRow; rows: LogRow[] }[],
@@ -57,12 +56,8 @@ export function mergeScopedActivityEntries(
   const foreignScoped = foreign.flatMap(({ project, rows }) =>
     rows.map((row) => ({ row, project })),
   );
-  const all = [...ownScoped, ...foreignScoped];
-  if (sort !== 'time') return all;
-
-  const running = all.filter(isRunningEntry).sort(byNewestEntry);
-  const rest = all.filter((scoped) => !isRunningEntry(scoped)).sort(byNewestEntry);
-  return [...running, ...rest];
+  const all = [...ownScoped, ...foreignScoped].filter(({ row }) => row.outcome !== 'running');
+  return sort === 'time' ? [...all].sort(byNewestEntry) : all;
 }
 
 export const promoteLabel = (

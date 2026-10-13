@@ -101,10 +101,11 @@ Activity across machines. Chat (its own page since IDEA-293). Filtering by
 date in the sidebar.
 
 ### Phases
-- [ ] Pin running runs in a card with Stop
+- [x] Pin running runs in a card with Stop
       Card per running task with phase, ticking elapsed time, agent, latest
       line, Open log and Stop; running rows leave the list; the N running
       stamp goes.
+      run: 8m47s · 154 in · 25.2k out · sonnet-5 · sess:b7b18499-103a-4a30-9b1c-c3d9163d5bd9
 - [x] Move Activity filters to sidebar checkbox rows
       Outcome and Type sections with counts and Clear on the existing URL
       params; the toolbar becomes search, Agent and Range on one row; kind
