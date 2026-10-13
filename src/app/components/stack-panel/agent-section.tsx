@@ -25,16 +25,16 @@ import { CapacityRow } from './capacity-row';
 import { formatLastRun, groupLabelClassName } from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
-// Shared by the task and capacity cards so they read as one stack. Their contents flex
-// to fit it; nothing inside carries a height of its own.
-/** The card's project, as a small tab riding its top edge; the card clips its own
- *  content to the sketched outline, so the tab sits on a wrapper around it. */
+
+// On a wrapper, not inside the card: the card clips its content to the sketched outline.
 const ProjectTab = ({ project }: { project: ScopeRow }) => (
   <span className="pointer-events-none absolute -top-2 left-3 z-10 max-w-[60%] truncate rounded-full border border-desk-border bg-desk-bg px-1.5 font-handwritten text-2xs leading-4 text-desk-text-muted">
     {project.name}
   </span>
 );
 
+// Shared by the task and capacity cards so they read as one stack. Their contents flex
+// to fit it; nothing inside carries a height of its own.
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 // Reserved so the Desk section below holds still as tasks start, finish, and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
