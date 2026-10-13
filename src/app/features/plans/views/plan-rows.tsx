@@ -73,29 +73,46 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
   </span>
 );
 
-/** Shared by every row in the plans/worklist lists (plan, note and fix rows)
- * so a header built from the same columns lines up with all three. */
+/** Each row's own template, used only where a row stands outside a PLAN_LIST_GRID
+ * (the loading skeleton); inside one, rows take the list's shared columns instead. */
 export const PLAN_ROW_COLUMNS: RowColumns = {
-  id: '108px',
+  id: '124px',
   title: 'minmax(0,1fr)',
   meta: { width: '64px', hideBelow: 'lg' },
-  trailing: '136px',
+  trailing: '156px',
 };
 
-/** Progress and status sit in fixed slots so they line up down the list and
- * under the header labels, whatever else a row carries. */
+/** One grid for the header and every row: id, meta and trailing are as wide as their
+ * widest cell, the title takes the rest. Rows join it through PLAN_ROW_HOST. The
+ * 1025px step matches Row's hideBelow="lg", which drops the meta cell below it. */
+export const PLAN_LIST_GRID =
+  'grid gap-x-2.5 gap-y-1 grid-cols-[max-content_minmax(0,1fr)_max-content] min-[1025px]:grid-cols-[max-content_minmax(0,1fr)_max-content_max-content]';
+
+/** A block inside the list grid (a group, a heading) that keeps its children on the list's columns. */
+export const PLAN_SUBGRID = 'col-span-full grid grid-cols-subgrid gap-y-1';
+
+/** Wraps a card Row so it sits on the list's columns: Row puts its grid inside a
+ * bordered wrapper, so both levels subgrid. The trailing cell stretches to its column
+ * so progress and status line up at its two ends. */
+export const PLAN_ROW_HOST = [
+  'col-span-full grid grid-cols-subgrid',
+  '[&>div]:col-span-full [&>div]:grid [&>div]:grid-cols-subgrid',
+  '[&>div>div:last-child]:col-span-full [&>div>div:last-child]:grid-cols-subgrid',
+  '[&>div>div:last-child>div:last-child]:justify-self-stretch [&>div>div:last-child>div:last-child]:ml-0',
+].join(' ');
+
 export const TrailingCells = ({ progress, status }: { progress: ReactNode; status: ReactNode }) => (
-  <>
-    <span className="flex w-[48px] justify-end">{progress}</span>
-    <span className="flex w-[80px] justify-end">{status}</span>
-  </>
+  <span className="flex w-full items-center justify-between gap-3">
+    <span className="flex shrink-0">{progress}</span>
+    <span className="flex shrink-0">{status}</span>
+  </span>
 );
 
 /** The id column: the run-order marker, then the id stamp. */
 export const RowIdCell = ({ marker, id }: { marker: ReactNode; id: ReactNode }) => (
   <span className="flex items-center gap-2">
     {marker}
-    {id}
+    <span className="shrink-0">{id}</span>
   </span>
 );
 
@@ -119,7 +136,7 @@ export const PlanRows = ({
   const navigate = useNavigate();
   const foreign = project && !project.isCurrent ? project : undefined;
   return (
-    <div className="flex flex-col gap-1">
+    <div className={PLAN_SUBGRID}>
       {plans.map((plan) => {
         const progress = phaseProgress(plan);
         const status = effectiveStatus(plan, agentStatus);
@@ -132,7 +149,7 @@ export const PlanRows = ({
               ? () => onOpen(plan.title)
               : undefined;
         return (
-          <div key={plan.title} className="min-w-0">
+          <div key={plan.title} className={PLAN_ROW_HOST}>
             <Row
               surface="card"
               columns={PLAN_ROW_COLUMNS}
