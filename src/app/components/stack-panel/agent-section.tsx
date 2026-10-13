@@ -1,5 +1,5 @@
 import { useScopeRuns } from '@/app/features/activity/hooks';
-import { ProjectChip, type ScopeRow, useScope } from '@/app/features/scope';
+import { type ScopeRow, useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { interruptedNotices, logRowIdForTask } from '@/core/run-rows';
@@ -27,6 +27,14 @@ import { formatLastRun, groupLabelClassName } from './shared';
 const MAX_VISIBLE_TASKS = 1;
 // Shared by the task and capacity cards so they read as one stack. Their contents flex
 // to fit it; nothing inside carries a height of its own.
+/** The card's project, as a small tab riding its top edge; the card clips its own
+ *  content to the sketched outline, so the tab sits on a wrapper around it. */
+const ProjectTab = ({ project }: { project: ScopeRow }) => (
+  <span className="pointer-events-none absolute -top-2 left-3 z-10 max-w-[60%] truncate rounded-full border border-desk-border bg-desk-bg px-1.5 font-handwritten text-2xs leading-4 text-desk-text-muted">
+    {project.name}
+  </span>
+);
+
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 // Reserved so the Desk section below holds still as tasks start, finish, and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
@@ -148,71 +156,73 @@ const AgentTaskCard = ({
   };
 
   return (
-    <Card
-      surface="chalkboard"
-      size="small"
-      className={TASK_CARD_HEIGHT_CLASS}
-      onClick={openTaskPage}
-      ariaLabel={taskCardTitle(task)}
-    >
-      <div className="flex h-full min-w-0 flex-col justify-between gap-1">
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-            {project && <ProjectChip project={project} surface="chalkboard" />}
-            {taskCardTitle(task)}
-          </span>
-          {!foreign &&
-            (task.status === 'running' ||
-              task.status === 'starting' ||
-              task.status === 'stopping') && (
-              <IconButton
-                icon={<CloseIcon size={20} />}
-                variant="ghost"
-                size="tiny"
-                surface="chalkboard"
-                label="Stop agent"
-                onClick={handleStop}
-                disabled={task.status === 'stopping'}
-              />
-            )}
-        </div>
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="min-w-0 truncate whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
-            {AGENT_LABELS[task.agentId]} · {formatLastRun(task.startedAt)}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
-            {task.status === 'error' && task.errorKind === 'auth' ? (
-              <Tooltip
-                content="Click to sign back in from Settings → Connections."
-                surface="chalkboard"
-              >
+    <div className="relative">
+      {project && <ProjectTab project={project} />}
+      <Card
+        surface="chalkboard"
+        size="small"
+        className={TASK_CARD_HEIGHT_CLASS}
+        onClick={openTaskPage}
+        ariaLabel={taskCardTitle(task)}
+      >
+        <div className="flex h-full min-w-0 flex-col justify-between gap-1">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+              {taskCardTitle(task)}
+            </span>
+            {!foreign &&
+              (task.status === 'running' ||
+                task.status === 'starting' ||
+                task.status === 'stopping') && (
+                <IconButton
+                  icon={<CloseIcon size={20} />}
+                  variant="ghost"
+                  size="tiny"
+                  surface="chalkboard"
+                  label="Stop agent"
+                  onClick={handleStop}
+                  disabled={task.status === 'stopping'}
+                />
+              )}
+          </div>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <span className="min-w-0 truncate whitespace-nowrap font-handwritten text-xs text-desk-text-muted">
+              {AGENT_LABELS[task.agentId]} · {formatLastRun(task.startedAt)}
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              {task.status === 'error' && task.errorKind === 'auth' ? (
+                <Tooltip
+                  content="Click to sign back in from Settings → Connections."
+                  surface="chalkboard"
+                >
+                  <Stamp
+                    surface="chalkboard"
+                    size="small"
+                    variant="error"
+                    className="leading-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: '/project/settings/$section', params: { section: 'setup' } });
+                    }}
+                  >
+                    stopped — agent signed out
+                  </Stamp>
+                </Tooltip>
+              ) : (
                 <Stamp
                   surface="chalkboard"
                   size="small"
-                  variant="error"
+                  variant={statusVariant[task.status]}
                   className="leading-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate({ to: '/project/settings/$section', params: { section: 'setup' } });
-                  }}
                 >
-                  stopped — agent signed out
+                  {task.status}
                 </Stamp>
-              </Tooltip>
-            ) : (
-              <Stamp
-                surface="chalkboard"
-                size="small"
-                variant={statusVariant[task.status]}
-                className="leading-none"
-              >
-                {task.status}
-              </Stamp>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
@@ -232,25 +242,32 @@ const InterruptedNoticeCard = ({
       ? onOpenCrossProject(foreign, `/activity/task:${entry.id}`)
       : navigate({ to: '/activity/$entryId', params: { entryId: `task:${entry.id}` } });
   return (
-    <Card
-      surface="chalkboard"
-      size="small"
-      className={TASK_CARD_HEIGHT_CLASS}
-      onClick={openEntry}
-      ariaLabel={entry.planId ?? entry.planTitle}
-    >
-      <div className="flex h-full min-w-0 flex-col justify-center gap-1">
-        <span className="flex min-w-0 items-center gap-1.5 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-          {project && <ProjectChip project={project} surface="chalkboard" />}
-          {entry.planId ?? entry.planTitle}
-        </span>
-        <Tooltip content="Click to open the run and retry it." surface="chalkboard">
-          <Stamp surface="chalkboard" size="small" variant="warning" className="w-fit leading-none">
-            A run was interrupted; run again
-          </Stamp>
-        </Tooltip>
-      </div>
-    </Card>
+    <div className="relative">
+      {project && <ProjectTab project={project} />}
+      <Card
+        surface="chalkboard"
+        size="small"
+        className={TASK_CARD_HEIGHT_CLASS}
+        onClick={openEntry}
+        ariaLabel={entry.planId ?? entry.planTitle}
+      >
+        <div className="flex h-full min-w-0 flex-col justify-center gap-1">
+          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+            {entry.planId ?? entry.planTitle}
+          </span>
+          <Tooltip content="Click to open the run and retry it." surface="chalkboard">
+            <Stamp
+              surface="chalkboard"
+              size="small"
+              variant="warning"
+              className="w-fit leading-none"
+            >
+              A run was interrupted; run again
+            </Stamp>
+          </Tooltip>
+        </div>
+      </Card>
+    </div>
   );
 };
 
@@ -308,7 +325,7 @@ export const AgentSection = () => {
         )}
       </div>
       <div
-        className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto ${TASK_STACK_MIN_HEIGHT_CLASS}`}
+        className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto pt-2 ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
         {visibleTasks.length > 0 ? (
           visibleTasks.map(({ task, project }) => (

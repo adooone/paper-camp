@@ -1,5 +1,5 @@
 import { SidebarSkeleton } from '@/app/components';
-import { CountBadge, GitStatusMarker } from '@/app/features/git/components';
+import { COMPACT_COLOR, CountBadge, gitStatusInfo } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
 import {
@@ -12,6 +12,12 @@ import {
 } from '@dendelion/paper-ui';
 
 const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
+
+// The last folders are what tell two groups apart; the shared root is the same everywhere.
+const shortDir = (dir: string): string => {
+  const parts = dir.split('/').filter(Boolean);
+  return parts.length > 2 ? `…/${parts.slice(-2).join('/')}` : dir;
+};
 
 const scrollToFile = (path: string, expandDiffPath: (path: string) => void) => {
   expandDiffPath(path);
@@ -71,22 +77,22 @@ export const GitFileList = () => {
                 className="flex h-[32px] items-end overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-mono text-3xs leading-none opacity-50"
                 title={group.dir}
               >
-                {group.dir}
+                {shortDir(group.dir)}
               </div>
               <ul className="m-0 flex list-none flex-col p-0">
                 {group.entries.map((entry) => (
                   <li
                     key={entry.path}
-                    className="pc-git-file-row flex h-[32px] min-w-0 items-end gap-1.5 pb-1"
+                    className="pc-git-file-row flex h-[32px] min-w-0 items-end gap-1 pb-1"
                   >
                     <Checkbox
+                      size="small"
                       checked={entry.staged}
                       indeterminate={isPartiallyStaged(entry.status)}
                       disabled={pending.has(entry.path)}
                       onChange={(e) => toggleStaged(entry, e.target.checked)}
                       aria-label={entry.staged ? `Unstage ${entry.path}` : `Stage ${entry.path}`}
                     />
-                    <GitStatusMarker status={entry.status} compact />
                     <ListItem
                       size="small"
                       active={entry.path === activePath}
@@ -99,8 +105,8 @@ export const GitFileList = () => {
                       }
                     >
                       <span
-                        className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs"
-                        title={entry.path}
+                        className={`block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-3xs ${COMPACT_COLOR[gitStatusInfo(entry.status).variant] ?? ''}`}
+                        title={`${gitStatusInfo(entry.status).label} · ${entry.path}`}
                       >
                         {splitPathForDisplay(entry.path).base}
                       </span>

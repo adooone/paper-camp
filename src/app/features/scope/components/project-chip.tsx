@@ -3,13 +3,12 @@ import type { ScopeRow } from '../hooks/use-scope';
 
 interface ProjectChipProps {
   project: ScopeRow;
-  surface?: 'paper' | 'chalkboard';
 }
 
 /** Names the project a merged row or section belongs to — shown whenever more
  * than one project is in scope (IDEA-291). */
-export const ProjectChip = ({ project, surface = 'paper' }: ProjectChipProps) => (
-  <Stamp size="small" variant="neutral" surface={surface}>
+export const ProjectChip = ({ project }: ProjectChipProps) => (
+  <Stamp size="small" variant="neutral">
     {project.name}
   </Stamp>
 );

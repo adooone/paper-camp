@@ -6,9 +6,9 @@ interface StatusInfo {
   variant: StampVariant;
 }
 
-// Compact rows can't spare the ~39px a Stamp's blob costs for one letter; the colour
-// alone carries the same meaning in a fraction of the width.
-const COMPACT_COLOR: Partial<Record<StampVariant, string>> = {
+// Compact rows can't spare the ~39px a Stamp's blob costs for one letter; they colour
+// the file name instead, which carries the same meaning in no extra width.
+export const COMPACT_COLOR: Partial<Record<StampVariant, string>> = {
   success: 'text-watercolor-green-dark',
   info: 'text-watercolor-blue-dark',
   error: 'text-watercolor-rose-dark',
@@ -36,21 +36,10 @@ export const gitStatusInfo = (status: string): StatusInfo => {
 
 interface GitStatusMarkerProps {
   status: string;
-  compact?: boolean;
 }
 
-export const GitStatusMarker = ({ status, compact = false }: GitStatusMarkerProps) => {
+export const GitStatusMarker = ({ status }: GitStatusMarkerProps) => {
   const info = gitStatusInfo(status);
-  if (compact) {
-    return (
-      <span
-        title={info.label}
-        className={`w-4 shrink-0 text-center font-mono text-3xs font-semibold leading-none ${COMPACT_COLOR[info.variant] ?? ''}`}
-      >
-        {info.letter}
-      </span>
-    );
-  }
   return (
     <span title={info.label}>
       <Stamp size="small" variant={info.variant}>
