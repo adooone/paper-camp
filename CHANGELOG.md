@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.42.0](https://github.com/adooone/paper-camp/compare/v0.41.0...v0.42.0) (2026-10-13)
+
+
+### Features
+
+* **app:** A compact Ideas toolbar and list ([bcad9c2](https://github.com/adooone/paper-camp/commit/bcad9c28bb355e75d25dbfe6bbf9176a2ec00854))
+* **app:** Add activity sidebar filters for outcome and type ([9433491](https://github.com/adooone/paper-camp/commit/9433491d5d444354a9544c4f4c4da256c494fd37))
+* **app:** Add branch list sidebar and simplify commit prefix stamp ([db22401](https://github.com/adooone/paper-camp/commit/db22401721f73cb6efc55fc96d089fd897429ceb))
+* **app:** Add not-pushed indicator and stabilize commit row layout ([e166924](https://github.com/adooone/paper-camp/commit/e166924a944f0fdc5bd8760f4102c68bd886723d))
+* **app:** Add sidebar action and fix plan group header sort ([46d841f](https://github.com/adooone/paper-camp/commit/46d841fc96523de33ceed2fe5f4f169026b35726))
+* **app:** Extract activity filters hook and align plan row id column ([f2827ed](https://github.com/adooone/paper-camp/commit/f2827ed61907f55e82910ae2408b11cc7925704b))
+* **stack:** Move project tab outside card clip, compact git status by color ([091e265](https://github.com/adooone/paper-camp/commit/091e265bd6e3605d018bfd403c785f78238e55e6))
+
 ## [0.41.0](https://github.com/adooone/paper-camp/compare/v0.40.0...v0.41.0) (2026-10-13)
 
 
