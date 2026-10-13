@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.41.0](https://github.com/adooone/paper-camp/compare/v0.40.0...v0.41.0) (2026-10-13)
+
+
+### Features
+
+* **app:** A compact Ideas toolbar and list ([8ba65db](https://github.com/adooone/paper-camp/commit/8ba65db41116b2430bc28afb12f0e7e3a6a4d52c))
+* **app:** Bump paper-ui to the small checkbox and row texture release ([d255a4e](https://github.com/adooone/paper-camp/commit/d255a4eda9204d8f5bc9c182b22be42719c24585))
+* **app:** Compact ideas toolbar group select and filter rows ([5b7ec7b](https://github.com/adooone/paper-camp/commit/5b7ec7b5a08a405db65953184af64b2c514cd686))
+* **app:** Cut the Ideas toolbar to one row ([4b5dbfb](https://github.com/adooone/paper-camp/commit/4b5dbfbe3a1bf9705efff3cb1184dd94c762a7f8))
+* **app:** Move the roadmap to the Project page ([13489a7](https://github.com/adooone/paper-camp/commit/13489a7018f7cb1ea7b0753080220ccf61d27a4b))
+* **app:** Put the list header on kraft and sort from its labels ([bf1f765](https://github.com/adooone/paper-camp/commit/bf1f765082c6e7d3a522a046b82beeacd6c455e1))
+* **app:** Turn sidebar filters into checkbox rows ([f3f3469](https://github.com/adooone/paper-camp/commit/f3f3469fea67b7a7b9f124b943bfe276e0c003f3))
+
+
+### Bug Fixes
+
+* **app:** lint ([780b8e5](https://github.com/adooone/paper-camp/commit/780b8e5e24e2322b0ce03ff5470f221fe43b2279))
+
 ## [0.40.0](https://github.com/adooone/paper-camp/compare/v0.39.0...v0.40.0) (2026-10-12)
 
 
