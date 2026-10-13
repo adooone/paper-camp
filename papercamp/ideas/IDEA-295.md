@@ -2,7 +2,7 @@
 id: IDEA-295
 title: A clearer Activity page
 type: feat
-status: planned
+status: in-progress
 created: 2026-10-13
 tags:
   - app
@@ -105,14 +105,14 @@ date in the sidebar.
       Card per running task with phase, ticking elapsed time, agent, latest
       line, Open log and Stop; running rows leave the list; the N running
       stamp goes.
-- [ ] Move Activity filters to sidebar checkbox rows
+- [x] Move Activity filters to sidebar checkbox rows
       Outcome and Type sections with counts and Clear on the existing URL
       params; the toolbar becomes search, Agent and Range on one row; kind
       chips and stamp rows removed.
-- [ ] Put the list header on kraft and sort from it
-      Shared seven-column grid with Cost hidden below lg, short times with a
-      tooltip, Time/Took/Cost sort labels on the `sort` param; the Sort select
-      removed.
+- [ ] Shorten the list's times
+      The kraft header, its Time/Took/Cost sort labels and the Cost column
+      (wide screens) already landed with phase 2; what remains is `HH:MM` for
+      today and `Oct 12` before that, with the full timestamp in a tooltip.
 - [ ] Lay out the entry page around its actions
       Title row with Open idea, Stop or the failure actions; the one-line facts
       replacing the FactsGrid card; the body card only when there is a body.

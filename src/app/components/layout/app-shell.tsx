@@ -40,6 +40,11 @@ const ProjectSidebar = lazy(() =>
     default: m.ProjectSidebar,
   })),
 );
+const ActivityFilters = lazy(() =>
+  importWithRecovery('ActivityFilters', () => import('@/app/features/activity/index')).then(
+    (m) => ({ default: m.ActivityFilters }),
+  ),
+);
 const ProjectsInView = lazy(() =>
   importWithRecovery('ProjectsInView', () => import('@/app/features/scope/index')).then((m) => ({
     default: m.ProjectsInView,
@@ -173,6 +178,7 @@ export const AppShell = () => {
                     {isActivityListArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <ProjectsInView mode="list" countKind="activity" />
+                        <ActivityFilters />
                       </Suspense>
                     )}
                     {isProjectArea && (

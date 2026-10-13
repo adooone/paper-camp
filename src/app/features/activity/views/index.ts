@@ -1,3 +1,4 @@
+export * from './activity-filters';
 export * from './activity-stats-line';
 export * from './activity-stream';
 export * from './activity-title-actions';

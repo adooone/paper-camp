@@ -1,5 +1,6 @@
+import { SidebarAction } from '@/app/components';
 import type { LogRow } from '@/types/index';
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { StopRunButton } from './run-row-detail';
 
@@ -9,11 +10,7 @@ export interface ActivityTitleActionsProps {
   unreadFilterOn: boolean;
   onToggleUnread: () => void;
   onMarkAllRead: () => Promise<void>;
-  matchedCount: number;
-  totalCount: number;
 }
-
-const countClass = 'font-handwritten text-sm opacity-[0.55] whitespace-nowrap';
 
 export const ActivityTitleActions = ({
   runningRows,
@@ -21,15 +18,12 @@ export const ActivityTitleActions = ({
   unreadFilterOn,
   onToggleUnread,
   onMarkAllRead,
-  matchedCount,
-  totalCount,
 }: ActivityTitleActionsProps) => {
   const navigate = useNavigate();
   const running = runningRows[0];
-  const hasActiveFilters = matchedCount !== totalCount;
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
+    <div className="flex shrink-0 items-center gap-2">
       {running && (
         <Stamp
           size="small"
@@ -55,19 +49,9 @@ export const ActivityTitleActions = ({
           >
             {unreadCount} unread
           </Stamp>
-          <Button
-            variant="link"
-            size="small"
-            className="font-handwritten text-sm opacity-70"
-            onClick={() => void onMarkAllRead()}
-          >
-            Mark all read
-          </Button>
+          <SidebarAction onClick={() => void onMarkAllRead()}>Mark all read</SidebarAction>
         </>
       )}
-      <span className={countClass}>
-        {hasActiveFilters ? `${matchedCount} of ${totalCount} entries` : `${totalCount} entries`}
-      </span>
     </div>
   );
 };

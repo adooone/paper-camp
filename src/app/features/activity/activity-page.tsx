@@ -13,7 +13,6 @@ export const ActivityPage = () => {
     hasMatches,
     filters,
     setFilters,
-    availableTypes,
     totalCount,
     matchedCount,
     runningRows,
@@ -27,28 +26,33 @@ export const ActivityPage = () => {
 
   return (
     <div>
-      <div className="mb-2 flex flex-nowrap items-center gap-3">
+      <div className="mb-4 flex items-baseline gap-3">
         <PageTitle className="shrink-0">Activity</PageTitle>
-        <div className="flex-1" />
         {hasAnyRows && (
-          <ActivityTitleActions
-            runningRows={runningRows}
-            unreadCount={unreadCount}
-            unreadFilterOn={filters.unread}
-            onToggleUnread={() => setFilters({ unread: !filters.unread })}
-            onMarkAllRead={markAllRead}
-            matchedCount={matchedCount}
-            totalCount={totalCount}
-          />
+          <span className="font-handwritten text-base opacity-60">
+            {matchedCount === totalCount
+              ? `${totalCount} ${totalCount === 1 ? 'entry' : 'entries'}`
+              : `${matchedCount} of ${totalCount} entries`}
+          </span>
         )}
       </div>
 
       <ActivityToolbar
         filters={filters}
-        availableTypes={availableTypes}
         onFiltersChange={setFilters}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
+        actions={
+          hasAnyRows && (
+            <ActivityTitleActions
+              runningRows={runningRows}
+              unreadCount={unreadCount}
+              unreadFilterOn={filters.unread}
+              onToggleUnread={() => setFilters({ unread: !filters.unread })}
+              onMarkAllRead={markAllRead}
+            />
+          )
+        }
       />
       <ActivityStatsLine stats={stats} />
 
@@ -62,6 +66,8 @@ export const ActivityPage = () => {
       {hasAnyRows &&
         (hasMatches ? (
           <ActivityStream
+            sort={filters.sort}
+            onSort={(sort) => setFilters({ sort })}
             entries={entries}
             hasMore={hasMore}
             onLoadMore={loadMore}

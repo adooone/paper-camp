@@ -5,11 +5,13 @@ import { AGENT_LABELS, type LogRow } from '@/types/index';
 import { Row, Stamp, Text } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
-import { formatTime } from '../helpers';
+import { formatCost, formatTime } from '../helpers';
 
-// The agent column only fits beside a readable title on a wide screen.
-const LOG_ROW_GRID_CLASS =
-  'grid grid-cols-[92px_112px_minmax(0,1fr)_60px_80px] min-[1440px]:grid-cols-[92px_112px_minmax(0,1fr)_96px_60px_80px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+// Agent and cost only fit beside a readable title on a wide screen.
+export const LOG_ROW_GRID_CLASS =
+  'grid grid-cols-[92px_112px_minmax(0,1fr)_60px_80px] min-[1440px]:grid-cols-[92px_112px_minmax(0,1fr)_96px_60px_56px_80px] gap-2.5 items-center max-[480px]:grid-cols-1 max-[480px]:gap-1';
+
+export const WIDE_ONLY_CLASS = 'max-[1439px]:hidden';
 
 export interface LogRowViewProps {
   row: LogRow;
@@ -48,11 +50,14 @@ export const LogRowView = ({ row, project, onOpenCrossProject }: LogRowViewProps
               {row.title}
             </span>
           </span>
-          <Text face="handwritten" size="sm" tone="muted" truncate className="max-[1439px]:hidden">
+          <Text face="handwritten" size="sm" tone="muted" truncate className={WIDE_ONLY_CLASS}>
             {row.agentId ? AGENT_LABELS[row.agentId] : '—'}
           </Text>
           <Text face="handwritten" size="sm" tone="muted" noWrap>
             {row.durationMs != null ? formatDuration(row.durationMs) : '—'}
+          </Text>
+          <Text face="handwritten" size="sm" tone="muted" noWrap className={WIDE_ONLY_CLASS}>
+            {row.costUsd != null ? formatCost(row.costUsd) : '—'}
           </Text>
           <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]} dot={row.unread}>
             {row.outcome}
