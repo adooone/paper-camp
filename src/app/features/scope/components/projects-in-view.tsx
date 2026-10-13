@@ -1,4 +1,5 @@
-import { Button, SidebarCard, SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarAction } from '@/app/components';
+import { SidebarCard, SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { type ScopeCountKind, useScope } from '../hooks/use-scope';
 import { ScopeProjectRow } from './scope-project-row';
@@ -18,13 +19,9 @@ export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
       <div className="flex items-end justify-between gap-2">
         <SidebarLabel>{mode === 'list' ? 'Projects in view' : 'Projects'}</SidebarLabel>
         {mode === 'list' && (
-          <span className="flex items-center gap-2 pb-1">
-            <Button variant="link" onClick={selectAll} className="text-2xs opacity-70">
-              All
-            </Button>
-            <Button variant="link" onClick={clear} className="text-2xs opacity-70">
-              Clear
-            </Button>
+          <span className="flex items-center gap-1 pb-0.5">
+            <SidebarAction onClick={selectAll}>All</SidebarAction>
+            <SidebarAction onClick={clear}>Clear</SidebarAction>
           </span>
         )}
       </div>

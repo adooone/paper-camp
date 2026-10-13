@@ -167,7 +167,7 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
       to: pathname,
       search: (prev: Record<string, unknown>) => ({
         ...prev,
-        p: next.length <= 1 ? undefined : serializeScopeParam(next),
+        p: serializeScopeParam(next),
       }),
       replace: true,
     } as never);

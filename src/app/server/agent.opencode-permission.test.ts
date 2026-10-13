@@ -120,14 +120,23 @@ describe('opencode external_directory permission ask (IDEA-125)', () => {
     expect(parked?.state).toBe('open');
     expect(parked?.text).toContain(`read outside workspace: ${SIBLING_REPO_PATH}`);
 
-    const taskLog = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
-    const entry = taskLog
-      .trim()
-      .split('\n')
-      .map((line) => JSON.parse(line))
-      .findLast((e) => e.planId === 'IDEA-1');
-    expect(entry.outcome).toBe('error');
-    expect(entry.reason).toBe(`read outside workspace: ${SIBLING_REPO_PATH}`);
+    // The completion row is written off setStatus(), so it can land just after 'error'.
+    const readEntry = async () => {
+      const taskLog = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => '');
+      return taskLog
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+        .findLast((e) => e.planId === 'IDEA-1' && e.outcome);
+    };
+    let entry = await readEntry();
+    for (let i = 0; !entry && i < 100; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      entry = await readEntry();
+    }
+    expect(entry?.outcome).toBe('error');
+    expect(entry?.reason).toBe(`read outside workspace: ${SIBLING_REPO_PATH}`);
 
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const { resumed } = await manager.resumeQuestionParkedTasks(plan.id as string);

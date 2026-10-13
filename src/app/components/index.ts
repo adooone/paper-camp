@@ -6,6 +6,7 @@ export { GitSyncActions } from './git/git-sync-actions';
 export { DoodleIllustration } from './doodle-illustration';
 export { Markdown } from './markdown';
 export { PageToolbar, PageToolbarRow } from './page-toolbar';
+export { HANDWRITTEN_ACTION_CLASS, SidebarAction } from './sidebar-action';
 export { StackPanel } from './stack-panel';
 export { NightCriticalBanner } from './layout/night-critical-banner';
 export { ProjectIdentityHeader } from './layout/project-identity-header';

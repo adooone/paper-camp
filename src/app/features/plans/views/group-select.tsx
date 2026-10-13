@@ -1,3 +1,4 @@
+import { HANDWRITTEN_ACTION_CLASS } from '@/app/components';
 import { Button, CheckIcon, ChevronRightIcon, Menu } from '@dendelion/paper-ui';
 import type { GroupMode } from '../helpers';
 
@@ -23,8 +24,12 @@ export const GroupSelect = ({ group, onChange, showProject }: GroupSelectProps) 
     <Menu
       align="end"
       trigger={
-        <Button variant="ghost" size="small" className="shrink-0 whitespace-nowrap">
-          <span className="opacity-60">Group:</span> {current.label}
+        <Button
+          variant="ghost"
+          size="small"
+          className={`shrink-0 whitespace-nowrap ${HANDWRITTEN_ACTION_CLASS}`}
+        >
+          Group: {current.label}
           <span className="ml-1 inline-flex rotate-90 opacity-60">
             <ChevronRightIcon size={12} />
           </span>

@@ -326,8 +326,8 @@ export interface ProjectGroup {
 }
 
 /** Groups already-merged worklist rows by the project tag the scope merge
- * attached — current project first, then every other in the order rows
- * arrived (scope order), each group's own rows keeping their relative order. */
+ * attached — current project first, then the rest by name, so a header sort
+ * reorders rows inside each group without shuffling the groups themselves. */
 export const groupRowsByProject = (rows: WorklistRow[]): ProjectGroup[] => {
   const order: string[] = [];
   const byKey = new Map<string, ProjectGroup>();
@@ -339,7 +339,12 @@ export const groupRowsByProject = (rows: WorklistRow[]): ProjectGroup[] => {
     }
     byKey.get(key)?.rows.push(row);
   }
-  return order.map((key) => byKey.get(key) as ProjectGroup);
+  const rank = (group: ProjectGroup) => (!group.project || group.project.isCurrent ? 0 : 1);
+  return order
+    .map((key) => byKey.get(key) as ProjectGroup)
+    .sort(
+      (a, b) => rank(a) - rank(b) || (a.project?.name ?? '').localeCompare(b.project?.name ?? ''),
+    );
 };
 
 /** Sorts already-built worklist rows the same way `selectWorklistRows` sorts its

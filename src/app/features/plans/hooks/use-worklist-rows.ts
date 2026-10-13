@@ -29,10 +29,6 @@ export const useWorklistRows = (rows: WorklistRow[]) => {
   const handleSort = (key: PlanSortKey) => {
     if (key === sortKey) togglePlanSortDirection();
     else setPlanSortKey(key);
-    // A manual sort order conflicts with subject/project sub-grouping, so sorting drops back to Plain.
-    if (group === 'subject' || group === 'project') {
-      navigate({ to: '/', search: { ...search, group: 'plain' } });
-    }
   };
 
   const groups = groupRowsBySubject(
@@ -45,7 +41,8 @@ export const useWorklistRows = (rows: WorklistRow[]) => {
   const projectGroups = groupRowsByProject(rows);
   const showProjectHeaders = group === 'project' && projectGroups.length > 1;
 
-  const sortReflectsRows = !showSubjectHeaders && !showProjectHeaders;
+  // Groups keep the sorted order of their rows, so a header sort holds under any grouping.
+  const sortReflectsRows = true;
 
   return {
     roadmapItemNames,

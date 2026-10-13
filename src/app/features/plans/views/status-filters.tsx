@@ -1,6 +1,7 @@
+import { SidebarAction } from '@/app/components';
 import { CheckboxFilterRow } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
 import { STATUS_LABEL } from '../constants';
 import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
 
@@ -21,13 +22,9 @@ export const StatusFilters = () => {
       <div className="flex items-end justify-between gap-2">
         <SidebarLabel>Status</SidebarLabel>
         {hasActiveFilters && (
-          <Button
-            variant="link"
-            onClick={clearPlanStatusFilter}
-            className="pb-1 text-2xs opacity-70"
-          >
-            Clear
-          </Button>
+          <span className="pb-0.5">
+            <SidebarAction onClick={clearPlanStatusFilter}>Clear</SidebarAction>
+          </span>
         )}
       </div>
       <div className="flex flex-col">
