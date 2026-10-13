@@ -1,5 +1,5 @@
-import { Button, Skeleton } from '@dendelion/paper-ui';
-import { useEffect, useRef } from 'react';
+import { Button, Skeleton, useToast } from '@dendelion/paper-ui';
+import { useEffect, useRef, useState } from 'react';
 
 export interface LogOutputPaneProps {
   lines: string[] | null;
@@ -10,7 +10,7 @@ export interface LogOutputPaneProps {
 }
 
 const paneClass =
-  'flex flex-col overflow-hidden rounded-[10px] border border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]';
+  'flex flex-1 min-h-0 flex-col overflow-hidden rounded-[10px] border border-paper-950/[12%] text-desk-text bg-desk-bg bg-chalkboard [background-repeat:repeat,no-repeat] [background-size:200px_200px,auto]';
 
 const headerClass =
   'flex shrink-0 items-center justify-between border-b border-desk-border px-4 py-2 font-handwritten text-xs text-desk-text-muted';
@@ -21,13 +21,40 @@ const FOLLOW_SLACK_PX = 48;
 
 export const LogOutputPane = ({ lines, failed, onRetry, live = false }: LogOutputPaneProps) => {
   const scrollRef = useRef<HTMLPreElement>(null);
-  const followingRef = useRef(true);
+  const [following, setFollowing] = useState(live);
+  const { toast } = useToast();
   const lineCount = lines?.length ?? 0;
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (live && el && followingRef.current && lineCount > 0) el.scrollTop = el.scrollHeight;
-  }, [live, lineCount]);
+    if (live && following && el && lineCount > 0) el.scrollTop = el.scrollHeight;
+  }, [live, following, lineCount]);
+
+  const toggleFollow = () => {
+    setFollowing((prev) => {
+      const next = !prev;
+      const el = scrollRef.current;
+      if (next && el) el.scrollTop = el.scrollHeight;
+      return next;
+    });
+  };
+
+  const copyOutput = async () => {
+    try {
+      await navigator.clipboard.writeText((lines ?? []).join('\n'));
+      toast({
+        title: 'Copied',
+        description: `${lineCount} ${lineCount === 1 ? 'line' : 'lines'} copied to the clipboard.`,
+        variant: 'success',
+      });
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: 'The clipboard is unavailable.',
+        variant: 'error',
+      });
+    }
+  };
 
   const retryButton = onRetry && !live && (
     <Button variant="ghost" size="small" surface="chalkboard" onClick={onRetry}>
@@ -47,7 +74,25 @@ export const LogOutputPane = ({ lines, failed, onRetry, live = false }: LogOutpu
             </span>
           )}
         </span>
-        <span>{lines ? `${lineCount} ${lineCount === 1 ? 'line' : 'lines'}` : ''}</span>
+        <span className="flex items-center gap-3">
+          <span>{lines ? `${lineCount} ${lineCount === 1 ? 'line' : 'lines'}` : ''}</span>
+          {lineCount > 0 && (
+            <span className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="small"
+                surface="chalkboard"
+                isActive={following}
+                onClick={toggleFollow}
+              >
+                Follow
+              </Button>
+              <Button variant="ghost" size="small" surface="chalkboard" onClick={copyOutput}>
+                Copy
+              </Button>
+            </span>
+          )}
+        </span>
       </div>
       {lines === null ? (
         <div className="flex flex-col gap-2 p-4" aria-hidden="true">
@@ -70,11 +115,11 @@ export const LogOutputPane = ({ lines, failed, onRetry, live = false }: LogOutpu
           ref={scrollRef}
           onScroll={(event) => {
             const el = event.currentTarget;
-            followingRef.current =
-              el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_SLACK_PX;
+            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_SLACK_PX;
+            if (!atBottom && following) setFollowing(false);
           }}
           aria-live={live ? 'polite' : undefined}
-          className="m-0 max-h-[70vh] overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-xs leading-relaxed text-desk-chalk"
+          className="m-0 min-h-0 flex-1 overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-xs leading-relaxed text-desk-chalk"
         >
           {lines.join('\n')}
         </pre>

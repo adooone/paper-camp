@@ -2,7 +2,7 @@
 id: IDEA-295
 title: A clearer Activity page
 type: feat
-status: in-progress
+status: review
 created: 2026-10-13
 tags:
   - app
@@ -119,6 +119,7 @@ date in the sidebar.
       Title row with Open idea, Stop or the failure actions; the one-line facts
       replacing the FactsGrid card; the body card only when there is a body.
       run: 7m57s · 96 in · 30.2k out · sonnet-5 · sess:a274f777-07a8-4e1d-8247-838eb93bd26b
-- [ ] Give the output pane Follow, Copy and full height
+- [x] Give the output pane Follow, Copy and full height
       Viewport-height pane scrolling inside itself, Follow toggle released by
       scrolling up, Copy with a toast.
+      run: 3m13s · 82 in · 20.3k out · sonnet-5 · sess:424f743f-c753-421f-a376-613df4d1c003
