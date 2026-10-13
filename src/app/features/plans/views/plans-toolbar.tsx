@@ -31,13 +31,9 @@ export const PlansToolbar = ({ group, onGroupChange, multiProject }: PlansToolba
           aria-label="Search ideas"
           value={filters.search}
           onChange={(event) => setPlanSearch(event.target.value)}
-          className="min-w-[140px] flex-1"
+          className="w-[240px] min-w-[140px] shrink"
         />
-        <GroupSelect group={group} onChange={onGroupChange} showProject={multiProject} />
-      </PageToolbarRow>
-
-      {hasActiveFilters && (
-        <PageToolbarRow chips>
+        {hasActiveFilters && (
           <Button
             variant="link"
             data-testid="clear-plan-filters"
@@ -45,12 +41,14 @@ export const PlansToolbar = ({ group, onGroupChange, multiProject }: PlansToolba
               clearPlanFilters();
               navigate({ to: '/', search: { group } });
             }}
-            className="ml-auto text-2xs opacity-70"
+            className="shrink-0 text-2xs opacity-70"
           >
             Clear filters
           </Button>
-        </PageToolbarRow>
-      )}
+        )}
+        <span className="flex-1" />
+        <GroupSelect group={group} onChange={onGroupChange} showProject={multiProject} />
+      </PageToolbarRow>
     </PageToolbar>
   );
 };

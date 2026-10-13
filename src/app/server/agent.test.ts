@@ -1665,7 +1665,8 @@ process.exit(1)
     let raw: string | undefined;
     while (Date.now() - start < 2000) {
       try {
-        raw = await readFile(logPath, 'utf-8');
+        // Streamed line by line, so the file ends in a newline the output route trims.
+        raw = (await readFile(logPath, 'utf-8')).replace(/\n$/, '');
         if (raw === expected) break;
       } catch {
         // Ignore ENOENT while waiting for the fire-and-forget write

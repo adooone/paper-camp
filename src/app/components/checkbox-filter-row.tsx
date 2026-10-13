@@ -11,6 +11,11 @@ export interface CheckboxFilterRowProps {
   trailing?: ReactNode;
 }
 
+// The label stretches to the count so the whole row toggles; -my-1.5 lets the 40px
+// hover area overlap its neighbours so rows sit 28px apart.
+const labelClass =
+  '-my-1.5 min-w-0 flex-1 gap-2 [&>span:last-child]:min-w-0 [&>span:last-child]:truncate [&>span:last-child]:text-sm';
+
 export const CheckboxFilterRow = ({
   label,
   checked,
@@ -20,17 +25,15 @@ export const CheckboxFilterRow = ({
   onChange,
   trailing,
 }: CheckboxFilterRowProps) => (
-  <div className="flex min-h-[26px] items-center gap-2 px-2">
+  <div className="flex items-center gap-2 pr-2">
     <Checkbox
-      size="small"
+      label={label}
       checked={checked}
       disabled={disabled}
       onChange={onChange}
       aria-label={ariaLabel}
+      className={labelClass}
     />
-    <span className={`min-w-0 flex-1 truncate text-sm ${checked ? '' : 'opacity-60'}`}>
-      {label}
-    </span>
     {count != null && <span className="shrink-0 text-2xs opacity-60">{count}</span>}
     {trailing}
   </div>
