@@ -2,18 +2,18 @@
 id: IDEA-294
 title: A compact Ideas toolbar and list
 type: feat
-status: review
+status: done
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-10-13
 tags:
   - app
   - ui
   - plans
   - roadmap
-subject: App UI
-order: 3
 needs:
   - paper-ui/IDEA-13
+subject: App UI
+order: 3
 ---
 
 The Ideas page header doesn't hold still. Under the title sit three
