@@ -1,14 +1,17 @@
-import { NewIdeaButton, WorklistActionsMenu } from '../actions';
+interface PlansHeaderProps {
+  /** Rows the list shows right now; omitted while it loads. */
+  count?: number;
+}
 
-export const PlansHeader = () => {
-  return (
-    <div className="flex items-center gap-3 mb-6 flex-wrap">
-      <h1 className="text-4xl flex-1 font-display-luminari font-semibold text-ink-900 m-0 leading-[1.1]">
-        Ideas
-      </h1>
-
-      <NewIdeaButton />
-      <WorklistActionsMenu />
-    </div>
-  );
-};
+export const PlansHeader = ({ count }: PlansHeaderProps) => (
+  <div className="mb-4 flex items-baseline gap-3">
+    <h1 className="m-0 font-display-luminari text-4xl font-semibold leading-[1.1] text-ink-900">
+      Ideas
+    </h1>
+    {count !== undefined && (
+      <span className="font-handwritten text-base opacity-60">
+        {count} {count === 1 ? 'idea' : 'ideas'}
+      </span>
+    )}
+  </div>
+);

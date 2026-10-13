@@ -12,11 +12,19 @@ import {
   Text,
   Tooltip,
 } from '@dendelion/paper-ui';
+import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
-import { PLAN_ROW_COLUMNS, PlanRows, RowMarker, RowTitle, TrailingCells } from './plan-rows';
+import {
+  PLAN_ROW_COLUMNS,
+  PlanRows,
+  RowIdCell,
+  RowMarker,
+  RowTitle,
+  TrailingCells,
+} from './plan-rows';
 
 interface WorklistRowsProps {
   rows: WorklistRow[];
@@ -28,14 +36,18 @@ interface WorklistRowsProps {
   onOpenCrossProject?: (project: ScopeRow, path: string) => void;
 }
 
-const headerLabelClass = 'font-handwritten text-sm opacity-60 whitespace-nowrap';
+const headerLabelClass = 'text-xs whitespace-nowrap';
 
-const subjectHeaderClass =
-  'font-handwritten text-xs font-semibold opacity-55 leading-none pt-2 pr-1 pb-0 pl-1';
+const groupHeadingClass = 'font-handwritten text-base leading-none';
+
+const GroupHeading = ({ children, count }: { children: ReactNode; count: number }) => (
+  <div className="flex items-baseline gap-2 px-1 pt-3 pb-1">
+    {children}
+    <span className="font-handwritten text-sm leading-none opacity-50">{count}</span>
+  </div>
+);
 
 const headerButtonClass = `${headerLabelClass} flex items-center gap-1 bg-none bg-transparent border-none p-0 cursor-pointer text-inherit text-left`;
-
-const HEADER_COLUMNS: RowColumns = { ...PLAN_ROW_COLUMNS, id: '112px' };
 
 const titleButtonClass =
   'flex items-center gap-2 min-w-0 bg-none bg-transparent border-none p-0 cursor-pointer text-left [font:inherit] text-inherit';
@@ -70,6 +82,7 @@ export const WorklistRows = ({
           onOpen={onOpenPlan}
           project={row.project}
           onOpenCrossProject={onOpenCrossProject}
+          showProjectChip={!showProjectHeaders}
         />
       );
     }
@@ -80,6 +93,7 @@ export const WorklistRows = ({
           row={row}
           onOpen={onOpenIdea}
           onOpenCrossProject={onOpenCrossProject}
+          showProjectChip={!showProjectHeaders}
         />
       );
     }
@@ -90,6 +104,7 @@ export const WorklistRows = ({
         activePlanTitle={activePlanTitle}
         onOpen={onOpenPlan}
         onOpenCrossProject={onOpenCrossProject}
+        showProjectChip={!showProjectHeaders}
       />
     );
   };
@@ -110,7 +125,7 @@ export const WorklistRows = ({
       >
         <button
           type="button"
-          className={`${headerButtonClass} ${active ? 'font-semibold' : ''}`}
+          className={`${headerButtonClass} ${active ? 'font-semibold' : 'opacity-60'}`}
           aria-label={ariaLabel}
           onClick={() => handleSort(key)}
         >
@@ -130,16 +145,17 @@ export const WorklistRows = ({
       <Row
         surface="card"
         texture="kraft"
-        columns={HEADER_COLUMNS}
+        columns={PLAN_ROW_COLUMNS}
         className="h-8"
-        style={{ padding: '0 14px' }}
         id={
-          <span className="flex items-center gap-2 w-full">
-            <span className="flex-[0_0_36px] flex justify-center">
-              {sortHeader('order', '#', 'Sort by run order')}
-            </span>
-            {sortHeader('id', 'Id')}
-          </span>
+          <RowIdCell
+            marker={
+              <span className="flex w-6 shrink-0 justify-center">
+                {sortHeader('order', '#', 'Sort by run order')}
+              </span>
+            }
+            id={sortHeader('id', 'Id')}
+          />
         }
         title={sortHeader('title', 'Title')}
         meta={sortHeader('updated', 'Updated')}
@@ -155,11 +171,11 @@ export const WorklistRows = ({
             const subject = group.subject;
             return (
               <div key={subject ?? '__no-subject__'} className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-2">
+                <GroupHeading count={group.rows.length}>
                   {subject && roadmapItemNames.has(subject) ? (
                     <button
                       type="button"
-                      className={`${subjectHeaderClass} bg-none bg-transparent border-none cursor-pointer text-left hover:underline`}
+                      className={`${groupHeadingClass} bg-none bg-transparent border-none p-0 cursor-pointer text-left text-inherit hover:underline`}
                       title="View in roadmap"
                       onClick={() =>
                         navigate({ to: '/project/roadmap/$item', params: { item: subject } })
@@ -168,9 +184,9 @@ export const WorklistRows = ({
                       {subject}
                     </button>
                   ) : (
-                    <div className={subjectHeaderClass}>{subject ?? 'No subject'}</div>
+                    <span className={groupHeadingClass}>{subject ?? 'No subject'}</span>
                   )}
-                </div>
+                </GroupHeading>
                 {group.rows.map((row) => renderRow(row))}
               </div>
             );
@@ -178,13 +194,9 @@ export const WorklistRows = ({
         : showProjectHeaders
           ? projectGroups.map((group) => (
               <div key={group.project?.key ?? '__current__'} className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-2">
-                  {group.project ? (
-                    <ProjectChip project={group.project} />
-                  ) : (
-                    <div className={subjectHeaderClass}>This project</div>
-                  )}
-                </div>
+                <GroupHeading count={group.rows.length}>
+                  <span className={groupHeadingClass}>{group.project?.name ?? 'This project'}</span>
+                </GroupHeading>
                 {group.rows.map((row) => renderRow(row))}
               </div>
             ))
@@ -197,9 +209,10 @@ interface NoteRowCardProps {
   row: NoteRow;
   onOpen?: (title: string) => void;
   onOpenCrossProject?: (project: ScopeRow, path: string) => void;
+  showProjectChip: boolean;
 }
 
-const NoteRowCard = ({ row, onOpen, onOpenCrossProject }: NoteRowCardProps) => {
+const NoteRowCard = ({ row, onOpen, onOpenCrossProject, showProjectChip }: NoteRowCardProps) => {
   const idea = row.idea;
   const status = idea.status ?? 'open';
   const foreign = row.project && !row.project.isCurrent ? row.project : undefined;
@@ -210,40 +223,44 @@ const NoteRowCard = ({ row, onOpen, onOpenCrossProject }: NoteRowCardProps) => {
         ? () => onOpen(idea.title)
         : undefined;
   return (
-    <div className="flex items-center">
-      <RowMarker order={idea.order} done={status === 'done'} status={status} />
-      <div className="flex-1 min-w-0">
-        <Row
-          surface="card"
-          columns={PLAN_ROW_COLUMNS}
-          onClick={handleOpen}
-          ariaLabel={idea.title}
-          id={idea.id ? <PlanIdStamp id={idea.id} fill /> : ''}
-          title={
-            <span className={titleButtonClass}>
-              <NoteIcon opacity={0.55} />
-              <RowTitle extras={row.project && <ProjectChip project={row.project} />}>
-                {idea.title}
-              </RowTitle>
-            </span>
-          }
-          meta={<MetaLine>—</MetaLine>}
-          trailing={
-            <TrailingCells
-              progress={
-                <Text face="serif" size="base" className="opacity-30">
-                  —
-                </Text>
-              }
-              status={
-                <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
-                  {IDEA_STATUS_LABEL[status]}
-                </Stamp>
-              }
-            />
-          }
-        />
-      </div>
+    <div className="min-w-0">
+      <Row
+        surface="card"
+        columns={PLAN_ROW_COLUMNS}
+        onClick={handleOpen}
+        ariaLabel={idea.title}
+        id={
+          <RowIdCell
+            marker={<RowMarker order={idea.order} done={status === 'done'} status={status} />}
+            id={idea.id ? <PlanIdStamp id={idea.id} fill /> : null}
+          />
+        }
+        title={
+          <span className={titleButtonClass}>
+            <NoteIcon opacity={0.55} />
+            <RowTitle
+              extras={row.project && showProjectChip && <ProjectChip project={row.project} />}
+            >
+              {idea.title}
+            </RowTitle>
+          </span>
+        }
+        meta={<MetaLine>—</MetaLine>}
+        trailing={
+          <TrailingCells
+            progress={
+              <Text face="serif" size="base" className="opacity-30">
+                —
+              </Text>
+            }
+            status={
+              <Stamp size="small" variant={IDEA_STATUS_STAMP[status]}>
+                {IDEA_STATUS_LABEL[status]}
+              </Stamp>
+            }
+          />
+        }
+      />
     </div>
   );
 };
@@ -253,9 +270,16 @@ interface FixRowCardProps {
   activePlanTitle?: string | null;
   onOpen?: (title: string) => void;
   onOpenCrossProject?: (project: ScopeRow, path: string) => void;
+  showProjectChip: boolean;
 }
 
-const FixRowCard = ({ row, activePlanTitle, onOpen, onOpenCrossProject }: FixRowCardProps) => {
+const FixRowCard = ({
+  row,
+  activePlanTitle,
+  onOpen,
+  onOpenCrossProject,
+  showProjectChip,
+}: FixRowCardProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const fix = row.fix;
   const status = effectiveStatus(fix, agentStatus);
@@ -267,51 +291,57 @@ const FixRowCard = ({ row, activePlanTitle, onOpen, onOpenCrossProject }: FixRow
         ? () => onOpen(fix.title)
         : undefined;
   return (
-    <div className="flex items-center">
-      <RowMarker
-        order={fix.order}
-        done={fix.status === 'done'}
-        status={fix.status}
-        running={Boolean(runningTaskForPlan(fix.id, agentStatus))}
-        fallback={fix.statusFallback}
+    <div className="min-w-0">
+      <Row
+        surface="card"
+        columns={PLAN_ROW_COLUMNS}
+        highlighted={fix.title === activePlanTitle}
+        onClick={handleOpen}
+        ariaLabel={fix.title}
+        id={
+          <RowIdCell
+            marker={
+              <RowMarker
+                order={fix.order}
+                done={fix.status === 'done'}
+                status={fix.status}
+                running={Boolean(runningTaskForPlan(fix.id, agentStatus))}
+                fallback={fix.statusFallback}
+              />
+            }
+            id={<PlanIdStamp id={fix.id} fill />}
+          />
+        }
+        title={
+          <span className={titleButtonClass}>
+            <Tooltip content={fix.idea ? `Fixes ${fix.idea}` : 'Fix'}>
+              <Stamp size="small" variant="warning">
+                fix
+              </Stamp>
+            </Tooltip>
+            <RowTitle
+              extras={row.project && showProjectChip && <ProjectChip project={row.project} />}
+            >
+              {fix.title}
+            </RowTitle>
+          </span>
+        }
+        meta={
+          <MetaLine className="whitespace-nowrap">
+            {fix.updated ? relativeDate(fix.updated) : relativeDate(fix.created)}
+          </MetaLine>
+        }
+        trailing={
+          <TrailingCells
+            progress={null}
+            status={
+              <Stamp size="small" variant={STATUS_STAMP[status]}>
+                {STATUS_LABEL[status]}
+              </Stamp>
+            }
+          />
+        }
       />
-      <div className="flex-1 min-w-0">
-        <Row
-          surface="card"
-          columns={PLAN_ROW_COLUMNS}
-          highlighted={fix.title === activePlanTitle}
-          onClick={handleOpen}
-          ariaLabel={fix.title}
-          id={<PlanIdStamp id={fix.id} fill />}
-          title={
-            <span className={titleButtonClass}>
-              <Tooltip content={fix.idea ? `Fixes ${fix.idea}` : 'Fix'}>
-                <Stamp size="small" variant="warning">
-                  fix
-                </Stamp>
-              </Tooltip>
-              <RowTitle extras={row.project && <ProjectChip project={row.project} />}>
-                {fix.title}
-              </RowTitle>
-            </span>
-          }
-          meta={
-            <MetaLine className="whitespace-nowrap">
-              {fix.updated ? relativeDate(fix.updated) : relativeDate(fix.created)}
-            </MetaLine>
-          }
-          trailing={
-            <TrailingCells
-              progress={null}
-              status={
-                <Stamp size="small" variant={STATUS_STAMP[status]}>
-                  {STATUS_LABEL[status]}
-                </Stamp>
-              }
-            />
-          }
-        />
-      </div>
     </div>
   );
 };

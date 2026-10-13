@@ -1,8 +1,9 @@
-import { PageToolbar, PageToolbarRow } from '@/app/components';
+import { PageToolbar, PageToolbarRow, SidebarAction } from '@/app/components';
 import { isDefaultStatusFilter } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, Input } from '@dendelion/paper-ui';
+import { Input } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { NewIdeaButton, WorklistActionsMenu } from '../actions';
 import type { GroupMode } from '../helpers';
 import { GroupSelect } from './group-select';
 
@@ -31,23 +32,22 @@ export const PlansToolbar = ({ group, onGroupChange, multiProject }: PlansToolba
           aria-label="Search ideas"
           value={filters.search}
           onChange={(event) => setPlanSearch(event.target.value)}
-          className="w-[240px] min-w-[140px] shrink"
+          className="w-[230px] min-w-[140px] shrink"
         />
+        <GroupSelect group={group} onChange={onGroupChange} showProject={multiProject} />
         {hasActiveFilters && (
-          <Button
-            variant="link"
-            data-testid="clear-plan-filters"
+          <SidebarAction
             onClick={() => {
               clearPlanFilters();
               navigate({ to: '/', search: { group } });
             }}
-            className="shrink-0 text-2xs opacity-70"
           >
             Clear filters
-          </Button>
+          </SidebarAction>
         )}
         <span className="flex-1" />
-        <GroupSelect group={group} onChange={onGroupChange} showProject={multiProject} />
+        <NewIdeaButton />
+        <WorklistActionsMenu />
       </PageToolbarRow>
     </PageToolbar>
   );

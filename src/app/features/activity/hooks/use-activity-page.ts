@@ -1,25 +1,17 @@
 import { useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
-import {
-  type LogFilters,
-  type LogSearchParams,
-  filterLogRows,
-  parseLogFilters,
-  serializeLogFilters,
-} from '@/core/run-filters';
+import { filterLogRows } from '@/core/run-filters';
 import { computeLogStats } from '@/core/run-stats';
-import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
 import { markReadIdFor, mergeScopedActivityEntries } from '../helpers';
+import { useActivityFilters } from './use-activity-filters';
 import { useLogRows } from './use-run-rows';
 import { useScopeActivity } from './use-scope-activity';
 
 export const useActivityPage = () => {
   const { loading, allRows, availableTypes } = useLogRows();
-  const navigate = useNavigate();
   const markRead = useAppStore((s) => s.markRead);
-  const search = useSearch({ strict: false }) as LogSearchParams;
   const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
 
   const scope = useScope(null);
@@ -30,15 +22,7 @@ export const useActivityPage = () => {
   const otherScopeProjects = multiProject ? checkedScopeRows.filter((r) => !r.isCurrent) : [];
   const scopeActivity = useScopeActivity(otherScopeProjects);
 
-  const filters = useMemo(() => parseLogFilters(search), [search]);
-
-  const setFilters = (patch: Partial<LogFilters>) => {
-    navigate({
-      to: '/activity',
-      search: serializeLogFilters({ ...filters, ...patch }),
-      replace: true,
-    });
-  };
+  const { filters, setFilters, clearFilters, hasActiveFilters } = useActivityFilters();
 
   const matchedRows = useMemo(() => filterLogRows(allRows, filters), [allRows, filters]);
 
@@ -81,7 +65,6 @@ export const useActivityPage = () => {
       ),
     [scopeActivity.data],
   );
-  const hasActiveFilters = Object.keys(serializeLogFilters(filters)).length > 0;
 
   const totalEntryCount =
     allRows.length + scopeActivity.data.reduce((sum, { rows }) => sum + rows.length, 0);
@@ -104,7 +87,7 @@ export const useActivityPage = () => {
     unreadCount: unreadIds.length + foreignUnread.length,
     markAllRead,
     hasActiveFilters,
-    clearFilters: () => navigate({ to: '/activity', search: {}, replace: true }),
+    clearFilters,
     stats,
     filters,
     setFilters,

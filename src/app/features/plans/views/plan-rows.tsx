@@ -29,6 +29,8 @@ interface PlanRowsProps {
    * navigation apply to that one plan (IDEA-291). */
   project?: ScopeRow;
   onOpenCrossProject?: (project: ScopeRow, path: string) => void;
+  /** Off under Group by Project, where the group heading already names it. */
+  showProjectChip?: boolean;
 }
 
 interface RowMarkerProps {
@@ -40,9 +42,9 @@ interface RowMarkerProps {
   fallback?: boolean;
 }
 
-/** The gutter outside a row card: spinner while an agent works, run-order stamp, a check for done, or blank. */
+/** The first cell of a row's id column: spinner while an agent works, run-order stamp, a check for done, or blank. */
 export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerProps) => (
-  <span className="flex-[0_0_36px] flex items-center justify-center">
+  <span className="flex w-6 shrink-0 items-center justify-center">
     {running ? (
       <Spinner size="small" label="Agent running" />
     ) : done ? (
@@ -74,7 +76,7 @@ export const RowMarker = ({ order, done, running, status, fallback }: RowMarkerP
 /** Shared by every row in the plans/worklist lists (plan, note and fix rows)
  * so a header built from the same columns lines up with all three. */
 export const PLAN_ROW_COLUMNS: RowColumns = {
-  id: '76px',
+  id: '108px',
   title: 'minmax(0,1fr)',
   meta: { width: '64px', hideBelow: 'lg' },
   trailing: '136px',
@@ -87,6 +89,14 @@ export const TrailingCells = ({ progress, status }: { progress: ReactNode; statu
     <span className="flex w-[48px] justify-end">{progress}</span>
     <span className="flex w-[80px] justify-end">{status}</span>
   </>
+);
+
+/** The id column: the run-order marker, then the id stamp. */
+export const RowIdCell = ({ marker, id }: { marker: ReactNode; id: ReactNode }) => (
+  <span className="flex items-center gap-2">
+    {marker}
+    {id}
+  </span>
 );
 
 /** A title that truncates before the stamps beside it do. */
@@ -103,6 +113,7 @@ export const PlanRows = ({
   onOpen,
   project,
   onOpenCrossProject,
+  showProjectChip = true,
 }: PlanRowsProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const navigate = useNavigate();
@@ -121,118 +132,119 @@ export const PlanRows = ({
               ? () => onOpen(plan.title)
               : undefined;
         return (
-          <div key={plan.title} className="flex items-center">
-            <RowMarker
-              order={plan.order}
-              done={plan.status === 'done'}
-              status={plan.status}
-              running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
-              fallback={plan.statusFallback}
-            />
-            <div className="flex-1 min-w-0">
-              <Row
-                surface="card"
-                columns={PLAN_ROW_COLUMNS}
-                highlighted={plan.title === activePlanTitle}
-                onClick={handleOpen}
-                ariaLabel={plan.title}
-                id={<PlanIdStamp id={plan.id} fill />}
-                title={
-                  <RowTitle
-                    extras={
-                      project ||
-                      blockingNeed ||
-                      deadNeed ||
-                      plan.statusFallback ||
-                      plan.pr?.state === 'merged' ? (
-                        <>
-                          {project && <ProjectChip project={project} />}
-                          {blockingNeed && (
-                            <Tooltip
-                              content={`Waits for ${blockingNeed.projectName ? `${blockingNeed.projectName} ` : ''}${blockingNeed.id}`}
+          <div key={plan.title} className="min-w-0">
+            <Row
+              surface="card"
+              columns={PLAN_ROW_COLUMNS}
+              highlighted={plan.title === activePlanTitle}
+              onClick={handleOpen}
+              ariaLabel={plan.title}
+              id={
+                <RowIdCell
+                  marker={
+                    <RowMarker
+                      order={plan.order}
+                      done={plan.status === 'done'}
+                      status={plan.status}
+                      running={Boolean(runningTaskForPlan(plan.id, agentStatus))}
+                      fallback={plan.statusFallback}
+                    />
+                  }
+                  id={<PlanIdStamp id={plan.id} fill />}
+                />
+              }
+              title={
+                <RowTitle
+                  extras={
+                    (project && showProjectChip) ||
+                    blockingNeed ||
+                    deadNeed ||
+                    plan.statusFallback ||
+                    plan.pr?.state === 'merged' ? (
+                      <>
+                        {project && showProjectChip && <ProjectChip project={project} />}
+                        {blockingNeed && (
+                          <Tooltip
+                            content={`Waits for ${blockingNeed.projectName ? `${blockingNeed.projectName} ` : ''}${blockingNeed.id}`}
+                          >
+                            <Stamp
+                              size="small"
+                              variant="warning"
+                              dot
+                              // A cross-project need has no mount to navigate to yet, so it
+                              // isn't a link — the tooltip still names it.
+                              onClick={
+                                blockingNeed.projectSlug
+                                  ? undefined
+                                  : (e) => {
+                                      e.stopPropagation();
+                                      navigate(
+                                        entityLink({
+                                          id: blockingNeed.id,
+                                          title: blockingNeed.title ?? blockingNeed.id,
+                                        }),
+                                      );
+                                    }
+                              }
                             >
-                              <Stamp
-                                size="small"
-                                variant="warning"
-                                dot
-                                // A cross-project need has no mount to navigate to yet, so it
-                                // isn't a link — the tooltip still names it.
-                                onClick={
-                                  blockingNeed.projectSlug
-                                    ? undefined
-                                    : (e) => {
-                                        e.stopPropagation();
-                                        navigate(
-                                          entityLink({
-                                            id: blockingNeed.id,
-                                            title: blockingNeed.title ?? blockingNeed.id,
-                                          }),
-                                        );
-                                      }
-                                }
-                              >
-                                Waits
-                              </Stamp>
-                            </Tooltip>
-                          )}
-                          {deadNeed && (
-                            <Tooltip content={`Can't find ${deadNeed.raw}`}>
-                              <Stamp size="small" variant="error" dot>
-                                Needs
-                              </Stamp>
-                            </Tooltip>
-                          )}
-                          {plan.statusFallback && (
-                            <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
-                              <Stamp size="small" variant="warning" dot>
-                                Guess
-                              </Stamp>
-                            </Tooltip>
-                          )}
-                          {plan.pr?.state === 'merged' && (
-                            <Tooltip content={`Merged in #${plan.pr.number}`}>
-                              <span
-                                className="inline-flex"
-                                style={{ color: color.accentPurpleDark }}
-                              >
-                                <MergeIcon size={14} />
-                              </span>
-                            </Tooltip>
-                          )}
-                        </>
-                      ) : undefined
-                    }
-                  >
-                    {plan.title}
-                  </RowTitle>
-                }
-                meta={
-                  <MetaLine className="whitespace-nowrap">
-                    {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
-                  </MetaLine>
-                }
-                trailing={
-                  <TrailingCells
-                    progress={
-                      progress ? (
-                        <MetaLine className="whitespace-nowrap">
-                          {progress.done}/{progress.total}
-                        </MetaLine>
-                      ) : (
-                        <Text face="serif" size="base" className="opacity-30">
-                          —
-                        </Text>
-                      )
-                    }
-                    status={
-                      <Stamp size="small" variant={STATUS_STAMP[status]}>
-                        {STATUS_LABEL[status]}
-                      </Stamp>
-                    }
-                  />
-                }
-              />
-            </div>
+                              Waits
+                            </Stamp>
+                          </Tooltip>
+                        )}
+                        {deadNeed && (
+                          <Tooltip content={`Can't find ${deadNeed.raw}`}>
+                            <Stamp size="small" variant="error" dot>
+                              Needs
+                            </Stamp>
+                          </Tooltip>
+                        )}
+                        {plan.statusFallback && (
+                          <Tooltip content="GitHub's PR state couldn't be resolved — this status is a guess from local data">
+                            <Stamp size="small" variant="warning" dot>
+                              Guess
+                            </Stamp>
+                          </Tooltip>
+                        )}
+                        {plan.pr?.state === 'merged' && (
+                          <Tooltip content={`Merged in #${plan.pr.number}`}>
+                            <span className="inline-flex" style={{ color: color.accentPurpleDark }}>
+                              <MergeIcon size={14} />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </>
+                    ) : undefined
+                  }
+                >
+                  {plan.title}
+                </RowTitle>
+              }
+              meta={
+                <MetaLine className="whitespace-nowrap">
+                  {plan.updated ? relativeDate(plan.updated) : relativeDate(plan.created)}
+                </MetaLine>
+              }
+              trailing={
+                <TrailingCells
+                  progress={
+                    progress ? (
+                      <MetaLine className="whitespace-nowrap">
+                        {progress.done}/{progress.total}
+                      </MetaLine>
+                    ) : (
+                      <Text face="serif" size="base" className="opacity-30">
+                        —
+                      </Text>
+                    )
+                  }
+                  status={
+                    <Stamp size="small" variant={STATUS_STAMP[status]}>
+                      {STATUS_LABEL[status]}
+                    </Stamp>
+                  }
+                />
+              }
+            />
           </div>
         );
       })}

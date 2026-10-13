@@ -116,7 +116,7 @@ export const PlansPage = () => {
         </div>
       ) : (
         <div>
-          <PlansHeader />
+          <PlansHeader count={rows.length} />
           <PlansToolbar
             group={group}
             onGroupChange={handleGroupChange}
