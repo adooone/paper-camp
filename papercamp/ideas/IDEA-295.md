@@ -115,9 +115,10 @@ date in the sidebar.
       (wide screens) already landed with phase 2; what remains is `HH:MM` for
       today and `Oct 12` before that, with the full timestamp in a tooltip.
       run: 3m9s · 66 in · 7.3k out · sonnet-5 · sess:a274f777-07a8-4e1d-8247-838eb93bd26b
-- [ ] Lay out the entry page around its actions
+- [x] Lay out the entry page around its actions
       Title row with Open idea, Stop or the failure actions; the one-line facts
       replacing the FactsGrid card; the body card only when there is a body.
+      run: 7m57s · 96 in · 30.2k out · sonnet-5 · sess:a274f777-07a8-4e1d-8247-838eb93bd26b
 - [ ] Give the output pane Follow, Copy and full height
       Viewport-height pane scrolling inside itself, Follow toggle released by
       scrolling up, Copy with a toast.

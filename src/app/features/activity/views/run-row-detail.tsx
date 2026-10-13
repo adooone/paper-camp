@@ -12,29 +12,56 @@ import {
   type PlanEntry,
   type StoredNotification,
 } from '@/types/index';
-import { Button, Card, FactsGrid, Spinner, Stamp, Textarea, useToast } from '@dendelion/paper-ui';
+import {
+  Button,
+  Card,
+  type FactItem,
+  FactsGrid,
+  Spinner,
+  Stamp,
+  Textarea,
+  useToast,
+} from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatFullTimestamp, promoteLabel, summaryLine } from '../helpers';
 import type { LogRowActions } from '../hooks/use-run-rows';
 
-interface Fact {
-  label: string;
-  value: string;
-}
+const phaseFact = (row: LogRow, plans: PlanEntry[]): FactItem | undefined => {
+  if (row.source.kind === 'running') {
+    const { task } = row.source;
+    if (task.phaseIndex === undefined) return undefined;
+    const phaseCount = plans.find((p) => p.id === task.planId)?.phases.length;
+    return {
+      label: 'Phase',
+      value: `${task.phaseIndex + 1}${phaseCount ? ` of ${phaseCount}` : ''}`,
+    };
+  }
+  if (row.source.kind === 'task') {
+    const { entry } = row.source;
+    const lastPhaseRun = entry.phaseRuns?.at(-1);
+    if (!lastPhaseRun) return undefined;
+    const phaseCount = plans.find((p) => p.id === entry.planId)?.phases.length;
+    return {
+      label: 'Phase',
+      value: `${lastPhaseRun.index + 1}${phaseCount ? ` of ${phaseCount}` : ''}`,
+    };
+  }
+  return undefined;
+};
 
-const factsFor = (row: LogRow): Fact[] => {
+const factsFor = (row: LogRow, plans: PlanEntry[]): FactItem[] => {
   const usage = row.source.kind === 'task' ? usageForEntry(row.source.entry) : undefined;
   const durationMs = usage?.durationMs ?? row.durationMs;
   const startedAt = row.source.kind === 'task' ? row.source.entry.startedAt : row.timestamp;
-  const facts: Fact[] = [{ label: 'Started', value: formatFullTimestamp(startedAt) }];
+  const facts: FactItem[] = [{ label: 'Started', value: formatFullTimestamp(startedAt) }];
   if (row.source.kind === 'running') {
     const elapsed = Date.now() - Date.parse(startedAt);
     if (Number.isFinite(elapsed)) facts.push({ label: 'Elapsed', value: formatDuration(elapsed) });
-    if (row.source.task.status === 'stopping') facts.push({ label: 'Status', value: 'Stopping…' });
-  } else if (durationMs != null)
-    facts.push({ label: 'Duration', value: formatDuration(durationMs) });
+  } else if (durationMs != null) facts.push({ label: 'Took', value: formatDuration(durationMs) });
+  const phase = phaseFact(row, plans);
+  if (phase) facts.push(phase);
   if (usage) {
     facts.push({ label: 'Turns', value: String(usage.numTurns) });
     facts.push({ label: 'Cost', value: formatCost(usage.costUsd) });
@@ -44,7 +71,23 @@ const factsFor = (row: LogRow): Fact[] => {
   return facts;
 };
 
-const FailureActions = ({
+const FailureReason = ({ issue, cleared }: { issue: Issue; cleared: boolean }) => (
+  <div className="flex flex-col gap-3">
+    <div className="flex items-center gap-2">
+      {cleared && (
+        <Stamp size="small" variant="success">
+          fixed
+        </Stamp>
+      )}
+      <p className="m-0 text-sm text-state-danger">{issue.reason}</p>
+    </div>
+    {issue.thread.length > 0 && (
+      <FeedbackThread messages={issue.thread} undo={null} undoing={false} onUndo={() => {}} />
+    )}
+  </div>
+);
+
+const FailureTitleActions = ({
   issue,
   cleared,
   actions,
@@ -78,70 +121,42 @@ const FailureActions = ({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        {cleared && (
-          <Stamp size="small" variant="success">
-            fixed
-          </Stamp>
-        )}
-        <p className="m-0 text-sm text-state-danger">{issue.reason}</p>
-      </div>
-      {issue.thread.length > 0 && (
-        <FeedbackThread messages={issue.thread} undo={null} undoing={false} onUndo={() => {}} />
+    <div className="flex shrink-0 items-center gap-2">
+      {issue.entityId && issue.entityTitle && (
+        <Button
+          size="small"
+          variant="ghost"
+          onClick={() => actions.openEntity(issue.entityId, issue.entityTitle as string)}
+        >
+          Open idea
+        </Button>
       )}
-      <div className="flex items-center gap-3">
-        {issue.entityId && issue.entityTitle && (
+      {!cleared &&
+        (issue.promotedFixId ? (
           <Button
             size="small"
-            onClick={() => actions.openEntity(issue.entityId, issue.entityTitle as string)}
+            onClick={() => actions.openEntity(issue.promotedFixId, promotedTitle as string)}
           >
-            Open
+            View {issue.promotedFixId}
           </Button>
-        )}
-        {!cleared &&
-          (issue.promotedFixId ? (
-            <Button
-              size="small"
-              onClick={() => actions.openEntity(issue.promotedFixId, promotedTitle as string)}
-            >
-              View {issue.promotedFixId}
+        ) : (
+          <>
+            <Button size="small" onClick={handleFix} disabled={Boolean(actions.fixingIssueId)}>
+              {fixing ? 'Fixing…' : 'Fix it here'}
             </Button>
-          ) : (
-            <>
-              <Button size="small" onClick={handleFix} disabled={Boolean(actions.fixingIssueId)}>
-                {fixing ? 'Fixing…' : 'Fix it here'}
-              </Button>
-              {fixing && <Spinner size="small" label="Agent fixing…" />}
-              <Button size="small" onClick={handlePromote} disabled={actions.promotingId !== null}>
-                {promoting ? 'Promoting…' : promoteLabel(issue, actions.entities)}
-              </Button>
-              {promoting && <Spinner size="small" label="Promoting…" />}
-            </>
-          ))}
-      </div>
+            {fixing && <Spinner size="small" label="Agent fixing…" />}
+            <Button size="small" onClick={handlePromote} disabled={actions.promotingId !== null}>
+              {promoting ? 'Promoting…' : promoteLabel(issue, actions.entities)}
+            </Button>
+            {promoting && <Spinner size="small" label="Promoting…" />}
+          </>
+        ))}
     </div>
   );
 };
 
-const ReplyBody = ({
-  notification,
-  actions,
-}: {
-  notification: StoredNotification;
-  actions: LogRowActions;
-}) => (
-  <div className="flex flex-col gap-3">
-    <p className="m-0">{notification.text}</p>
-    <div>
-      <Button
-        size="small"
-        onClick={() => actions.openEntity(notification.entityId, notification.entityTitle)}
-      >
-        Open
-      </Button>
-    </div>
-  </div>
+const ReplyBody = ({ notification }: { notification: StoredNotification }) => (
+  <p className="m-0">{notification.text}</p>
 );
 
 const QuestionReplyForm = ({
@@ -217,6 +232,19 @@ const QuestionBody = ({
   return <QuestionReplyForm plan={plan} reload={actions.reloadEntities} />;
 };
 
+const resolveRowFailure = (
+  row: LogRow,
+  actions: LogRowActions,
+  lines: string[] | null,
+): { issue: Issue; cleared: boolean; fixOutput?: string } | undefined => {
+  if (row.source.kind === 'issue') return { issue: row.source.issue, cleared: false };
+  if (row.source.kind === 'task' && row.source.entry.outcome === 'error') {
+    const failure = actions.resolveFailure(row.source.entry);
+    if (failure) return { issue: failure, cleared: failure.cleared, fixOutput: lines?.join('\n') };
+  }
+  return undefined;
+};
+
 const EntryBody = ({
   row,
   actions,
@@ -228,9 +256,9 @@ const EntryBody = ({
 }) => {
   switch (row.source.kind) {
     case 'issue':
-      return <FailureActions issue={row.source.issue} cleared={false} actions={actions} />;
+      return <FailureReason issue={row.source.issue} cleared={false} />;
     case 'reply':
-      return <ReplyBody notification={row.source.notification} actions={actions} />;
+      return <ReplyBody notification={row.source.notification} />;
     case 'question':
       return <QuestionBody question={row.source.question} actions={actions} />;
     case 'running':
@@ -241,16 +269,8 @@ const EntryBody = ({
         const summary = lines ? summaryLine(lines) : undefined;
         return summary ? <p className="m-0 font-serif">{summary}</p> : null;
       }
-      const failure = actions.resolveFailure(entry);
-      if (!failure) return null;
-      return (
-        <FailureActions
-          issue={failure}
-          cleared={failure.cleared}
-          actions={actions}
-          fixOutput={lines?.join('\n')}
-        />
-      );
+      const failure = resolveRowFailure(row, actions, lines);
+      return failure ? <FailureReason issue={failure.issue} cleared={failure.cleared} /> : null;
     }
   }
 };
@@ -293,31 +313,58 @@ export const StopRunButton = ({ taskId, className }: { taskId: string; className
   );
 };
 
+const OpenIdeaButton = ({ row, actions }: { row: LogRow; actions: LogRowActions }) =>
+  row.entityId && row.entityTitle ? (
+    <Button
+      size="small"
+      variant="ghost"
+      onClick={() => actions.openEntity(row.entityId, row.entityTitle as string)}
+    >
+      Open idea
+    </Button>
+  ) : null;
+
 export const EntryDetailsCard = ({ row, actions, lines }: EntryDetailsCardProps) => {
   const runningTask = row.source.kind === 'running' ? row.source.task : null;
+  const failure = runningTask ? undefined : resolveRowFailure(row, actions, lines);
+
   return (
-    <Card size="small" texture={surface.card} className="shrink-0">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="m-0 mr-1 font-serif text-lg font-semibold">{row.title}</h2>
-          <PlanIdStamp id={row.entityId} />
-          <Stamp size="small" variant="neutral">
-            {LOG_TYPE_LABELS[row.type]}
-          </Stamp>
-          <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]}>
-            {row.outcome}
-          </Stamp>
-          {runningTask && runningTask.status !== 'stopping' && (
-            <StopRunButton taskId={runningTask.id} className="ml-auto" />
+    <div className="flex shrink-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="m-0 mr-1 font-serif text-lg font-semibold">{row.title}</h1>
+        <PlanIdStamp id={row.entityId} />
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {runningTask ? (
+            <>
+              <OpenIdeaButton row={row} actions={actions} />
+              {runningTask.status !== 'stopping' && <StopRunButton taskId={runningTask.id} />}
+            </>
+          ) : failure ? (
+            <FailureTitleActions
+              issue={failure.issue}
+              cleared={failure.cleared}
+              actions={actions}
+              fixOutput={failure.fixOutput}
+            />
+          ) : (
+            <OpenIdeaButton row={row} actions={actions} />
           )}
         </div>
-        <FactsGrid items={factsFor(row)} />
-        {hasBody(row, lines) && (
-          <div className="border-t border-paper-950/[12%] pt-3">
-            <EntryBody row={row} actions={actions} lines={lines} />
-          </div>
-        )}
       </div>
-    </Card>
+      <div className="flex flex-wrap items-center gap-3">
+        <Stamp size="small" variant="neutral">
+          {LOG_TYPE_LABELS[row.type]}
+        </Stamp>
+        <Stamp size="small" variant={LOG_OUTCOME_VARIANT[row.outcome]}>
+          {row.outcome}
+        </Stamp>
+        <FactsGrid items={factsFor(row, actions.plans)} layout="inline" />
+      </div>
+      {hasBody(row, lines) && (
+        <Card size="small" texture={surface.card}>
+          <EntryBody row={row} actions={actions} lines={lines} />
+        </Card>
+      )}
+    </div>
   );
 };
