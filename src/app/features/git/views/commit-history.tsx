@@ -1,7 +1,6 @@
 import { useOpenEntity } from '@/app/hooks';
 import type { GitLogCommit } from '@/types/index';
 import { CommitRail, Divider, MetaLine, PushIcon, Row, Stamp, Tooltip } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
 
 function formatRelativeTime(iso: string): string {
   const diffSec = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
@@ -18,11 +17,8 @@ function formatRelativeTime(iso: string): string {
   return diffYear === 1 ? '1 year ago' : `${diffYear} years ago`;
 }
 
-/** `docs(papercamp)!` → type `docs`, scope `papercamp`: the type fits the stamp column, the scope rides with the subject. */
-function splitPrefix(prefix: string): { type: string; scope: string | null } {
-  const match = /^([^(!]+)(?:\(([^)]*)\))?!?$/.exec(prefix);
-  return match ? { type: match[1], scope: match[2] || null } : { type: prefix, scope: null };
-}
+/** `docs(papercamp)!` → `docs`; the full prefix stays in the stamp's tooltip. */
+const commitType = (prefix: string): string => /^[^(!]+/.exec(prefix)?.[0] ?? prefix;
 
 interface CommitRowProps {
   commit: GitLogCommit;
@@ -33,7 +29,7 @@ interface CommitRowProps {
 
 const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
   const openEntity = useOpenEntity();
-  const prefix = commit.prefix ? splitPrefix(commit.prefix) : null;
+  const type = commit.prefix ? commitType(commit.prefix) : null;
 
   return (
     <div className="flex min-w-0 items-stretch gap-3">
@@ -43,13 +39,15 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
         {!isFirst && <Divider sketch />}
         <Row
           surface="none"
-          columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: '9.5rem', trailing: '7.5rem' }}
+          columns={{ id: '4.5rem', title: 'minmax(0,1fr)', meta: '9.5rem', trailing: '7.5rem' }}
           id={
-            prefix ? (
+            type ? (
               <span className="hidden sm:inline-flex">
-                <Stamp size="small" variant="neutral">
-                  {prefix.type}
-                </Stamp>
+                <Tooltip content={commit.prefix}>
+                  <Stamp size="small" variant="neutral">
+                    {type}
+                  </Stamp>
+                </Tooltip>
               </span>
             ) : (
               ''
@@ -57,10 +55,7 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
           }
           title={
             <span className="flex min-w-0 items-center gap-2">
-              <span className="min-w-0 truncate">
-                {prefix?.scope && <span className="mr-1.5 opacity-50">{prefix.scope}</span>}
-                {commit.subject}
-              </span>
+              <span className="min-w-0 truncate">{commit.subject}</span>
               {commit.tags.map((tag) => (
                 <Stamp key={tag} size="small" variant="success">
                   {tag}
@@ -100,8 +95,7 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
                     <span
                       role="img"
                       aria-label="Not pushed"
-                      className="inline-flex"
-                      style={{ color: color.accentAmberDark }}
+                      className="inline-flex text-watercolor-amber-dark"
                     >
                       <PushIcon size={14} />
                     </span>

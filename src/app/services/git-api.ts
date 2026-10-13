@@ -1,4 +1,4 @@
-import type { FileDiffEntry, GitLogResponse, GitStatusResponse } from '@/types/index';
+import type { FileDiffEntry, GitBranch, GitLogResponse, GitStatusResponse } from '@/types/index';
 import { apiFetch, apiUrl } from './api-base';
 
 // Above the server's 30s cap so a stall surfaces the server's own timeout
@@ -33,6 +33,14 @@ export const fetchGitLog = async (skip = 0): Promise<GitLogResponse> => {
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
   await throwIfNotOk(response, 'Failed to load commit history');
+  return response.json();
+};
+
+export const fetchGitBranches = async (): Promise<GitBranch[]> => {
+  const response = await apiFetch(apiUrl('/api/git/branches'), {
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Failed to load branches');
   return response.json();
 };
 

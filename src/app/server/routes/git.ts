@@ -1,6 +1,6 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
 import { readCommitConvention } from '@/core/commit-convention';
-import { readFirstParentLog } from '@/core/git-log';
+import { readBranches, readFirstParentLog } from '@/core/git-log';
 import { squashMergePr } from '@/core/git-pr';
 import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
@@ -335,6 +335,14 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
         }
+      },
+    },
+
+    {
+      method: 'GET',
+      path: '/api/git/branches',
+      handle: async (_req, res) => {
+        sendJson(res, 200, await readBranches(root));
       },
     },
 

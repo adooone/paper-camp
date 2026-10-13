@@ -1192,6 +1192,18 @@ export interface GitLogCommit {
   ideaId: string | null;
 }
 
+export interface GitBranch {
+  name: string;
+  current: boolean;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  /** The upstream was deleted on the remote (a merged PR's branch). */
+  gone: boolean;
+  date: string;
+  ideaId: string | null;
+}
+
 export interface GitLogResponse {
   commits: GitLogCommit[];
   upstream: string | null;

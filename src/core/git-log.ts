@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import type { GitBranch } from '../types/index';
 
 export const COMMIT_SHA_RE = /^[0-9a-f]{4,40}$/i;
 
@@ -140,6 +141,49 @@ export async function resolveUpstream(root: string): Promise<string | null> {
   const output = await runGit(root, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
   const trimmed = output.trim();
   return trimmed || null;
+}
+
+const BRANCH_FORMAT = [
+  '%(refname:short)',
+  '%(HEAD)',
+  '%(upstream:short)',
+  '%(upstream:track,nobracket)',
+  '%(committerdate:iso-strict)',
+].join('%09');
+
+const BRANCH_ENTITY_RE = /(?:^|\/)(idea|ticket)-(\d+)(?:-|$)/i;
+
+/** One line of `git for-each-ref` in BRANCH_FORMAT. Exported for tests. */
+export function parseBranchLine(line: string): GitBranch | null {
+  const [name, head, upstream, track, date] = line.split('\t');
+  if (!name) return null;
+  const ahead = Number(track?.match(/ahead (\d+)/)?.[1] ?? 0);
+  const behind = Number(track?.match(/behind (\d+)/)?.[1] ?? 0);
+  const entity = name.match(BRANCH_ENTITY_RE);
+  return {
+    name,
+    current: head === '*',
+    upstream: upstream || null,
+    ahead,
+    behind,
+    gone: track === 'gone',
+    date: date ?? '',
+    ideaId: entity ? `${entity[1].toUpperCase()}-${entity[2]}` : null,
+  };
+}
+
+/** Local branches, most recently committed first. */
+export async function readBranches(root: string): Promise<GitBranch[]> {
+  const output = await runGit(root, [
+    'for-each-ref',
+    'refs/heads',
+    '--sort=-committerdate',
+    `--format=${BRANCH_FORMAT}`,
+  ]);
+  return output
+    .split('\n')
+    .map(parseBranchLine)
+    .filter((branch): branch is GitBranch => branch !== null);
 }
 
 export async function readFirstParentLog(

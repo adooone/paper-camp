@@ -50,6 +50,11 @@ const ProjectsInView = lazy(() =>
     default: m.ProjectsInView,
   })),
 );
+const GitBranchList = lazy(() =>
+  importWithRecovery('GitBranchList', () => import('@/app/features/git/index')).then((m) => ({
+    default: m.GitBranchList,
+  })),
+);
 const GitFileList = lazy(() =>
   importWithRecovery('GitFileList', () => import('@/app/features/git/index')).then((m) => ({
     default: m.GitFileList,
@@ -189,6 +194,7 @@ export const AppShell = () => {
                     {isGitArea && (
                       <Suspense fallback={<SidebarSkeleton />}>
                         <GitFileList />
+                        <GitBranchList />
                       </Suspense>
                     )}
                   </SidebarShell>

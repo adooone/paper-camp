@@ -3,7 +3,12 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { parseGitLogOutput, readFirstParentLog, resolveIdsWithMainActivity } from './git-log';
+import {
+  parseBranchLine,
+  parseGitLogOutput,
+  readFirstParentLog,
+  resolveIdsWithMainActivity,
+} from './git-log';
 
 function git(cwd: string, ...args: string[]): string {
   const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
@@ -285,5 +290,43 @@ describe('readFirstParentLog', () => {
     expect(secondPage.commits).toHaveLength(2);
     expect(secondPage.hasMore).toBe(false);
     expect(secondPage.commits.map((c) => c.subject)).toEqual(['commit 1', 'commit 0']);
+  });
+});
+
+describe('parseBranchLine', () => {
+  it('reads the current branch with its upstream and ahead/behind counts', () => {
+    expect(
+      parseBranchLine(
+        'feat/idea-294-compact-ideas\t*\torigin/feat/idea-294-compact-ideas\tahead 3, behind 1\t2026-10-13T07:20:34+00:00',
+      ),
+    ).toEqual({
+      name: 'feat/idea-294-compact-ideas',
+      current: true,
+      upstream: 'origin/feat/idea-294-compact-ideas',
+      ahead: 3,
+      behind: 1,
+      gone: false,
+      date: '2026-10-13T07:20:34+00:00',
+      ideaId: 'IDEA-294',
+    });
+  });
+
+  it('marks a branch whose upstream was deleted, and ties ticket branches to their ticket', () => {
+    expect(
+      parseBranchLine('feat/ticket-4-import\t \torigin/feat/ticket-4-import\tgone\t'),
+    ).toMatchObject({
+      current: false,
+      gone: true,
+      ideaId: 'TICKET-4',
+    });
+  });
+
+  it('leaves a branch with no upstream and no entity id plain', () => {
+    expect(parseBranchLine('spike\t \t\t\t')).toMatchObject({
+      upstream: null,
+      ahead: 0,
+      behind: 0,
+      ideaId: null,
+    });
   });
 });

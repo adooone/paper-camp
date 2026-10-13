@@ -5,7 +5,6 @@ import { splitPathForDisplay } from '@/app/utils/path-display';
 import {
   CheckAllIcon,
   Checkbox,
-  EmptyState,
   IconButton,
   ListItem,
   SidebarCard,
@@ -44,18 +43,8 @@ export const GitFileList = () => {
   } = useGitFileList();
 
   if (!files) return <SidebarSkeleton />;
-  if (files.length === 0) {
-    return (
-      <SidebarCard className="shrink-0">
-        <div className="flex flex-col">
-          <div className={`${sectionLabelClass} flex h-[32px] items-end pb-1`}>
-            <span>Changed files</span>
-          </div>
-          <EmptyState className="py-4" message="Nothing changed — the working tree is clean." />
-        </div>
-      </SidebarCard>
-    );
-  }
+  // A clean tree has nothing to list; the branches card below takes the space.
+  if (files.length === 0) return null;
 
   return (
     <SidebarCard className="shrink-0">
