@@ -1,6 +1,7 @@
 import { useOpenEntity } from '@/app/hooks';
 import type { GitLogCommit } from '@/types/index';
-import { CommitRail, Divider, MetaLine, Row, Stamp } from '@dendelion/paper-ui';
+import { CommitRail, Divider, MetaLine, PushIcon, Row, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { color } from '@dendelion/paper-ui/tokens';
 
 function formatRelativeTime(iso: string): string {
   const diffSec = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
@@ -42,7 +43,7 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
         {!isFirst && <Divider sketch />}
         <Row
           surface="none"
-          columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: 'auto', trailing: 'auto' }}
+          columns={{ id: '6rem', title: 'minmax(0,1fr)', meta: '9.5rem', trailing: '7.5rem' }}
           id={
             prefix ? (
               <span className="hidden sm:inline-flex">
@@ -55,20 +56,11 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
             )
           }
           title={
-            <div className="truncate">
-              {prefix?.scope && <span className="mr-1.5 opacity-50">{prefix.scope}</span>}
-              {commit.subject}
-            </div>
-          }
-          meta={
-            <MetaLine className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
-              {commit.prefix && <span className="sm:hidden">· {commit.prefix}</span>}
-              <span>· {formatRelativeTime(commit.date)}</span>
-            </MetaLine>
-          }
-          trailing={
-            <>
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="min-w-0 truncate">
+                {prefix?.scope && <span className="mr-1.5 opacity-50">{prefix.scope}</span>}
+                {commit.subject}
+              </span>
               {commit.tags.map((tag) => (
                 <Stamp key={tag} size="small" variant="success">
                   {tag}
@@ -79,20 +71,43 @@ const CommitRow = ({ commit, upstream, isFirst, isLast }: CommitRowProps) => {
                   {upstream}
                 </Stamp>
               )}
-              {commit.ideaId && (
-                <Stamp
-                  size="small"
-                  variant="info"
-                  onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
-                >
-                  {commit.ideaId}
-                </Stamp>
-              )}
-              {!commit.pushed && (
-                <Stamp size="small" variant="warning">
-                  not pushed
-                </Stamp>
-              )}
+            </span>
+          }
+          meta={
+            <MetaLine className="flex items-baseline gap-x-1.5 overflow-hidden whitespace-nowrap">
+              <span className="font-mono text-2xs">{commit.hash.slice(0, 8)}</span>
+              {commit.prefix && <span className="sm:hidden">· {commit.prefix}</span>}
+              <span>· {formatRelativeTime(commit.date)}</span>
+            </MetaLine>
+          }
+          trailing={
+            <>
+              <span className="flex w-24 justify-end">
+                {commit.ideaId && (
+                  <Stamp
+                    size="small"
+                    variant="info"
+                    onClick={() => openEntity(commit.ideaId, commit.ideaId ?? '')}
+                  >
+                    {commit.ideaId}
+                  </Stamp>
+                )}
+              </span>
+              {/* Slot held even when pushed, so the idea column never shifts. */}
+              <span className="flex w-4 justify-center">
+                {!commit.pushed && (
+                  <Tooltip content="Not pushed yet">
+                    <span
+                      role="img"
+                      aria-label="Not pushed"
+                      className="inline-flex"
+                      style={{ color: color.accentAmberDark }}
+                    >
+                      <PushIcon size={14} />
+                    </span>
+                  </Tooltip>
+                )}
+              </span>
             </>
           }
         />
