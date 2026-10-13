@@ -1,16 +1,9 @@
-import { CheckboxFilterRow } from '@/app/components';
+import { CheckboxFilterRow, SidebarSection } from '@/app/components';
 import { useDocsSidebar } from '@/app/features/docs/hooks';
 import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
 import { ProjectsInView } from '@/app/features/scope/index';
 import { useActiveSettingsSection } from '@/app/hooks';
-import {
-  EmptyState,
-  Input,
-  SidebarCard,
-  SidebarItem,
-  SidebarLabel,
-  Skeleton,
-} from '@dendelion/paper-ui';
+import { EmptyState, Input, SidebarItem, SidebarLabel, Skeleton } from '@dendelion/paper-ui';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 
 const simplecaseLabel = (name: string) =>
@@ -43,7 +36,7 @@ export const ProjectSidebar = () => {
   return (
     <>
       <ProjectsInView mode="switcher" countKind={null} />
-      <SidebarCard className="shrink-0">
+      <SidebarSection>
         <SidebarLabel>Roadmap</SidebarLabel>
         <div className="flex flex-col">
           <SidebarItem active={isRoadmapPath} onClick={() => navigate({ to: '/project/roadmap' })}>
@@ -60,8 +53,8 @@ export const ProjectSidebar = () => {
             />
           ))}
         </div>
-      </SidebarCard>
-      <SidebarCard className="shrink-0">
+      </SidebarSection>
+      <SidebarSection>
         <SidebarLabel>Docs</SidebarLabel>
         <div className="px-1 pt-1 pb-2">
           <Input
@@ -182,7 +175,7 @@ export const ProjectSidebar = () => {
             Notifications
           </SidebarItem>
         </div>
-      </SidebarCard>
+      </SidebarSection>
     </>
   );
 };

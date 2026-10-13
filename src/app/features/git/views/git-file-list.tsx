@@ -1,15 +1,8 @@
-import { SidebarSkeleton } from '@/app/components';
+import { SidebarSection, SidebarSkeleton } from '@/app/components';
 import { COMPACT_COLOR, CountBadge, gitStatusInfo } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
-import {
-  CheckAllIcon,
-  Checkbox,
-  IconButton,
-  ListItem,
-  SidebarCard,
-  Tooltip,
-} from '@dendelion/paper-ui';
+import { CheckAllIcon, Checkbox, IconButton, ListItem, Tooltip } from '@dendelion/paper-ui';
 
 const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 
@@ -48,12 +41,12 @@ export const GitFileList = () => {
     toggleStaged,
   } = useGitFileList();
 
-  if (!files) return <SidebarSkeleton />;
+  if (!files) return <SidebarSkeleton bare />;
   // A clean tree has nothing to list; the branches card below takes the space.
   if (files.length === 0) return null;
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <nav aria-label="Changed files" className="flex flex-col">
         <div className={`${sectionLabelClass} flex h-[32px] items-end justify-between pb-1`}>
           <span>Changed files</span>
@@ -118,6 +111,6 @@ export const GitFileList = () => {
           ))}
         </ul>
       </nav>
-    </SidebarCard>
+    </SidebarSection>
   );
 };

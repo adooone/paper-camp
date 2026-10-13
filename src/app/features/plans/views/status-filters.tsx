@@ -1,7 +1,7 @@
-import { SidebarAction } from '@/app/components';
+import { SidebarAction, SidebarSection } from '@/app/components';
 import { CheckboxFilterRow } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
-import { SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarLabel } from '@dendelion/paper-ui';
 import { STATUS_LABEL } from '../constants';
 import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
 
@@ -18,7 +18,7 @@ export const StatusFilters = () => {
   const hasActiveFilters = !isDefaultStatusFilter(filters.statuses);
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <div className="flex items-end justify-between gap-2">
         <SidebarLabel>Status</SidebarLabel>
         {hasActiveFilters && (
@@ -39,6 +39,6 @@ export const StatusFilters = () => {
           />
         ))}
       </div>
-    </SidebarCard>
+    </SidebarSection>
   );
 };

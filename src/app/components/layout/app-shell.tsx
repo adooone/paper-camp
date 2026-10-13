@@ -24,6 +24,7 @@ import {
   Button,
   IconButton,
   Layout,
+  SidebarCard,
   SidebarToggleIcon,
   ToastProvider,
   getSurfaceStyles,
@@ -175,27 +176,35 @@ export const AppShell = () => {
                     {isPlansArea && !isIdeasListArea && <PlanActionsColumn />}
                     {isPlansArea && !isIdeasListArea && <PlanActionsCommandsColumn />}
                     {isIdeasListArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <ProjectsInView mode="list" countKind="ideas" />
-                        <StatusFilters />
-                      </Suspense>
+                      <SidebarCard className="shrink-0">
+                        <Suspense fallback={<SidebarSkeleton bare />}>
+                          <ProjectsInView mode="list" countKind="ideas" />
+                          <StatusFilters />
+                        </Suspense>
+                      </SidebarCard>
                     )}
                     {isActivityListArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <ProjectsInView mode="list" countKind="activity" />
-                        <ActivityFilters />
-                      </Suspense>
+                      <SidebarCard className="shrink-0">
+                        <Suspense fallback={<SidebarSkeleton bare />}>
+                          <ProjectsInView mode="list" countKind="activity" />
+                          <ActivityFilters />
+                        </Suspense>
+                      </SidebarCard>
                     )}
                     {isProjectArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <ProjectSidebar />
-                      </Suspense>
+                      <SidebarCard className="shrink-0">
+                        <Suspense fallback={<SidebarSkeleton bare />}>
+                          <ProjectSidebar />
+                        </Suspense>
+                      </SidebarCard>
                     )}
                     {isGitArea && (
-                      <Suspense fallback={<SidebarSkeleton />}>
-                        <GitFileList />
-                        <GitBranchList />
-                      </Suspense>
+                      <SidebarCard className="shrink-0">
+                        <Suspense fallback={<SidebarSkeleton bare />}>
+                          <GitFileList />
+                          <GitBranchList />
+                        </Suspense>
+                      </SidebarCard>
                     )}
                   </SidebarShell>
                 )}

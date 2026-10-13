@@ -1,6 +1,6 @@
-import { CheckboxFilterRow, SidebarAction } from '@/app/components';
+import { CheckboxFilterRow, SidebarAction, SidebarSection } from '@/app/components';
 import type { LogRowOutcome, LogRowType } from '@/types/index';
-import { SidebarCard, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarLabel } from '@dendelion/paper-ui';
 import { LOG_TYPE_LABELS } from '../constants';
 import { toggleInAll, useActivityFilters, useLogRows } from '../hooks';
 
@@ -36,7 +36,7 @@ const FilterSection = <T extends string>({
   labelFor,
   onChange,
 }: FilterSectionProps<T>) => (
-  <>
+  <SidebarSection>
     <div className="flex items-end justify-between gap-2">
       <SidebarLabel>{label}</SidebarLabel>
       {selected.length > 0 && (
@@ -60,7 +60,7 @@ const FilterSection = <T extends string>({
         );
       })}
     </div>
-  </>
+  </SidebarSection>
 );
 
 /** Outcome and type filters for Activity, in the sidebar like the Ideas status
@@ -78,7 +78,7 @@ export const ActivityFilters = () => {
   if (allRows.length === 0) return null;
 
   return (
-    <SidebarCard className="shrink-0">
+    <>
       <FilterSection<LogRowOutcome>
         label="Outcome"
         options={outcomes}
@@ -95,6 +95,6 @@ export const ActivityFilters = () => {
         labelFor={(type) => LOG_TYPE_LABELS[type]}
         onChange={(next) => setFilters({ types: next })}
       />
-    </SidebarCard>
+    </>
   );
 };

@@ -1,8 +1,9 @@
+import { SidebarSection } from '@/app/components';
 import { useOpenEntity } from '@/app/hooks';
 import { fetchGitBranches } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { GitBranch } from '@/types/index';
-import { SidebarCard, SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 const trackLabel = (branch: GitBranch): string | undefined => {
@@ -38,7 +39,7 @@ export const GitBranchList = () => {
   if (!branches || branches.length === 0) return null;
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <SidebarLabel>Branches</SidebarLabel>
       <div className="flex flex-col">
         {branches.map((branch) => (
@@ -57,6 +58,6 @@ export const GitBranchList = () => {
           </SidebarItem>
         ))}
       </div>
-    </SidebarCard>
+    </SidebarSection>
   );
 };

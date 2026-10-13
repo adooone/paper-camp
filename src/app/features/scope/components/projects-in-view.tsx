@@ -1,5 +1,5 @@
-import { SidebarAction } from '@/app/components';
-import { SidebarCard, SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarAction, SidebarSection } from '@/app/components';
+import { SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { type ScopeCountKind, useScope } from '../hooks/use-scope';
 import { ScopeProjectRow } from './scope-project-row';
@@ -15,7 +15,7 @@ export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
   const showHosts = groups.length > 1;
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <div className="flex items-end justify-between gap-2">
         <SidebarLabel>{mode === 'list' ? 'Projects in view' : 'Projects'}</SidebarLabel>
         {mode === 'list' && (
@@ -50,6 +50,6 @@ export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
           <span className="opacity-70">All machines</span>
         </SidebarItem>
       </div>
-    </SidebarCard>
+    </SidebarSection>
   );
 };

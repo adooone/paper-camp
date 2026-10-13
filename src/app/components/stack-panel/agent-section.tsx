@@ -28,7 +28,7 @@ const MAX_VISIBLE_TASKS = 1;
 
 // On a wrapper, not inside the card: the card clips its content to the sketched outline.
 const ProjectTab = ({ project }: { project: ScopeRow }) => (
-  <span className="pointer-events-none absolute -top-2 left-3 z-10 max-w-[60%] truncate rounded-full border border-desk-border bg-desk-bg px-1.5 font-handwritten text-2xs leading-4 text-desk-text-muted">
+  <span className="pointer-events-none absolute -top-2 right-3 z-10 max-w-[60%] truncate rounded-full bg-desk-chalk px-1.5 font-handwritten text-2xs leading-4 text-desk-bg">
     {project.name}
   </span>
 );
