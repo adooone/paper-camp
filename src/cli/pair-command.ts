@@ -48,8 +48,9 @@ export async function runPair(): Promise<boolean> {
   if (process.stdout.isTTY) {
     console.log('Scan with your phone:');
     console.log(`  ${formatLinkQrCode(pairQrLink(printedCode))}`);
-    console.log('Or paste into Paper Camp on another device:');
-    console.log(`  ${printedCode}`);
+    console.log('Or enter in Paper Camp on another device:');
+    console.log(`  Machine  ${tailnetStatus.selfDnsName}`);
+    console.log(`  Code     ${formatPairCode(code)}`);
   } else {
     console.log(printedCode);
   }

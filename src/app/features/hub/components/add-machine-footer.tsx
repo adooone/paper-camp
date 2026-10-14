@@ -3,28 +3,82 @@ import {
   type PairCodeInput,
   buildMachineLink,
   hostLabel,
+  normalizePairCode,
   pairMachine,
   parsePairCode,
   readPairCodeFromHash,
+  resolveMachineHost,
 } from '@/app/services/machine-connection';
+import { listMachines } from '@/app/services/machine-store';
 import { mountPrefix } from '@/app/services/mount';
 import { pairWithCode } from '@/app/services/pairing-api';
 import { fetchMachineProjects } from '@/app/services/system';
 import { Button, Card, CommandLine, Input } from '@dendelion/paper-ui';
 import { surface } from '@dendelion/paper-ui/tokens';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 
 type Attempt =
   | { status: 'idle' }
   | { status: 'pairing' }
+  | { status: 'bad-machine' }
+  | { status: 'bad-code' }
   | { status: 'unreachable'; input: PairCodeInput }
-  | { status: 'rejected' }
-  | { status: 'invalid' };
+  | { status: 'rejected'; host: string }
+  | { status: 'outdated'; host: string }
+  | { status: 'failed'; host: string; httpStatus: number | null };
+
+const KNOWN_MACHINES_LIST = 'pc-known-machines';
+
+const messageFor = (attempt: Attempt): ReactNode => {
+  switch (attempt.status) {
+    case 'bad-machine':
+      return (
+        <>
+          Enter the machine's full address, like <code>deimos.your-tailnet.ts.net</code>. A short
+          name works once this browser knows a machine on that tailnet.
+        </>
+      );
+    case 'bad-code':
+      return <>A pairing code has eight characters, like 7KQ4-M9XZ.</>;
+    case 'rejected':
+      return (
+        <>
+          {hostLabel(attempt.host)} didn't accept this code — it expired or was already used. Run{' '}
+          <code>paper-camp pair</code> again.
+        </>
+      );
+    case 'outdated':
+      return (
+        <>
+          {hostLabel(attempt.host)} runs an older paper-camp that can't take pairing codes. Update
+          it with <code>npm install -g @dendelion/paper-camp@latest</code> and restart the daemon.
+        </>
+      );
+    case 'failed':
+      return (
+        <>
+          Couldn't pair with {hostLabel(attempt.host)}
+          {attempt.httpStatus ? ` (error ${attempt.httpStatus})` : ''}. Try again in a moment.
+        </>
+      );
+    default:
+      return (
+        <>
+          Run <code>paper-camp pair</code> on the machine, then enter what it prints.
+        </>
+      );
+  }
+};
+
+const isError = (attempt: Attempt) =>
+  attempt.status !== 'idle' && attempt.status !== 'pairing' && attempt.status !== 'unreachable';
 
 export const AddMachineFooter = () => {
+  const [machine, setMachine] = useState('');
   const [code, setCode] = useState('');
   const [attempt, setAttempt] = useState<Attempt>({ status: 'idle' });
   const startCommand = daemonStartCommand(window.location.origin);
+  const knownMachines = listMachines();
 
   const attemptPair = async (input: PairCodeInput) => {
     setAttempt({ status: 'pairing' });
@@ -34,22 +88,21 @@ export const AddMachineFooter = () => {
       fetchMachineProjects,
       pairWithCode,
     );
-    if (!outcome.ok) {
-      setAttempt(
-        outcome.reason === 'unreachable'
-          ? { status: 'unreachable', input }
-          : { status: 'rejected' },
+    if (outcome.ok) {
+      window.location.assign(
+        buildMachineLink(
+          outcome.machineUrl,
+          outcome.pairingToken,
+          window.location.origin,
+          mountPrefix,
+        ),
       );
       return;
     }
-    window.location.assign(
-      buildMachineLink(
-        outcome.machineUrl,
-        outcome.pairingToken,
-        window.location.origin,
-        mountPrefix,
-      ),
-    );
+    if (outcome.reason === 'unreachable') setAttempt({ status: 'unreachable', input });
+    else if (outcome.reason === 'failed')
+      setAttempt({ status: 'failed', host: input.host, httpStatus: outcome.status });
+    else setAttempt({ status: outcome.reason, host: input.host });
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on mount to consume the fragment, not on every attemptPair identity change.
@@ -57,19 +110,41 @@ export const AddMachineFooter = () => {
     const input = readPairCodeFromHash(window.location.hash);
     if (!input) return;
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    setCode(`${input.code}@${input.host}`);
+    setMachine(input.host);
+    setCode(input.code);
     void attemptPair(input);
   }, []);
 
+  // Pasting what `paper-camp pair` prints as one string fills both fields.
+  const takeInput = (value: string, field: 'machine' | 'code') => {
+    const combined = value.includes('@') ? parsePairCode(value) : null;
+    if (combined) {
+      setMachine(combined.host);
+      setCode(combined.code);
+    } else if (field === 'machine') setMachine(value);
+    else setCode(value);
+    if (attempt.status !== 'idle') setAttempt({ status: 'idle' });
+  };
+
   const submit = () => {
-    const trimmed = code.trim();
-    if (trimmed === '') return;
-    const input = parsePairCode(trimmed);
-    if (!input) {
-      setAttempt({ status: 'invalid' });
+    const host = resolveMachineHost(machine, knownMachines);
+    if (!host) {
+      setAttempt({ status: 'bad-machine' });
       return;
     }
-    void attemptPair(input);
+    const normalized = normalizePairCode(code);
+    if (!normalized) {
+      setAttempt({ status: 'bad-code' });
+      return;
+    }
+    setMachine(host.host);
+    setCode(normalized);
+    void attemptPair({ code: normalized, host: host.host, machineUrl: host.machineUrl });
+  };
+
+  const pairing = attempt.status === 'pairing';
+  const onEnter = (e: { key: string }) => {
+    if (e.key === 'Enter') submit();
   };
 
   return (
@@ -88,38 +163,47 @@ export const AddMachineFooter = () => {
         </>
       ) : (
         <>
-          <p className="m-0 text-sm opacity-70">
-            Run <code>paper-camp pair</code> on the machine, then paste the code it prints.
-          </p>
-          <div className="flex items-start gap-2">
+          <p className="m-0 text-sm opacity-70">{messageFor(attempt)}</p>
+          <Input
+            size="small"
+            label="Machine"
+            placeholder="deimos.your-tailnet.ts.net"
+            list={knownMachines.length > 0 ? KNOWN_MACHINES_LIST : undefined}
+            value={machine}
+            error={attempt.status === 'bad-machine'}
+            disabled={pairing}
+            onChange={(e) => takeInput(e.target.value, 'machine')}
+            onKeyDown={onEnter}
+          />
+          <div className="flex items-end gap-2">
             <Input
               size="small"
+              label="Code"
               className="min-w-0 flex-1"
-              placeholder="Paste a pairing code"
+              placeholder="7KQ4-M9XZ"
+              autoComplete="one-time-code"
               value={code}
-              error={attempt.status === 'rejected' || attempt.status === 'invalid'}
-              disabled={attempt.status === 'pairing'}
-              onChange={(e) => {
-                setCode(e.target.value);
-                if (attempt.status !== 'idle') setAttempt({ status: 'idle' });
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') submit();
-              }}
+              error={isError(attempt) && attempt.status !== 'bad-machine'}
+              disabled={pairing}
+              onChange={(e) => takeInput(e.target.value, 'code')}
+              onKeyDown={onEnter}
             />
             <Button
               size="small"
               variant="secondary"
+              className="shrink-0"
               onClick={submit}
-              disabled={attempt.status === 'pairing'}
+              disabled={pairing}
             >
-              Add
+              {pairing ? 'Pairing…' : 'Add'}
             </Button>
           </div>
-          {attempt.status === 'rejected' && (
-            <p className="m-0 text-sm opacity-70">
-              This code expired or was already used — run <code>paper-camp pair</code> again.
-            </p>
+          {knownMachines.length > 0 && (
+            <datalist id={KNOWN_MACHINES_LIST}>
+              {knownMachines.map((url) => (
+                <option key={url} value={url.replace(/^https?:\/\//, '')} />
+              ))}
+            </datalist>
           )}
         </>
       )}

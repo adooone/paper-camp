@@ -3,10 +3,12 @@ import {
   buildMachineLink,
   hostLabel,
   loadMachineConnection,
+  normalizePairCode,
   pairMachine,
   parsePairCode,
   readMachineConnection,
   readPairCodeFromHash,
+  resolveMachineHost,
 } from './machine-connection';
 import { listMachines, machineToken } from './machine-store';
 
@@ -128,7 +130,9 @@ describe('pairMachine', () => {
 
   it('stores the token it gets back, exactly as a link pairing does', async () => {
     const probeMachine = vi.fn().mockResolvedValue({ projects: [], pendingUpdateVersion: null });
-    const redeemCode = vi.fn().mockResolvedValue({ token: 'abc', origin: 'https://preview.test' });
+    const redeemCode = vi
+      .fn()
+      .mockResolvedValue({ ok: true, token: 'abc', origin: 'https://preview.test' });
 
     const outcome = await pairMachine(
       'https://deimos.pitta-ray.ts.net',
@@ -163,7 +167,7 @@ describe('pairMachine', () => {
 
   it('reports rejected for an expired or already-used code', async () => {
     const probeMachine = vi.fn().mockResolvedValue({ projects: [], pendingUpdateVersion: null });
-    const redeemCode = vi.fn().mockResolvedValue(null);
+    const redeemCode = vi.fn().mockResolvedValue({ ok: false, reason: 'rejected' });
 
     const outcome = await pairMachine(
       'https://deimos.pitta-ray.ts.net',
@@ -173,6 +177,18 @@ describe('pairMachine', () => {
     );
 
     expect(outcome).toEqual({ ok: false, reason: 'rejected' });
+  });
+});
+
+describe('pairMachine with an older daemon', () => {
+  it('reports outdated rather than a rejected code when the daemon has no root pairing', async () => {
+    const outcome = await pairMachine(
+      'https://deimos.pitta-ray.ts.net',
+      '7KQ4-M9XZ',
+      vi.fn().mockResolvedValue({ projects: [], pendingUpdateVersion: null }),
+      vi.fn().mockResolvedValue({ ok: false, reason: 'outdated' }),
+    );
+    expect(outcome).toEqual({ ok: false, reason: 'outdated' });
   });
 });
 
@@ -187,5 +203,37 @@ describe('buildMachineLink', () => {
     expect(
       buildMachineLink('https://deimos.pitta-ray.ts.net', '', 'http://app.test', '/paper-camp'),
     ).toBe('http://app.test/paper-camp?machine=https%3A%2F%2Fdeimos.pitta-ray.ts.net');
+  });
+});
+
+describe('normalizePairCode', () => {
+  it('accepts a code however it was typed and prints it the way `paper-camp pair` does', () => {
+    expect(normalizePairCode('1600-3ebr')).toBe('1600-3EBR');
+    expect(normalizePairCode(' 16003EBR ')).toBe('1600-3EBR');
+  });
+
+  it('rejects anything that is not eight code characters', () => {
+    expect(normalizePairCode('1600-3EB')).toBeNull();
+    expect(normalizePairCode('1600-3EBO')).toBeNull();
+  });
+});
+
+describe('resolveMachineHost', () => {
+  it('takes a full address as is, scheme and trailing slash optional', () => {
+    expect(resolveMachineHost('https://deimos.pitta-ray.ts.net/', [])).toEqual({
+      host: 'deimos.pitta-ray.ts.net',
+      machineUrl: 'https://deimos.pitta-ray.ts.net',
+    });
+  });
+
+  it('completes a short name from a machine already known on the same tailnet', () => {
+    expect(resolveMachineHost('phobos', ['https://deimos.pitta-ray.ts.net'])).toEqual({
+      host: 'phobos.pitta-ray.ts.net',
+      machineUrl: 'https://phobos.pitta-ray.ts.net',
+    });
+  });
+
+  it('cannot resolve a short name with no known tailnet machine', () => {
+    expect(resolveMachineHost('deimos', [])).toBeNull();
   });
 });

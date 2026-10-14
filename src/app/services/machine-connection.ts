@@ -1,5 +1,6 @@
 import type { MachineProjectsResponse } from '@/types/index';
 import { addMachine } from './machine-store';
+import type { PairCodeResult } from './pairing-api';
 
 const MACHINE_URL_PARAM = 'machine';
 const PAIRING_TOKEN_PARAM = 'token';
@@ -52,6 +53,39 @@ export function parsePairCode(raw: string): PairCodeInput | null {
   return { code: trimmed.slice(0, at), host, machineUrl: `https://${host}` };
 }
 
+const CROCKFORD = /^[0-9A-HJKMNP-TV-Z]{8}$/;
+
+/** A code as typed or pasted (`1600-3ebr`, `16003EBR`) to the `1600-3EBR` form
+ *  `paper-camp pair` prints, or null when it isn't eight code characters. */
+export function normalizePairCode(raw: string): string | null {
+  const compact = raw.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  return CROCKFORD.test(compact) ? `${compact.slice(0, 4)}-${compact.slice(4)}` : null;
+}
+
+/** The machine field: a full address, or a short name like `deimos` completed from a
+ *  machine this browser already knows on the same tailnet. Null when it can't resolve. */
+export function resolveMachineHost(
+  raw: string,
+  knownMachineUrls: readonly string[],
+): { host: string; machineUrl: string } | null {
+  const host = raw
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/+$/, '')
+    .toLowerCase();
+  if (!host || /[\s/@]/.test(host)) return null;
+  if (host.includes('.')) return { host, machineUrl: `https://${host}` };
+  for (const url of knownMachineUrls) {
+    const known = url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const dot = known.indexOf('.');
+    if (dot > 0 && known.endsWith('.ts.net')) {
+      const full = `${host}${known.slice(dot)}`;
+      return { host: full, machineUrl: `https://${full}` };
+    }
+  }
+  return null;
+}
+
 /** The first label of a tailnet hostname, for a short "Can't reach deimos"
  *  rather than its full `deimos.pitta-ray.ts.net` (IDEA-292). */
 export function hostLabel(host: string): string {
@@ -69,7 +103,8 @@ export function readPairCodeFromHash(hash: string): PairCodeInput | null {
 
 export type PairMachineOutcome =
   | { ok: true; machineUrl: string; pairingToken: string }
-  | { ok: false; reason: 'unreachable' | 'rejected' };
+  | { ok: false; reason: 'unreachable' | 'rejected' | 'outdated' }
+  | { ok: false; reason: 'failed'; status: number | null };
 
 /** Stores the token exactly as a `?machine=&token=` link's token is stored
  *  today via `addMachine` — only how the token is obtained differs, so
@@ -78,15 +113,12 @@ export async function pairMachine(
   machineUrl: string,
   code: string,
   probeMachine: (machineUrl: string) => Promise<MachineProjectsResponse | null>,
-  redeemCode: (
-    machineUrl: string,
-    code: string,
-  ) => Promise<{ token: string; origin: string } | null>,
+  redeemCode: (machineUrl: string, code: string) => Promise<PairCodeResult>,
 ): Promise<PairMachineOutcome> {
   const reachable = await probeMachine(machineUrl);
   if (!reachable) return { ok: false, reason: 'unreachable' };
   const result = await redeemCode(machineUrl, code);
-  if (!result) return { ok: false, reason: 'rejected' };
+  if (!result.ok) return result;
   addMachine(machineUrl, result.token);
   return { ok: true, machineUrl, pairingToken: result.token };
 }
