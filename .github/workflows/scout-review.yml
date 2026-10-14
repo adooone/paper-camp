@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Generate Scout app token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.SCOUT_APP_ID }}
           private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}

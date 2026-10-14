@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Generate Scout app token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.SCOUT_APP_ID }}
           private-key: ${{ secrets.SCOUT_PRIVATE_KEY }}
@@ -24,7 +24,7 @@ jobs:
           permission-pull-requests: write
 
       - name: Run release-please
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ steps.app-token.outputs.token }}

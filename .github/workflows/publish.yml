@@ -14,18 +14,20 @@ jobs:
   publish:
     name: Publish
     runs-on: ubuntu-latest
+    env:
+      PAPER_CAMP_UPDATE_TOKEN: ${{ secrets.PAPER_CAMP_UPDATE_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -53,11 +55,14 @@ jobs:
 
       # The daemon publishes only this path through Tailscale Funnel on 8443:
       #   tailscale funnel --bg --https=8443 --set-path /api/machine/update http://localhost:4333/api/machine/update
+      # Skipped, not failed, until the token secret exists: an unset secret is an
+      # unconfigured hook, and the release itself has already shipped.
       - name: Hook the daemon
+        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' }}
         continue-on-error: true
         run: |
           curl --fail --silent --show-error \
             -X POST "https://deimos.pitta-ray.ts.net:8443/api/machine/update" \
-            -H "Authorization: Bearer ${{ secrets.PAPER_CAMP_UPDATE_TOKEN }}" \
+            -H "Authorization: Bearer $PAPER_CAMP_UPDATE_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"version\":\"${{ steps.version.outputs.version }}\"}"
