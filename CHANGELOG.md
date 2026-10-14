@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.43.0](https://github.com/adooone/paper-camp/compare/v0.42.0...v0.43.0) (2026-10-14)
+
+
+### Features
+
+* **app:** Add project switcher idea and pairing input validation ([562ef0d](https://github.com/adooone/paper-camp/commit/562ef0d5a7c196c0110973734d3cb499ea6cbc14))
+* **app:** Give the output pane Follow, Copy and full height ([1aaa496](https://github.com/adooone/paper-camp/commit/1aaa496fd9ec6e654181458ee7aaef0530f91897))
+* **app:** Lay out the entry page around its actions ([1858140](https://github.com/adooone/paper-camp/commit/1858140572a7d763016617a7c75bd95c06adb2db))
+* **app:** Merge sidebar sections into a single card ([faf001f](https://github.com/adooone/paper-camp/commit/faf001fa6d4abbe4b3661832b0fd3a90ce8e8294))
+* **app:** Pin running runs in a card with Stop ([bc6248c](https://github.com/adooone/paper-camp/commit/bc6248cab9072aa4b7b05ed96eddf31caa970b46))
+* **app:** Shorten the list's times ([26405f1](https://github.com/adooone/paper-camp/commit/26405f19f96822e621130bd81f1a1e4e2802ca03))
+* **server:** Add daemon-root pairing endpoint for hosted clients ([a6f32ee](https://github.com/adooone/paper-camp/commit/a6f32ee2093e3f99180fea8b6aeb25d058c36e71))
+
+
+### Bug Fixes
+
+* **app:** Align plan list rows on a shared CSS grid ([88f2561](https://github.com/adooone/paper-camp/commit/88f2561daa999a1e8872c8a0fed192448cbfc670))
+* **app:** Hide branch list unless history view is clean ([f39b9dc](https://github.com/adooone/paper-camp/commit/f39b9dce0f0703ca72e4407eb3e42425218d04ed))
+
 ## [0.42.0](https://github.com/adooone/paper-camp/compare/v0.41.0...v0.42.0) (2026-10-13)
 
 
