@@ -15,6 +15,7 @@ import { readBody, sendJson } from '../app/server/http';
 import { type PairCodeManager, createPairCodeManager } from '../app/server/pair-code';
 import {
   type PairingManagerState,
+  createPairingManager,
   loadOrMintPairingState,
   machinePairingPath,
   savePairingState,
@@ -97,6 +98,8 @@ interface MountRequest {
 
 /** `/p/<slug>` and `/p/<slug>/...` mount a registered project; anything else
  * (bare `/`, `/api/machine/projects`) is handled unmounted, at the daemon root. */
+const MACHINE_PAIR_PATH = '/api/pair';
+
 export function parseMountRequest(pathname: string): MountRequest | null {
   const match = pathname.match(/^\/p\/([^/]+)(\/.*)?$/);
   return match ? { slug: match[1], rest: match[2] ?? '/' } : null;
@@ -379,6 +382,49 @@ export function createMachinePairCodeHandler(
   };
 }
 
+/** `POST /api/pair` at the daemon root, where a hosted client sends a pasted or scanned
+ *  code (it knows the machine, not a project). Pairs the caller's origin machine-wide. */
+export function createMachinePairHandler(
+  pairingState: PairingManagerState,
+  persistPairing: () => void,
+  pairCodeManager: PairCodeManager,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  const pairing = createPairingManager(pairingState, persistPairing);
+  return async (req, res) => {
+    applyCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+      handlePreflight(req, res);
+      return;
+    }
+    if (req.method !== 'POST') {
+      sendJson(res, 405, { error: 'POST a pairing code' });
+      return;
+    }
+    if (!isTrustedHost(hostOf(req.headers.host))) {
+      sendJson(res, 403, { error: 'Forbidden: request failed the Host check' });
+      return;
+    }
+    const origin = req.headers.origin;
+    if (!origin) {
+      sendJson(res, 400, { error: 'Origin header is required to pair' });
+      return;
+    }
+    let code: unknown;
+    try {
+      ({ code } = JSON.parse((await readBody(req)) || '{}') as { code?: unknown });
+    } catch {
+      sendJson(res, 400, { error: 'Body must be JSON' });
+      return;
+    }
+    if (typeof code !== 'string' || !pairCodeManager.redeem(code, origin)) {
+      sendJson(res, 403, { error: 'Invalid or expired pairing code' });
+      return;
+    }
+    pairing.pair(pairing.token, origin);
+    sendJson(res, 200, { token: pairing.token, origin });
+  };
+}
+
 /** The daemon's routing decision, isolated from `startDaemonServer`'s process
  * lifecycle (signal handlers, tunnel, tailnet) so it can be driven by a real
  * `http.Server` in tests without spinning any of that up. */
@@ -398,9 +444,18 @@ export function createDaemonRequestHandler(
     _req,
     res,
   ) => sendJson(res, 403, { error: 'Forbidden: invalid update token' }),
+  handleMachinePair: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (
+    _req,
+    res,
+  ) => sendJson(res, 404, { error: 'pairing is not served here' }),
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
+
+    if (pathname === MACHINE_PAIR_PATH) {
+      await handleMachinePair(req, res);
+      return;
+    }
 
     // localLink only resolves for loopback — gating it here keeps the pairing token
     // out of a LAN/tunnel peer's reach instead of handing it out via Location.
@@ -592,6 +647,7 @@ export async function startDaemonServer({
     undefined,
     handleMachineUpdate,
     handleMachinePairCode,
+    createMachinePairHandler(pairingState, persistPairing, pairCodeManager),
   );
 
   const server = createServer((req, res) => {

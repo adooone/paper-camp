@@ -2,8 +2,9 @@
 id: IDEA-295
 title: A clearer Activity page
 type: feat
-status: review
+status: done
 created: 2026-10-13
+updated: 2026-10-13
 tags:
   - app
   - ui

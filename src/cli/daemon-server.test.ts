@@ -19,6 +19,7 @@ import {
   buildNightGateResponse,
   createDaemonRequestHandler,
   createMachinePairCodeHandler,
+  createMachinePairHandler,
   createMachineUpdateHandler,
   createProjectApi,
   createProjectMounter,
@@ -1225,5 +1226,71 @@ describe('createDaemonRequestHandler', () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('mounted');
     expect(seenUrls).toEqual(['/toolbar.js']);
+  });
+});
+
+describe('createMachinePairHandler', () => {
+  const pairServers: Server[] = [];
+  afterAll(() => {
+    for (const server of pairServers) server.close();
+  });
+
+  async function startPairServer() {
+    const state: PairingManagerState = { token: 'long-token', origins: new Set() };
+    const persist = vi.fn();
+    const codes = createPairCodeManager();
+    const handler = createMachinePairHandler(state, persist, codes);
+    const server = createServer((req, res) => {
+      void handler(req, res);
+    });
+    pairServers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    const post = (body: unknown, origin = 'https://paper.adoo.one') =>
+      fetch(`http://127.0.0.1:${port}/api/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify(body),
+      });
+    return { state, persist, codes, port, post };
+  }
+
+  it('redeems a fresh code at the daemon root, pairing the origin and returning the token', async () => {
+    const { state, persist, codes, post } = await startPairServer();
+    const { code } = codes.mint();
+
+    const response = await post({ code: `${code.slice(0, 4)}-${code.slice(4)}` });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      token: 'long-token',
+      origin: 'https://paper.adoo.one',
+    });
+    expect(state.origins.has('https://paper.adoo.one')).toBe(true);
+    expect(persist).toHaveBeenCalled();
+  });
+
+  it('refuses a code that was already used', async () => {
+    const { codes, post } = await startPairServer();
+    const { code } = codes.mint();
+    await post({ code });
+
+    const second = await post({ code }, 'https://another.example');
+    expect(second.status).toBe(403);
+  });
+
+  it('answers the CORS preflight a hosted client sends before posting JSON', async () => {
+    const { port } = await startPairServer();
+    const response = await fetch(`http://127.0.0.1:${port}/api/pair`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://paper.adoo.one',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'content-type',
+      },
+    });
+    expect(response.status).toBeLessThan(300);
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://paper.adoo.one');
   });
 });
