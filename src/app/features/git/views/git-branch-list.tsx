@@ -13,11 +13,12 @@ const trackLabel = (branch: GitBranch): string | undefined => {
   return parts.filter(Boolean).join(' ') || undefined;
 };
 
-/** Local branches beside the history — the current one marked, each with how far it
- *  sits from its upstream. A branch named for an idea opens that idea. */
+/** Local branches beside the history — only on a clean tree, when the page shows history
+ *  rather than diffs. A branch named for an idea opens that idea. */
 export const GitBranchList = () => {
   const [branches, setBranches] = useState<GitBranch[] | null>(null);
   const openEntity = useOpenEntity();
+  const showsHistory = useAppStore((s) => s.diffFiles?.length === 0);
   // A checkout, push or pull moves these; the store's branch and counts change with them.
   const refreshKey = useAppStore((s) => `${s.gitBranch}:${s.gitAhead}:${s.gitBehind}`);
 
@@ -36,7 +37,7 @@ export const GitBranchList = () => {
     };
   }, [refreshKey]);
 
-  if (!branches || branches.length === 0) return null;
+  if (!showsHistory || !branches || branches.length === 0) return null;
 
   return (
     <SidebarSection>
