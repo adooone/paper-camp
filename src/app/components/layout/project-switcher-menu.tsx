@@ -1,7 +1,7 @@
 import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { Button, CheckIcon, ChevronRightIcon, Menu, type MenuEntry } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { HUB_PATH } from './nav';
@@ -18,6 +18,7 @@ export const ProjectSwitcherMenu = () => {
   const navigate = useNavigate();
   const { machines, openRow } = useHubMachines();
   const { projectName, nameLoading } = useProjectIdentity();
+  const { runtimeUrl: currentRuntimeUrl } = useRuntimeConnection();
 
   const groups = machines
     .map((machine) => ({
@@ -44,7 +45,7 @@ export const ProjectSwitcherMenu = () => {
     return [
       ...heading,
       ...rows.map((row): MenuEntry => {
-        const current = row.runtimeUrl === runtimeConnection.runtimeUrl;
+        const current = row.runtimeUrl === currentRuntimeUrl;
         return {
           id: row.runtimeUrl,
           icon: current ? <CheckIcon size={14} /> : <span className="inline-block w-[14px]" />,

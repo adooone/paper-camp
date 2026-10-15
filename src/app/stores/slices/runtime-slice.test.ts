@@ -75,7 +75,7 @@ describe('checkRuntimeReachable on a self-served origin', () => {
     vi.resetModules();
     vi.doMock('@/app/services/mount', () => ({ mountPrefix: '' }));
     vi.doMock('@/app/services/runtime-connection', () => ({
-      runtimeConnection: { runtimeUrl: '', pairingToken: null },
+      getRuntimeConnection: () => ({ runtimeUrl: '', pairingToken: null }),
     }));
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
     const { createRuntimeSlice } = await import('./runtime-slice');
@@ -101,5 +101,33 @@ describe('checkRuntimeReachable on a self-served origin', () => {
   it('starts out checking so the shell does not flash the offline state', async () => {
     const { slice } = await reachabilityWith({ ok: true, json: async () => ({}) });
     expect(slice.runtimeChecking).toBe(true);
+  });
+});
+
+describe('checkRuntimeReachable reads the current connection, not a load-time snapshot', () => {
+  afterEach(() => {
+    vi.resetModules();
+    vi.unstubAllGlobals();
+  });
+
+  it('probes the dialled runtime once one is switched to after the module loaded', async () => {
+    vi.resetModules();
+    vi.doMock('@/app/services/mount', () => ({ mountPrefix: '' }));
+    let connection = { runtimeUrl: '', pairingToken: null as string | null };
+    vi.doMock('@/app/services/runtime-connection', () => ({
+      getRuntimeConnection: () => connection,
+    }));
+    const servesOwnRuntime = vi.fn().mockResolvedValue(true);
+    vi.doMock('@/app/services/hub', () => ({ servesOwnRuntime }));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createRuntimeSlice } = await import('./runtime-slice');
+    connection = { runtimeUrl: 'http://localhost:4444', pairingToken: null };
+    const slice = createRuntimeSlice((() => {}) as unknown as SetState);
+    await slice.checkRuntimeReachable();
+
+    expect(fetchMock).toHaveBeenCalled();
+    expect(servesOwnRuntime).not.toHaveBeenCalled();
   });
 });

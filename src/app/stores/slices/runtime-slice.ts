@@ -1,7 +1,7 @@
 import { apiUrl } from '@/app/services/api-base';
 import { servesOwnRuntime } from '@/app/services/hub';
 import { mountPrefix } from '@/app/services/mount';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { getRuntimeConnection } from '@/app/services/runtime-connection';
 import type { SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
@@ -14,7 +14,6 @@ export type RuntimeSlice = {
 // Embedded serves itself, so there's nothing to probe; detached needs a probe to
 // confirm; neither has no runtime, so it's just unreachable.
 const hasEmbeddedRuntime = !!mountPrefix;
-const hasDetachedRuntime = !!runtimeConnection.runtimeUrl;
 
 const PROBE_TIMEOUT_MS = 15_000;
 const PROBE_RETRIES = 2;
@@ -56,7 +55,7 @@ export function createRuntimeSlice(set: SetState): RuntimeSlice {
       set,
       async () => {
         if (hasEmbeddedRuntime) return true;
-        if (hasDetachedRuntime) return probeReachable();
+        if (getRuntimeConnection().runtimeUrl) return probeReachable();
         return probeSelfServed();
       },
       (reachable) => ({ runtimeReachable: reachable }),

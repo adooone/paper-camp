@@ -1,5 +1,5 @@
 import { parseMachineProjectRuntimeUrl } from '@/app/services/hub-machines';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { NightStatus } from '@/app/services/system';
 import {
   fetchConfig,
@@ -67,12 +67,13 @@ export const useNightSection = () => {
   const [thresholdInput, setThresholdInput] = useState('');
   const [gate, setGate] = useState<NightGateStatus | null>(null);
   const { toast } = useToast();
+  const { runtimeUrl } = useRuntimeConnection();
 
   useEffect(() => {
-    const machineUrl = parseMachineProjectRuntimeUrl(runtimeConnection.runtimeUrl)?.machineUrl;
+    const machineUrl = parseMachineProjectRuntimeUrl(runtimeUrl)?.machineUrl;
     if (!machineUrl) return;
     fetchMachineNightGate(machineUrl).then((response) => setGate(response?.gate ?? null));
-  }, []);
+  }, [runtimeUrl]);
 
   const reloadFromConfig = useCallback((c: PaperCampConfig | null) => {
     setConfig(c);

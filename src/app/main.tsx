@@ -17,13 +17,13 @@ import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { listProjects, projectEntryId } from './services/project-registry';
 import { persistOptions, queryClient } from './services/query-client';
-import { runtimeConnection } from './services/runtime-connection';
+import { getRuntimeConnection } from './services/runtime-connection';
 import { fetchMachineProjects } from './services/system';
 import { probeSelfServed } from './stores/slices/runtime-slice';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
-const { runtimeUrl, pairingToken } = runtimeConnection;
+const { runtimeUrl, pairingToken } = getRuntimeConnection();
 setApiBase(runtimeUrl || mountPrefix);
 setApiPairingToken(pairingToken);
 

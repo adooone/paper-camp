@@ -8,7 +8,7 @@ import { useScope } from '@/app/features/scope';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
 import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
@@ -83,6 +83,7 @@ export function useAppShell(): AppShellState {
   const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
   const runtimeReachable = useAppStore((s) => s.runtimeReachable);
   const runtimeChecking = useAppStore((s) => s.runtimeChecking);
+  const { runtimeUrl } = useRuntimeConnection();
   const activeLayer = useRouterState({
     select: (s) => s.matches.at(-1)?.staticData.layer,
   });
@@ -203,8 +204,8 @@ export function useAppShell(): AppShellState {
   // work, so it is never worth landing back on.
   useEffect(() => {
     if (HUB_PATHS.includes(pathname)) return;
-    rememberRoute(runtimeConnection.runtimeUrl, pathname, storage);
-  }, [pathname]);
+    rememberRoute(runtimeUrl, pathname, storage);
+  }, [pathname, runtimeUrl]);
 
   const toggleStack = () => {
     // Not a functional updater: StrictMode double-invokes those, which would

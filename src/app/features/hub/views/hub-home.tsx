@@ -1,6 +1,6 @@
 import { resolveCurrentProject } from '@/app/features/scope/current-project';
 import { useProjectIdentity } from '@/app/hooks';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { Button, Page, PageTitle } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AddMachineFooter } from '../components';
@@ -10,7 +10,7 @@ export const HubHome = () => {
   const navigate = useNavigate();
   const { machines } = useHubMachines();
   const { projectName } = useProjectIdentity();
-  const currentRuntimeUrl = runtimeConnection.runtimeUrl;
+  const { runtimeUrl: currentRuntimeUrl } = useRuntimeConnection();
   const current = currentRuntimeUrl
     ? resolveCurrentProject(machines, currentRuntimeUrl, projectName ?? 'this project')
     : null;

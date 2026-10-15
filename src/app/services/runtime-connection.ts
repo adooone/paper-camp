@@ -1,3 +1,6 @@
+import { useSyncExternalStore } from 'react';
+import { setApiBase, setApiPairingToken } from './api-base';
+import { mountPrefix } from './mount';
 import {
   type ProjectEntry,
   activeProjectId,
@@ -86,7 +89,39 @@ export function loadRuntimeConnection(
   return active ? toRuntimeConnection(active) : { runtimeUrl: '', pairingToken: null };
 }
 
-export const runtimeConnection = loadRuntimeConnection(
+const storage = typeof window === 'undefined' ? null : window.localStorage;
+
+let current: RuntimeConnection = loadRuntimeConnection(
   typeof window === 'undefined' ? null : window.location,
-  typeof window === 'undefined' ? null : window.localStorage,
+  storage,
 );
+
+const listeners = new Set<() => void>();
+
+export function getRuntimeConnection(): RuntimeConnection {
+  return current;
+}
+
+function subscribeRuntimeConnection(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function useRuntimeConnection(): RuntimeConnection {
+  return useSyncExternalStore(
+    subscribeRuntimeConnection,
+    getRuntimeConnection,
+    getRuntimeConnection,
+  );
+}
+
+// Switches which project this running app talks to, without a reload: the
+// registry remembers the choice, api-base is repointed so every request after
+// this call lands on the new runtime, and subscribers re-render against it.
+export function switchRuntime(connection: RuntimeConnection): void {
+  rememberRuntime(storage, connection);
+  setApiBase(connection.runtimeUrl || mountPrefix);
+  setApiPairingToken(connection.pairingToken);
+  current = connection;
+  for (const listener of listeners) listener();
+}

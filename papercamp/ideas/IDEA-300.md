@@ -79,10 +79,11 @@ Opening two projects side by side. Moving agent status, diff, task log, docs,
 roadmap, capacity and status onto queries.
 
 ### Phases
-- [ ] Make the current runtime switchable
+- [x] Make the current runtime switchable
       External store with `getRuntimeConnection`, `useRuntimeConnection` and
       `switchRuntime`; the constant removed and its eight readers moved; the
       runtime slice reads the connection when probing; tests.
+      run: 4m25s · 126 in · 20.1k out · sonnet-5 · sess:f1c93ce0-d428-4655-9f25-a3ffb7bc67e7
 - [ ] Move the boot reads onto per-project queries
       Suggestions, night report, capabilities, agent auth status, parked
       questions, notifications and chat as queries with `refresh*` helpers;

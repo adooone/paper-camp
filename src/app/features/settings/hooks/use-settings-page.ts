@@ -1,7 +1,7 @@
 import { HUB_PATH } from '@/app/components/layout/nav';
 import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
 import {
   type AgentConfig,
@@ -27,7 +27,7 @@ export const useSettingsPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { machines, chosenRuntimeUrls, renameRow } = useHubMachines();
-  const currentRuntimeUrl = runtimeConnection.runtimeUrl;
+  const { runtimeUrl: currentRuntimeUrl } = useRuntimeConnection();
   const currentRow =
     machines.flatMap((m) => m.projects).find((p) => p.runtimeUrl === currentRuntimeUrl) ?? null;
   const deviceChosen = currentRuntimeUrl !== '' && chosenRuntimeUrls.has(currentRuntimeUrl);

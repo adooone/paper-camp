@@ -3,7 +3,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { createStore, del, get, set } from 'idb-keyval';
-import { runtimeConnection } from './runtime-connection';
+import { getRuntimeConnection } from './runtime-connection';
 import { CLIENT_VERSION } from './version';
 
 export const PROJECT_QUERY_PREFIX = 'project';
@@ -60,17 +60,20 @@ export function packageNameQueryKey(runtimeUrl: string) {
 
 export function getCachedPlans(): ParseResult<PlanEntry> | null {
   return (
-    queryClient.getQueryData<ParseResult<PlanEntry>>(plansQueryKey(runtimeConnection.runtimeUrl)) ??
-    null
+    queryClient.getQueryData<ParseResult<PlanEntry>>(
+      plansQueryKey(getRuntimeConnection().runtimeUrl),
+    ) ?? null
   );
 }
 
 export function getCachedIdeas(): IdeaEntry[] {
-  return queryClient.getQueryData<IdeaEntry[]>(ideasQueryKey(runtimeConnection.runtimeUrl)) ?? [];
+  return (
+    queryClient.getQueryData<IdeaEntry[]>(ideasQueryKey(getRuntimeConnection().runtimeUrl)) ?? []
+  );
 }
 
 export function getPlansError(): string | null {
-  const state = queryClient.getQueryState(plansQueryKey(runtimeConnection.runtimeUrl));
+  const state = queryClient.getQueryState(plansQueryKey(getRuntimeConnection().runtimeUrl));
   return state?.error ? String(state.error) : null;
 }
 
@@ -78,14 +81,14 @@ export function getPlansError(): string | null {
 // mounted (e.g. from the Stack panel) still re-fetches, not just marks stale.
 export function refreshPlans(): Promise<void> {
   return queryClient.invalidateQueries({
-    queryKey: plansQueryKey(runtimeConnection.runtimeUrl),
+    queryKey: plansQueryKey(getRuntimeConnection().runtimeUrl),
     refetchType: 'all',
   });
 }
 
 export function refreshIdeas(): Promise<void> {
   return queryClient.invalidateQueries({
-    queryKey: ideasQueryKey(runtimeConnection.runtimeUrl),
+    queryKey: ideasQueryKey(getRuntimeConnection().runtimeUrl),
     refetchType: 'all',
   });
 }

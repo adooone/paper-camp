@@ -1,7 +1,7 @@
 import { useHubMachines } from '@/app/features/hub/hooks/use-hub-machines';
 import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import {
   type ScopeKey,
   parseScopeParam,
@@ -79,7 +79,7 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
   const search = useSearch({ strict: false }) as { p?: string };
   const { machines, openRow: openHubRow } = useHubMachines();
   const { projectName } = useProjectIdentity();
-  const currentRuntimeUrl = runtimeConnection.runtimeUrl;
+  const { runtimeUrl: currentRuntimeUrl } = useRuntimeConnection();
 
   const current = useMemo(
     () => resolveCurrentProject(machines, currentRuntimeUrl, projectName ?? 'This project'),

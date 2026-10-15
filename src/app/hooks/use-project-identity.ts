@@ -1,5 +1,5 @@
 import { packageNameQueryKey } from '@/app/services/query-client';
-import { runtimeConnection } from '@/app/services/runtime-connection';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchIconDataUri, fetchPackageName, projectDisplayName } from '@/app/services/system';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -12,8 +12,9 @@ export interface ProjectIdentity {
 }
 
 export const useProjectIdentity = (): ProjectIdentity => {
+  const { runtimeUrl } = useRuntimeConnection();
   const { data: packageName, isLoading: nameLoading } = useQuery({
-    queryKey: packageNameQueryKey(runtimeConnection.runtimeUrl),
+    queryKey: packageNameQueryKey(runtimeUrl),
     queryFn: fetchPackageName,
   });
   const [iconDataUri, setIconDataUri] = useState<string | null>(null);
