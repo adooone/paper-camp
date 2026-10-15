@@ -50,6 +50,21 @@ function connect(runtimeUrl: string, connection: Connection): void {
   connection.source = source;
 }
 
+// Called when the current runtime switches: the '' connection's listeners
+// stay in place, but its EventSource must be redialled against the new base.
+export function reconnectCurrentRuntime(): void {
+  const connection = connections.get('');
+  if (!connection) return;
+  if (connection.reconnectTimer) {
+    clearTimeout(connection.reconnectTimer);
+    connection.reconnectTimer = null;
+  }
+  connection.source?.close();
+  connection.source = null;
+  connection.reconnectDelay = MIN_RECONNECT_DELAY_MS;
+  connect('', connection);
+}
+
 export function subscribeToActivityStream(listener: ActivityListener, runtimeUrl = ''): () => void {
   let connection = connections.get(runtimeUrl);
   if (!connection) {

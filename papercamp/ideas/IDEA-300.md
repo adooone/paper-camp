@@ -2,7 +2,7 @@
 id: IDEA-300
 title: Switch projects without a reload
 type: feat
-status: planned
+status: review
 created: 2026-10-15
 tags:
   - app
@@ -97,10 +97,11 @@ roadmap, capacity and status onto queries.
       `openProject` adopting, switching, pairing, resetting, probing and
       navigating to the given or remembered route; no reload in the path.
       run: 7m13s · 90 in · 38.5k out · sonnet-5 · sess:92430077-b8bd-4638-9182-33ae92f2112c
-- [ ] Resubscribe live streams on switch
+- [x] Resubscribe live streams on switch
       Current-runtime activity-stream subscriptions follow `switchRuntime`;
       stack panel, desk checks, notification push and Git page verified by
       tests.
+      run: 3m52s · 78 in · 12.8k out · sonnet-5 · sess:a581e906-96f8-4560-99bb-88edadb83231
 
 ### Thread
 - [x] 2026-10-15 [log] [agent] Run order: States it depends on IDEA-299's per-project caching for instant paint on switch, so it must come last.

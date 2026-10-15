@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { reconnectCurrentRuntime } from './activity-stream';
 import { setApiBase, setApiPairingToken } from './api-base';
 import { mountPrefix } from './mount';
 import {
@@ -123,5 +124,6 @@ export function switchRuntime(connection: RuntimeConnection): void {
   setApiBase(connection.runtimeUrl || mountPrefix);
   setApiPairingToken(connection.pairingToken);
   current = connection;
+  reconnectCurrentRuntime();
   for (const listener of listeners) listener();
 }
