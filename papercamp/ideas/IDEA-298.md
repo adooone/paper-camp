@@ -67,3 +67,6 @@ them. The Activity and Chat counts in the scope sidebar.
 - [ ] Show which projects are still loading
       The hook returns the pending projects; a muted *Loading …* line above
       the list in an `<output>`, and *…* in the scope sidebar's count slot.
+
+### Thread
+- [x] 2026-10-15 [log] [agent] Run order: Delivers a standalone gzip+streaming win and lays the per-project module-level cache that IDEA-299 explicitly says it will replace, so it must land first to give IDEA-299 something to supersede.

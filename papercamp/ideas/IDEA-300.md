@@ -97,3 +97,6 @@ roadmap, capacity and status onto queries.
       Current-runtime activity-stream subscriptions follow `switchRuntime`;
       stack panel, desk checks, notification push and Git page verified by
       tests.
+
+### Thread
+- [x] 2026-10-15 [log] [agent] Run order: States it depends on IDEA-299's per-project caching for instant paint on switch, so it must come last.

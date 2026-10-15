@@ -87,3 +87,6 @@ the store.
       the loading projects; the IDEA-298 map removed.
 - [ ] Read the header name from the cache
       `useProjectIdentity` on the `package-name` query.
+
+### Thread
+- [x] 2026-10-15 [log] [agent] Run order: Builds the shared TanStack Query cache that IDEA-298's map is replaced by and that IDEA-300 explicitly depends on for per-project query keys and boot reads.
