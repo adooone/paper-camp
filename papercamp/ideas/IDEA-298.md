@@ -62,9 +62,10 @@ them. The Activity and Chat counts in the scope sidebar.
       `sendJson` gzips bodies over 1 KB when `Accept-Encoding` allows it,
       with `Content-Encoding` and `Vary` headers; server test for both paths.
       run: 1m15s · 26 in · 3.6k out · sonnet-5 · sess:71f7329b-b7b7-45fd-9645-e63f2d005841
-- [ ] Land each other project's rows as it answers
+- [x] Land each other project's rows as it answers
       Per-project results set as each resolves, held in a module-level map
       keyed by runtimeUrl and shown on remount while refetching; hook tests.
+      run: 3m11s · 66 in · 13.4k out · sonnet-5 · sess:71f7329b-b7b7-45fd-9645-e63f2d005841
 - [ ] Show which projects are still loading
       The hook returns the pending projects; a muted *Loading …* line above
       the list in an `<output>`, and *…* in the scope sidebar's count slot.

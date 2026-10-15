@@ -10,6 +10,31 @@ interface ProjectData {
   ideas: IdeaEntry[];
 }
 
+/** Holds every project's last-fetched rows for the page's lifetime, so leaving
+ * the Ideas list and coming back shows them immediately while a fresh fetch
+ * runs in the background (IDEA-298). Replaced by the shared query cache in
+ * IDEA-299. */
+const scopeProjectDataCache = new Map<string, ProjectData>();
+
+export function cachedScopeProjectData(urls: string[]): Record<string, ProjectData> {
+  const cached: Record<string, ProjectData> = {};
+  for (const url of urls) {
+    const projectData = scopeProjectDataCache.get(url);
+    if (projectData) cached[url] = projectData;
+  }
+  return cached;
+}
+
+export async function loadScopeProjectData(runtimeUrl: string): Promise<ProjectData> {
+  const [plansResult, ideasResult] = await Promise.all([
+    fetchPlansAt(runtimeUrl),
+    fetchIdeasAt(runtimeUrl),
+  ]);
+  const projectData = { plans: plansResult?.entries ?? [], ideas: ideasResult?.entries ?? [] };
+  scopeProjectDataCache.set(runtimeUrl, projectData);
+  return projectData;
+}
+
 /** Fetches and filters every other scope project's worklist rows the same way
  * `selectWorklistRows` builds the current project's own, tagging each row
  * with the project it came from (IDEA-291). No server merges this — the
@@ -18,30 +43,21 @@ export const useScopeWorklist = (
   otherProjects: ScopeRow[],
   filters: PlanListFilters,
 ): WorklistRow[] => {
-  const [data, setData] = useState<Record<string, ProjectData>>({});
   const key = otherProjects.map((p) => p.runtimeUrl).join('\n');
+  const [data, setData] = useState<Record<string, ProjectData>>(() =>
+    cachedScopeProjectData(key === '' ? [] : key.split('\n')),
+  );
 
   useEffect(() => {
     const urls = key === '' ? [] : key.split('\n');
-    if (urls.length === 0) {
-      setData({});
-      return;
-    }
+    setData(cachedScopeProjectData(urls));
+    if (urls.length === 0) return;
     let cancelled = false;
-    Promise.all(
-      urls.map(async (runtimeUrl) => {
-        const [plansResult, ideasResult] = await Promise.all([
-          fetchPlansAt(runtimeUrl),
-          fetchIdeasAt(runtimeUrl),
-        ]);
-        return [
-          runtimeUrl,
-          { plans: plansResult?.entries ?? [], ideas: ideasResult?.entries ?? [] },
-        ] as const;
-      }),
-    ).then((entries) => {
-      if (!cancelled) setData(Object.fromEntries(entries));
-    });
+    for (const runtimeUrl of urls) {
+      loadScopeProjectData(runtimeUrl).then((projectData) => {
+        if (!cancelled) setData((prev) => ({ ...prev, [runtimeUrl]: projectData }));
+      });
+    }
     return () => {
       cancelled = true;
     };
