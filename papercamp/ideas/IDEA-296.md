@@ -93,10 +93,11 @@ Managing machines (forgetting a machine, its version, its update).
       one is known; numbers column, machine sections and project rows deleted
       with their hooks, helpers and tests.
       run: 5m16s · 92 in · 20.5k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
-- [ ] Move rename and forget to Project › Settings
+- [x] Move rename and forget to Project › Settings
       Name on this device and Forget on this device in Project Info, using
       renameRow and forgetRow; forgetting opens the next project or the welcome
       screen.
+      run: 2m56s · 40 in · 12.4k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
 - [ ] Drop the project list from the Project sidebar
       Remove the Projects section so the sidebar starts with Roadmap; delete
       ProjectsInView's switcher mode if unused.

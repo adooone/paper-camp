@@ -1,4 +1,7 @@
+import { HUB_PATH } from '@/app/components/layout/nav';
+import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
+import { runtimeConnection } from '@/app/services/runtime-connection';
 import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
 import {
   type AgentConfig,
@@ -8,6 +11,7 @@ import {
   agentConfigsEqual,
 } from '@/types/index';
 import { useToast } from '@dendelion/paper-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { TaskTypeKey } from '../constants';
 
@@ -21,6 +25,15 @@ export const useSettingsPage = () => {
   const [portInput, setPortInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { machines, chosenRuntimeUrls, renameRow, forgetRow, openRow } = useHubMachines();
+  const currentRuntimeUrl = runtimeConnection.runtimeUrl;
+  const currentRow =
+    machines.flatMap((m) => m.projects).find((p) => p.runtimeUrl === currentRuntimeUrl) ?? null;
+  const deviceChosen = currentRuntimeUrl !== '' && chosenRuntimeUrls.has(currentRuntimeUrl);
+  const [deviceNameInput, setDeviceNameInput] = useState(
+    () => currentRow?.label ?? currentRow?.slug ?? '',
+  );
 
   useEffect(() => {
     fetchConfig().then((c) => {
@@ -89,6 +102,26 @@ export const useSettingsPage = () => {
     }
   };
 
+  const handleSaveDeviceName = () => {
+    if (!deviceChosen) return;
+    const label = deviceNameInput.trim();
+    renameRow(currentRuntimeUrl, label);
+    setDeviceNameInput(label === '' ? (currentRow?.slug ?? '') : label);
+  };
+
+  const handleForgetDevice = () => {
+    if (!deviceChosen) return;
+    const next = machines
+      .flatMap((m) => m.projects.map((project) => ({ project, machineUrl: m.machineUrl })))
+      .find(
+        ({ project }) =>
+          chosenRuntimeUrls.has(project.runtimeUrl) && project.runtimeUrl !== currentRuntimeUrl,
+      );
+    forgetRow(currentRuntimeUrl);
+    if (next) openRow(next.project, next.machineUrl);
+    else navigate({ to: HUB_PATH });
+  };
+
   const handleToggleToolbar = async () => {
     if (!config) return;
     const next = !(config.integration?.toolbar?.enabled ?? true);
@@ -134,9 +167,14 @@ export const useSettingsPage = () => {
     setPortInput,
     nameInput,
     setNameInput,
+    deviceChosen,
+    deviceNameInput,
+    setDeviceNameInput,
     handleSaveAgentConfig,
     handleSavePort,
     handleSaveName,
+    handleSaveDeviceName,
+    handleForgetDevice,
     handleToggleToolbar,
     handleFile,
   };

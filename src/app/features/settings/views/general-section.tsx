@@ -1,6 +1,16 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@dendelion/paper-ui';
+import {
+  Alert,
+  Button,
+  Input,
+  Modal,
+  SettingGroup,
+  SettingRow,
+  Stamp,
+  Switch,
+} from '@dendelion/paper-ui';
 import { color } from '@dendelion/paper-ui/tokens';
+import { useState } from 'react';
 import { SettingsHeader } from '../components/settings-header';
 import { VERSION_STAMP_FILL } from '../constants';
 import { useSettingsPage } from '../hooks';
@@ -17,12 +27,18 @@ export const GeneralSection = () => {
     setPortInput,
     nameInput,
     setNameInput,
+    deviceChosen,
+    deviceNameInput,
+    setDeviceNameInput,
     handleSaveAgentConfig,
     handleSavePort,
     handleSaveName,
+    handleSaveDeviceName,
+    handleForgetDevice,
     handleToggleToolbar,
     handleFile,
   } = useSettingsPage();
+  const [forgetConfirmOpen, setForgetConfirmOpen] = useState(false);
 
   return (
     <div>
@@ -120,11 +136,65 @@ export const GeneralSection = () => {
             }
           />
 
+          {deviceChosen && (
+            <>
+              <SettingRow
+                label="Name on this device"
+                control={
+                  <Input
+                    size="small"
+                    value={deviceNameInput}
+                    onChange={(e) => setDeviceNameInput(e.target.value)}
+                    onBlur={handleSaveDeviceName}
+                  />
+                }
+              />
+
+              <SettingRow
+                label="Forget on this device"
+                control={
+                  <Button size="small" variant="danger" onClick={() => setForgetConfirmOpen(true)}>
+                    Forget
+                  </Button>
+                }
+              />
+            </>
+          )}
+
           <SettingGroup title="Default agents">
             <AgentTaskTable defaultAgents={config.defaultAgents} onSave={handleSaveAgentConfig} />
           </SettingGroup>
         </div>
       )}
+
+      <Modal
+        open={forgetConfirmOpen}
+        onClose={() => setForgetConfirmOpen(false)}
+        title="Forget on this device"
+        size="small"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="m-0 opacity-80">
+            Forget <strong>{deviceNameInput}</strong> on this device? Its files and the machine's
+            registry are untouched.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setForgetConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => {
+                setForgetConfirmOpen(false);
+                handleForgetDevice();
+              }}
+            >
+              Forget
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
