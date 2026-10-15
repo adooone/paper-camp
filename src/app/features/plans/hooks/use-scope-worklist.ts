@@ -35,6 +35,11 @@ export async function loadScopeProjectData(runtimeUrl: string): Promise<ProjectD
   return projectData;
 }
 
+export interface ScopeWorklistResult {
+  rows: WorklistRow[];
+  pendingProjects: ScopeRow[];
+}
+
 /** Fetches and filters every other scope project's worklist rows the same way
  * `selectWorklistRows` builds the current project's own, tagging each row
  * with the project it came from (IDEA-291). No server merges this — the
@@ -42,7 +47,7 @@ export async function loadScopeProjectData(runtimeUrl: string): Promise<ProjectD
 export const useScopeWorklist = (
   otherProjects: ScopeRow[],
   filters: PlanListFilters,
-): WorklistRow[] => {
+): ScopeWorklistResult => {
   const key = otherProjects.map((p) => p.runtimeUrl).join('\n');
   const [data, setData] = useState<Record<string, ProjectData>>(() =>
     cachedScopeProjectData(key === '' ? [] : key.split('\n')),
@@ -63,10 +68,13 @@ export const useScopeWorklist = (
     };
   }, [key]);
 
-  return otherProjects.flatMap((project) => {
+  const rows = otherProjects.flatMap((project) => {
     const projectData = data[project.runtimeUrl];
     if (!projectData) return [];
-    const { rows } = selectWorklistRows(projectData.plans, projectData.ideas, filters);
-    return rows.map((row) => ({ ...row, project }));
+    const { rows: projectRows } = selectWorklistRows(projectData.plans, projectData.ideas, filters);
+    return projectRows.map((row) => ({ ...row, project }));
   });
+  const pendingProjects = otherProjects.filter((project) => !data[project.runtimeUrl]);
+
+  return { rows, pendingProjects };
 };

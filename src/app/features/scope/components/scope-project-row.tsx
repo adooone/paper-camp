@@ -14,7 +14,7 @@ export const ScopeProjectRow = ({ row, asleep, showCount, onToggle }: ScopeProje
     label={row.name}
     checked={row.checked}
     disabled={asleep || row.isCurrent}
-    count={!asleep && showCount && row.count !== null ? row.count : null}
+    count={asleep || !showCount ? null : row.countLoading ? '…' : row.count}
     ariaLabel={`${row.checked ? 'Hide' : 'Show'} ${row.name}`}
     onChange={() => onToggle(row.key)}
     trailing={

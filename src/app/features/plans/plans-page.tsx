@@ -49,7 +49,7 @@ export const PlansPage = () => {
   const multiProject = scopeRows.length > 1;
   const currentScopeRow = scopeRows.find((r) => r.isCurrent);
   const otherScopeProjects = multiProject ? scopeRows.filter((r) => !r.isCurrent) : [];
-  const otherRows = useScopeWorklist(otherScopeProjects, planFilters);
+  const { rows: otherRows, pendingProjects } = useScopeWorklist(otherScopeProjects, planFilters);
 
   if (plansError) {
     return (
@@ -136,6 +136,12 @@ export const PlansPage = () => {
                 ))}
               </ul>
             </Card>
+          )}
+
+          {pendingProjects.length > 0 && (
+            <output aria-live="polite" className="block text-sm opacity-60 mb-2">
+              Loading {pendingProjects.map((p) => p.name).join(', ')}…
+            </output>
           )}
 
           {(multiProject ? rows.length === 0 : plans.entries.length === 0) ? (

@@ -31,6 +31,7 @@ export interface ScopeRow {
   isCurrent: boolean;
   checked: boolean;
   count: number | null;
+  countLoading: boolean;
   machineUrl: string;
   project: HubProjectRow;
 }
@@ -117,6 +118,7 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
     [allMachines],
   );
   const urlsKey = reachableUrls.join('\n');
+  const reachableUrlSet = useMemo(() => new Set(reachableUrls), [reachableUrls]);
 
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   useEffect(() => {
@@ -160,6 +162,10 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
             isCurrent: project.runtimeUrl === currentRuntimeUrl,
             checked: scopeSet.has(key),
             count: counts[project.runtimeUrl] ?? null,
+            countLoading:
+              countKind !== null &&
+              reachableUrlSet.has(project.runtimeUrl) &&
+              !(project.runtimeUrl in counts),
             machineUrl: machine.machineUrl,
             project,
           };

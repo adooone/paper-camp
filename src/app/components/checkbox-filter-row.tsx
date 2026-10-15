@@ -5,7 +5,7 @@ export interface CheckboxFilterRowProps {
   label: string;
   checked: boolean;
   disabled?: boolean;
-  count?: number | null;
+  count?: number | string | null;
   ariaLabel: string;
   onChange: () => void;
   trailing?: ReactNode;
