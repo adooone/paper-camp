@@ -79,10 +79,11 @@ A replacement for the numbers column. Renaming a project for every device.
 Managing machines (forgetting a machine, its version, its update).
 
 ### Phases
-- [ ] Put Paper Camp and the project switcher in the header
+- [x] Put Paper Camp and the project switcher in the header
       Logo, Paper Camp, separator and the project dropdown on `Menu`, grouped
       by machine with current, running and asleep states and Add a machine at
       the end; no dropdown under a mount prefix.
+      run: 7m13s · 156 in · 31.9k out · sonnet-5 · sess:f7de84da-bd8c-433b-911b-3269eccfe54f
 - [ ] Name the project in the status bar
       Icon and name as the first item of the left group, before the branch,
       not clickable.
