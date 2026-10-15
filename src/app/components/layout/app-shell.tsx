@@ -188,7 +188,7 @@ export const AppShell = () => {
                       <SidebarCard className="min-h-0">
                         <div className={SIDEBAR_SCROLL_CLASS}>
                           <Suspense fallback={<SidebarSkeleton bare />}>
-                            <ProjectsInView mode="list" countKind="ideas" />
+                            <ProjectsInView countKind="ideas" />
                             <StatusFilters />
                           </Suspense>
                         </div>
@@ -198,7 +198,7 @@ export const AppShell = () => {
                       <SidebarCard className="min-h-0">
                         <div className={SIDEBAR_SCROLL_CLASS}>
                           <Suspense fallback={<SidebarSkeleton bare />}>
-                            <ProjectsInView mode="list" countKind="activity" />
+                            <ProjectsInView countKind="activity" />
                             <ActivityFilters />
                           </Suspense>
                         </div>

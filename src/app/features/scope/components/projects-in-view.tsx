@@ -5,25 +5,22 @@ import { type ScopeCountKind, useScope } from '../hooks/use-scope';
 import { ScopeProjectRow } from './scope-project-row';
 
 export interface ProjectsInViewProps {
-  mode: 'list' | 'switcher';
   countKind: ScopeCountKind;
 }
 
-export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
+export const ProjectsInView = ({ countKind }: ProjectsInViewProps) => {
   const navigate = useNavigate();
-  const { groups, toggle, selectAll, clear, openRow } = useScope(countKind);
+  const { groups, toggle, selectAll, clear } = useScope(countKind);
   const showHosts = groups.length > 1;
 
   return (
     <SidebarSection>
       <div className="flex items-end justify-between gap-2">
-        <SidebarLabel>{mode === 'list' ? 'Projects in view' : 'Projects'}</SidebarLabel>
-        {mode === 'list' && (
-          <span className="flex items-center gap-1 pb-0.5">
-            <SidebarAction onClick={selectAll}>All</SidebarAction>
-            <SidebarAction onClick={clear}>Clear</SidebarAction>
-          </span>
-        )}
+        <SidebarLabel>Projects in view</SidebarLabel>
+        <span className="flex items-center gap-1 pb-0.5">
+          <SidebarAction onClick={selectAll}>All</SidebarAction>
+          <SidebarAction onClick={clear}>Clear</SidebarAction>
+        </span>
       </div>
       <div className="flex flex-col">
         {groups.map((group) => (
@@ -37,11 +34,9 @@ export const ProjectsInView = ({ mode, countKind }: ProjectsInViewProps) => {
               <ScopeProjectRow
                 key={row.key}
                 row={row}
-                mode={mode}
                 asleep={group.asleep}
                 showCount={countKind !== null}
                 onToggle={toggle}
-                onOpen={openRow}
               />
             ))}
           </div>

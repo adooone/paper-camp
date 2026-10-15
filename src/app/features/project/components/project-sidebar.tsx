@@ -1,7 +1,6 @@
 import { CheckboxFilterRow, SidebarSection } from '@/app/components';
 import { useDocsSidebar } from '@/app/features/docs/hooks';
 import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
-import { ProjectsInView } from '@/app/features/scope/index';
 import { useActiveSettingsSection } from '@/app/hooks';
 import { EmptyState, Input, SidebarItem, SidebarLabel, Skeleton } from '@dendelion/paper-ui';
 import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
@@ -43,7 +42,6 @@ export const ProjectSidebar = () => {
 
   return (
     <>
-      <ProjectsInView mode="switcher" countKind={null} />
       <SidebarSection>
         <SidebarLabel>Settings</SidebarLabel>
         <div className="flex flex-col">

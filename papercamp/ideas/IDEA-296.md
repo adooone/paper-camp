@@ -2,7 +2,7 @@
 id: IDEA-296
 title: Project switcher in the header
 type: feat
-status: planned
+status: review
 created: 2026-10-14
 tags:
   - app
@@ -98,6 +98,7 @@ Managing machines (forgetting a machine, its version, its update).
       renameRow and forgetRow; forgetting opens the next project or the welcome
       screen.
       run: 2m56s · 40 in · 12.4k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
-- [ ] Drop the project list from the Project sidebar
+- [x] Drop the project list from the Project sidebar
       Remove the Projects section so the sidebar starts with Roadmap; delete
       ProjectsInView's switcher mode if unused.
+      run: 1m37s · 40 in · 6.3k out · sonnet-5 · sess:6c9bd922-6b43-46bc-b535-04b9e8649309
