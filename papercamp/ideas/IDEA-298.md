@@ -58,9 +58,10 @@ A slimmer list-only plans payload: search matches on bodies, so the list needs
 them. The Activity and Chat counts in the scope sidebar.
 
 ### Phases
-- [ ] Gzip JSON responses
+- [x] Gzip JSON responses
       `sendJson` gzips bodies over 1 KB when `Accept-Encoding` allows it,
       with `Content-Encoding` and `Vary` headers; server test for both paths.
+      run: 1m15s · 26 in · 3.6k out · sonnet-5 · sess:71f7329b-b7b7-45fd-9645-e63f2d005841
 - [ ] Land each other project's rows as it answers
       Per-project results set as each resolves, held in a module-level map
       keyed by runtimeUrl and shown on remount while refetching; hook tests.
