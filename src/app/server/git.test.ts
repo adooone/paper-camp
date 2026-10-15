@@ -1027,6 +1027,40 @@ describe('assertCleanWorkingTree', () => {
   });
 });
 
+describe('checkoutBranch', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+    git(root, 'branch', 'feature-a');
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+    git(root, 'branch', 'feature-a');
+  });
+
+  it('switches to an existing branch on a clean tree', async () => {
+    await manager.checkoutBranch('feature-a');
+    expect(manager.getCurrentBranch()).toBe('feature-a');
+  });
+
+  it('rejects a branch that does not exist', async () => {
+    await expect(manager.checkoutBranch('no-such-branch')).rejects.toThrow(/does not exist/);
+    expect(manager.getCurrentBranch()).toBe('main');
+  });
+
+  it('refuses a dirty working tree', async () => {
+    await writeFile(join(root, 'README.md'), 'modified\n');
+    await expect(manager.checkoutBranch('feature-a')).rejects.toThrow(/uncommitted changes/);
+    expect(manager.getCurrentBranch()).toBe('main');
+  });
+});
+
 describe('verifyDirectCompletion', () => {
   let root: string;
   let initialSha: string;

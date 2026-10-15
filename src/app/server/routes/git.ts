@@ -338,6 +338,27 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       },
     },
 
+    // The branch list only shows on a clean tree, so a dirty 409 here is the rare
+    // case of a change landing between page load and the click.
+    {
+      method: 'POST',
+      path: '/api/git/checkout',
+      handle: async (req, res) => {
+        try {
+          const body = await readBody(req);
+          const { branch } = JSON.parse(body) as { branch?: string };
+          if (!branch) {
+            sendJson(res, 400, { error: 'branch is required' });
+            return;
+          }
+          await git.checkoutBranch(branch);
+          sendJson(res, 200, { ok: true, branch: git.getCurrentBranch() });
+        } catch (error) {
+          sendJson(res, 409, { error: (error as Error).message });
+        }
+      },
+    },
+
     {
       method: 'GET',
       path: '/api/git/branches',

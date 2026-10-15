@@ -278,6 +278,19 @@ export function createGitManager(root: string) {
     return { branch, remoteDeleted };
   }
 
+  // Checked before the switch, not left to `git checkout`'s own refusal, so the
+  // error names the real reason (dirty tree vs unknown branch) rather than git's wording.
+  async function checkoutBranch(branch: string): Promise<void> {
+    const exists =
+      spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
+        .status === 0;
+    if (!exists) {
+      throw new Error(`Branch ${branch} does not exist`);
+    }
+    await assertCleanWorkingTree();
+    await runGit(['checkout', branch]);
+  }
+
   async function hasUpstream(): Promise<boolean> {
     try {
       await runGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
@@ -926,6 +939,7 @@ export function createGitManager(root: string) {
     verifyDirectCompletion,
     returnToMain,
     getCurrentBranch,
+    checkoutBranch,
     commit,
     commitCorpus,
     stageAll,

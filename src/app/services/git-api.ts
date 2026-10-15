@@ -224,6 +224,16 @@ export const verifyDirectCompletion = async (
   return { ready: data.ready as boolean, missing: data.missing as string[] };
 };
 
+export const checkoutBranch = async (branch: string): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/git/checkout'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ branch }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Checkout failed');
+};
+
 export const createPlanBranch = async (
   planId: string,
 ): Promise<{ branch: string; warning?: string }> => {

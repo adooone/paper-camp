@@ -1,9 +1,10 @@
 import { SidebarSection } from '@/app/components';
 import { useOpenEntity } from '@/app/hooks';
-import { fetchGitBranches } from '@/app/services/git-api';
+import { checkoutBranch, fetchGitBranches } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { GitBranch } from '@/types/index';
-import { SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarItem, SidebarLabel, Stamp, useToast } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 
 const trackLabel = (branch: GitBranch): string | undefined => {
@@ -14,13 +15,19 @@ const trackLabel = (branch: GitBranch): string | undefined => {
 };
 
 /** Local branches beside the history — only on a clean tree, when the page shows history
- *  rather than diffs. A branch named for an idea opens that idea. */
+ *  rather than diffs. Clicking a row checks it out; its id stamp opens the idea instead. */
 export const GitBranchList = () => {
   const [branches, setBranches] = useState<GitBranch[] | null>(null);
+  const [switching, setSwitching] = useState<string | null>(null);
   const openEntity = useOpenEntity();
+  const { toast } = useToast();
   const showsHistory = useAppStore((s) => s.diffFiles?.length === 0);
   // A checkout, push or pull moves these; the store's branch and counts change with them.
   const refreshKey = useAppStore((s) => `${s.gitBranch}:${s.gitAhead}:${s.gitBehind}`);
+  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
+  const loadGitLog = useAppStore((s) => s.loadGitLog);
+  const loadPlans = useAppStore((s) => s.loadPlans);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,6 +46,24 @@ export const GitBranchList = () => {
 
   if (!showsHistory || !branches || branches.length === 0) return null;
 
+  const handleCheckout = async (branch: string) => {
+    if (switching) return;
+    setSwitching(branch);
+    try {
+      await checkoutBranch(branch);
+      await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog(), loadPlans()]);
+      toast({ title: `Switched to ${branch}`, variant: 'success' });
+    } catch (err) {
+      toast({
+        title: 'Checkout failed',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    } finally {
+      setSwitching(null);
+    }
+  };
+
   return (
     <SidebarSection>
       <SidebarLabel>Branches</SidebarLabel>
@@ -47,11 +72,26 @@ export const GitBranchList = () => {
           <SidebarItem
             key={branch.name}
             active={branch.current}
-            ariaLabel={branch.ideaId ? `Open ${branch.ideaId}` : branch.name}
-            onClick={
-              branch.ideaId ? () => openEntity(branch.ideaId, branch.ideaId ?? '') : undefined
-            }
+            ariaLabel={branch.current ? branch.name : `Switch to ${branch.name}`}
+            busy={switching === branch.name ? 'Switching…' : undefined}
+            disabled={branch.current || (switching !== null && switching !== branch.name)}
+            onClick={branch.current ? undefined : () => handleCheckout(branch.name)}
             count={trackLabel(branch)}
+            action={
+              branch.ideaId ? (
+                <Stamp
+                  size="small"
+                  variant="idea"
+                  ariaLabel={`Open ${branch.ideaId}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openEntity(branch.ideaId, branch.ideaId ?? '');
+                  }}
+                >
+                  {branch.ideaId}
+                </Stamp>
+              ) : undefined
+            }
           >
             <span className="font-mono text-xs" title={branch.name}>
               {branch.name}

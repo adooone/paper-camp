@@ -2,7 +2,7 @@
 id: IDEA-297
 title: A compact Deliver footer
 type: feat
-status: planned
+status: review
 created: 2026-10-15
 tags:
   - app
@@ -126,7 +126,8 @@ The commit form's fields.
       GitSyncActions, DeliverEmptyState and the unused sync path; stash stays on
       the Git page only; tests updated.
       run: 8m45s · 164 in · 36.5k out · sonnet-5 · sess:cd265b22-8420-4e65-82cd-e13f6ade5ca4
-- [ ] Switch branches from the Git page's branch list
+- [x] Switch branches from the Git page's branch list
       `POST /api/git/checkout` refusing a dirty tree or unknown branch; branch
       rows check out on click, the current one inert, idea and ticket ids as a
       small stamp that opens the entity; reloads and a toast after switching.
+      run: 4m45s · 98 in · 13.6k out · sonnet-5 · sess:f6411f77-62fc-496f-9adb-3156c6480b40
