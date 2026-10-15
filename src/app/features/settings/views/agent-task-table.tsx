@@ -1,3 +1,4 @@
+import { InlineSelect } from '@/app/components';
 import {
   AGENT_IDS,
   AGENT_LABELS,
@@ -7,7 +8,7 @@ import {
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
 } from '@/types/index';
-import { Input, Select, Table } from '@dendelion/paper-ui';
+import { Input, Table } from '@dendelion/paper-ui';
 import { useEffect, useState } from 'react';
 import { TASK_TYPE_KEYS, TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
 
@@ -45,8 +46,8 @@ const AgentCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAgen
   };
 
   return (
-    <Select
-      size="small"
+    <InlineSelect
+      ariaLabel={`Agent for ${TASK_TYPE_LABELS[row.taskKey]}`}
       value={row.agentConfig.agent}
       onChange={handleAgentChange}
       options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
@@ -72,8 +73,8 @@ const ModelCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAgen
 
   if (Array.isArray(modelOpts)) {
     return (
-      <Select
-        size="small"
+      <InlineSelect
+        ariaLabel={`Model for ${TASK_TYPE_LABELS[row.taskKey]}`}
         value={row.agentConfig.model ?? ''}
         onChange={(v) => onSave(row.taskKey, { ...row.agentConfig, model: v || undefined })}
         options={[
@@ -105,8 +106,8 @@ const EffortCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAge
   if (!Array.isArray(effortOpts)) return null;
 
   return (
-    <Select
-      size="small"
+    <InlineSelect
+      ariaLabel={`Effort for ${TASK_TYPE_LABELS[row.taskKey]}`}
       value={row.agentConfig.effort ?? ''}
       onChange={(v) => onSave(row.taskKey, { ...row.agentConfig, effort: v || undefined })}
       options={[
@@ -140,19 +141,19 @@ export const AgentTaskTable = ({ defaultAgents, onSave }: AgentTaskTableProps) =
         },
         {
           key: 'agent',
-          width: 5,
+          width: 'auto',
           header: 'Agent',
           cell: (row) => <AgentCell row={row} onSave={onSave} />,
         },
         {
           key: 'model',
-          width: 3,
+          width: 'auto',
           header: 'Model',
           cell: (row) => <ModelCell row={row} onSave={onSave} />,
         },
         {
           key: 'effort',
-          width: 3,
+          width: 'auto',
           header: 'Effort',
           cell: (row) => <EffortCell row={row} onSave={onSave} />,
         },

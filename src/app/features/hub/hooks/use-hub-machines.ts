@@ -14,7 +14,6 @@ import {
   type ProjectEntry,
   listProjects,
   projectEntryId,
-  removeProject,
   renameProject,
   selectProject,
 } from '@/app/services/project-registry';
@@ -37,7 +36,6 @@ export interface UseHubMachinesResult {
   chosenRuntimeUrls: Set<string>;
   openRow: (row: HubProjectRow, machineUrl: string, path?: string) => void;
   renameRow: (runtimeUrl: string, label: string) => void;
-  forgetRow: (runtimeUrl: string) => void;
 }
 
 /** Merges this browser's chosen projects with every paired machine's own
@@ -110,10 +108,6 @@ export function useHubMachines(): UseHubMachinesResult {
     },
     renameRow: (runtimeUrl, label) => {
       renameProject(runtimeUrl, label, storage);
-      setProjects(listProjects(storage));
-    },
-    forgetRow: (runtimeUrl) => {
-      removeProject(runtimeUrl, storage);
       setProjects(listProjects(storage));
     },
   };

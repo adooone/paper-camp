@@ -119,12 +119,13 @@ The commit form's fields.
       button; the commit form as a second row only when there are changes;
       min-height reservation removed.
       run: 3m38s · 64 in · 16.1k out · sonnet-5 · sess:0a6a28be-5f22-49ea-9fd1-cf53757e7899
-- [ ] Put the same bar on the Git page and remove Sync to main
+- [x] Put the same bar on the Git page and remove Sync to main
       `DeliverBar` shared in `components/git/`, rendered as the idea page's
       phases footer and as the Git page's sticky footer with its bottom
       padding; `GitSyncActions` leaves the title row; delete
       GitSyncActions, DeliverEmptyState and the unused sync path; stash stays on
       the Git page only; tests updated.
+      run: 8m45s · 164 in · 36.5k out · sonnet-5 · sess:cd265b22-8420-4e65-82cd-e13f6ade5ca4
 - [ ] Switch branches from the Git page's branch list
       `POST /api/git/checkout` refusing a dirty tree or unknown branch; branch
       rows check out on click, the current one inert, idea and ticket ids as a

@@ -1,9 +1,10 @@
 export { CheckboxFilterRow } from './checkbox-filter-row';
 export { CommitMessageFields } from './git/commit-message-fields';
 export type { CommitMessageFieldsState } from './git/commit-message-fields';
+export { DeliverBar } from './git/deliver-bar';
 export { GitStashSurface } from './git/git-stash-surface';
-export { GitSyncActions } from './git/git-sync-actions';
 export { DoodleIllustration } from './doodle-illustration';
+export { InlineSelect } from './inline-select';
 export { Markdown } from './markdown';
 export { PageToolbar, PageToolbarRow } from './page-toolbar';
 export { HANDWRITTEN_ACTION_CLASS, SidebarAction } from './sidebar-action';

@@ -16,15 +16,14 @@ function machineAsleep(machine: HubMachine): boolean {
 
 export const ProjectSwitcherMenu = () => {
   const navigate = useNavigate();
-  const { machines, chosenRuntimeUrls, openRow } = useHubMachines();
+  const { machines, openRow } = useHubMachines();
   const { projectName, loading } = useProjectIdentity();
 
   const groups = machines
     .map((machine) => ({
       machine,
-      rows: machine.projects
-        .filter((row) => chosenRuntimeUrls.has(row.runtimeUrl))
-        .sort((a, b) => rowLabel(a).localeCompare(rowLabel(b))),
+      // Every project the machine serves, not only the ones this browser opened before.
+      rows: [...machine.projects].sort((a, b) => rowLabel(a).localeCompare(rowLabel(b))),
     }))
     .filter((group) => group.rows.length > 0)
     .sort((a, b) => a.machine.host.localeCompare(b.machine.host));

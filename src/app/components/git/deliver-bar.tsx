@@ -1,15 +1,22 @@
-import { GitStashSurface } from '@/app/components';
+import { useDeliverChecksRow } from '@/app/features/plans/hooks';
 import { entityLink } from '@/app/hooks';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import type { CheckStatus } from '@/types/index';
 import {
   Button,
+  IconButton,
   Menu,
   type MenuEntry,
+  PullIcon,
+  PushIcon,
   Stamp,
   type StampVariant,
   Tooltip,
+  getSurfaceStyles,
 } from '@dendelion/paper-ui';
-import { useDeliverChecksRow } from '../hooks';
+import { surface } from '@dendelion/paper-ui/tokens';
+import type { ReactNode } from 'react';
+import { CommitMessageFields, type CommitMessageFieldsState } from './commit-message-fields';
 
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
   pass: 'success',
@@ -52,11 +59,39 @@ const FixButton = ({ label, tooltip, variant, disabled, onClick }: FixButtonProp
   </Tooltip>
 );
 
-interface DeliverChecksRowProps {
-  showStash?: boolean;
+const gitStateLine = (
+  hasChanges: boolean,
+  fileCount: number,
+  gitAhead: number,
+  branch?: string,
+): string => {
+  const suffix = hasChanges
+    ? `${fileCount} file${fileCount === 1 ? '' : 's'} changed`
+    : gitAhead > 0
+      ? `${gitAhead} commit${gitAhead === 1 ? '' : 's'} ready`
+      : 'Up to date with origin';
+  return branch ? `${branch} · ${suffix}` : suffix;
+};
+
+interface DeliverBarProps {
+  files: { path: string; staged: boolean }[];
+  gitAhead: number;
+  branch?: string;
+  commitForm: CommitMessageFieldsState;
+  commitButton: ReactNode;
+  /** The Git page's standalone footer: its own card surface, top border and sticky
+   *  bottom-0 — the idea page's footer rides inside the phases table's panelFooter instead. */
+  pinned?: boolean;
 }
 
-export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {}) => {
+export const DeliverBar = ({
+  files,
+  gitAhead,
+  branch,
+  commitForm,
+  commitButton,
+  pinned = false,
+}: DeliverBarProps) => {
   const {
     deskChecks,
     anyRunning,
@@ -75,6 +110,9 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
     runAutoFix,
     fixCheck,
   } = useDeliverChecksRow();
+  const { pushing, pulling, gitActionBusy, handlePush, handlePull } = useBranchSync();
+
+  const hasChanges = files.length > 0;
 
   const failingDeskChecks = deskChecks.filter((check) => check.status === 'fail');
   const runningCount = deskChecks.filter((check) => check.status === 'running').length;
@@ -165,8 +203,15 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
   ) : null;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex flex-wrap items-center justify-center gap-2">
+    <div
+      className={
+        pinned
+          ? 'sticky bottom-0 z-10 flex flex-col gap-2 border-t border-black/10 px-4 py-2'
+          : 'flex flex-col gap-2'
+      }
+      style={pinned ? getSurfaceStyles(surface.card) : undefined}
+    >
+      <div className="flex flex-wrap items-center gap-2">
         <Menu
           trigger={
             <Stamp size="small" variant={statusVariant}>
@@ -176,7 +221,28 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
           items={menuItems}
         />
         {fixButton}
-        {showStash && <GitStashSurface />}
+        <span className="text-desk-text-muted text-xs">
+          {gitStateLine(hasChanges, files.length, gitAhead, branch)}
+        </span>
+        <div className="flex-1" />
+        {gitAhead > 0 && (
+          <Button
+            size="small"
+            icon={<PushIcon size={14} />}
+            disabled={gitActionBusy}
+            onClick={handlePush}
+          >
+            {pushing ? 'Pushing…' : `Push ${gitAhead}`}
+          </Button>
+        )}
+        <IconButton
+          icon={<PullIcon size={14} />}
+          variant="ghost"
+          size="small"
+          label={pulling ? 'Pulling…' : 'Pull'}
+          disabled={gitActionBusy}
+          onClick={handlePull}
+        />
       </div>
       {docsExpanded && hasDocIssues && (
         <div id="deliver-doc-findings" className="flex flex-col gap-2">
@@ -201,6 +267,14 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
               </div>
             );
           })}
+        </div>
+      )}
+      {hasChanges && (
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <CommitMessageFields state={commitForm} filesEmpty={false} />
+          </div>
+          {commitButton}
         </div>
       )}
     </div>

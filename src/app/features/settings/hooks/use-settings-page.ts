@@ -26,7 +26,7 @@ export const useSettingsPage = () => {
   const [nameInput, setNameInput] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { machines, chosenRuntimeUrls, renameRow, forgetRow, openRow } = useHubMachines();
+  const { machines, chosenRuntimeUrls, renameRow } = useHubMachines();
   const currentRuntimeUrl = runtimeConnection.runtimeUrl;
   const currentRow =
     machines.flatMap((m) => m.projects).find((p) => p.runtimeUrl === currentRuntimeUrl) ?? null;
@@ -109,19 +109,6 @@ export const useSettingsPage = () => {
     setDeviceNameInput(label === '' ? (currentRow?.slug ?? '') : label);
   };
 
-  const handleForgetDevice = () => {
-    if (!deviceChosen) return;
-    const next = machines
-      .flatMap((m) => m.projects.map((project) => ({ project, machineUrl: m.machineUrl })))
-      .find(
-        ({ project }) =>
-          chosenRuntimeUrls.has(project.runtimeUrl) && project.runtimeUrl !== currentRuntimeUrl,
-      );
-    forgetRow(currentRuntimeUrl);
-    if (next) openRow(next.project, next.machineUrl);
-    else navigate({ to: HUB_PATH });
-  };
-
   const handleToggleToolbar = async () => {
     if (!config) return;
     const next = !(config.integration?.toolbar?.enabled ?? true);
@@ -174,7 +161,6 @@ export const useSettingsPage = () => {
     handleSavePort,
     handleSaveName,
     handleSaveDeviceName,
-    handleForgetDevice,
     handleToggleToolbar,
     handleFile,
   };

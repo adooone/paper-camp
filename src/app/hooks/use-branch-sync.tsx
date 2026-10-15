@@ -4,17 +4,16 @@ import {
   pullFromOrigin,
   pushChanges,
   resolveConflict,
-  syncToMain,
 } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { Button, useToast } from '@dendelion/paper-ui';
 import { useCallback } from 'react';
 
-type GitAction = 'push' | 'sync' | 'pull' | 'fix-divergence';
+type GitAction = 'push' | 'pull' | 'fix-divergence';
 
-// Shared by push/sync/pull: runs against the store-wide lock so no two can run at
-// once across any useBranchSync() mount, and toasts a one-line summary if it throws.
+// Shared by push/pull/fix-divergence: runs against the store-wide lock so no two can
+// run at once across any useBranchSync() mount, and toasts a one-line summary if it throws.
 function useTrackedAction(kind: GitAction, failTitle: string) {
   const { toast } = useToast();
   const activeGitAction = useAppStore((s) => s.activeGitAction);
@@ -53,7 +52,6 @@ export function useBranchSync() {
     Promise.all([loadGitStatus(), loadPlans(), loadIdeas(), loadDiffFiles(), loadGitLog()]);
 
   const [pushing, runPush] = useTrackedAction('push', 'Push failed');
-  const [syncing, runSync] = useTrackedAction('sync', 'Sync failed');
   const [pulling, runPull] = useTrackedAction('pull', 'Pull failed');
   const [fixingDivergence, runFixDivergence] = useTrackedAction('fix-divergence', 'Fix failed');
 
@@ -113,18 +111,6 @@ export function useBranchSync() {
       await pushChanges();
       await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog()]);
     });
-  const handleSync = () =>
-    runSync(async () => {
-      const result = await syncToMain();
-      if (!result.ok) {
-        if (handleDeterministicFailure('Sync', result)) {
-          await loadGitStatus();
-          return;
-        }
-        throw new Error(result.message);
-      }
-      await refreshAfterUpstream();
-    });
   const handlePull = () =>
     runPull(async () => {
       await pullFromOrigin();
@@ -145,12 +131,10 @@ export function useBranchSync() {
 
   return {
     pushing,
-    syncing,
     pulling,
     fixingDivergence,
     gitActionBusy,
     handlePush,
-    handleSync,
     handlePull,
     handleFixDivergence,
   };
