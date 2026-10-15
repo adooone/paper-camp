@@ -2,8 +2,9 @@
 id: IDEA-297
 title: A compact Deliver footer
 type: feat
-status: review
+status: done
 created: 2026-10-15
+updated: 2026-10-15
 tags:
   - app
   - ui

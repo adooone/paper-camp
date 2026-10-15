@@ -2,8 +2,9 @@
 id: IDEA-296
 title: Project switcher in the header
 type: feat
-status: review
+status: done
 created: 2026-10-14
+updated: 2026-10-15
 tags:
   - app
   - ui
