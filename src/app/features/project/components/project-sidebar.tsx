@@ -4,10 +4,20 @@ import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
 import { ProjectsInView } from '@/app/features/scope/index';
 import { useActiveSettingsSection } from '@/app/hooks';
 import { EmptyState, Input, SidebarItem, SidebarLabel, Skeleton } from '@dendelion/paper-ui';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 
 const simplecaseLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+const SETTINGS_ITEMS: { section: string | null; label: string }[] = [
+  { section: null, label: 'Project Info' },
+  { section: 'setup', label: 'Setup' },
+  { section: 'merge-policy', label: 'Merge Policy' },
+  { section: 'toolbar', label: 'Toolbar' },
+  { section: 'desk', label: 'Desk' },
+  { section: 'night', label: 'Review passes' },
+  { section: 'notifications', label: 'Notifications' },
+];
 
 export const ProjectSidebar = () => {
   const {
@@ -16,17 +26,15 @@ export const ProjectSidebar = () => {
     activeDocTitle,
     docSearchQuery,
     setDocSearchQuery,
-    releaseVersions,
-    releaseVersionsLoading,
-    activeReleaseVersion,
-    activeDocSection,
     selectRepoDoc,
-    selectReleaseVersion,
+    openReleases,
   } = useDocsSidebar();
   const settingsSection = useActiveSettingsSection();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { section: routeSection } = useParams({ strict: false }) as { section?: string };
   const navigate = useNavigate();
   const isDocsPath = pathname.startsWith('/project/docs');
+  const docSection = isDocsPath ? routeSection : undefined;
   const isSettingsPath = pathname.startsWith('/project/settings');
   const isStatsPath = pathname === '/project' || pathname.startsWith('/project/stats');
   const isRoadmapPath = pathname.startsWith('/project/roadmap');
@@ -36,6 +44,27 @@ export const ProjectSidebar = () => {
   return (
     <>
       <ProjectsInView mode="switcher" countKind={null} />
+      <SidebarSection>
+        <SidebarLabel>Settings</SidebarLabel>
+        <div className="flex flex-col">
+          {SETTINGS_ITEMS.map((item) => (
+            <SidebarItem
+              key={item.label}
+              active={isSettingsPath && settingsSection === item.section}
+              onClick={() =>
+                item.section
+                  ? navigate({
+                      to: '/project/settings/$section',
+                      params: { section: item.section },
+                    })
+                  : navigate({ to: '/project/settings' })
+              }
+            >
+              {item.label}
+            </SidebarItem>
+          ))}
+        </div>
+      </SidebarSection>
       <SidebarSection>
         <SidebarLabel>Roadmap</SidebarLabel>
         <div className="flex flex-col">
@@ -66,7 +95,6 @@ export const ProjectSidebar = () => {
             onChange={(e) => setDocSearchQuery(e.target.value)}
           />
         </div>
-        <SidebarLabel>Repo Docs</SidebarLabel>
         <div className="flex flex-col">
           {repoDocsLoading && repoDocs.length === 0 ? (
             <span className="block px-3 py-1">
@@ -76,7 +104,7 @@ export const ProjectSidebar = () => {
             repoDocs.map((f) => (
               <SidebarItem
                 key={f.name}
-                active={isDocsPath && activeDocSection === 'repo-docs' && activeDocTitle === f.name}
+                active={docSection === 'repo-docs' && activeDocTitle === f.name}
                 onClick={() => selectRepoDoc(f.name)}
               >
                 {simplecaseLabel(f.name)}
@@ -85,94 +113,16 @@ export const ProjectSidebar = () => {
           ) : (
             <EmptyState message="No repo docs found" />
           )}
+          <SidebarItem active={docSection === 'release-notes'} onClick={openReleases}>
+            Releases
+          </SidebarItem>
         </div>
-        <SidebarLabel>Releases</SidebarLabel>
-        <div className="flex flex-col">
-          {releaseVersionsLoading && releaseVersions.length === 0 ? (
-            <span className="block px-3 py-1">
-              <Skeleton variant="text" width="60%" />
-            </span>
-          ) : releaseVersions.length > 0 ? (
-            releaseVersions.map((version) => (
-              <SidebarItem
-                key={version}
-                active={
-                  isDocsPath &&
-                  activeDocSection === 'release-notes' &&
-                  activeReleaseVersion === version
-                }
-                onClick={() => selectReleaseVersion(version)}
-              >
-                {version}
-              </SidebarItem>
-            ))
-          ) : (
-            <EmptyState message="No releases yet" />
-          )}
-        </div>
-
+      </SidebarSection>
+      <SidebarSection>
         <SidebarLabel>Stats</SidebarLabel>
         <div className="flex flex-col">
           <SidebarItem active={isStatsPath} onClick={() => navigate({ to: '/project/stats' })}>
             Overview
-          </SidebarItem>
-        </div>
-
-        <SidebarLabel>Settings</SidebarLabel>
-        <div className="flex flex-col">
-          <SidebarItem
-            active={isSettingsPath && settingsSection === null}
-            onClick={() => navigate({ to: '/project/settings' })}
-          >
-            Project Info
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'setup'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'setup' } })
-            }
-          >
-            Setup
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'merge-policy'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'merge-policy' } })
-            }
-          >
-            Merge Policy
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'toolbar'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'toolbar' } })
-            }
-          >
-            Toolbar
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'desk'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'desk' } })
-            }
-          >
-            Desk
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'night'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'night' } })
-            }
-          >
-            Review passes
-          </SidebarItem>
-          <SidebarItem
-            active={isSettingsPath && settingsSection === 'notifications'}
-            onClick={() =>
-              navigate({ to: '/project/settings/$section', params: { section: 'notifications' } })
-            }
-          >
-            Notifications
           </SidebarItem>
         </div>
       </SidebarSection>

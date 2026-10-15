@@ -88,10 +88,11 @@ Managing machines (forgetting a machine, its version, its update).
       Icon and name as the first item of the left group, before the branch,
       not clickable.
       run: 1m54s · 38 in · 6.6k out · sonnet-5 · sess:f7de84da-bd8c-433b-911b-3269eccfe54f
-- [ ] Cut the welcome screen to pairing
+- [x] Cut the welcome screen to pairing
       Logo, title and the Add a machine card only, with Back to <project> when
       one is known; numbers column, machine sections and project rows deleted
       with their hooks, helpers and tests.
+      run: 5m16s · 92 in · 20.5k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
 - [ ] Move rename and forget to Project › Settings
       Name on this device and Forget on this device in Project Info, using
       renameRow and forgetRow; forgetting opens the next project or the welcome

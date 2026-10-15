@@ -14,8 +14,6 @@ export const useDocsSidebar = () => {
   const releaseVersions = useAppStore((s) => s.releaseVersions);
   const releaseVersionsLoading = useAppStore((s) => s.releaseVersionsLoading);
   const loadReleaseVersions = useAppStore((s) => s.loadReleaseVersions);
-  const activeReleaseVersion = useAppStore((s) => s.activeReleaseVersion);
-  const setActiveReleaseVersion = useAppStore((s) => s.setActiveReleaseVersion);
   const activeDocSection = useResolvedDocSection();
   const navigate = useNavigate();
 
@@ -32,10 +30,8 @@ export const useDocsSidebar = () => {
     setActiveDocTitle(name);
   };
 
-  const selectReleaseVersion = (version: string) => {
+  const openReleases = () =>
     navigate({ to: '/project/docs/$section', params: { section: 'release-notes' } });
-    setActiveReleaseVersion(version);
-  };
 
   return {
     repoDocs,
@@ -45,9 +41,8 @@ export const useDocsSidebar = () => {
     setDocSearchQuery,
     releaseVersions,
     releaseVersionsLoading,
-    activeReleaseVersion,
     activeDocSection,
     selectRepoDoc,
-    selectReleaseVersion,
+    openReleases,
   };
 };

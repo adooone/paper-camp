@@ -2,13 +2,12 @@ import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { EmptyState, PageTitle } from '@dendelion/paper-ui';
 import { DocsSearch } from './components/docs-search';
-import { ReleaseNotesDetail } from './components/release-notes-detail';
+import { ReleasesList } from './components/releases-list';
 import { RepoDocDetail } from './components/repo-doc-detail';
 
 export const DocsPage = () => {
   const docSearchQuery = useAppStore((s) => s.docSearchQuery);
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
-  const activeReleaseVersion = useAppStore((s) => s.activeReleaseVersion);
   const activeDocSection = useResolvedDocSection();
 
   if (docSearchQuery.trim()) {
@@ -27,10 +26,10 @@ export const DocsPage = () => {
     );
   }
 
-  if (activeDocSection === 'release-notes' && activeReleaseVersion) {
+  if (activeDocSection === 'release-notes') {
     return (
       <div>
-        <ReleaseNotesDetail />
+        <ReleasesList />
       </div>
     );
   }

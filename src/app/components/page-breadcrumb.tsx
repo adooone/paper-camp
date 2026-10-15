@@ -22,7 +22,6 @@ export const PageBreadcrumb = () => {
   const plans = useAppStore((s) => s.plans);
   const activeDocSection = useResolvedDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
-  const activeReleaseVersion = useAppStore((s) => s.activeReleaseVersion);
   const activeLogEntryTitle = useAppStore((s) => s.activeLogEntryTitle);
   const { entryId } = useParams({ strict: false });
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -75,7 +74,7 @@ export const PageBreadcrumb = () => {
       : activeDocSection === 'repo-docs'
         ? activeDocTitle
         : activeDocSection === 'release-notes'
-          ? activeReleaseVersion
+          ? 'Releases'
           : null;
     if (docLabel) {
       return [

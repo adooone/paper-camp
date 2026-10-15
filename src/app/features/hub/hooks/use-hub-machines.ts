@@ -38,7 +38,6 @@ export interface UseHubMachinesResult {
   openRow: (row: HubProjectRow, machineUrl: string, path?: string) => void;
   renameRow: (runtimeUrl: string, label: string) => void;
   forgetRow: (runtimeUrl: string) => void;
-  retryMachine: (machineUrl: string) => void;
 }
 
 /** Merges this browser's chosen projects with every paired machine's own
@@ -63,7 +62,7 @@ export function useHubMachines(): UseHubMachinesResult {
   }, []);
 
   const projectStates = useHubProjectStates(chosenRuntimeUrls);
-  const { reports, retry } = useHubMachineReports(machineUrls);
+  const { reports } = useHubMachineReports(machineUrls);
 
   const rememberedInputs: RememberedProjectInput[] = projects.map((entry) => {
     const url = projectEntryId(entry);
@@ -117,6 +116,5 @@ export function useHubMachines(): UseHubMachinesResult {
       removeProject(runtimeUrl, storage);
       setProjects(listProjects(storage));
     },
-    retryMachine: retry,
   };
 }

@@ -77,6 +77,9 @@ function contentPlaceholder(pathname: string, isPlansArea: boolean) {
   return <RuntimeChecking label={SPINNER_ROUTE_LABELS[pathname] ?? 'This page'} />;
 }
 
+// The card keeps its outline at the sidebar's height cap; only its contents scroll inside.
+const SIDEBAR_SCROLL_CLASS = '-mx-1 min-h-0 overflow-y-auto px-1';
+
 export const AppShell = () => {
   const {
     navigate,
@@ -182,34 +185,42 @@ export const AppShell = () => {
                     {isPlansArea && !isIdeasListArea && <PlanActionsColumn />}
                     {isPlansArea && !isIdeasListArea && <PlanActionsCommandsColumn />}
                     {isIdeasListArea && (
-                      <SidebarCard className="shrink-0">
-                        <Suspense fallback={<SidebarSkeleton bare />}>
-                          <ProjectsInView mode="list" countKind="ideas" />
-                          <StatusFilters />
-                        </Suspense>
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <Suspense fallback={<SidebarSkeleton bare />}>
+                            <ProjectsInView mode="list" countKind="ideas" />
+                            <StatusFilters />
+                          </Suspense>
+                        </div>
                       </SidebarCard>
                     )}
                     {isActivityListArea && (
-                      <SidebarCard className="shrink-0">
-                        <Suspense fallback={<SidebarSkeleton bare />}>
-                          <ProjectsInView mode="list" countKind="activity" />
-                          <ActivityFilters />
-                        </Suspense>
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <Suspense fallback={<SidebarSkeleton bare />}>
+                            <ProjectsInView mode="list" countKind="activity" />
+                            <ActivityFilters />
+                          </Suspense>
+                        </div>
                       </SidebarCard>
                     )}
                     {isProjectArea && (
-                      <SidebarCard className="shrink-0">
-                        <Suspense fallback={<SidebarSkeleton bare />}>
-                          <ProjectSidebar />
-                        </Suspense>
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <Suspense fallback={<SidebarSkeleton bare />}>
+                            <ProjectSidebar />
+                          </Suspense>
+                        </div>
                       </SidebarCard>
                     )}
                     {isGitArea && (
-                      <SidebarCard className="shrink-0">
-                        <Suspense fallback={<SidebarSkeleton bare />}>
-                          <GitFileList />
-                          <GitBranchList />
-                        </Suspense>
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <Suspense fallback={<SidebarSkeleton bare />}>
+                            <GitFileList />
+                            <GitBranchList />
+                          </Suspense>
+                        </div>
                       </SidebarCard>
                     )}
                   </SidebarShell>

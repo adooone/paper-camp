@@ -2,22 +2,28 @@ import { fetchReleaseNotes } from '@/app/services/release-notes-api';
 import type { ReleaseNoteSection } from '@/types/index';
 import { useEffect, useState } from 'react';
 
-export const useReleaseNotes = (version: string | null): ReleaseNoteSection[] | null => {
-  const [sections, setSections] = useState<ReleaseNoteSection[] | null>(null);
+export type ReleaseNotesState =
+  | { status: 'loading' }
+  | { status: 'missing' }
+  | { status: 'ready'; sections: ReleaseNoteSection[] };
+
+export const useReleaseNotes = (version: string): ReleaseNotesState => {
+  const [state, setState] = useState<ReleaseNotesState>({ status: 'loading' });
 
   useEffect(() => {
-    setSections(null);
-    if (!version) return;
+    setState({ status: 'loading' });
     let cancelled = false;
     fetchReleaseNotes(version)
-      .then((result) => {
-        if (!cancelled) setSections(result);
+      .then((sections) => {
+        if (!cancelled) setState(sections ? { status: 'ready', sections } : { status: 'missing' });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setState({ status: 'missing' });
+      });
     return () => {
       cancelled = true;
     };
   }, [version]);
 
-  return sections;
+  return state;
 };
