@@ -311,6 +311,7 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
   const children: ChildProcess[] = [];
   let originalConfigDir: string | undefined;
   const originalPath = process.env.PATH;
+  const originalVoltaHome = process.env.VOLTA_HOME;
   const originalIsTTY = process.stdout.isTTY;
   const originalNoColor = process.env.NO_COLOR;
 
@@ -327,6 +328,8 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
     process.env.PATH = originalPath;
+    if (originalVoltaHome === undefined) Reflect.deleteProperty(process.env, 'VOLTA_HOME');
+    else process.env.VOLTA_HOME = originalVoltaHome;
     process.stdout.isTTY = originalIsTTY;
     // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalNoColor === undefined) delete process.env.NO_COLOR;
@@ -359,6 +362,8 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     dirs.push(dir);
     await writeFile(join(dir, 'npm'), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
     process.env.PATH = `${dir}:${originalPath}`;
+    // On a machine with Volta the updater would otherwise run its real npm shim.
+    process.env.VOLTA_HOME = dir;
   }
 
   async function makeTempConfigDir(): Promise<string> {

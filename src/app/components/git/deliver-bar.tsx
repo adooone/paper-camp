@@ -26,10 +26,10 @@ const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
 };
 
 const DOT_CLASS: Record<CheckStatus, string> = {
-  pass: 'bg-chalk-pass-text',
-  fail: 'bg-chalk-fail-text',
-  running: 'bg-chalk-running-text',
-  stale: 'bg-desk-text-muted',
+  pass: 'bg-watercolor-green-dark',
+  fail: 'bg-watercolor-rose-dark',
+  running: 'bg-watercolor-amber-dark',
+  stale: 'bg-watercolor-slate-dark',
 };
 
 const StatusDot = ({ status }: { status: CheckStatus }) => (
@@ -39,7 +39,7 @@ const StatusDot = ({ status }: { status: CheckStatus }) => (
 const menuItemLabel = (name: string, action: string) => (
   <span className="flex w-full items-center justify-between gap-4">
     <span>{name}</span>
-    <span className="text-desk-text-muted">{action}</span>
+    <span className="opacity-60">{action}</span>
   </span>
 );
 
@@ -209,7 +209,7 @@ export const DeliverBar = ({
           ? 'sticky bottom-0 z-10 flex flex-col gap-2 border-t border-black/10 px-4 py-2'
           : 'flex flex-col gap-2'
       }
-      style={pinned ? getSurfaceStyles(surface.card) : undefined}
+      style={pinned ? getSurfaceStyles(surface.page) : undefined}
     >
       <div className="flex flex-wrap items-center gap-2">
         <Menu
@@ -221,7 +221,7 @@ export const DeliverBar = ({
           items={menuItems}
         />
         {fixButton}
-        <span className="text-desk-text-muted text-xs">
+        <span className="text-xs opacity-60">
           {gitStateLine(hasChanges, files.length, gitAhead, branch)}
         </span>
         <div className="flex-1" />

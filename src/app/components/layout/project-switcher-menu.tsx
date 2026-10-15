@@ -77,7 +77,7 @@ export const ProjectSwitcherMenu = () => {
       trigger={
         <Button variant="ghost" size="small" className="min-w-0">
           <span className="inline-flex min-w-0 items-center gap-1 whitespace-nowrap">
-            <span className="truncate font-handwritten text-base">
+            <span className="truncate pr-1 font-handwritten text-base leading-normal">
               {loading ? 'Loading…' : (projectName ?? 'Choose a project')}
             </span>
             <span className="inline-flex shrink-0 rotate-90 opacity-60">

@@ -336,11 +336,17 @@ export function createGitManager(root: string) {
     return { branch: getCurrentBranch(), ahead, behind, dirtyCount: entries.length };
   }
 
+  // A branch tracking a differently named one (cut from origin/main) can't `git push`:
+  // it publishes under its own name instead, which also repoints its upstream.
   async function push(): Promise<void> {
-    if (await hasUpstream()) {
+    const branch = getCurrentBranch();
+    const upstream = await runGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'])
+      .then((out) => out.trim())
+      .catch(() => null);
+    if (upstream === `origin/${branch}`) {
       await runGit(['push']);
     } else {
-      await runGit(['push', '--set-upstream', 'origin', getCurrentBranch()]);
+      await runGit(['push', '--set-upstream', 'origin', branch]);
     }
   }
 

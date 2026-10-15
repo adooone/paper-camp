@@ -1581,3 +1581,42 @@ describe('getWorkingDiff', () => {
     expect(entry.patch.length).toBeLessThan(200);
   });
 });
+
+describe('push', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
+  it('publishes a branch cut from origin/main under its own name and repoints its upstream', async () => {
+    const remote = await addOrigin(root);
+    git(root, 'switch', '-c', 'fix/some-fix', 'origin/main');
+    await commitFile(root, 'a.txt', 'a\n', 'fix commit');
+
+    await manager.push();
+
+    expect(git(remote, 'rev-parse', 'fix/some-fix')).toBe(git(root, 'rev-parse', 'HEAD'));
+    expect(git(remote, 'rev-parse', 'main')).toBe(initialSha);
+    expect(git(root, 'rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}')).toBe(
+      'origin/fix/some-fix',
+    );
+  });
+
+  it('pushes a branch already tracking its own remote branch', async () => {
+    const remote = await addOrigin(root);
+    await commitFile(root, 'b.txt', 'b\n', 'main commit');
+
+    await manager.push();
+
+    expect(git(remote, 'rev-parse', 'main')).toBe(git(root, 'rev-parse', 'HEAD'));
+  });
+});
