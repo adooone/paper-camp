@@ -219,6 +219,7 @@ export const DeliverBar = ({
             </Stamp>
           }
           items={menuItems}
+          className="[&_[role=menuitem]]:px-2 [&_[role=menuitem]]:py-1 [&_[role=menuitem]]:text-sm"
         />
         {fixButton}
         <span className="text-xs opacity-60">

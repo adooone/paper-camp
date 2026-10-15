@@ -10,7 +10,7 @@ export function sendJson(res: ServerResponse, statusCode: number, data: unknown)
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');
   const body = JSON.stringify(data);
-  const acceptEncoding = [res.req.headers['accept-encoding'] ?? ''].flat().join(',');
+  const acceptEncoding = [res.req?.headers['accept-encoding'] ?? ''].flat().join(',');
   if (Buffer.byteLength(body) <= GZIP_THRESHOLD_BYTES || !acceptEncoding.includes('gzip')) {
     res.end(body);
     return;

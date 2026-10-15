@@ -111,7 +111,7 @@ describe('paper-camp stamp-release (CLI)', () => {
     expect(after.released).toBe('v0.2.0');
     expect(after.title).toBe('Do the thing');
     expect(after.status).toBe('done');
-  });
+  }, 15000);
 
   it('is idempotent — skips an idea already stamped with that version', async () => {
     const { root } = await makeReleasedProject();

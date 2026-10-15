@@ -10,10 +10,8 @@ interface ProjectData {
   ideas: IdeaEntry[];
 }
 
-/** Holds every project's last-fetched rows for the page's lifetime, so leaving
- * the Ideas list and coming back shows them immediately while a fresh fetch
- * runs in the background (IDEA-298). Replaced by the shared query cache in
- * IDEA-299. */
+/** Holds every project's last-fetched rows for the page's lifetime (IDEA-298);
+ * replaced by the shared query cache in IDEA-299. */
 const scopeProjectDataCache = new Map<string, ProjectData>();
 
 export function cachedScopeProjectData(urls: string[]): Record<string, ProjectData> {
