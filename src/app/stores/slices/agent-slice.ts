@@ -41,6 +41,15 @@ export interface QueuedReconcile extends ReconcilePreview {
 let previewCounter = 0;
 const nextPreviewId = () => `preview-${++previewCounter}`;
 
+export function createInitialAgentState() {
+  return {
+    agentStatus: [] as AgentTaskState[],
+    pendingReconcile: null as ReconcilePreview | null,
+    reconcileQueue: [] as QueuedReconcile[],
+    batchReconcileConsumed: false,
+  };
+}
+
 export type AgentSlice = {
   agentStatus: AgentTaskState[];
   loadAgentStatus: () => Promise<void>;
@@ -86,7 +95,7 @@ export type AgentSlice = {
 
 export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
   return {
-    agentStatus: [],
+    ...createInitialAgentState(),
     loadAgentStatus: async () => {
       try {
         const data = await fetchAgentStatus();
@@ -248,12 +257,9 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
       set({ loginRelay: state });
     },
 
-    pendingReconcile: null,
-    reconcileQueue: [],
     removeFromReconcileQueue: (previewId) =>
       set((s) => ({
         reconcileQueue: s.reconcileQueue.filter((item) => item.previewId !== previewId),
       })),
-    batchReconcileConsumed: false,
   };
 }

@@ -2,6 +2,18 @@ import { fetchRepoDocs } from '../../services/content';
 import { fetchReleaseVersions } from '../../services/release-notes-api';
 import type { GetState, SetState } from './slice-helpers';
 
+export function createInitialDocsState() {
+  return {
+    repoDocs: [] as { name: string; content: string }[],
+    repoDocsLoading: true,
+    activeDocTitle: null as string | null,
+    docSearchQuery: '',
+    releaseVersions: [] as string[],
+    releaseVersionsLoading: true,
+    activeReleaseVersion: null as string | null,
+  };
+}
+
 export type DocsSlice = {
   repoDocs: { name: string; content: string }[];
   repoDocsLoading: boolean;
@@ -23,8 +35,7 @@ export type DocsSlice = {
 
 export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
   return {
-    repoDocs: [],
-    repoDocsLoading: true,
+    ...createInitialDocsState(),
     loadRepoDocs: async () => {
       set({ repoDocsLoading: true });
       try {
@@ -42,14 +53,10 @@ export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
       }
     },
 
-    activeDocTitle: null,
     setActiveDocTitle: (title) => set({ activeDocTitle: title }),
 
-    docSearchQuery: '',
     setDocSearchQuery: (query) => set({ docSearchQuery: query }),
 
-    releaseVersions: [],
-    releaseVersionsLoading: true,
     loadReleaseVersions: async () => {
       set({ releaseVersionsLoading: true });
       try {
@@ -60,7 +67,6 @@ export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
       }
     },
 
-    activeReleaseVersion: null,
     setActiveReleaseVersion: (version) => set({ activeReleaseVersion: version }),
   };
 }

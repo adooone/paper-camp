@@ -20,6 +20,24 @@ import { dropServerCaches, fetchStatus } from '../../services/status-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
+export function createInitialStatusState() {
+  return {
+    status: null as StatusState | null,
+    refreshing: false,
+    commitInFlight: false,
+    activeGitAction: null as 'push' | 'sync' | 'pull' | 'fix-divergence' | null,
+    consistency: [] as ConsistencyIssue[],
+    doctor: { findings: [], errorCount: 0, warningCount: 0 } as DoctorFindingSummary,
+    gitStatus: null as GitStatusEntry[] | null,
+    gitBranch: null as string | null,
+    gitAhead: 0,
+    gitBehind: 0,
+    gitDiverged: false,
+    gitBranchHygiene: null as BranchHygieneStatus | null,
+    gitStashes: [] as GitStashEntry[],
+  };
+}
+
 export type StatusSlice = {
   status: StatusState | null;
   loadStatus: () => Promise<void>;
@@ -53,8 +71,7 @@ export type StatusSlice = {
 
 export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
   return {
-    status: null,
-    refreshing: false,
+    ...createInitialStatusState(),
     loadStatus: loadSlice(set, fetchStatus, (data) => ({ status: data })),
     refreshAll: async () => {
       set({ refreshing: true });
@@ -80,10 +97,8 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
         set({ refreshing: false });
       }
     },
-    commitInFlight: false,
     setCommitInFlight: (inFlight) => set({ commitInFlight: inFlight }),
 
-    activeGitAction: null,
     setActiveGitAction: (action) => set({ activeGitAction: action }),
     quickCommit: async () => {
       const { gitStatus, loadGitStatus, commitInFlight } = get();
@@ -113,19 +128,10 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
       }
     },
 
-    consistency: [],
     loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
 
-    doctor: { findings: [], errorCount: 0, warningCount: 0 },
     loadDoctor: loadSlice(set, fetchDoctor, (data) => ({ doctor: data })),
 
-    gitStatus: null,
-    gitBranch: null,
-    gitAhead: 0,
-    gitBehind: 0,
-    gitDiverged: false,
-    gitBranchHygiene: null,
-    gitStashes: [],
     loadGitStatus: async () => {
       try {
         const { branch, entries, ahead, behind, diverged, branchHygiene, stashes } =

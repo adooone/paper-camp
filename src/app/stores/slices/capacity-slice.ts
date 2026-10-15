@@ -2,6 +2,12 @@ import type { CapacityStat } from '@/types/index';
 import { refreshCapacityProbe } from '../../services/system/capacity-api';
 import type { SetState } from './slice-helpers';
 
+export function createInitialCapacityState() {
+  return {
+    probedCapacity: null as CapacityStat | null,
+  };
+}
+
 export type CapacitySlice = {
   /** A probe reading, preferred over the task log until the next run supersedes it. */
   probedCapacity: CapacityStat | null;
@@ -10,7 +16,7 @@ export type CapacitySlice = {
 
 export function createCapacitySlice(set: SetState): CapacitySlice {
   return {
-    probedCapacity: null,
+    ...createInitialCapacityState(),
     refreshCapacity: async () => {
       const stat = await refreshCapacityProbe().catch(() => null);
       if (stat) set({ probedCapacity: stat });

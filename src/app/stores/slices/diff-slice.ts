@@ -3,6 +3,22 @@ import type { FileDiffEntry, GitLogCommit } from '@/types/index';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
+export function createInitialDiffState() {
+  return {
+    diffFiles: null as FileDiffEntry[] | null,
+    diffLoadFailed: false,
+    activeDiffPath: null as string | null,
+    manuallyExpandedDiffPaths: new Set<string>(),
+    manuallyCollapsedDiffPaths: new Set<string>(),
+    gitLogCommits: null as GitLogCommit[] | null,
+    gitLogUpstream: null as string | null,
+    gitLogHasMore: false,
+    gitLogLoadingMore: false,
+    gitLogLoadFailed: false,
+    gitLogLoadMoreFailed: false,
+  };
+}
+
 export type DiffSlice = {
   // Lifted here (not local page state) so the router-level sidebar and the page share one source.
   diffFiles: FileDiffEntry[] | null;
@@ -33,8 +49,7 @@ export type DiffSlice = {
 
 export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
   return {
-    diffFiles: null,
-    diffLoadFailed: false,
+    ...createInitialDiffState(),
     loadDiffFiles: loadSlice(
       set,
       fetchFileDiffs,
@@ -42,14 +57,11 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
       () => ({ diffLoadFailed: true }),
     ),
 
-    activeDiffPath: null,
     setActiveDiffPath: (path) => {
       if (get().activeDiffPath === path) return;
       set({ activeDiffPath: path });
     },
 
-    manuallyExpandedDiffPaths: new Set(),
-    manuallyCollapsedDiffPaths: new Set(),
     setDiffCollapsed: (path, collapsed) => {
       set((s) => {
         const expanded = new Set(s.manuallyExpandedDiffPaths);
@@ -66,12 +78,6 @@ export function createDiffSlice(set: SetState, get: GetState): DiffSlice {
     },
     expandDiffPath: (path) => get().setDiffCollapsed(path, false),
 
-    gitLogCommits: null,
-    gitLogUpstream: null,
-    gitLogHasMore: false,
-    gitLogLoadingMore: false,
-    gitLogLoadFailed: false,
-    gitLogLoadMoreFailed: false,
     loadGitLog: loadSlice(
       set,
       () => fetchGitLog(0),

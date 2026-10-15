@@ -89,9 +89,10 @@ roadmap, capacity and status onto queries.
       questions, notifications and chat as queries with `refresh*` helpers;
       store fields and mount loads removed; tests updated.
       run: 10m11s · 318 in · 64.9k out · sonnet-5 · sess:f1c93ce0-d428-4655-9f25-a3ffb7bc67e7
-- [ ] Reset the remaining project state on switch
+- [x] Reset the remaining project state on switch
       `resetProjectState()` restoring agent status, diff, task log, docs,
       roadmap, capacity, status and reconcile queue to initial values.
+      run: 3m10s · 72 in · 17.3k out · sonnet-5 · sess:92430077-b8bd-4638-9182-33ae92f2112c
 - [ ] Switch in place from the header
       `openProject` adopting, switching, pairing, resetting, probing and
       navigating to the given or remembered route; no reload in the path.

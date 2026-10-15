@@ -1,18 +1,40 @@
 import { create } from 'zustand';
-import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
-import { type CapacitySlice, createCapacitySlice } from './slices/capacity-slice';
-import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
-import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
+import { type AgentSlice, createAgentSlice, createInitialAgentState } from './slices/agent-slice';
+import {
+  type CapacitySlice,
+  createCapacitySlice,
+  createInitialCapacityState,
+} from './slices/capacity-slice';
+import { type DiffSlice, createDiffSlice, createInitialDiffState } from './slices/diff-slice';
+import { type DocsSlice, createDocsSlice, createInitialDocsState } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
 import { type NightReportSlice, createNightReportSlice } from './slices/night-report-slice';
 import { type PlansSlice, createPlansSlice } from './slices/plans-slice';
-import { type RoadmapSlice, createRoadmapSlice } from './slices/roadmap-slice';
+import {
+  type RoadmapSlice,
+  createInitialRoadmapState,
+  createRoadmapSlice,
+} from './slices/roadmap-slice';
 import { type RuntimeSlice, createRuntimeSlice } from './slices/runtime-slice';
-import { type StatusSlice, createStatusSlice } from './slices/status-slice';
+import {
+  type StatusSlice,
+  createInitialStatusState,
+  createStatusSlice,
+} from './slices/status-slice';
 import { type SuggestionsSlice, createSuggestionsSlice } from './slices/suggestions-slice';
-import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
+import {
+  type TaskLogSlice,
+  createInitialTaskLogState,
+  createTaskLogSlice,
+} from './slices/task-log-slice';
 
 export type { DetailView } from './slices/plans-slice';
+
+type ResetSlice = {
+  // Clears everything cached from the previous project on a runtime switch; pages
+  // that need it reload on mount, same as they do today.
+  resetProjectState: () => void;
+};
 
 export type AppStore = CapacitySlice &
   PlansSlice &
@@ -25,7 +47,8 @@ export type AppStore = CapacitySlice &
   StatusSlice &
   AgentSlice &
   DiffSlice &
-  RuntimeSlice;
+  RuntimeSlice &
+  ResetSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createCapacitySlice(set),
@@ -40,6 +63,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createAgentSlice(set, get),
   ...createDiffSlice(set, get),
   ...createRuntimeSlice(set),
+  resetProjectState: () =>
+    set({
+      ...createInitialAgentState(),
+      ...createInitialDiffState(),
+      ...createInitialTaskLogState(),
+      ...createInitialDocsState(),
+      ...createInitialRoadmapState(),
+      ...createInitialCapacityState(),
+      ...createInitialStatusState(),
+    }),
 }));
 
 export const selectAgentBusy = (s: AppStore) =>

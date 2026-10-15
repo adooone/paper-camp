@@ -3,6 +3,14 @@ import { fetchTaskLog } from '../../services/content';
 import type { SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
+export function createInitialTaskLogState() {
+  return {
+    taskLog: [] as TaskLogEntry[],
+    taskLogLoading: true,
+    activeLogEntryTitle: null as string | null,
+  };
+}
+
 export type TaskLogSlice = {
   taskLog: TaskLogEntry[];
   taskLogLoading: boolean;
@@ -14,8 +22,7 @@ export type TaskLogSlice = {
 
 export function createTaskLogSlice(set: SetState): TaskLogSlice {
   return {
-    taskLog: [],
-    taskLogLoading: true,
+    ...createInitialTaskLogState(),
     loadTaskLog: loadSlice(
       set,
       fetchTaskLog,
@@ -24,7 +31,6 @@ export function createTaskLogSlice(set: SetState): TaskLogSlice {
       'taskLogLoading',
     ),
 
-    activeLogEntryTitle: null,
     setActiveLogEntryTitle: (title) => set({ activeLogEntryTitle: title }),
   };
 }

@@ -7,6 +7,15 @@ import { fetchRoadmap } from '../../services/content/docs-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
+export function createInitialRoadmapState() {
+  return {
+    roadmap: null as ResolvedRoadmap | null,
+    roadmapLoading: false,
+    roadmapError: null as string | null,
+    roadmapFilters: DEFAULT_ROADMAP_FILTERS,
+  };
+}
+
 export type RoadmapSlice = {
   roadmap: ResolvedRoadmap | null;
   roadmapLoading: boolean;
@@ -22,9 +31,7 @@ export type RoadmapSlice = {
 
 export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice {
   return {
-    roadmap: null,
-    roadmapLoading: false,
-    roadmapError: null,
+    ...createInitialRoadmapState(),
     loadRoadmap: loadSlice(
       set,
       fetchRoadmap,
@@ -33,7 +40,6 @@ export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice 
       'roadmapLoading',
     ),
 
-    roadmapFilters: DEFAULT_ROADMAP_FILTERS,
     toggleRoadmapHorizon: (title) =>
       set((s) => ({
         roadmapFilters: {
