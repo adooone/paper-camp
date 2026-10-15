@@ -1,5 +1,4 @@
 export * from './collapsible-text';
-export * from './deliver-changed-files';
 export * from './deliver-checks-row';
 export * from './deliver-commit-button';
 export * from './deliver-empty-state';

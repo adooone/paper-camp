@@ -114,10 +114,11 @@ The commit form's fields.
       Auto-fix beside it on a failure, and the menu of every check with Run,
       Run all and the Docs findings toggle.
       run: 8m39s · 114 in · 27.1k out · sonnet-5 · sess:0a6a28be-5f22-49ea-9fd1-cf53757e7899
-- [ ] Lay the footer out as one row with Push and Pull
+- [x] Lay the footer out as one row with Push and Pull
       Status, state line, Push button with the ahead count and the Pull icon
       button; the commit form as a second row only when there are changes;
       min-height reservation removed.
+      run: 3m38s · 64 in · 16.1k out · sonnet-5 · sess:0a6a28be-5f22-49ea-9fd1-cf53757e7899
 - [ ] Put the same bar on the Git page and remove Sync to main
       `DeliverBar` shared in `components/git/`, rendered as the idea page's
       phases footer and as the Git page's sticky footer with its bottom
