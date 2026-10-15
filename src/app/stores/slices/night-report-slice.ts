@@ -1,3 +1,4 @@
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import {
   dismissNightFinding as dismissNightFindingApi,
@@ -20,7 +21,7 @@ export function createNightReportSlice(set: SetState, get: GetState): NightRepor
     loadNightReport: loadSlice(set, fetchNightReport, (data) => ({ nightReport: data.groups })),
     promoteNightFinding: async (finding) => {
       const { id } = await promoteNightFindingApi(finding);
-      await Promise.all([get().loadNightReport(), get().loadPlans(), get().loadIdeas()]);
+      await Promise.all([get().loadNightReport(), refreshPlans(), refreshIdeas()]);
       return id;
     },
     dismissNightFinding: async (finding) => {

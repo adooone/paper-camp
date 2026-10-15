@@ -1,7 +1,9 @@
+import type { IdeaEntry, ParseResult, PlanEntry } from '@/types/index';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { createStore, del, get, set } from 'idb-keyval';
+import { runtimeConnection } from './runtime-connection';
 import { CLIENT_VERSION } from './version';
 
 export const PROJECT_QUERY_PREFIX = 'project';
@@ -39,3 +41,47 @@ export const persistOptions: PersistQueryClientOptions = {
     shouldDehydrateQuery: (query) => query.queryKey[0] === PROJECT_QUERY_PREFIX,
   },
 };
+
+export function projectQueryKey(runtimeUrl: string, resource: string) {
+  return [PROJECT_QUERY_PREFIX, runtimeUrl, resource] as const;
+}
+
+export function plansQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'plans');
+}
+
+export function ideasQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'ideas');
+}
+
+export function getCachedPlans(): ParseResult<PlanEntry> | null {
+  return (
+    queryClient.getQueryData<ParseResult<PlanEntry>>(plansQueryKey(runtimeConnection.runtimeUrl)) ??
+    null
+  );
+}
+
+export function getCachedIdeas(): IdeaEntry[] {
+  return queryClient.getQueryData<IdeaEntry[]>(ideasQueryKey(runtimeConnection.runtimeUrl)) ?? [];
+}
+
+export function getPlansError(): string | null {
+  const state = queryClient.getQueryState(plansQueryKey(runtimeConnection.runtimeUrl));
+  return state?.error ? String(state.error) : null;
+}
+
+// `refetchType: 'all'` so a refresh triggered while the plans/ideas list isn't
+// mounted (e.g. from the Stack panel) still re-fetches, not just marks stale.
+export function refreshPlans(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: plansQueryKey(runtimeConnection.runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshIdeas(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: ideasQueryKey(runtimeConnection.runtimeUrl),
+    refetchType: 'all',
+  });
+}

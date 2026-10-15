@@ -1,4 +1,5 @@
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
+import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { type RefObject, useEffect, useRef } from 'react';
 
@@ -51,7 +52,7 @@ export function useStackPanel(
   // Catches remote changes (a PR merged on GitHub) faster than the server's own poll.
   useEffect(() => {
     const handleFocus = () => {
-      useAppStore.getState().loadPlans();
+      refreshPlans();
       useAppStore.getState().loadGitStatus();
     };
     window.addEventListener('focus', handleFocus);
@@ -79,7 +80,6 @@ export function useStackPanel(
         'activity',
         () => {
           const {
-            loadPlans,
             loadSuggestions,
             loadNightReport,
             loadStatus,
@@ -90,7 +90,7 @@ export function useStackPanel(
             loadArchivableIdeas,
             loadTaskLog,
           } = useAppStore.getState();
-          loadPlans();
+          refreshPlans();
           loadSuggestions();
           loadNightReport();
           loadStatus();

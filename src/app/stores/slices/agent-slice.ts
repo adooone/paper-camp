@@ -1,3 +1,4 @@
+import { getCachedPlans, refreshPlans } from '@/app/services/query-client';
 import { fetchAgentAuthStatus } from '@/app/services/system';
 import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
@@ -120,7 +121,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           const before = prev.find((p) => p.id === t.id);
           if (!before || before.status === 'done' || before.status === 'error') return false;
           if (t.taskKind === 'phase') {
-            const plan = get().plans?.entries.find((p) => p.id === t.planId);
+            const plan = getCachedPlans()?.entries.find((p) => p.id === t.planId);
             if (!plan || t.phaseIndex !== plan.phases.length - 1) return false;
           }
           return true;
@@ -137,8 +138,8 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           : undefined;
         if (pending && reconcileTask) {
           if (reconcileTask.status === 'done') {
-            // loadPlans first: if it throws, pendingReconcile stays set and retries.
-            await get().loadPlans();
+            // refreshPlans first: if it throws, pendingReconcile stays set and retries.
+            await refreshPlans();
             set((s) => ({
               reconcileQueue: [...s.reconcileQueue, { ...pending, previewId: nextPreviewId() }],
               pendingReconcile: null,
@@ -159,7 +160,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
           if (batchTask.taskKind === 'batch-reconcile') {
             const results = await fetchReconcileQueue();
             if (results && results.length > 0) {
-              await get().loadPlans();
+              await refreshPlans();
               set((s) => ({
                 reconcileQueue: [
                   ...s.reconcileQueue,
@@ -176,7 +177,7 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
               await consumeReconcileQueue();
             }
           } else {
-            await get().loadPlans();
+            await refreshPlans();
           }
           // Set only after the fetch+append succeeds, so a throw here leaves it false and retries.
           set({ batchReconcileConsumed: true });

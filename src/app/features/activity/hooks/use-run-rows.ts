@@ -1,6 +1,7 @@
-import { useOpenEntity } from '@/app/hooks';
+import { useIdeas, useOpenEntity, usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import {
   applyPromotions,
@@ -39,10 +40,8 @@ export const useLogRows = () => {
   const taskLogLoading = useAppStore((s) => s.taskLogLoading);
   const loadTaskLog = useAppStore((s) => s.loadTaskLog);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const plans = useAppStore((s) => s.plans);
-  const ideaEntries = useAppStore((s) => s.ideaEntries);
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
+  const { plans } = usePlans();
+  const ideaEntries = useIdeas();
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const notifications = useAppStore((s) => s.notifications);
   const loadNotifications = useAppStore((s) => s.loadNotifications);
@@ -114,14 +113,14 @@ export const useLogRows = () => {
     setPromotingId(issue.id);
     try {
       await promoteIssue(issue);
-      await Promise.all([loadPlans(), loadIdeas()]);
+      await Promise.all([refreshPlans(), refreshIdeas()]);
     } finally {
       setPromotingId(null);
     }
   };
 
   const reloadEntities = async () => {
-    await Promise.all([loadPlans(), loadNotifications()]);
+    await Promise.all([refreshPlans(), loadNotifications()]);
   };
 
   const fixingIssueId = agentStatus.find(

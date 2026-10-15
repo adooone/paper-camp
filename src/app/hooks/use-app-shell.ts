@@ -72,8 +72,6 @@ export interface AppShellState {
 export function useAppShell(): AppShellState {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadSuggestions = useAppStore((s) => s.loadSuggestions);
   const loadNightReport = useAppStore((s) => s.loadNightReport);
   const loadCapabilities = useAppStore((s) => s.loadCapabilities);
@@ -158,8 +156,6 @@ export function useAppShell(): AppShellState {
     loadNotifications();
     loadChat();
     checkRuntimeReachable();
-    loadPlans();
-    loadIdeas();
   }, [
     loadSuggestions,
     loadNightReport,
@@ -169,8 +165,6 @@ export function useAppShell(): AppShellState {
     loadNotifications,
     loadChat,
     checkRuntimeReachable,
-    loadPlans,
-    loadIdeas,
   ]);
 
   // An unused corpus (IDEA-1 only, no plans) points at USAGE.md instead of an empty

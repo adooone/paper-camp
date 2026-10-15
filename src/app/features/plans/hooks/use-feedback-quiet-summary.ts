@@ -1,5 +1,5 @@
 import { summarizeFeedbackSession } from '@/app/services/agent-api';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshPlans } from '@/app/services/query-client';
 import type { PlanEntry } from '@/types/index';
 import { useEffect } from 'react';
 
@@ -11,7 +11,6 @@ const QUIET_MS = 3 * 60_000;
  * appends is no longer `chat` itself. `enabled` scopes this to whichever mount is
  * actually showing the thread (see IDEA-130 phase 4). */
 export const useFeedbackQuietSummary = (plan: PlanEntry, enabled: boolean): void => {
-  const loadPlans = useAppStore((s) => s.loadPlans);
   const thread = plan.thread ?? [];
   const last = thread[thread.length - 1];
   const planId = plan.id;
@@ -21,10 +20,10 @@ export const useFeedbackQuietSummary = (plan: PlanEntry, enabled: boolean): void
     const timer = setTimeout(() => {
       summarizeFeedbackSession(planId)
         .then((result) => {
-          if (!result.skipped) return loadPlans();
+          if (!result.skipped) return refreshPlans();
         })
         .catch(() => {});
     }, QUIET_MS);
     return () => clearTimeout(timer);
-  }, [enabled, planId, last, loadPlans]);
+  }, [enabled, planId, last]);
 };

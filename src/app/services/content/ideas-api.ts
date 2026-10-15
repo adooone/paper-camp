@@ -1,5 +1,5 @@
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
-import { apiUrl } from '@/app/services/api-base';
+import { apiFetch, apiUrl } from '@/app/services/api-base';
 import type { ArchivableIdea, IdeaEntry, OverlapVerdict, ParseResult } from '@/types/index';
 
 export interface PrioritiseResult {
@@ -13,7 +13,7 @@ export interface PrioritiseResult {
 const IDEAS_TIMEOUT_MS = 45_000;
 
 export const fetchIdeas = async (): Promise<ParseResult<IdeaEntry>> => {
-  const response = await fetch(apiUrl('/api/ideas'), {
+  const response = await apiFetch(apiUrl('/api/ideas'), {
     signal: AbortSignal.timeout(IDEAS_TIMEOUT_MS),
   });
   if (!response.ok) {

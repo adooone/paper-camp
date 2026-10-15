@@ -7,12 +7,12 @@ import type {
   PlanStatus,
   ThreadMessage,
 } from '@/types/index';
-import { apiUrl } from '../api-base';
+import { apiFetch, apiUrl } from '../api-base';
 
 const PLANS_TIMEOUT_MS = 45_000;
 
 export const fetchPlans = async (): Promise<ParseResult<PlanEntry>> => {
-  const response = await fetch(apiUrl('/api/plans'), {
+  const response = await apiFetch(apiUrl('/api/plans'), {
     signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
   });
   if (!response.ok) {

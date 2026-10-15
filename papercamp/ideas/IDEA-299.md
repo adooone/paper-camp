@@ -79,10 +79,11 @@ the store.
       `project` key prefix filter and version buster, and
       `PersistQueryClientProvider` in `main.tsx`.
       run: 2m53s · 56 in · 9.4k out · sonnet-5 · sess:15e2f1e3-8d2f-4cac-b649-4f9b0cf5cf0a
-- [ ] Move plans and ideas onto queries
+- [x] Move plans and ideas onto queries
       `usePlans`/`useIdeas` keyed by runtime URL, the store fields removed,
       every `loadPlans`/`loadIdeas` caller switched to `refreshPlans`/
       `refreshIdeas`, skeleton only without data; tests updated.
+      run: 14m50s · 322 in · 62.6k out · sonnet-5 · sess:15e2f1e3-8d2f-4cac-b649-4f9b0cf5cf0a
 - [ ] Share the cache with other projects' rows
       `useScopeWorklist` on `useQueries` with the same keys, still returning
       the loading projects; the IDEA-298 map removed.

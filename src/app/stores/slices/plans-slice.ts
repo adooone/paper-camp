@@ -4,10 +4,8 @@ import {
   type PlanSortKey,
 } from '@/app/features/plans/helpers';
 import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
-import type { IdeaStatus, ParseResult, PlanEntry, PlanStatus } from '@/types/index';
-import { fetchPlans } from '../../services/content';
+import type { IdeaStatus, PlanStatus } from '@/types/index';
 import type { SetState } from './slice-helpers';
-import { loadSlice } from './slice-helpers';
 
 export type DetailView = 'details' | 'feedback';
 
@@ -28,11 +26,6 @@ function storePlanFilters(filters: PlanListFilters): PlanListFilters {
 }
 
 export type PlansSlice = {
-  plans: ParseResult<PlanEntry> | null;
-  plansLoading: boolean;
-  plansError: string | null;
-  loadPlans: () => Promise<void>;
-
   // Lifted here (not local state) so the sidebar filter column and the list share one source.
   planFilters: PlanListFilters;
   togglePlanStatus: (status: PlanStatus) => void;
@@ -53,17 +46,6 @@ export type PlansSlice = {
 
 export function createPlansSlice(set: SetState): PlansSlice {
   return {
-    plans: null,
-    plansLoading: false,
-    plansError: null,
-    loadPlans: loadSlice(
-      set,
-      fetchPlans,
-      (data) => ({ plans: data, plansError: null }),
-      (err) => ({ plansError: String(err) }),
-      'plansLoading',
-    ),
-
     planFilters: readStoredPlanFilters(),
     togglePlanStatus: (status) =>
       set((s) => ({

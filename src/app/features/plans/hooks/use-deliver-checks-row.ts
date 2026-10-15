@@ -1,3 +1,4 @@
+import { usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { DoctorFindingSummary } from '@/core/doctor';
@@ -62,7 +63,7 @@ export const useDeliverChecksRow = () => {
   const { checks: deskChecks, run: runDeskCheck, runAll: runAllChecks, fix } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
   const navigate = useNavigate();

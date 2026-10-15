@@ -6,6 +6,8 @@ import type {
   ResolvedRoadmapItem,
 } from '@/types/index';
 import { useParams } from '@tanstack/react-router';
+import { useIdeas } from './use-ideas';
+import { usePlans } from './use-plans';
 
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
@@ -96,7 +98,7 @@ export function entityPath(entity: {
 
 export function useActivePlan(): PlanEntry | null {
   const { planId, ideaId, ticketId } = useParams({ strict: false });
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   if (!plans) return null;
   if (typeof ticketId === 'string') {
     return resolveByIdOrTitle(plans.entries, decodeURIComponent(ticketId), 'TICKET');
@@ -110,7 +112,7 @@ export function useActivePlan(): PlanEntry | null {
 
 export function useActiveIdea(): IdeaEntry | null {
   const { ideaId } = useParams({ strict: false });
-  const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const ideaEntries = useIdeas();
   if (typeof ideaId !== 'string') return null;
   return resolveByIdOrTitle(ideaEntries, decodeURIComponent(ideaId));
 }

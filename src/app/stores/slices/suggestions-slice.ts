@@ -1,3 +1,4 @@
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import type { RoadmapItem, SuggestionEntry } from '@/types/index';
 import {
   type PrioritiseResult,
@@ -40,7 +41,7 @@ export function createSuggestionsSlice(set: SetState, get: GetState): Suggestion
     ),
     promoteSuggestion: async (suggestion) => {
       const { id } = await promoteSuggestionApi(suggestion);
-      await Promise.all([get().loadSuggestions(), get().loadPlans(), get().loadIdeas()]);
+      await Promise.all([get().loadSuggestions(), refreshPlans(), refreshIdeas()]);
       return id;
     },
     dismissSuggestion: async (suggestion) => {
@@ -50,7 +51,7 @@ export function createSuggestionsSlice(set: SetState, get: GetState): Suggestion
 
     promoteRoadmapItem: async (horizonTitle, item, subject, candidateName) => {
       const { id } = await promoteRoadmapItemApi(horizonTitle, item, subject, candidateName);
-      await Promise.all([get().loadPlans(), get().loadIdeas()]);
+      await Promise.all([refreshPlans(), refreshIdeas()]);
       return id;
     },
 

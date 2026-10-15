@@ -1,16 +1,10 @@
-import type { ArchivableIdea, IdeaEntry } from '@/types/index';
-import {
-  archiveIdeas as archiveIdeasApi,
-  fetchArchivableIdeas,
-  fetchIdeas,
-} from '../../services/content';
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
+import type { ArchivableIdea } from '@/types/index';
+import { archiveIdeas as archiveIdeasApi, fetchArchivableIdeas } from '../../services/content';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice } from './slice-helpers';
 
 export type IdeasSlice = {
-  ideaEntries: IdeaEntry[];
-  loadIdeas: () => Promise<void>;
-
   archivableIdeas: ArchivableIdea[];
   loadArchivableIdeas: () => Promise<void>;
   archiveIdeas: (ids: string[]) => Promise<void>;
@@ -18,14 +12,6 @@ export type IdeasSlice = {
 
 export function createIdeasSlice(set: SetState, get: GetState): IdeasSlice {
   return {
-    ideaEntries: [],
-    loadIdeas: loadSlice(
-      set,
-      fetchIdeas,
-      (result) => ({ ideaEntries: result.entries }),
-      () => ({ ideaEntries: [] }),
-    ),
-
     archivableIdeas: [],
     loadArchivableIdeas: loadSlice(
       set,
@@ -35,7 +21,7 @@ export function createIdeasSlice(set: SetState, get: GetState): IdeasSlice {
     ),
     archiveIdeas: async (ids) => {
       await archiveIdeasApi(ids);
-      await Promise.all([get().loadArchivableIdeas(), get().loadPlans(), get().loadIdeas()]);
+      await Promise.all([get().loadArchivableIdeas(), refreshPlans(), refreshIdeas()]);
     },
   };
 }

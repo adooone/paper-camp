@@ -1,3 +1,4 @@
+import { getPlansError, refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import { fetchCapabilitiesPayload } from '@/app/services/system';
 import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
@@ -60,8 +61,8 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
       try {
         await dropServerCaches().catch(() => {});
         await Promise.all([
-          get().loadPlans(),
-          get().loadIdeas(),
+          refreshPlans(),
+          refreshIdeas(),
           get().loadArchivableIdeas(),
           get().loadSuggestions(),
           get().loadNightReport(),
@@ -73,7 +74,7 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           get().loadAgentAuthStatus(),
         ]);
         // plansError is the one loader that surfaces failure; the rest swallow theirs.
-        const error = get().plansError;
+        const error = getPlansError();
         return error ? { ok: false, error } : { ok: true };
       } finally {
         set({ refreshing: false });
