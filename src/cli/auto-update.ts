@@ -27,9 +27,17 @@ export function resolveNpmCommand(
   return exists(voltaShim) ? voltaShim : 'npm';
 }
 
+/** Volta marks every process it launches with `_VOLTA_TOOL_RECURSION`, and its npm shim
+ *  skips global-install interception when it sees the mark — so the child loses it. */
+export function npmInstallEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const { _VOLTA_TOOL_RECURSION: _ignored, ...rest } = env;
+  return rest;
+}
+
 export function runNpmInstall(version: string): Promise<InstallResult> {
   return new Promise((resolve) => {
     const proc = spawn(resolveNpmCommand(), npmInstallArgs(version), {
+      env: npmInstallEnv(),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let output = '';

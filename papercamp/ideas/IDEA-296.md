@@ -28,7 +28,8 @@ the Paper Camp logo, *Paper Camp* in the display face, a thin separator, then
 the current project as a dropdown trigger — its icon, its name, and a small
 down chevron — built on paper-ui's `Menu`. The dropdown lists every project
 this browser knows, grouped under each machine's host name (the group heading
-appears only when there is more than one machine). Each row shows the project
+appears only when there is more than one machine), machines and projects in
+alphabetical order so the list never reshuffles when the project changes. Each row shows the project
 name, with a check on the current one and a muted *running* when an agent is
 working there. A project on an asleep or unreachable machine is listed disabled
 with *asleep*. Choosing a project opens it the way the welcome screen's rows do

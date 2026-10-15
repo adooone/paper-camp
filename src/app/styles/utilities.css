@@ -80,20 +80,20 @@ header > div[class*="headerActions"] {
 /*
  * The Stack panel's docked width (stack-panel.tsx) and the root wrapper's
  * `pr` reservation (router.tsx) must agree or the panel either gaps from or
- * overlaps the page edge — one variable both read instead of the 480px
+ * overlaps the page edge — one variable both read instead of a width
  * literal duplicated across files. A continuous clamp here meant the width
  * was never the same twice, so it never settled; three fixed steps instead.
  * Below the phone breakpoint (480px) the panel is a full-screen overlay.
- * Below THREE_COLUMN_BREAKPOINT (1199px, router.tsx) it isn't docked but is
- * still an overlay, at 60% of the full width (288px). Above that it's
- * docked, but stays at 288 until there's enough viewport to grow to the
- * full 480 without taking it from the page: 1199 + (480 - 288) = 1391px.
+ * Below THREE_COLUMN_BREAKPOINT (1199px, nav.tsx) it isn't docked but is
+ * still an overlay, 288px wide. Above that it's docked at 288 until there's
+ * room to grow to 360 without taking it from the page: 1199 + (360 - 288) = 1271px.
+ * 360 is as wide as its cards ever use; past that the panel was only dead space.
  */
 :root {
   --pc-stack-width: 288px;
   /* Section padding rides the same breakpoint: at 288px the panel can't spare
      2×1.5rem, so its sections tighten to 16px and hand the difference back to
-     content. It relaxes only once the panel widens to 480. */
+     content. It relaxes only once the panel widens to 360. */
   --pc-stack-pad: 16px;
 }
 @media (max-width: 480px) {
@@ -101,9 +101,9 @@ header > div[class*="headerActions"] {
     --pc-stack-width: 100vw;
   }
 }
-@media (min-width: 1391px) {
+@media (min-width: 1271px) {
   :root {
-    --pc-stack-width: 480px;
+    --pc-stack-width: 360px;
     --pc-stack-pad: 1.5rem;
   }
 }

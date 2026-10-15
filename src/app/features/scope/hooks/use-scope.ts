@@ -142,25 +142,30 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
     };
   }, [urlsKey, countKind, currentRuntimeUrl]);
 
-  const groups: ScopeGroup[] = allMachines.map((machine) => ({
-    machineUrl: machine.machineUrl,
-    host: machine.host,
-    asleep: machine.reach === 'unreachable',
-    rows: machine.projects.map((project): ScopeRow => {
-      const key = scopeKey(project.slug, machine.host);
-      return {
-        key,
-        runtimeUrl: project.runtimeUrl,
-        slug: project.slug,
-        name: project.packageName ?? project.label ?? project.slug,
-        isCurrent: project.runtimeUrl === currentRuntimeUrl,
-        checked: scopeSet.has(key),
-        count: counts[project.runtimeUrl] ?? null,
-        machineUrl: machine.machineUrl,
-        project,
-      };
-    }),
-  }));
+  // Alphabetical, not the hub's recency order, so switching project never reshuffles the list.
+  const groups: ScopeGroup[] = [...allMachines]
+    .sort((a, b) => a.host.localeCompare(b.host))
+    .map((machine) => ({
+      machineUrl: machine.machineUrl,
+      host: machine.host,
+      asleep: machine.reach === 'unreachable',
+      rows: machine.projects
+        .map((project): ScopeRow => {
+          const key = scopeKey(project.slug, machine.host);
+          return {
+            key,
+            runtimeUrl: project.runtimeUrl,
+            slug: project.slug,
+            name: project.packageName ?? project.label ?? project.slug,
+            isCurrent: project.runtimeUrl === currentRuntimeUrl,
+            checked: scopeSet.has(key),
+            count: counts[project.runtimeUrl] ?? null,
+            machineUrl: machine.machineUrl,
+            project,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    }));
 
   function setScope(next: ScopeKey[]): void {
     navigate({

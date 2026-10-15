@@ -55,10 +55,17 @@ const messageFor = (attempt: Attempt): ReactNode => {
         </>
       );
     case 'failed':
-      return (
+      // Reachable, yet no readable answer: an old daemon's 404 carries no CORS headers.
+      return attempt.httpStatus ? (
         <>
-          Couldn't pair with {hostLabel(attempt.host)}
-          {attempt.httpStatus ? ` (error ${attempt.httpStatus})` : ''}. Try again in a moment.
+          Couldn't pair with {hostLabel(attempt.host)} (error {attempt.httpStatus}). Try again in a
+          moment.
+        </>
+      ) : (
+        <>
+          {hostLabel(attempt.host)} didn't answer the pairing request — it most likely runs an older
+          paper-camp. Run <code>paper-camp update</code> there, restart the daemon, and try again
+          with a new code.
         </>
       );
     default:

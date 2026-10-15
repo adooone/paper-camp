@@ -8,11 +8,19 @@ import {
   checkForUpdateAtBoot,
   installedVersionAt,
   npmInstallArgs,
+  npmInstallEnv,
   resolveNpmCommand,
   runNpmInstall,
   skipsUpdateCheck,
   spawnRestart,
 } from './auto-update';
+
+describe('npmInstallEnv', () => {
+  it("drops Volta's recursion mark so its npm shim installs into Volta's image", () => {
+    const env = npmInstallEnv({ _VOLTA_TOOL_RECURSION: '1', PATH: '/bin', HOME: '/home/x' });
+    expect(env).toEqual({ PATH: '/bin', HOME: '/home/x' });
+  });
+});
 
 describe('npmInstallArgs', () => {
   it('installs the exact version globally from the scoped package', () => {
@@ -23,9 +31,12 @@ describe('npmInstallArgs', () => {
 describe('npm binary stubbing', () => {
   const dirs: string[] = [];
   const originalPath = process.env.PATH;
+  const originalVoltaHome = process.env.VOLTA_HOME;
 
   afterEach(async () => {
     process.env.PATH = originalPath;
+    if (originalVoltaHome === undefined) Reflect.deleteProperty(process.env, 'VOLTA_HOME');
+    else process.env.VOLTA_HOME = originalVoltaHome;
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
     dirs.length = 0;
   });
@@ -36,6 +47,8 @@ describe('npm binary stubbing', () => {
     const binPath = join(dir, 'npm');
     await writeFile(binPath, `#!/bin/sh\n${script}\n`, { mode: 0o755 });
     process.env.PATH = `${dir}:${originalPath}`;
+    // A machine with Volta would otherwise run its real npm shim instead of this stub.
+    process.env.VOLTA_HOME = dir;
   }
 
   describe('runNpmInstall', () => {
@@ -54,6 +67,7 @@ describe('npm binary stubbing', () => {
 
     it('resolves not-ok when the npm binary is missing', async () => {
       process.env.PATH = '';
+      process.env.VOLTA_HOME = tmpdir();
       const result = await runNpmInstall('0.29.1');
       expect(result.ok).toBe(false);
     });
