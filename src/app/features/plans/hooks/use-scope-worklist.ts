@@ -1,37 +1,9 @@
 import type { ScopeRow } from '@/app/features/scope';
 import { fetchIdeasAt } from '@/app/services/content/ideas-api';
 import { fetchPlansAt } from '@/app/services/content/plans-api';
-import type { IdeaEntry, PlanEntry } from '@/types/index';
-import { useEffect, useState } from 'react';
+import { ideasQueryKey, plansQueryKey } from '@/app/services/query-client';
+import { useQueries } from '@tanstack/react-query';
 import { type PlanListFilters, type WorklistRow, selectWorklistRows } from '../helpers';
-
-interface ProjectData {
-  plans: PlanEntry[];
-  ideas: IdeaEntry[];
-}
-
-/** Holds every project's last-fetched rows for the page's lifetime (IDEA-298);
- * replaced by the shared query cache in IDEA-299. */
-const scopeProjectDataCache = new Map<string, ProjectData>();
-
-export function cachedScopeProjectData(urls: string[]): Record<string, ProjectData> {
-  const cached: Record<string, ProjectData> = {};
-  for (const url of urls) {
-    const projectData = scopeProjectDataCache.get(url);
-    if (projectData) cached[url] = projectData;
-  }
-  return cached;
-}
-
-export async function loadScopeProjectData(runtimeUrl: string): Promise<ProjectData> {
-  const [plansResult, ideasResult] = await Promise.all([
-    fetchPlansAt(runtimeUrl),
-    fetchIdeasAt(runtimeUrl),
-  ]);
-  const projectData = { plans: plansResult?.entries ?? [], ideas: ideasResult?.entries ?? [] };
-  scopeProjectDataCache.set(runtimeUrl, projectData);
-  return projectData;
-}
 
 export interface ScopeWorklistResult {
   rows: WorklistRow[];
@@ -46,33 +18,29 @@ export const useScopeWorklist = (
   otherProjects: ScopeRow[],
   filters: PlanListFilters,
 ): ScopeWorklistResult => {
-  const key = otherProjects.map((p) => p.runtimeUrl).join('\n');
-  const [data, setData] = useState<Record<string, ProjectData>>(() =>
-    cachedScopeProjectData(key === '' ? [] : key.split('\n')),
-  );
+  const plansQueries = useQueries({
+    queries: otherProjects.map((project) => ({
+      queryKey: plansQueryKey(project.runtimeUrl),
+      queryFn: async () => (await fetchPlansAt(project.runtimeUrl)) ?? { entries: [] },
+    })),
+  });
+  const ideasQueries = useQueries({
+    queries: otherProjects.map((project) => ({
+      queryKey: ideasQueryKey(project.runtimeUrl),
+      queryFn: async () => (await fetchIdeasAt(project.runtimeUrl))?.entries ?? [],
+    })),
+  });
 
-  useEffect(() => {
-    const urls = key === '' ? [] : key.split('\n');
-    setData(cachedScopeProjectData(urls));
-    if (urls.length === 0) return;
-    let cancelled = false;
-    for (const runtimeUrl of urls) {
-      loadScopeProjectData(runtimeUrl).then((projectData) => {
-        if (!cancelled) setData((prev) => ({ ...prev, [runtimeUrl]: projectData }));
-      });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [key]);
-
-  const rows = otherProjects.flatMap((project) => {
-    const projectData = data[project.runtimeUrl];
-    if (!projectData) return [];
-    const { rows: projectRows } = selectWorklistRows(projectData.plans, projectData.ideas, filters);
+  const rows = otherProjects.flatMap((project, index) => {
+    const plans = plansQueries[index]?.data;
+    const ideas = ideasQueries[index]?.data;
+    if (!plans || !ideas) return [];
+    const { rows: projectRows } = selectWorklistRows(plans.entries, ideas, filters);
     return projectRows.map((row) => ({ ...row, project }));
   });
-  const pendingProjects = otherProjects.filter((project) => !data[project.runtimeUrl]);
+  const pendingProjects = otherProjects.filter(
+    (_project, index) => !plansQueries[index]?.data || !ideasQueries[index]?.data,
+  );
 
   return { rows, pendingProjects };
 };

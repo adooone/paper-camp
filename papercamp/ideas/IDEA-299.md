@@ -84,9 +84,10 @@ the store.
       every `loadPlans`/`loadIdeas` caller switched to `refreshPlans`/
       `refreshIdeas`, skeleton only without data; tests updated.
       run: 14m50s · 322 in · 62.6k out · sonnet-5 · sess:15e2f1e3-8d2f-4cac-b649-4f9b0cf5cf0a
-- [ ] Share the cache with other projects' rows
+- [x] Share the cache with other projects' rows
       `useScopeWorklist` on `useQueries` with the same keys, still returning
       the loading projects; the IDEA-298 map removed.
+      run: 2m58s · 64 in · 10.6k out · sonnet-5 · sess:6c20742a-c65f-4b94-a5b7-319fcd8ea2de
 - [ ] Read the header name from the cache
       `useProjectIdentity` on the `package-name` query.
 
