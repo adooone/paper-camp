@@ -22,7 +22,6 @@ import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
 import {
   Button,
-  Divider,
   IconButton,
   Layout,
   SidebarCard,
@@ -144,7 +143,6 @@ export const AppShell = () => {
             <span className="font-display-luminari font-semibold text-sm whitespace-nowrap shrink-0">
               Paper Camp
             </span>
-            <Divider orientation="vertical" className="h-5" />
             <ProjectSwitcher />
             <nav aria-label="Main navigation" className="flex items-center gap-1 ml-auto">
               {navItems.map((item) => (

@@ -1,10 +1,10 @@
 import { useHubMachines } from '@/app/features/hub';
+import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { runtimeConnection } from '@/app/services/runtime-connection';
 import { Button, CheckIcon, ChevronRightIcon, Menu, type MenuEntry } from '@dendelion/paper-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { HUB_PATH } from './nav';
-import { ProjectIdentityHeader } from './project-identity-header';
 
 function rowLabel(row: HubProjectRow): string {
   return row.label ?? row.slug;
@@ -17,6 +17,7 @@ function machineAsleep(machine: HubMachine): boolean {
 export const ProjectSwitcherMenu = () => {
   const navigate = useNavigate();
   const { machines, chosenRuntimeUrls, openRow } = useHubMachines();
+  const { projectName, loading } = useProjectIdentity();
 
   const groups = machines
     .map((machine) => ({
@@ -75,10 +76,14 @@ export const ProjectSwitcherMenu = () => {
   return (
     <Menu
       trigger={
-        <Button variant="ghost" size="small" className="flex items-center gap-1 min-w-0">
-          <ProjectIdentityHeader size="sm" />
-          <span className="inline-flex rotate-90 opacity-60 shrink-0">
-            <ChevronRightIcon size={12} />
+        <Button variant="ghost" size="small" className="min-w-0">
+          <span className="inline-flex min-w-0 items-center gap-1 whitespace-nowrap">
+            <span className="truncate font-handwritten text-base">
+              {loading ? 'Loading…' : (projectName ?? 'Choose a project')}
+            </span>
+            <span className="inline-flex shrink-0 rotate-90 opacity-60">
+              <ChevronRightIcon size={12} />
+            </span>
           </span>
         </Button>
       }

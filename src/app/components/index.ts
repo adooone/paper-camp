@@ -10,7 +10,6 @@ export { HANDWRITTEN_ACTION_CLASS, SidebarAction } from './sidebar-action';
 export { SidebarSection } from './sidebar-section';
 export { StackPanel } from './stack-panel';
 export { NightCriticalBanner } from './layout/night-critical-banner';
-export { ProjectIdentityHeader } from './layout/project-identity-header';
 export { ProjectSwitcher } from './layout/project-switcher';
 export { RowSkeleton } from './layout/row-skeleton';
 export { SidebarSkeleton } from './layout/sidebar-skeleton';
