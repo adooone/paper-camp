@@ -1,36 +1,45 @@
+import { packageNameQueryKey } from '@/app/services/query-client';
+import { runtimeConnection } from '@/app/services/runtime-connection';
 import { fetchIconDataUri, fetchPackageName, projectDisplayName } from '@/app/services/system';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 export interface ProjectIdentity {
   projectName: string | null;
   iconDataUri: string | null;
-  loading: boolean;
+  nameLoading: boolean;
+  iconLoading: boolean;
 }
 
 export const useProjectIdentity = (): ProjectIdentity => {
-  const [projectName, setProjectName] = useState<string | null>(null);
+  const { data: packageName, isLoading: nameLoading } = useQuery({
+    queryKey: packageNameQueryKey(runtimeConnection.runtimeUrl),
+    queryFn: fetchPackageName,
+  });
   const [iconDataUri, setIconDataUri] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [iconLoading, setIconLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    setIconLoading(true);
 
-    Promise.all([
-      fetchPackageName().then((name) => {
-        if (!cancelled && name) setProjectName(projectDisplayName(name));
-      }),
-      fetchIconDataUri().then((uri) => {
+    fetchIconDataUri()
+      .then((uri) => {
         if (!cancelled) setIconDataUri(uri);
-      }),
-    ]).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+      })
+      .finally(() => {
+        if (!cancelled) setIconLoading(false);
+      });
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return { projectName, iconDataUri, loading };
+  return {
+    projectName: packageName ? projectDisplayName(packageName) : null,
+    iconDataUri,
+    nameLoading,
+    iconLoading,
+  };
 };

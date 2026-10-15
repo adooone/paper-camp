@@ -54,6 +54,10 @@ export function ideasQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'ideas');
 }
 
+export function packageNameQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'package-name');
+}
+
 export function getCachedPlans(): ParseResult<PlanEntry> | null {
   return (
     queryClient.getQueryData<ParseResult<PlanEntry>>(plansQueryKey(runtimeConnection.runtimeUrl)) ??

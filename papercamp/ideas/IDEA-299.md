@@ -2,7 +2,7 @@
 id: IDEA-299
 title: Keep each project's data across switches
 type: feat
-status: planned
+status: review
 created: 2026-10-15
 tags:
   - app
@@ -88,8 +88,9 @@ the store.
       `useScopeWorklist` on `useQueries` with the same keys, still returning
       the loading projects; the IDEA-298 map removed.
       run: 2m58s · 64 in · 10.6k out · sonnet-5 · sess:6c20742a-c65f-4b94-a5b7-319fcd8ea2de
-- [ ] Read the header name from the cache
+- [x] Read the header name from the cache
       `useProjectIdentity` on the `package-name` query.
+      run: 3m25s · 66 in · 11.6k out · sonnet-5 · sess:6c20742a-c65f-4b94-a5b7-319fcd8ea2de
 
 ### Thread
 - [x] 2026-10-15 [log] [agent] Run order: Builds the shared TanStack Query cache that IDEA-298's map is replaced by and that IDEA-300 explicitly depends on for per-project query keys and boot reads.
