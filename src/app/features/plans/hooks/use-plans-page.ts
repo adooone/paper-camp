@@ -4,7 +4,9 @@ import {
   useActiveIdea,
   useActiveNightChunk,
   useActivePlan,
+  useIdeas,
   useOpenEntity,
+  usePlans,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
@@ -14,9 +16,8 @@ import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_GROUP_MODE, type GroupMode, isGroupMode } from '../helpers';
 
 export const usePlansPage = () => {
-  const plans = useAppStore((s) => s.plans);
-  const plansError = useAppStore((s) => s.plansError);
-  const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const { plans, plansError } = usePlans();
+  const ideaEntries = useIdeas();
   const suggestions = useAppStore((s) => s.suggestions);
   const nightReport = useAppStore((s) => s.nightReport);
   const setDetailView = useAppStore((s) => s.setDetailView);

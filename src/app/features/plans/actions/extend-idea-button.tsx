@@ -1,4 +1,5 @@
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
+import { getCachedIdeas } from '@/app/services/query-client';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
@@ -23,7 +24,7 @@ export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const handleClick = () => {
     if (!ideaId) return;
     run(async () => {
-      const latest = useAppStore.getState().ideaEntries.find((e) => e.id === ideaId);
+      const latest = getCachedIdeas().find((e) => e.id === ideaId);
       // Throw, don't return: a bare return resolves the run() callback normally, so
       // useActionFeedback would flash success even though the extend never launched.
       if (!latest) throw new Error(`Idea ${ideaId} not found`);

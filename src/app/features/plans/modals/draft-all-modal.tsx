@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { usePlans } from '@/app/hooks';
 import type { PlanEntry } from '@/types/index';
 import { Button, Checkbox, Modal } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
@@ -12,7 +12,8 @@ interface DraftAllModalProps {
 type DraftCandidate = PlanEntry & { id: string };
 
 export const DraftAllModal = ({ open, onClose, onConfirm }: DraftAllModalProps) => {
-  const planEntries = useAppStore((s) => s.plans?.entries ?? []);
+  const { plans } = usePlans();
+  const planEntries = plans?.entries ?? [];
   const [candidates, setCandidates] = useState<DraftCandidate[]>([]);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);

@@ -1,7 +1,6 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { entityRouteParam, useOpenEntity, useSimilarIdeas } from '@/app/hooks';
+import { entityRouteParam, useOpenEntity, usePlans, useSimilarIdeas } from '@/app/hooks';
 import { checkIdeaOverlap } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
 import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
@@ -33,7 +32,8 @@ export const CreateIdeaModal = ({ open, onClose, onAdd, initialContent }: Create
   const [checkingOverlap, setCheckingOverlap] = useState(false);
   const [overlapVerdict, setOverlapVerdict] = useState<OverlapVerdict | null>(null);
   const [overlapError, setOverlapError] = useState<string | null>(null);
-  const planEntries = useAppStore((s) => s.plans?.entries ?? []);
+  const { plans } = usePlans();
+  const planEntries = plans?.entries ?? [];
   const { patch } = usePlanStatusPatch();
   const navigate = useNavigate();
   const openEntity = useOpenEntity();

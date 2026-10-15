@@ -1,6 +1,7 @@
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import type { ActiveNightChunk } from '@/app/hooks';
 import { entityRouteParam } from '@/app/hooks';
+import { getCachedIdeas } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { nightFindingKey, sortedFindings } from '@/core/night-findings';
@@ -49,7 +50,7 @@ const FindingActions = ({ finding }: { finding: NightSuggestionEntry }) => {
     setPromoting(true);
     try {
       const id = await promoteNightFinding(finding);
-      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === id);
+      const idea = getCachedIdeas().find((e) => e.id === id);
       if (idea) {
         try {
           await launchIdeaExtend(id, buildSuggestionPromotePrompt(idea));

@@ -4,6 +4,7 @@ import {
   useActiveNightChunk,
   useActivePlan,
   useActiveRoadmapItem,
+  usePlans,
   useResolvedDocSection,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
@@ -19,7 +20,7 @@ export const PageBreadcrumb = () => {
   const activeIdea = useActiveIdea();
   const activeChunk = useActiveNightChunk();
   const activeRoadmapItem = useActiveRoadmapItem();
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   const activeDocSection = useResolvedDocSection();
   const activeDocTitle = useAppStore((s) => s.activeDocTitle);
   const activeLogEntryTitle = useAppStore((s) => s.activeLogEntryTitle);

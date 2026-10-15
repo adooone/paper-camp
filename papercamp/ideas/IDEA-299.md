@@ -4,6 +4,7 @@ title: Keep each project's data across switches
 type: feat
 status: review
 created: 2026-10-15
+updated: 2026-10-15
 tags:
   - app
   - multi-project
@@ -91,6 +92,7 @@ the store.
 - [x] Read the header name from the cache
       `useProjectIdentity` on the `package-name` query.
       run: 3m25s · 66 in · 11.6k out · sonnet-5 · sess:6c20742a-c65f-4b94-a5b7-319fcd8ea2de
+- [x] [manual] Migrate plans and ideas to TanStack Query caching
 
 ### Thread
 - [x] 2026-10-15 [log] [agent] Run order: Builds the shared TanStack Query cache that IDEA-298's map is replaced by and that IDEA-300 explicitly depends on for per-project query keys and boot reads.

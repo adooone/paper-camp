@@ -1,12 +1,13 @@
 import { SidebarAction, SidebarSection } from '@/app/components';
 import { CheckboxFilterRow } from '@/app/components';
+import { usePlans } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { SidebarLabel } from '@dendelion/folk-ui';
 import { STATUS_LABEL } from '../constants';
 import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
 
 export const StatusFilters = () => {
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const clearPlanStatusFilter = useAppStore((s) => s.clearPlanStatusFilter);

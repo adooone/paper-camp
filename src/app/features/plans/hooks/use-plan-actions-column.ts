@@ -1,4 +1,4 @@
-import { useActivePlan, useSubjectVocabulary } from '@/app/hooks';
+import { useActivePlan, usePlans, useSubjectVocabulary } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
@@ -16,7 +16,7 @@ export const usePlanActionsColumn = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitStatus = useAppStore((s) => s.gitStatus);
-  const allPlans = useAppStore((s) => s.plans);
+  const { plans: allPlans } = usePlans();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);

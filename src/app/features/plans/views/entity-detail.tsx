@@ -3,6 +3,8 @@ import {
   useRunningPhaseFill,
   useSendFeedbackMessage,
 } from '@/app/features/plans/hooks';
+import { usePlans } from '@/app/hooks';
+import { refreshPlans } from '@/app/services/query-client';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
@@ -36,8 +38,7 @@ interface EntityDetailProps {
 }
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
-  const allPlans = useAppStore((s) => s.plans);
-  const loadPlans = useAppStore((s) => s.loadPlans);
+  const { plans: allPlans } = usePlans();
   const { toast } = useToast();
   const { patch: patchByTitle, updating } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -100,7 +101,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     undo: feedbackUndo,
     undoing: undoingFeedback,
     undoEdit,
-  } = useSendFeedbackMessage(plan, { reload: loadPlans, notify: toast });
+  } = useSendFeedbackMessage(plan, { reload: refreshPlans, notify: toast });
 
   return (
     <div>

@@ -1,4 +1,5 @@
 import { usePlanStatusPatch } from '@/app/features/plans/hooks';
+import { usePlans } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useRef } from 'react';
@@ -7,7 +8,7 @@ import { ReconcileDiffPanel } from '../modals';
 export const ReconcileQueueReview = () => {
   const reconcileQueue = useAppStore((s) => s.reconcileQueue);
   const removeFromReconcileQueue = useAppStore((s) => s.removeFromReconcileQueue);
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   const { patch } = usePlanStatusPatch();
   const { toast } = useToast();
   // Counts dismissed previews so the header reads "2 of 3" — the queue only knows what's pending.

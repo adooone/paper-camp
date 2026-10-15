@@ -1,4 +1,5 @@
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
+import { getCachedIdeas } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { SuggestionEntry } from '@/types/index';
@@ -32,7 +33,7 @@ export const PromoteSuggestionModal = ({ suggestion, onClose }: PromoteSuggestio
     setError(null);
     try {
       const id = await promoteSuggestion(suggestion);
-      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === id);
+      const idea = getCachedIdeas().find((e) => e.id === id);
       if (idea) {
         try {
           await launchIdeaExtend(id, buildSuggestionPromotePrompt(idea));

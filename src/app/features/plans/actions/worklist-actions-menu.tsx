@@ -1,3 +1,4 @@
+import { useIdeas } from '@/app/hooks';
 import { selectAgentBusy, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import {
@@ -23,7 +24,7 @@ export const WorklistActionsMenu = () => {
   const launchBatchDraft = useAppStore((s) => s.launchBatchDraft);
   const launchPrioritise = useAppStore((s) => s.launchPrioritise);
   const refreshAll = useAppStore((s) => s.refreshAll);
-  const ideaEntries = useAppStore((s) => s.ideaEntries);
+  const ideaEntries = useIdeas();
   const suggestions = useAppStore((s) => s.suggestions);
   const agentBusy = useAppStore(selectAgentBusy);
   const hasAgent = useAppStore(selectHasAnyAgent);

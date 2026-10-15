@@ -18,7 +18,7 @@ import type { TaskTypeKey } from '../constants';
 export const useSettingsPage = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [config, setConfig] = useState<PaperCampConfig | null | undefined>(undefined);
-  const { iconDataUri: fetchedIconDataUri, loading: identityLoading } = useProjectIdentity();
+  const { iconDataUri: fetchedIconDataUri, iconLoading: identityLoading } = useProjectIdentity();
   const [uploadedIconDataUri, setUploadedIconDataUri] = useState<string | null>(null);
   const iconDataUri = uploadedIconDataUri ?? fetchedIconDataUri;
   const [uploading, setUploading] = useState(false);

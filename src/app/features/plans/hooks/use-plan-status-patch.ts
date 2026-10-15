@@ -1,12 +1,11 @@
 import { updatePlan } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshPlans } from '@/app/services/query-client';
 import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 // Shared by plan-actions-column.tsx and the review queue so approve/reject/dropped
 // go through one updatePlan + reload + error-toast path instead of each caller reimplementing it.
 export const usePlanStatusPatch = () => {
-  const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
@@ -18,7 +17,7 @@ export const usePlanStatusPatch = () => {
     setUpdating(true);
     try {
       await updatePlan(title, updates);
-      await loadPlans();
+      await refreshPlans();
       return true;
     } catch (err) {
       // e.g. the 409 branch-conflict guard when approving/closing off the plan's

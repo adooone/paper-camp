@@ -1,6 +1,6 @@
 import { entityLink } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshPlans } from '@/app/services/query-client';
 import type { PlanEntry } from '@/types/index';
 import { SectionHeading } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -16,7 +16,6 @@ interface TicketsSectionProps {
 
 export const TicketsSection = ({ plan, otherPlans }: TicketsSectionProps) => {
   const navigate = useNavigate();
-  const loadPlans = useAppStore((s) => s.loadPlans);
   // Run-order rank, so the board lists its tickets in the order they should be worked.
   // An unranked ticket (not in the queue) sorts after every ranked one.
   const tickets = otherPlans
@@ -30,7 +29,7 @@ export const TicketsSection = ({ plan, otherPlans }: TicketsSectionProps) => {
   const handleAddTicket = async (title: string) => {
     if (!plan.id) return;
     await createTicket({ boardId: plan.id, title });
-    await loadPlans();
+    await refreshPlans();
   };
   return (
     <div className="mb-8">

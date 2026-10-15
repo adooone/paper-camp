@@ -17,7 +17,7 @@ function machineAsleep(machine: HubMachine): boolean {
 export const ProjectSwitcherMenu = () => {
   const navigate = useNavigate();
   const { machines, openRow } = useHubMachines();
-  const { projectName, loading } = useProjectIdentity();
+  const { projectName, nameLoading } = useProjectIdentity();
 
   const groups = machines
     .map((machine) => ({
@@ -78,7 +78,7 @@ export const ProjectSwitcherMenu = () => {
         <Button variant="ghost" size="small" className="min-w-0">
           <span className="inline-flex min-w-0 items-center gap-1 whitespace-nowrap">
             <span className="truncate pr-1 font-handwritten text-base leading-normal">
-              {loading ? 'Loading…' : (projectName ?? 'Choose a project')}
+              {nameLoading ? 'Loading…' : (projectName ?? 'Choose a project')}
             </span>
             <span className="inline-flex shrink-0 rotate-90 opacity-60">
               <ChevronRightIcon size={12} />

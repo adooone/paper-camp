@@ -5,6 +5,7 @@ import {
   pushChanges,
   resolveConflict,
 } from '@/app/services/git-api';
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { Button, useToast } from '@dendelion/folk-ui';
@@ -41,15 +42,13 @@ function useTrackedAction(kind: GitAction, failTitle: string) {
 
 export function useBranchSync() {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
-  const loadPlans = useAppStore((s) => s.loadPlans);
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const loadGitLog = useAppStore((s) => s.loadGitLog);
   const gitActionBusy = useAppStore((s) => s.activeGitAction !== null);
   const { toast, dismiss } = useToast();
   // Sync/pull can bring upstream commits, so refresh plans/ideas too — git-status alone would leave them stale.
   const refreshAfterUpstream = () =>
-    Promise.all([loadGitStatus(), loadPlans(), loadIdeas(), loadDiffFiles(), loadGitLog()]);
+    Promise.all([loadGitStatus(), refreshPlans(), refreshIdeas(), loadDiffFiles(), loadGitLog()]);
 
   const [pushing, runPush] = useTrackedAction('push', 'Push failed');
   const [pulling, runPull] = useTrackedAction('pull', 'Pull failed');

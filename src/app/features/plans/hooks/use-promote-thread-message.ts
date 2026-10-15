@@ -1,6 +1,6 @@
 import { promoteFeedbackMessage } from '@/app/services/agent-api';
 import { createIdea } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshPlans } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
@@ -9,7 +9,6 @@ import { useState } from 'react';
 // Distillation: turns one ephemeral `chat` thread message into a durable
 // decision/log entry, or into a whole new idea entity — see IDEA-130 phase 4.
 export const usePromoteThreadMessage = (plan: PlanEntry) => {
-  const loadPlans = useAppStore((s) => s.loadPlans);
   const { toast } = useToast();
   const [promotingIndex, setPromotingIndex] = useState<number | null>(null);
 
@@ -18,7 +17,7 @@ export const usePromoteThreadMessage = (plan: PlanEntry) => {
     setPromotingIndex(index);
     try {
       await promoteFeedbackMessage(plan.id, index, target);
-      await loadPlans();
+      await refreshPlans();
     } catch (err) {
       toast({
         title: 'Promote failed',
@@ -45,7 +44,7 @@ export const usePromoteThreadMessage = (plan: PlanEntry) => {
         'log',
         `Captured as ${newId}: ${idea.title}`,
       ).catch(() => {});
-      await loadPlans();
+      await refreshPlans();
       return true;
     } catch (err) {
       toast({

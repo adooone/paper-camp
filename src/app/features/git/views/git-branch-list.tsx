@@ -1,6 +1,7 @@
 import { SidebarSection } from '@/app/components';
 import { useOpenEntity } from '@/app/hooks';
 import { checkoutBranch, fetchGitBranches } from '@/app/services/git-api';
+import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { GitBranch } from '@/types/index';
@@ -27,7 +28,6 @@ export const GitBranchList = () => {
   const loadGitStatus = useAppStore((s) => s.loadGitStatus);
   const loadDiffFiles = useAppStore((s) => s.loadDiffFiles);
   const loadGitLog = useAppStore((s) => s.loadGitLog);
-  const loadPlans = useAppStore((s) => s.loadPlans);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +51,7 @@ export const GitBranchList = () => {
     setSwitching(branch);
     try {
       await checkoutBranch(branch);
-      await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog(), loadPlans()]);
+      await Promise.all([loadGitStatus(), loadDiffFiles(), loadGitLog(), refreshPlans()]);
       toast({ title: `Switched to ${branch}`, variant: 'success' });
     } catch (err) {
       toast({

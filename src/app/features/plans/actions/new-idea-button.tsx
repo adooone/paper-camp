@@ -1,11 +1,10 @@
 import { createIdea } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshIdeas } from '@/app/services/query-client';
 import { Button, LightbulbIcon } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 export const NewIdeaButton = () => {
-  const loadIdeas = useAppStore((s) => s.loadIdeas);
   const [open, setOpen] = useState(false);
 
   const handleAdd = async (idea: {
@@ -14,7 +13,7 @@ export const NewIdeaButton = () => {
     kind?: 'idea' | 'note' | 'board';
   }) => {
     await createIdea(idea);
-    await loadIdeas();
+    await refreshIdeas();
     setOpen(false);
   };
 

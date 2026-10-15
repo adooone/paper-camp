@@ -1,5 +1,5 @@
 import { PlanIdStamp } from '@/app/features/plans/components';
-import { useAppStore } from '@/app/stores/app-store';
+import { usePlans } from '@/app/hooks';
 import { formatDuration } from '@/core/phase-run';
 import { logRowIdForTask } from '@/core/run-rows';
 import { AGENT_LABELS, type AgentTaskState, type LogRow } from '@/types/index';
@@ -21,7 +21,7 @@ function useElapsedMs(startedAt: string): number {
 
 const RunningRunCard = ({ task }: { task: AgentTaskState }) => {
   const navigate = useNavigate();
-  const plans = useAppStore((s) => s.plans);
+  const { plans } = usePlans();
   const elapsed = useElapsedMs(task.startedAt);
   const phaseCount = plans?.entries.find((p) => p.id === task.planId)?.phases.length;
   const latestLine = task.lines.at(-1)?.trim();

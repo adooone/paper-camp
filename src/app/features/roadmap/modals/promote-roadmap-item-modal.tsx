@@ -1,5 +1,6 @@
 import { buildRoadmapPromotePrompt } from '@/app/features/plans/prompts';
 import { useSubjectVocabulary } from '@/app/hooks/use-subject-vocabulary';
+import { getCachedIdeas } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { RoadmapItem } from '@/types/index';
@@ -52,7 +53,7 @@ export const PromoteRoadmapItemModal = ({
         subject === NO_SUBJECT ? undefined : subject,
         candidateName ?? undefined,
       );
-      const idea = useAppStore.getState().ideaEntries.find((e) => e.id === id);
+      const idea = getCachedIdeas().find((e) => e.id === id);
       if (idea) {
         try {
           await launchIdeaExtend(id, buildRoadmapPromotePrompt(idea, horizonTitle));
