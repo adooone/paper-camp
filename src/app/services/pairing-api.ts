@@ -1,5 +1,19 @@
 import { apiUrl } from './api-base';
 
+// A fresh --share tunnel can still be warming up when its link is first opened.
+export const PAIR_TIMEOUT_MS = 15_000;
+
+// A detached, hosted bundle pairs via its `?runtime=&token=` link, a persisted
+// token, or a header switch — timed so an unreachable tunnel can't hang forever.
+export async function pairWithToken(token: string): Promise<void> {
+  await fetch(apiUrl('/api/pair'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+    signal: AbortSignal.timeout(PAIR_TIMEOUT_MS),
+  }).catch(() => {});
+}
+
 export interface PairingInfo {
   hostedClientUrl: string;
   token: string;

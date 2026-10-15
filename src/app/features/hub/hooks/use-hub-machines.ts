@@ -1,4 +1,3 @@
-import { runtimeAdditionUrl } from '@/app/services/hub';
 import {
   type HubMachine,
   type HubMachineInput,
@@ -8,16 +7,17 @@ import {
   collectMachineUrls,
 } from '@/app/services/hub-machines';
 import { lastOpenedAt } from '@/app/services/last-route-store';
-import { listMachines, machineToken } from '@/app/services/machine-store';
+import { listMachines } from '@/app/services/machine-store';
 import { mountPrefix } from '@/app/services/mount';
+import { openProject } from '@/app/services/open-project';
 import {
   type ProjectEntry,
   listProjects,
   projectEntryId,
   renameProject,
-  selectProject,
 } from '@/app/services/project-registry';
 import { fetchMachineProjects } from '@/app/services/system';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useHubMachineReports } from './use-hub-machine-reports';
 import { useHubProjectStates } from './use-hub-project-states';
@@ -43,6 +43,8 @@ export interface UseHubMachinesResult {
  * this page is served from is folded in too, when it's a daemon root
  * (`paper-camp start`) rather than a hosted bundle under a mount prefix. */
 export function useHubMachines(): UseHubMachinesResult {
+  const navigate = useNavigate();
+  const router = useRouter();
   const [projects, setProjects] = useState<ProjectEntry[]>(() => listProjects(storage));
   const chosenRuntimeUrls = useMemo(() => projects.map(projectEntryId), [projects]);
 
@@ -94,17 +96,10 @@ export function useHubMachines(): UseHubMachinesResult {
     machines,
     chosenRuntimeUrls: chosenSet,
     openRow: (row, machineUrl, path) => {
-      const destination = path || mountPrefix || '/';
-      if (chosenSet.has(row.runtimeUrl)) {
-        selectProject(row.runtimeUrl, storage);
-        window.location.assign(destination);
-        return;
-      }
-      // Land on the project's own root, not on the hub path this click came from —
-      // adopting the runtime there leaves the reload sitting on the hub again.
-      window.location.assign(
-        runtimeAdditionUrl(destination, row.runtimeUrl, machineToken(machineUrl)),
-      );
+      void openProject(row, machineUrl, path, {
+        navigate: (opts) => navigate(opts as never),
+        routeExists: (pathname) => router.getMatchedRoutes(pathname).foundRoute !== undefined,
+      });
     },
     renameRow: (runtimeUrl, label) => {
       renameProject(runtimeUrl, label, storage);

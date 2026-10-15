@@ -93,9 +93,10 @@ roadmap, capacity and status onto queries.
       `resetProjectState()` restoring agent status, diff, task log, docs,
       roadmap, capacity, status and reconcile queue to initial values.
       run: 3m10s · 72 in · 17.3k out · sonnet-5 · sess:92430077-b8bd-4638-9182-33ae92f2112c
-- [ ] Switch in place from the header
+- [x] Switch in place from the header
       `openProject` adopting, switching, pairing, resetting, probing and
       navigating to the given or remembered route; no reload in the path.
+      run: 7m13s · 90 in · 38.5k out · sonnet-5 · sess:92430077-b8bd-4638-9182-33ae92f2112c
 - [ ] Resubscribe live streams on switch
       Current-runtime activity-stream subscriptions follow `switchRuntime`;
       stack panel, desk checks, notification push and Git page verified by

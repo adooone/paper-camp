@@ -5,7 +5,7 @@ import './styles/utilities.css';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
-import { apiUrl, setApiBase, setApiPairingToken } from './services/api-base';
+import { setApiBase, setApiPairingToken } from './services/api-base';
 import {
   hasChosenProject,
   machineProjectRuntimeUrl,
@@ -15,6 +15,7 @@ import {
 import { lastRouteFor } from './services/last-route-store';
 import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
+import { pairWithToken } from './services/pairing-api';
 import { listProjects, projectEntryId } from './services/project-registry';
 import { persistOptions, queryClient } from './services/query-client';
 import { getRuntimeConnection } from './services/runtime-connection';
@@ -27,19 +28,10 @@ const { runtimeUrl, pairingToken } = getRuntimeConnection();
 setApiBase(runtimeUrl || mountPrefix);
 setApiPairingToken(pairingToken);
 
-// A fresh --share tunnel can still be warming up when its link is first opened.
-const TUNNEL_WARMUP_TIMEOUT_MS = 15_000;
-
-// A detached, hosted bundle pairs via its `?runtime=&token=` link or a persisted
-// token, timed so an unreachable tunnel can't hang the boot sequence forever.
+// A detached, hosted bundle pairs via its `?runtime=&token=` link or a persisted token.
 async function pairIfNeeded(): Promise<void> {
   if (!runtimeUrl || !pairingToken) return;
-  await fetch(apiUrl('/api/pair'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: pairingToken }),
-    signal: AbortSignal.timeout(TUNNEL_WARMUP_TIMEOUT_MS),
-  }).catch(() => {});
+  await pairWithToken(pairingToken);
 }
 
 const rootElement = document.getElementById('root');
