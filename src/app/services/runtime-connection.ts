@@ -116,9 +116,8 @@ export function useRuntimeConnection(): RuntimeConnection {
   );
 }
 
-// Switches which project this running app talks to, without a reload: the
-// registry remembers the choice, api-base is repointed so every request after
-// this call lands on the new runtime, and subscribers re-render against it.
+// Switches which project this running app talks to, without a reload:
+// api-base is repointed and subscribers (incl. the activity stream) re-dial.
 export function switchRuntime(connection: RuntimeConnection): void {
   rememberRuntime(storage, connection);
   setApiBase(connection.runtimeUrl || mountPrefix);
