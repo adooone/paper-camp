@@ -1,4 +1,4 @@
-import { Alert, IconButton, Input, WandIcon } from '@dendelion/paper-ui';
+import { Alert, IconButton, Input, WandIcon } from '@dendelion/folk-ui';
 import { SignInAction } from '../sign-in-action';
 
 export interface CommitMessageFieldsState {

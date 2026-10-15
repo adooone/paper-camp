@@ -2,7 +2,7 @@ import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { runtimeConnection } from '@/app/services/runtime-connection';
-import { Button, CheckIcon, ChevronRightIcon, Menu, type MenuEntry } from '@dendelion/paper-ui';
+import { Button, CheckIcon, ChevronRightIcon, Menu, type MenuEntry } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { HUB_PATH } from './nav';
 

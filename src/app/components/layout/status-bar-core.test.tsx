@@ -1,4 +1,4 @@
-import { IconButton, Stamp } from '@dendelion/paper-ui';
+import { IconButton, Stamp } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { StatusBarCore, type StatusBarCoreProps } from './status-bar-core';

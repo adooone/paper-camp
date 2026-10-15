@@ -1,7 +1,7 @@
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
-import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/folk-ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 

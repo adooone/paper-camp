@@ -1,7 +1,7 @@
 import { fetchConfig, fetchToolbarHostState, saveConfig } from '@/app/services/system';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PaperCampConfig, ToolbarHostState } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 export const useToolbarSection = () => {

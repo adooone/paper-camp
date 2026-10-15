@@ -1,4 +1,4 @@
-import { Button, Modal } from '@dendelion/paper-ui';
+import { Button, Modal } from '@dendelion/folk-ui';
 
 interface ClearChatModalProps {
   open: boolean;

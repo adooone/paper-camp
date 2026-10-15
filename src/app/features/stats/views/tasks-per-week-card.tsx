@@ -1,6 +1,6 @@
 import type { ProjectStats } from '@/types/index';
-import { EmptyState, Progress } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
+import { EmptyState, Progress } from '@dendelion/folk-ui';
+import { color } from '@dendelion/folk-ui/tokens';
 import { StatCard, StatRow } from './stat-card';
 
 export interface TasksPerWeekCardProps {

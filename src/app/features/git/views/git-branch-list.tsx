@@ -4,7 +4,7 @@ import { checkoutBranch, fetchGitBranches } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { GitBranch } from '@/types/index';
-import { SidebarItem, SidebarLabel, Stamp, useToast } from '@dendelion/paper-ui';
+import { SidebarItem, SidebarLabel, Stamp, useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 const trackLabel = (branch: GitBranch): string | undefined => {

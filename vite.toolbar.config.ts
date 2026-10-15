@@ -4,7 +4,7 @@ import { resolve } from 'path';
 
 // A separate pass from vite.config.ts's lib build: the toolbar is a browser app
 // artifact embedded in a host page, not a downstream-consumed lib entry, so it
-// needs everything (react, react-dom, zustand, paper-ui) bundled in with no
+// needs everything (react, react-dom, zustand, folk-ui) bundled in with no
 // externals and NODE_ENV substituted, rather than left for a consumer's bundler.
 export default defineConfig({
   plugins: [react()],
@@ -34,8 +34,8 @@ export default defineConfig({
       '@cli': resolve(__dirname, './src/cli'),
       '@types': resolve(__dirname, './src/types'),
     },
-    // A locally-linked peer dependency (e.g. `pnpm add link:../paper-ui` while
-    // testing an unreleased paper-ui change) resolves react/react-dom from its
+    // A locally-linked peer dependency (e.g. `pnpm add link:../folk-ui` while
+    // testing an unreleased folk-ui change) resolves react/react-dom from its
     // OWN node_modules — a different real path than this package's copy, even
     // at the same version. Vite/Rollup dedupe by resolved path, not package
     // identity, so without this the bundle silently doubled both packages

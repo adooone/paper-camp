@@ -1,4 +1,4 @@
-import { color } from '@dendelion/paper-ui/tokens';
+import { color } from '@dendelion/folk-ui/tokens';
 
 export const sectionLabelClassName =
   'font-display-luminari text-base font-semibold text-desk-text-muted mb-3';

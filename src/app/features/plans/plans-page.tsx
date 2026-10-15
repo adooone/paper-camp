@@ -1,6 +1,6 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { useScope } from '@/app/features/scope';
-import { Card, EmptyState, PageTitle } from '@dendelion/paper-ui';
+import { Card, EmptyState, PageTitle } from '@dendelion/folk-ui';
 import { selectWorklistRows, sortWorklistRows } from './helpers';
 import { usePlansPage, useScopeWorklist } from './hooks';
 import { PromoteSuggestionModal } from './modals';

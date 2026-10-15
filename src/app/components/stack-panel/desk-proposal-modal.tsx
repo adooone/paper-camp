@@ -11,7 +11,7 @@ import {
   Stamp,
   Switch,
   UndoIcon,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface DeskProposalModalProps {

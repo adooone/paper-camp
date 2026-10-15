@@ -2,7 +2,7 @@ interface DoodleIllustrationProps {
   name: string;
 }
 
-// paper-ui has no illustration-fetch component; the doodle pack is a plain SVG file the
+// folk-ui has no illustration-fetch component; the doodle pack is a plain SVG file the
 // hosted client fetches, so a build without it (PAPERCAMP_ASSETS_URL unset) 404s quietly.
 export const DoodleIllustration = ({ name }: DoodleIllustrationProps) => (
   <img

@@ -10,7 +10,7 @@ import {
   ShuffleIcon,
   WandIcon,
   useToast,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { DraftAllModal } from '../modals/draft-all-modal';
 import { buildSuggestIdeasPrompt } from '../prompts';

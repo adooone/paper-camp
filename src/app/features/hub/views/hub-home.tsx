@@ -1,7 +1,7 @@
 import { resolveCurrentProject } from '@/app/features/scope/current-project';
 import { useProjectIdentity } from '@/app/hooks';
 import { runtimeConnection } from '@/app/services/runtime-connection';
-import { Button, Page, PageTitle } from '@dendelion/paper-ui';
+import { Button, Page, PageTitle } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AddMachineFooter } from '../components';
 import { useHubMachines } from '../hooks';

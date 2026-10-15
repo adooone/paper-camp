@@ -9,8 +9,8 @@ import {
   PageTitle,
   Stamp,
   Text,
-} from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import { ITEM_STATE_STAMP } from '../constants';
 import { type IdeaDateRange, formatFactDate } from '../helpers';
 import { AddCandidateForm } from './add-candidate-form';

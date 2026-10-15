@@ -1,5 +1,5 @@
 import { useTrail } from '@/app/features/plans/hooks';
-import { Skeleton } from '@dendelion/paper-ui';
+import { Skeleton } from '@dendelion/folk-ui';
 import { ProvenanceTrailPanel } from '../components';
 
 interface TrailSectionProps {

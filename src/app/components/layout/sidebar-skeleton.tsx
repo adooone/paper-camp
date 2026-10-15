@@ -1,4 +1,4 @@
-import { SidebarCard, Skeleton } from '@dendelion/paper-ui';
+import { SidebarCard, Skeleton } from '@dendelion/folk-ui';
 
 const LINES = [
   { key: 'a', width: '62%' },

@@ -11,14 +11,14 @@ import { describe, expect, it } from 'vitest';
 // colour/size computed from data at render time. Add it here with a one-line reason.
 const DYNAMIC_STYLE_ALLOWLIST = new Set([
   'components/stack-panel/stack-panel.tsx', // open/closed slide toggled via `transform`
-  'components/layout/app-shell.tsx', // paper-ui's Layout has no className prop, only style
-  'components/layout/status-bar-core.tsx', // paper-ui's getTextureStyles() has no className form
+  'components/layout/app-shell.tsx', // folk-ui's Layout has no className prop, only style
+  'components/layout/status-bar-core.tsx', // folk-ui's getTextureStyles() has no className form
   'features/plans/views/plan-rows.tsx', // highlight outline / merged-PR colour from tokens
   'features/plans/views/worklist-rows.tsx', // highlight outline colour from tokens
   'features/roadmap/views/roadmap-item-row.tsx', // highlight outline colour from tokens
   'components/charts/bar-chart.tsx', // label column width computed from bar count
   'components/charts/stacked-bar.tsx', // legend dot colour computed per segment
-  'components/git/deliver-bar.tsx', // paper-ui's getSurfaceStyles() has no className form
+  'components/git/deliver-bar.tsx', // folk-ui's getSurfaceStyles() has no className form
 ]);
 
 const APP_DIR = dirname(fileURLToPath(import.meta.url));

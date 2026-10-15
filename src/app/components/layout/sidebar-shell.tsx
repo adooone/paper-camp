@@ -1,4 +1,4 @@
-import { Drawer } from '@dendelion/paper-ui';
+import { Drawer } from '@dendelion/folk-ui';
 import { SIDEBAR_WIDTH } from './nav';
 
 interface SidebarShellProps {

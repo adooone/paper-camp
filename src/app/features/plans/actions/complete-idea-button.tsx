@@ -3,7 +3,7 @@ import { completeIdea } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { CheckIcon, SidebarItem, useToast } from '@dendelion/paper-ui';
+import { CheckIcon, SidebarItem, useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { completionGate } from '../helpers';
 

@@ -1,4 +1,4 @@
-import { RowSkeleton } from '@dendelion/paper-ui';
+import { RowSkeleton } from '@dendelion/folk-ui';
 import { PLAN_ROW_COLUMNS } from './plan-rows';
 
 const ROW_KEYS = ['a', 'b', 'c', 'd', 'e', 'f'];

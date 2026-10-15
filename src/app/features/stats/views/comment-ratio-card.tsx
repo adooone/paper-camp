@@ -1,6 +1,6 @@
 import type { ProjectStats } from '@/types/index';
-import { Progress } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
+import { Progress } from '@dendelion/folk-ui';
+import { color } from '@dendelion/folk-ui/tokens';
 import { pct } from '../helpers';
 import { StatCard, StatRow } from './stat-card';
 

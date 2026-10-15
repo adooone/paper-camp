@@ -1,5 +1,5 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Divider, EmptyState, Stamp, Switch } from '@dendelion/paper-ui';
+import { Alert, Divider, EmptyState, Stamp, Switch } from '@dendelion/folk-ui';
 import { SettingsHeader } from '../components/settings-header';
 import { NOTIFICATION_KIND_LABELS, PERMISSION_STAMP } from '../constants';
 import { useNotificationsSection } from '../hooks/use-notifications-section';

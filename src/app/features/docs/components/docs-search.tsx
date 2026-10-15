@@ -1,6 +1,6 @@
 import { DoodleIllustration } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, EmptyState } from '@dendelion/paper-ui';
+import { Button, EmptyState } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 interface SearchMatch {

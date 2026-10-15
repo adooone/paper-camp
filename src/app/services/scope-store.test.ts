@@ -25,30 +25,30 @@ describe('rememberScope / lastScopeFor', () => {
   });
 
   it('works without a storage backend', () => {
-    expect(() => rememberScope('http://localhost:4333', ['paper-ui@deimos'], null)).not.toThrow();
+    expect(() => rememberScope('http://localhost:4333', ['folk-ui@deimos'], null)).not.toThrow();
     expect(lastScopeFor('http://localhost:4333', null)).toEqual([]);
   });
 
   it('recalls the scope written under a runtime URL', () => {
     const storage = createStorage();
-    rememberScope('http://localhost:4333', ['paper-camp@deimos', 'paper-ui@deimos'], storage);
+    rememberScope('http://localhost:4333', ['paper-camp@deimos', 'folk-ui@deimos'], storage);
     expect(lastScopeFor('http://localhost:4333', storage)).toEqual([
       'paper-camp@deimos',
-      'paper-ui@deimos',
+      'folk-ui@deimos',
     ]);
   });
 
   it('keeps two projects apart, keyed by runtime URL', () => {
     const storage = createStorage();
-    rememberScope('http://localhost:4333', ['paper-ui@deimos'], storage);
+    rememberScope('http://localhost:4333', ['folk-ui@deimos'], storage);
     rememberScope('http://localhost:5000', ['paper-camp@deimos'], storage);
-    expect(lastScopeFor('http://localhost:4333', storage)).toEqual(['paper-ui@deimos']);
+    expect(lastScopeFor('http://localhost:4333', storage)).toEqual(['folk-ui@deimos']);
     expect(lastScopeFor('http://localhost:5000', storage)).toEqual(['paper-camp@deimos']);
   });
 
   it('clears the stored entry when remembering an empty scope', () => {
     const storage = createStorage();
-    rememberScope('http://localhost:4333', ['paper-ui@deimos'], storage);
+    rememberScope('http://localhost:4333', ['folk-ui@deimos'], storage);
     rememberScope('http://localhost:4333', [], storage);
     expect(lastScopeFor('http://localhost:4333', storage)).toEqual([]);
   });
@@ -70,7 +70,7 @@ describe('rememberScope / lastScopeFor', () => {
     } as unknown as Storage;
 
     expect(() =>
-      rememberScope('http://localhost:4333', ['paper-ui@deimos'], throwing),
+      rememberScope('http://localhost:4333', ['folk-ui@deimos'], throwing),
     ).not.toThrow();
     expect(lastScopeFor('http://localhost:4333', throwing)).toEqual([]);
   });

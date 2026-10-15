@@ -163,29 +163,29 @@ function papercampApi(): Plugin {
   };
 }
 
-const paperUiRoot = resolve(__dirname, '../paper-ui');
+const folkUiRoot = resolve(__dirname, '../folk-ui');
 
-// Local `file:../paper-ui` iteration: watches the built dist so a rebuilt
+// Local `file:../folk-ui` iteration: watches the built dist so a rebuilt
 // local package reaches the browser without restarting `pnpm dev`. CSS and JS
 // need separate handling — Vite's dependency pre-bundler (see
 // optimizeDeps.exclude below) never touches CSS, so the CSS half needed no
 // extra help beyond invalidating its module; the JS half is only reachable
 // at all once optimizeDeps stops freezing it into a cached pre-bundle.
-function watchPaperUi(): Plugin {
+function watchFolkUi(): Plugin {
   return {
-    name: 'watch-paper-ui',
+    name: 'watch-folk-ui',
     configureServer(server) {
       const watched = [
-        resolve(paperUiRoot, 'dist/index.css'),
-        resolve(paperUiRoot, 'dist/index.mjs'),
+        resolve(folkUiRoot, 'dist/index.css'),
+        resolve(folkUiRoot, 'dist/index.mjs'),
       ];
       for (const file of watched) server.watcher.add(file);
-      // 'all' (not just 'change'): `pnpm add file:../paper-ui` swaps the
+      // 'all' (not just 'change'): `pnpm add file:../folk-ui` swaps the
       // symlinked package's store entry rather than editing the existing
       // file in place, so chokidar reports 'unlink' + 'add', which a
       // change-only listener silently misses — the on-disk file was fresh
       // but the server kept transforming/serving its old cached copy.
-      // Neither module has HMR accept boundaries wired up (paper-ui ships
+      // Neither module has HMR accept boundaries wired up (folk-ui ships
       // one flat bundle), so a full reload is the correct signal — a
       // component-level hot-swap can't apply here anyway.
       server.watcher.on('all', (event, file) => {
@@ -200,7 +200,7 @@ function watchPaperUi(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths(), papercampApi(), watchPaperUi()],
+  plugins: [react(), tsconfigPaths(), papercampApi(), watchFolkUi()],
   root: '.',
   // Absolute, not relative: a hosted client serves the same bundle at nested paths
   // like /ideas/195/tickets/2, where './assets/…' resolves against the route instead
@@ -218,22 +218,22 @@ export default defineConfig({
     allowedHosts: true,
     watch: {
       ignored: (path) => {
-        // Ignore all node_modules except the symlinked local paper-ui package
+        // Ignore all node_modules except the symlinked local folk-ui package
         if (!path.includes('node_modules')) return false;
-        return !path.includes('@dendelion/paper-ui');
+        return !path.includes('@dendelion/folk-ui');
       },
     },
   },
   optimizeDeps: {
     // Vite's dependency pre-bundler caches a dependency's whole module graph
     // into one frozen file at server startup and only re-scans it when its
-    // own heuristics say to — which a same-version `file:../paper-ui` rebuild
+    // own heuristics say to — which a same-version `file:../folk-ui` rebuild
     // never triggers. Excluding it drops that dependency out of the cache
-    // entirely, so it's served (and watched — see watchPaperUi above) like a
+    // entirely, so it's served (and watched — see watchFolkUi above) like a
     // normal source file instead, and a rebuilt local package reaches the
     // browser without a `pnpm dev` restart.
-    exclude: ['@dendelion/paper-ui'],
-    // Excluding paper-ui also excludes it from the optimizer's dependency
+    exclude: ['@dendelion/folk-ui'],
+    // Excluding folk-ui also excludes it from the optimizer's dependency
     // scan, so its own `import { createPortal } from 'react-dom'` (Menu,
     // Select, Modal) never gets the CJS→ESM named-export shim that scan
     // normally produces — the browser then fails loading react-dom's raw
@@ -252,9 +252,9 @@ export default defineConfig({
     },
   },
   resolve: {
-    // A linked ../paper-ui resolves react from its own node_modules, so hooks run
+    // A linked ../folk-ui resolves react from its own node_modules, so hooks run
     // against a second React instance and every render throws "Cannot read
-    // properties of null (reading 'useState')". Harmless when paper-ui comes from
+    // properties of null (reading 'useState')". Harmless when folk-ui comes from
     // the registry; required whenever it is linked for local development.
     dedupe: ['react', 'react-dom'],
     alias: {

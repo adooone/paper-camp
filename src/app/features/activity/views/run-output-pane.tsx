@@ -1,4 +1,4 @@
-import { Button, Skeleton, useToast } from '@dendelion/paper-ui';
+import { Button, Skeleton, useToast } from '@dendelion/folk-ui';
 import { useEffect, useRef, useState } from 'react';
 
 export interface LogOutputPaneProps {

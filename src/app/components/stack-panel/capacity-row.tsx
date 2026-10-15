@@ -8,7 +8,7 @@ import {
   Spinner,
   Stamp,
   Tooltip,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { chalkStatusText } from './shared';
 

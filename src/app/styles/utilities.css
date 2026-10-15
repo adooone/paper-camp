@@ -1,7 +1,7 @@
 @tailwind utilities;
 
 /*
- * paper-ui's Layout header is `justify-content: space-between` with a left slot
+ * folk-ui's Layout header is `justify-content: space-between` with a left slot
  * that only takes a string `title` — all arbitrary content goes into the
  * right-aligned `headerActions` div. Letting that slot grow to fill the row is
  * what allows the identity to sit left and the nav right (a `flex-1` spacer
@@ -43,7 +43,7 @@ header > div[class*="headerActions"] {
 }
 
 /*
- * paper-ui's smallest IconButton/Checkbox hit areas are 40px square — under the
+ * folk-ui's smallest IconButton/Checkbox hit areas are 40px square — under the
  * ~44px comfortable tap-target minimum. Bump both at phone width via the same
  * hashed-class reach-in pattern as the headerActions rule above; `small` alone is
  * too common a module-local class name, so it's paired with the component's own
@@ -143,7 +143,7 @@ header > div[class*="headerActions"] {
 }
 
 /*
- * paper-ui's Checkbox reserves a fixed 40x40 touch target — more than a 32px dense
+ * folk-ui's Checkbox reserves a fixed 40x40 touch target — more than a 32px dense
  * row can give, and here it was costing the filename its width. Scoped to the git
  * file list so every other checkbox keeps the full target; the substring match on
  * the CSS-module class survives its hash changing between builds.

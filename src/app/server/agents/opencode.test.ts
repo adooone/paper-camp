@@ -12,14 +12,14 @@ describe('opencode parseLine', () => {
   it('extracts a human reason from an external_directory permission denial on read', () => {
     const line = toolUseLine('read', {
       status: 'error',
-      input: { filePath: '/home/user/dev/paper-ui/src/components/select/select.tsx' },
+      input: { filePath: '/home/user/dev/folk-ui/src/components/select/select.tsx' },
       error: 'The user rejected permission to use this specific tool call.',
     });
 
     expect(parseLine(line)).toEqual({
-      text: 'read outside workspace: /home/user/dev/paper-ui/src/components/select/select.tsx',
+      text: 'read outside workspace: /home/user/dev/folk-ui/src/components/select/select.tsx',
       error: true,
-      reason: 'read outside workspace: /home/user/dev/paper-ui/src/components/select/select.tsx',
+      reason: 'read outside workspace: /home/user/dev/folk-ui/src/components/select/select.tsx',
     });
   });
 

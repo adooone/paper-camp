@@ -21,8 +21,8 @@ import {
   Stamp,
   Textarea,
   useToast,
-} from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import { useEffect, useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatFullTimestamp, promoteLabel, summaryLine } from '../helpers';

@@ -1,7 +1,7 @@
 import { RowSkeleton } from '@/app/components';
 import { applyMergePolicy, fetchMergePolicy } from '@/app/services/system';
 import type { MergePolicy, MergePolicyResult } from '@/types/index';
-import { Alert, Button, SettingRow, Stamp, Switch, useToast } from '@dendelion/paper-ui';
+import { Alert, Button, SettingRow, Stamp, Switch, useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 import { MERGE_POLICY_STAMP } from '../constants';
 import { SettingsHeader } from './settings-header';

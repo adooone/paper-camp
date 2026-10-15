@@ -1,6 +1,6 @@
 import { RowSkeleton } from '@/app/components';
 import type { LogRow } from '@/types/index';
-import { Button, EmptyState } from '@dendelion/paper-ui';
+import { Button, EmptyState } from '@dendelion/folk-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useActivityEntryPage } from './hooks';
 import type { LogRowActions } from './hooks/use-run-rows';

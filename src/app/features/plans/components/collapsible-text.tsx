@@ -1,4 +1,4 @@
-import { Disclosure } from '@dendelion/paper-ui';
+import { Disclosure } from '@dendelion/folk-ui';
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 
 interface CollapsibleTextProps {

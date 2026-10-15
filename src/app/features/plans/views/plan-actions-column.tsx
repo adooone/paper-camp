@@ -10,7 +10,7 @@ import {
   SidebarField,
   SidebarItem,
   Stamp,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import {
   CompleteIdeaButton,
   CreateBranchButton,

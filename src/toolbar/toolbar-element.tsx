@@ -1,5 +1,5 @@
 import { setApiBase } from '@/app/services/api-base';
-import paperUiCss from '@dendelion/paper-ui/dist/index.css?raw';
+import folkUiCss from '@dendelion/folk-ui/dist/index.css?raw';
 import { type Root, createRoot } from 'react-dom/client';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID, scriptOrigin } from './route-attribute';
 import { Toolbar } from './toolbar';
@@ -21,7 +21,7 @@ function ensureFonts(): void {
 }
 
 // Shadow DOM keeps host page CSS out and this element's own styles in — the
-// paper-ui stylesheet is injected here rather than assumed present on the host.
+// folk-ui stylesheet is injected here rather than assumed present on the host.
 export class PaperCampToolbarElement extends HTMLElement {
   #root: Root | null = null;
 
@@ -41,7 +41,7 @@ export class PaperCampToolbarElement extends HTMLElement {
     shadow.appendChild(hostStyle);
     const style = document.createElement('style');
     // :root never matches inside a shadow tree, so re-scope declarations to :host too.
-    style.textContent = paperUiCss.replaceAll(':root', ':root, :host');
+    style.textContent = folkUiCss.replaceAll(':root', ':root, :host');
     shadow.appendChild(style);
     const mountPoint = document.createElement('div');
     // Set on the mount node, not :host, since host-page rules matching the

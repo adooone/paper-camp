@@ -1,5 +1,5 @@
 import type { PrInfo } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/folk-ui';
 import { REVIEW_DECISION_LABEL, REVIEW_DECISION_STAMP, STATUS_STAMP } from '../constants';
 
 interface ReviewSignalBadgeProps {

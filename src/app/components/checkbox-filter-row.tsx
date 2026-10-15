@@ -1,4 +1,4 @@
-import { Checkbox } from '@dendelion/paper-ui';
+import { Checkbox } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 export interface CheckboxFilterRowProps {

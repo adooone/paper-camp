@@ -1,6 +1,6 @@
 import { type DiffToken, diffWords } from '@/app/features/plans/helpers';
 import type { PhaseItem, PlanEntry } from '@/types/index';
-import { Button, Modal } from '@dendelion/paper-ui';
+import { Button, Modal } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface ReconcileDiffPanelProps {

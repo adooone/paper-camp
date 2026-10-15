@@ -76,7 +76,7 @@ layout-jump complaints come from. Rules, in priority order:
 
   Related trap: a component library's outer element is not always the one that
   lays out your children. Passing `flex flex-col justify-center gap-1` to
-  paper-ui's `Card` puts those classes on its *border* layer, while an inner
+  folk-ui's `Card` puts those classes on its *border* layer, while an inner
   texture layer arranges the children with its own spacing — 13px of gap that no
   class of yours controls. **Wrap your rows in a `div` you own and put the
   layout there**, letting the library element carry only the size.
@@ -112,7 +112,7 @@ layout-jump complaints come from. Rules, in priority order:
   emphasis. Pick the font for the whole line — including its digits, durations
   and percentages — and let size, weight, or colour carry any emphasis within
   it.
-- Prefer paper-ui's existing `Stamp`/color conventions for conveying state
+- Prefer folk-ui's existing `Stamp`/color conventions for conveying state
   (pass/fail/running, plan status) over inventing new color meanings. Once a
   color means something in one place (e.g. rose = fail), keep that meaning
   everywhere else it appears.

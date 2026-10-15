@@ -1,7 +1,7 @@
 import type { GitCommitFormState } from '@/app/features/git/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { failingCheckNames } from '@/app/utils/check-status';
-import { Button, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Button, Stamp, Tooltip } from '@dendelion/folk-ui';
 import { useMemo } from 'react';
 
 interface GitCommitButtonProps {

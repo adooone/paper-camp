@@ -14,7 +14,7 @@ import {
   type NotificationSettingKind,
   type PaperCampConfig,
 } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useState } from 'react';
 
 const SW_PATH = `${mountPrefix}/sw.js`;

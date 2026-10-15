@@ -4,9 +4,9 @@ This document is the source of truth for how UI code in `src/app` is written. It
 captures the rules the project already follows implicitly and the ones this
 cleanup pass is bringing into line.
 
-## 1. Use paper-ui components by default
+## 1. Use folk-ui components by default
 
-The dashboard is built on top of `@dendelion/paper-ui`. Reach for a paper-ui
+The dashboard is built on top of `@dendelion/folk-ui`. Reach for a folk-ui
 component before writing raw HTML.
 
 - Buttons → `Button` or `IconButton`
@@ -20,23 +20,23 @@ component before writing raw HTML.
 - Overlays → `Modal`, `Alert`
 - Code → `CodeBlock`
 
-If paper-ui has no equivalent for what you need, use raw HTML and add an inline
+If folk-ui has no equivalent for what you need, use raw HTML and add an inline
 comment explaining the gap. Do not build a workaround component locally unless the
-gap is approved as a real paper-ui addition.
+gap is approved as a real folk-ui addition.
 
 Known gaps that are intentionally raw:
 
-- `<input type="file">` hidden trigger in `settings-page.tsx` — paper-ui has no
+- `<input type="file">` hidden trigger in `settings-page.tsx` — folk-ui has no
   file-input abstraction.
 
 ### Lane/column boards use `Table`'s `board` prop
 
 If you build a UI that groups items into side-by-side lanes, render it through
-paper-ui's `Table` with its `board` prop rather than a hand-rolled `flex` div per
+folk-ui's `Table` with its `board` prop rather than a hand-rolled `flex` div per
 column — `Table` owns the wrapper chrome, the column headers and the card
 borders, so a consumer supplies only `{ key, label, accent, items, getKey,
 renderItem }` per column. Nothing in `src/app` uses it today (the boards it was
-written for were deleted); the prop lives in the paper-ui repo.
+written for were deleted); the prop lives in the folk-ui repo.
 
 ### Content cards use `texture="kraft"`
 
@@ -55,9 +55,9 @@ cards are the exception: they stay `surface="chalkboard"`.
 ### Primary buttons are green by default
 
 The default `Button` (`variant="primary"`) is the app's accent green — paper-camp
-themes paper-ui's brand primary through the `--pui-btn-primary` CSS vars in
+themes folk-ui's brand primary through the `--pui-btn-primary` CSS vars in
 `utilities.css` `:root`, which the button's fills read (see
-`node_modules/@dendelion/paper-ui/src/components/button/button.module.scss`). So a primary/affirmative
+`node_modules/@dendelion/folk-ui/src/components/button/button.module.scss`). So a primary/affirmative
 action is just `<Button>` — no per-button styling. Use `variant="secondary"` (pale)
 or `variant="ghost"` (borderless) for lesser or cancel-style actions; `variant="danger"`
 for destructive ones. Never hand-color a button's fill.
@@ -69,12 +69,12 @@ for destructive ones. Never hand-color a button's fill.
 
 ## 2. Design tokens, not literals
 
-paper-ui owns the design tokens. Do not hand-type font stacks, spacing values,
+folk-ui owns the design tokens. Do not hand-type font stacks, spacing values,
 colors, or transitions in `src/app`.
 
 ### Fonts
 
-paper-ui's own default for body text/buttons/most components is Luminari
+folk-ui's own default for body text/buttons/most components is Luminari
 (`fontFamily.serif`) — paper-camp overrides that default to the simpler body font
 via `--paper-font-default` (set once in `src/app/styles/utilities.css`), so most
 text does not need an explicit `fontFamily` at all.
@@ -90,14 +90,14 @@ text does not need an explicit `fontFamily` at all.
 - Handwritten: `'Caveat', cursive`.
 - Mono: `'JetBrains Mono', monospace`.
 
-Do not invent new stacks. If you need a paper-ui component's default font
+Do not invent new stacks. If you need a folk-ui component's default font
 changed project-wide, add to the `--paper-font-default` indirection in the
-sibling `paper-ui` repo (see `globals.scss`/`button.module.scss` for the
+sibling `folk-ui` repo (see `globals.scss`/`button.module.scss` for the
 pattern) rather than fighting it with per-instance overrides in `src/app`.
 
 ### Spacing
 
-paper-ui's spacing scale is the source of truth:
+folk-ui's spacing scale is the source of truth:
 
 ```
 $space-1:  0.25rem
@@ -114,16 +114,16 @@ $space-14: 3.5rem
 $space-16: 4rem
 ```
 
-Because paper-ui does not expose the full token set as CSS custom properties,
+Because folk-ui does not expose the full token set as CSS custom properties,
 `src/app` mirrors the tokens in one local constants file (`src/app/styles/tokens.ts`).
 Import from there; do not duplicate the values inline.
 
 ### Colors and transitions
 
-Use paper-ui tokens where exposed (`--pui-bg-base`, `--pui-bg-surface`,
+Use folk-ui tokens where exposed (`--pui-bg-base`, `--pui-bg-surface`,
 `--pui-text-primary`, `--pui-text-secondary`). For other colors, mirror the
-paper-ui `_tokens.scss` values in `src/app/styles/tokens.ts` rather than copying
-hex codes. Transitions should use the paper-ui timing values (`150ms`, `200ms`,
+folk-ui `_tokens.scss` values in `src/app/styles/tokens.ts` rather than copying
+hex codes. Transitions should use the folk-ui timing values (`150ms`, `200ms`,
 `300ms`) with `ease-out` / `cubic-bezier(0.4, 0, 0.2, 1)`.
 
 Components that take a named accent (`Card`'s `accentColor`, `Table`'s `board[].accent`)
@@ -313,7 +313,7 @@ A comment must clear *all three* bars, or it doesn't ship:
 1. It states a *why* that is genuinely **not derivable** from the code — an
    environment quirk (clipboard over non-secure origins), a spec footgun (auto
    cross-axis margins suppress flex `stretch`), a protocol shape, a security
-   constraint, or a paper-ui gap (§1).
+   constraint, or a folk-ui gap (§1).
 2. Rediscovering it would cost a future reader **real debugging time**.
 3. It fits in **one line** (two at the absolute most).
 
@@ -429,9 +429,9 @@ rule in this file. That is the point of the pass.
 
 `STATUS_ACCENT`, `STATUS_STAMP` and friends in
 `features/plans/constants.ts` are raw `#hex`/`rgba()` values, which §2 forbids.
-Do not "fix" them in passing. Removing them requires paper-ui to publish
+Do not "fix" them in passing. Removing them requires folk-ui to publish
 `--pui-color-*-rgb` channel tokens first; the approach is settled and the
-paper-ui code was written, but never released, and paper-camp's installed
-paper-ui still ships no `-rgb` token. Until that publish happens, a feature's
+folk-ui code was written, but never released, and paper-camp's installed
+folk-ui still ships no `-rgb` token. Until that publish happens, a feature's
 `constants.ts` is the one sanctioned home for a colour literal, and no new
 literal is added outside it.

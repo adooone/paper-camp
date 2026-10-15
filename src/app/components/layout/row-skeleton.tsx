@@ -1,4 +1,4 @@
-import { RowSkeleton as PaperRowSkeleton } from '@dendelion/paper-ui';
+import { RowSkeleton as PaperRowSkeleton } from '@dendelion/folk-ui';
 
 const ROW_KEYS = ['a', 'b', 'c', 'd'];
 

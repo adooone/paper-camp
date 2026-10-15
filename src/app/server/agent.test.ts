@@ -571,7 +571,7 @@ describe('startRunAllPhases', () => {
   it('parks on a permission-denial reason instead of auto-failing the run', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = `
-console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/folk-ui/select.tsx')
 process.exit(1)
 `;
     const onPhaseCommit = vi.fn(async () => {});
@@ -583,7 +583,7 @@ process.exit(1)
     expect(currentStatus(manager)?.errorKind).toBe('question');
     const lines = currentStatus(manager)?.lines.join('\n') ?? '';
     expect(lines).toContain(
-      '[blocked] phase 1 — agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
+      '[blocked] phase 1 — agent needs a decision: read outside workspace: /home/user/dev/folk-ui/select.tsx',
     );
     expect(lines).not.toContain('[fail]');
     expect(onPhaseCommit).not.toHaveBeenCalled();
@@ -591,7 +591,7 @@ process.exit(1)
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('### Thread');
     expect(planFile).toContain(
-      'the agent needs a decision: read outside workspace: /home/user/dev/paper-ui/select.tsx',
+      'the agent needs a decision: read outside workspace: /home/user/dev/folk-ui/select.tsx',
     );
     const parsedPlan = entityToPlan(parseEntityFile(planFile).entries[0]);
     const parked = parsedPlan.thread?.find((m) => m.kind === 'question');
@@ -1624,7 +1624,7 @@ describe('task log', () => {
   it('carries a permission-denial reason onto the error entry instead of a bare outcome', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = `
-console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/paper-ui/select.tsx')
+console.log('PERMISSION-DENIED: read outside workspace: /home/user/dev/folk-ui/select.tsx')
 process.exit(1)
 `;
     const manager = createAgentManager(root);
@@ -1645,7 +1645,7 @@ process.exit(1)
       }
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect(entry.reason).toBe('read outside workspace: /home/user/dev/paper-ui/select.tsx');
+    expect(entry.reason).toBe('read outside workspace: /home/user/dev/folk-ui/select.tsx');
   });
 
   it('persists the finished task’s output lines to a per-task file', async () => {

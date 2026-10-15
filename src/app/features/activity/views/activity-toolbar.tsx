@@ -1,7 +1,7 @@
 import { PageToolbar, PageToolbarRow, SidebarAction } from '@/app/components';
 import type { LogDateRange, LogFilters } from '@/core/run-filters';
 import { AGENT_IDS, AGENT_LABELS } from '@/types/index';
-import { Input, Select } from '@dendelion/paper-ui';
+import { Input, Select } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 const RANGE_OPTIONS: { value: LogDateRange; label: string }[] = [

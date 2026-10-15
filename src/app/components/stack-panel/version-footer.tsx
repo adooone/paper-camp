@@ -1,6 +1,6 @@
 import { CLIENT_VERSION } from '@/app/services/version';
 import { useAppStore } from '@/app/stores/app-store';
-import { Divider } from '@dendelion/paper-ui';
+import { Divider } from '@dendelion/folk-ui';
 
 export function versionLabel(runtimeVersion: string | null, clientVersion: string): string {
   if (!runtimeVersion) return `Paper Camp v${clientVersion}`;

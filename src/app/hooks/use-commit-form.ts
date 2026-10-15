@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { AgentTaskState } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface CommitFormFile {

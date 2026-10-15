@@ -2,7 +2,7 @@ import { CountBadge, FilePath, GitStatusMarker } from '@/app/features/git/compon
 import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Accordion, Stamp } from '@dendelion/paper-ui';
+import { Accordion, Stamp } from '@dendelion/folk-ui';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
 
@@ -63,7 +63,7 @@ const DiffBody = ({ entry }: DiffBodyProps) => {
       {hunks.map((hunk, i) => (
         <div key={`${hunk.header}-${i}`} className="min-w-0 max-w-full">
           {hunk.header && <div className="mb-1 font-mono text-2xs opacity-50">{hunk.header}</div>}
-          {/* paper-ui's CodeBlock has no per-line add/remove styling. */}
+          {/* folk-ui's CodeBlock has no per-line add/remove styling. */}
           <pre className="m-0 min-w-0 max-w-full overflow-x-auto font-mono text-2xs leading-normal">
             {/* As wide as the longest line, so every line's tint spans the full scroll width. */}
             <span className="block w-max min-w-full">

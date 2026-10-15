@@ -2,7 +2,7 @@ import { entityLink } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { SectionHeading } from '@dendelion/paper-ui';
+import { SectionHeading } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { AddTicketButton } from '../actions';
 import { PlanRows } from './plan-rows';

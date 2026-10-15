@@ -1,4 +1,4 @@
-import { Button } from '@dendelion/paper-ui';
+import { Button } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 /** The handwritten ghost voice for small secondary actions (All, Clear, Group). */

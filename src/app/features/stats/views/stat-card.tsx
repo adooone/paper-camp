@@ -1,5 +1,5 @@
-import { Card } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { Card } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
 
 export interface StatCardProps {

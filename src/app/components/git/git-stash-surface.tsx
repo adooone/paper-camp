@@ -1,7 +1,7 @@
 import { fetchStashDiff } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { GitStashEntry } from '@/types/index';
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Button, Stamp } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 const formatStashAge = (days: number) =>

@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import type { IdeaEntry } from '@/types/index';
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Button, Stamp } from '@dendelion/folk-ui';
 import { ExtendIdeaButton } from '../actions';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP } from '../constants';

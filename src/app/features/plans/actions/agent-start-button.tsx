@@ -1,6 +1,6 @@
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { IconButton, useToast } from '@dendelion/paper-ui';
+import { IconButton, useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface AgentStartButtonProps {
@@ -40,7 +40,7 @@ export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartBut
 
   return (
     <IconButton
-      // Raw glyph: paper-ui has no play/run icon.
+      // Raw glyph: folk-ui has no play/run icon.
       icon={<span className="text-xs leading-none">▶</span>}
       variant="ghost"
       size="small"

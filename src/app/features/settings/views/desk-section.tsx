@@ -1,6 +1,6 @@
 import { RowSkeleton } from '@/app/components';
 import { DeskProposalModal } from '@/app/components/stack-panel/desk-proposal-modal';
-import { Alert, Button, SettingGroup, Spinner } from '@dendelion/paper-ui';
+import { Alert, Button, SettingGroup, Spinner } from '@dendelion/folk-ui';
 import { SettingsHeader } from '../components/settings-header';
 import { useDeskSection } from '../hooks/use-desk-section';
 import { DeskCheckTable } from './desk-check-table';

@@ -3,7 +3,7 @@ import { STATUS_COLOR, STATUS_LABEL } from '@/app/features/plans/constants';
 import { type OpenQuestionGroup, phaseProgress } from '@/app/features/plans/helpers';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry } from '@/types/index';
-import { Button, Card, IconButton, Input, Island, Stamp, WandIcon } from '@dendelion/paper-ui';
+import { Button, Card, IconButton, Input, Island, Stamp, WandIcon } from '@dendelion/folk-ui';
 import { type CSSProperties, type ReactNode, useState } from 'react';
 import { ScoutThread } from './scout-thread';
 
@@ -167,7 +167,7 @@ const emptyCommitStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-// Overrides paper-ui's 0.875rem Input size to match deskLinkStyle's 0.75rem.
+// Overrides folk-ui's 0.875rem Input size to match deskLinkStyle's 0.75rem.
 const commitInputTextStyle: CSSProperties = { fontSize: '0.75rem' };
 
 const commitActionsRowStyle: CSSProperties = {
@@ -180,7 +180,7 @@ const commitActionsRowStyle: CSSProperties = {
 const commitActionsSpacerStyle: CSSProperties = { flex: 1 };
 
 // `.pc-scout-island` clips the full-bleed banner's square corners to the
-// Island's own rounded border, which paper-ui's Island doesn't set itself.
+// Island's own rounded border, which folk-ui's Island doesn't set itself.
 const scoutCardCss = `
 .pc-scout-island {
   overflow: hidden;

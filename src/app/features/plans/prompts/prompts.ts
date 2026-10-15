@@ -46,7 +46,7 @@ Find the root cause in this repo and fix it. Commit the fix yourself once the re
 
 Never run \`git stash\`, \`git reset\`, or \`git checkout\` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only \`git diff\` or \`git show HEAD:<file>\` instead.
 
-Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because folk-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
 
@@ -88,7 +88,7 @@ Leave the rest of the config as it is. Commit the change yourself once the repo 
 
 Never run \`git stash\`, \`git reset\`, or \`git checkout\` over working-tree state you did not create yourself — it may be someone else's pending work. To compare against a clean baseline, use read-only \`git diff\` or \`git show HEAD:<file>\` instead.
 
-Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because folk-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`, lint, tests) — never open the app, navigate to a URL, or take screenshots.
 
@@ -180,7 +180,7 @@ export function buildStylePassPhase(): PhaseItem {
 - Delete any comment that fails §7 — the cap is two lines and the default count is zero.
 - Move complex logic out of components into hooks/, leaving components rendering what a hook returns.
 - Sort files into the by-role folders of §4, and split a file holding more than one component.
-- Replace a literal with its design token (§2) and a hand-rolled element with its paper-ui component (§1).
+- Replace a literal with its design token (§2) and a hand-rolled element with its folk-ui component (§1).
 - Extract anything now written three times (§3) — into the feature's helpers/ if it is feature logic, into @/app/utils or @/app/hooks if it is not.
 - Apply §5's naming rules: every component's props are a named \`{Component}Props\` interface, duplicate import statements from one module merge into one, and table/list column definitions live outside the JSX.
 

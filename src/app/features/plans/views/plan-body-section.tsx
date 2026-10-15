@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import type { PlanEntry } from '@/types/index';
-import { SectionHeading } from '@dendelion/paper-ui';
+import { SectionHeading } from '@dendelion/folk-ui';
 
 interface PlanBodySectionProps {
   plan: PlanEntry;

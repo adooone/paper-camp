@@ -10,7 +10,7 @@ import {
   Spinner,
   StopIcon,
   useToast,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { groupLabelClassName } from './shared';
 

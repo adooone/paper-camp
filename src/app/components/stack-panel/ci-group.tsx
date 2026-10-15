@@ -1,7 +1,7 @@
 import { useCiRelease } from '@/app/hooks/use-ci-release';
 import { useAppStore } from '@/app/stores/app-store';
 import type { CiRun, CiRunStatus, DraftPrReadiness } from '@/types/index';
-import { Card, EmptyState } from '@dendelion/paper-ui';
+import { Card, EmptyState } from '@dendelion/folk-ui';
 import { useEffect, useRef } from 'react';
 import { groupLabelClassName } from './shared';
 

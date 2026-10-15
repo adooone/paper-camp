@@ -1,7 +1,7 @@
 // Specific file, not the `actions` barrel: the barrel pulls in the whole plans
 // graph and loops back to components/index.ts, which depcruise fails as a cycle.
 import { useDeskDiscovery } from '@/app/hooks/use-desk-discovery';
-import { Button, Skeleton, Spinner } from '@dendelion/paper-ui';
+import { Button, Skeleton, Spinner } from '@dendelion/folk-ui';
 import { CI_GROUP_LABEL, CiGroup } from './ci-group';
 import { DeskProposalModal } from './desk-proposal-modal';
 import { SERVICES_GROUP_LABEL, ServicesGroup } from './services-group';

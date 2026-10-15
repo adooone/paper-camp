@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
-import { Button } from '@dendelion/paper-ui';
+import { Button } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 export function criticalNightFindings(groups: NightReportGroup[]): NightSuggestionEntry[] {

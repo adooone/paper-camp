@@ -20,7 +20,7 @@ import {
   type NightGateStatus,
   type PaperCampConfig,
 } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useState } from 'react';
 
 export interface KeyedNightCustomCheck extends NightCustomCheck {

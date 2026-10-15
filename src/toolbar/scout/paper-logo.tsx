@@ -1,4 +1,4 @@
-// Raw inline SVG: paper-ui ships no logo component, and the brand mark's fill
+// Raw inline SVG: folk-ui ships no logo component, and the brand mark's fill
 // colours are intrinsic artwork, not themeable chrome, so they can't reduce to a --pui-* token.
 export const PaperLogo = ({ size = 20 }: { size?: number }) => (
   <svg

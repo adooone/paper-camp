@@ -40,31 +40,31 @@ For `src/app` code, also follow `docs/CODE_STYLE.md` (how the code is written) a
 `docs/UX_PRINCIPLES.md` (how the UI should feel to use — layout stability, visual
 hierarchy, motion). Read both before making UI changes.
 
-## Working with the paper-ui sibling repo
+## Working with the folk-ui sibling repo
 
-The dashboard is built on `@dendelion/paper-ui`, which lives in a sibling repo at
-`~/dev/paper-ui` and is published to npm. `package.json` declares it as a
-normal registry range (`"@dendelion/paper-ui": "^0.17.0"`) — this is required
-for CI and for anyone installing `paper-camp` for real; a `link:../paper-ui`
+The dashboard is built on `@dendelion/folk-ui`, which lives in a sibling repo at
+`~/dev/folk-ui` and is published to npm. `package.json` declares it as a
+normal registry range (`"@dendelion/folk-ui": "^0.17.0"`) — this is required
+for CI and for anyone installing `paper-camp` for real; a `link:../folk-ui`
 relative path only resolves on this dev machine and breaks everywhere else
 (this is exactly the bug that broke the CI quality check and would have
 broken `npm publish` too).
 
-- **For active co-development with paper-ui**, override the registry
+- **For active co-development with folk-ui**, override the registry
   resolution locally without touching `package.json`: run
-  `pnpm link ../paper-ui` from `paper-camp`'s root once. This symlinks
-  `node_modules/@dendelion/paper-ui` to the sibling repo for your local
+  `pnpm link ../folk-ui` from `paper-camp`'s root once. This symlinks
+  `node_modules/@dendelion/folk-ui` to the sibling repo for your local
   checkout only — it's invisible to git, CI, and anyone else's install. Run
   `pnpm install` (no args) to go back to the registry-resolved version.
-- **paper-camp imports from `dist/`, not `src/`** either way. paper-ui's
+- **paper-camp imports from `dist/`, not `src/`** either way. folk-ui's
   `package.json` points `main`/`module`/`types` at `dist/index.{js,mjs,d.ts}`.
-  If you edit anything under `~/dev/paper-ui/src` while linked, it has **no
-  effect** in paper-camp until you run `pnpm run build` inside `~/dev/paper-ui`.
-- **Publishing a new paper-ui version:** paper-ui releases through
+  If you edit anything under `~/dev/folk-ui/src` while linked, it has **no
+  effect** in paper-camp until you run `pnpm run build` inside `~/dev/folk-ui`.
+- **Publishing a new folk-ui version:** folk-ui releases through
   release-please, not Changesets — there is no `.changeset/` directory and no
   `version` script, and `npm publish` runs from `publish.yml` after a release
   is published. Never run `pnpm publish` locally: it mints a version
-  release-please's manifest does not know about. Instead, in `~/dev/paper-ui`
+  release-please's manifest does not know about. Instead, in `~/dev/folk-ui`
   verify with `pnpm run check-types && pnpm run lint && pnpm run build`, then
   commit on a branch with a **Conventional Commit** and open a PR. Only `feat`
   (minor, while `bump-minor-pre-major` holds), `fix`, `refactor` and `docs`
@@ -74,7 +74,7 @@ broken `npm publish` too).
   release-please open a release PR; merging *that* publishes to npm. Bump
   paper-camp's `package.json` range and `pnpm install` only once the version
   is actually on npm.
-- **paper-ui lands PRs as merge commits, so the *commit message* is what
+- **folk-ui lands PRs as merge commits, so the *commit message* is what
   release-please reads — not the PR title.** Retitling a PR changes nothing
   unless it is squash-merged (only squash promotes the title to the commit
   message). Fix the type by amending the commit, so it works under any merge
@@ -84,17 +84,17 @@ broken `npm publish` too).
   a second PR for a related change.
 - **Check the real source, not just the `.d.ts` — from inside this repo.**
   Since 0.18.0 the package ships its sources, so read
-  `node_modules/@dendelion/paper-ui/src/components/<name>/` directly —
+  `node_modules/@dendelion/folk-ui/src/components/<name>/` directly —
   both the `.tsx` and its `.module.scss` are there. Do **not** read
-  `~/dev/paper-ui/src/components/` for this: leaving the workspace is what
+  `~/dev/folk-ui/src/components/` for this: leaving the workspace is what
   makes headless opencode runs stop for an `external_directory` approval.
   The sibling checkout is needed only for the showcase and for editing
-  paper-ui itself.
-- **When changing paper-ui itself,** follow `~/dev/paper-ui/AGENTS.md`/
+  folk-ui itself.
+- **When changing folk-ui itself,** follow `~/dev/folk-ui/AGENTS.md`/
   `CODE_STYLE.md` (one component per file, `cn()` for classNames, SCSS modules
   for styles — no hardcoded hex in `.tsx`), then run `pnpm run check-types` and
   `pnpm run build` there before switching back to paper-camp.
-- **Adding to paper-ui's public API** (new component, new exported prop) means
+- **Adding to folk-ui's public API** (new component, new exported prop) means
   updating both `src/components/<name>/index.ts` *and* the top-level
   `src/index.ts` barrel — both re-export the public types, and it's easy to
   update one and forget the other.

@@ -1,6 +1,6 @@
 import { splitQuestionText } from '@/core/decision-text';
 import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
-import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/paper-ui';
+import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface QuestionCardProps {

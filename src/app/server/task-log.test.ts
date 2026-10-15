@@ -161,7 +161,7 @@ describe('logTaskCompletion reason', () => {
     const id = 'eeeeeeee-0000-0000-0000-000000000006';
     await logTaskCompletion(
       root,
-      { ...completed(id), errorReason: 'read outside workspace: /home/user/dev/paper-ui' },
+      { ...completed(id), errorReason: 'read outside workspace: /home/user/dev/folk-ui' },
       'error',
     );
 
@@ -171,7 +171,7 @@ describe('logTaskCompletion reason', () => {
       .filter(Boolean)
       .map((l) => JSON.parse(l))
       .find((e) => e.id === id);
-    expect(logged.reason).toBe('read outside workspace: /home/user/dev/paper-ui');
+    expect(logged.reason).toBe('read outside workspace: /home/user/dev/folk-ui');
   });
 
   it('omits the reason field when the task carries no error cause', async () => {

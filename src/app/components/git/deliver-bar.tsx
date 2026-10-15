@@ -13,8 +13,8 @@ import {
   type StampVariant,
   Tooltip,
   getSurfaceStyles,
-} from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
 import { CommitMessageFields, type CommitMessageFieldsState } from './commit-message-fields';
 

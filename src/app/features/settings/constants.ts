@@ -1,5 +1,5 @@
 import type { CapabilityStatus, NotificationSettingKind } from '@/types/index';
-import { color, colors, withAlpha } from '@dendelion/paper-ui/tokens';
+import { color, colors, withAlpha } from '@dendelion/folk-ui/tokens';
 
 export const TASK_TYPE_KEYS = [
   'phase',

@@ -1,5 +1,5 @@
 import { SidebarAction, SidebarSection } from '@/app/components';
-import { SidebarItem, SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarItem, SidebarLabel } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { type ScopeCountKind, useScope } from '../hooks/use-scope';
 import { ScopeProjectRow } from './scope-project-row';

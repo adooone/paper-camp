@@ -1,6 +1,6 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
+import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@dendelion/folk-ui';
+import { color } from '@dendelion/folk-ui/tokens';
 import { useState } from 'react';
 import { SettingsHeader } from '../components/settings-header';
 import { VERSION_STAMP_FILL } from '../constants';
@@ -76,7 +76,7 @@ export const GeneralSection = () => {
                       className="w-8 h-8 object-contain shrink-0 rounded"
                     />
                   )}
-                  {/* paper-ui has no file-input component, so this raw input is intentional */}
+                  {/* folk-ui has no file-input component, so this raw input is intentional */}
                   <input
                     ref={fileRef}
                     type="file"

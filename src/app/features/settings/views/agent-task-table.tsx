@@ -8,7 +8,7 @@ import {
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
 } from '@/types/index';
-import { Input, Table } from '@dendelion/paper-ui';
+import { Input, Table } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 import { TASK_TYPE_KEYS, TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
 

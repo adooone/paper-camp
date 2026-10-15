@@ -1,7 +1,7 @@
 import { addRoadmapItem, patchRoadmapItem } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Button, Input, Modal, Select } from '@dendelion/paper-ui';
+import { Button, Input, Modal, Select } from '@dendelion/folk-ui';
 import { useEffect, useRef, useState } from 'react';
 
 interface Editing {

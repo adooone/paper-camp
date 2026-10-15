@@ -1,6 +1,6 @@
 import { createIdea } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, LightbulbIcon } from '@dendelion/paper-ui';
+import { Button, LightbulbIcon } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 

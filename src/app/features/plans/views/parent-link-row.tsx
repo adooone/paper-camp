@@ -1,6 +1,6 @@
 import { entityLink } from '@/app/hooks';
 import type { PlanEntry } from '@/types/index';
-import { Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 
 interface ParentLinkRowProps {
@@ -18,7 +18,7 @@ export const ParentLinkRow = ({ plan, otherPlans }: ParentLinkRowProps) => {
   const parent = otherPlans.find((p) => p.id === parentId);
   return (
     <div className="mb-3">
-      {/* Raw <button>: a chromeless click target wrapping a stamp + label, not a paper-ui Button. */}
+      {/* Raw <button>: a chromeless click target wrapping a stamp + label, not a folk-ui Button. */}
       <button
         type="button"
         onClick={() => navigate(entityLink(parent ?? { id: parentId, title: parentId }))}

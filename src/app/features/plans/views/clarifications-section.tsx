@@ -1,5 +1,5 @@
 import type { LogEntry } from '@/types/index';
-import { SectionHeading } from '@dendelion/paper-ui';
+import { SectionHeading } from '@dendelion/folk-ui';
 
 interface ClarificationsSectionProps {
   clarifications: LogEntry[];

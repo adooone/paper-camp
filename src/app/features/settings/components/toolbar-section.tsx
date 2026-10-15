@@ -1,5 +1,5 @@
 import { RowSkeleton } from '@/app/components';
-import { Alert, Button, Divider, Stamp, Switch, Tooltip } from '@dendelion/paper-ui';
+import { Alert, Button, Divider, Stamp, Switch, Tooltip } from '@dendelion/folk-ui';
 import { useToolbarSection } from '../hooks';
 
 export const ToolbarSection = () => {

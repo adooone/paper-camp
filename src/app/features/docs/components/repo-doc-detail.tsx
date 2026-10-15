@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
-import { Text } from '@dendelion/paper-ui';
+import { Text } from '@dendelion/folk-ui';
 
 export const RepoDocDetail = () => {
   const repoDocs = useAppStore((s) => s.repoDocs);

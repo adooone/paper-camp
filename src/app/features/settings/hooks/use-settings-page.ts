@@ -10,7 +10,7 @@ import {
   type PaperCampConfig,
   agentConfigsEqual,
 } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import type { TaskTypeKey } from '../constants';

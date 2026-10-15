@@ -8,7 +8,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAgentManager } from './agent';
 
 // Reproduces IDEA-125's original report end to end: an opencode run reading a sibling
-// repo (~/dev/paper-ui) as an API reference gets an `external_directory` permission
+// repo (~/dev/folk-ui) as an API reference gets an `external_directory` permission
 // denial. Unlike agent.test.ts's fake adapter (which simulates the `reason` contract
 // with a synthetic "PERMISSION-DENIED:" marker), this wires opencode's *real*
 // parseLine so the actual JSON shape opencode emits for a denied tool call is what
@@ -29,7 +29,7 @@ vi.mock('./agents', async () => {
   };
 });
 
-const SIBLING_REPO_PATH = '/home/user/dev/paper-ui/src/components/select/select.tsx';
+const SIBLING_REPO_PATH = '/home/user/dev/folk-ui/src/components/select/select.tsx';
 
 const DENIED_READ_SCRIPT = `
 console.log(JSON.stringify({

@@ -18,7 +18,7 @@ reviews:
     - path: "**/*.{ts,tsx}"
       instructions: |
         Review against CODE_STYLE.md (code style guide) and UX_PRINCIPLES.md (UX/UI principles):
-        - Use paper-ui components by default (Button, Card, Input, Table, Stamp, etc.) — raw HTML only when paper-ui has no equivalent, with an inline comment explaining the gap
+        - Use folk-ui components by default (Button, Card, Input, Table, Stamp, etc.) — raw HTML only when folk-ui has no equivalent, with an inline comment explaining the gap
         - Follow design tokens from src/app/styles/tokens.ts (fontFamily, space, fontSize, layout constants) — no hardcoded spacing or font stacks
         - Luminari font reserved for page H1s, markdown headings, and deliberate title moments only; body text uses the project-wide default (Cormorant Garamond)
         - Naming: PascalCase components with {Name}Props interface, camelCase helpers and event handlers (handleXxx), PascalCase files

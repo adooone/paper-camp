@@ -1,4 +1,4 @@
-import { Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/folk-ui';
 
 export const HUB_PATH = '/projects';
 export const HUB_PATHS: string[] = [HUB_PATH];

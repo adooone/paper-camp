@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss';
-import { paperPreset } from '@dendelion/paper-ui/tailwind';
-import { color, colors, withAlpha } from '@dendelion/paper-ui/tokens';
+import { paperPreset } from '@dendelion/folk-ui/tailwind';
+import { color, colors, withAlpha } from '@dendelion/folk-ui/tokens';
 
 const config: Config = {
   darkMode: 'class',

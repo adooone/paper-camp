@@ -1,4 +1,4 @@
-import { Stamp, type StampVariant } from '@dendelion/paper-ui';
+import { Stamp, type StampVariant } from '@dendelion/folk-ui';
 
 interface StatusInfo {
   letter: string;

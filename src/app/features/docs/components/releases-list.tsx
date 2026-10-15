@@ -1,6 +1,6 @@
 import { Markdown } from '@/app/components/markdown';
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, Divider, EmptyState, PageTitle, Skeleton, Text } from '@dendelion/paper-ui';
+import { Button, Divider, EmptyState, PageTitle, Skeleton, Text } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 import { useReleaseNotes } from '../hooks/use-release-notes';
 

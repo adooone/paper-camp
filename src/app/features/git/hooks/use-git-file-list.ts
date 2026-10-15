@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { splitPathForDisplay } from '@/app/utils/path-display';
 import type { FileDiffEntry } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useMemo, useState } from 'react';
 
 function groupByFolder(files: FileDiffEntry[]): { dir: string; entries: FileDiffEntry[] }[] {

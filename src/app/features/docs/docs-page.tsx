@@ -1,6 +1,6 @@
 import { useResolvedDocSection } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { EmptyState, PageTitle } from '@dendelion/paper-ui';
+import { EmptyState, PageTitle } from '@dendelion/folk-ui';
 import { DocsSearch } from './components/docs-search';
 import { ReleasesList } from './components/releases-list';
 import { RepoDocDetail } from './components/repo-doc-detail';

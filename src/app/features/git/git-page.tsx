@@ -2,7 +2,7 @@ import { DeliverBar, GitStashSurface } from '@/app/components';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
-import { Button, Divider, PageTitle, Spinner } from '@dendelion/paper-ui';
+import { Button, Divider, PageTitle, Spinner } from '@dendelion/folk-ui';
 import { Fragment } from 'react';
 
 export const GitPage = () => {

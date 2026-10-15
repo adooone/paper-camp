@@ -1,6 +1,6 @@
 import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { CheckAllIcon, SidebarItem, Tooltip } from '@dendelion/paper-ui';
+import { CheckAllIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface FixReviewButtonProps {

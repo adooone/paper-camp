@@ -1,4 +1,4 @@
-import { Button, IconButton, Input, Modal, PlusIcon, Tooltip } from '@dendelion/paper-ui';
+import { Button, IconButton, Input, Modal, PlusIcon, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface AddTicketButtonProps {

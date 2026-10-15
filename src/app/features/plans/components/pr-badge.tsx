@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { PrInfo } from '@/types/index';
-import { GithubIcon, Spinner, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { GithubIcon, Spinner, Stamp, Tooltip } from '@dendelion/folk-ui';
 import { PR_STATE_LABEL, PR_STATE_STAMP } from '../constants';
 import { formatFetchedAt } from '../helpers/helpers';
 

@@ -1,5 +1,5 @@
 import { RowSkeleton } from '@/app/components';
-import { PageTitle } from '@dendelion/paper-ui';
+import { PageTitle } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useRoadmapItemPage, useRoadmapPage } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';

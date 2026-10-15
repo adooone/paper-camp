@@ -1,6 +1,6 @@
 import { useOpenEntity } from '@/app/hooks';
 import type { GitLogCommit } from '@/types/index';
-import { CommitRail, Divider, MetaLine, PushIcon, Row, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { CommitRail, Divider, MetaLine, PushIcon, Row, Stamp, Tooltip } from '@dendelion/folk-ui';
 
 function formatRelativeTime(iso: string): string {
   const diffSec = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));

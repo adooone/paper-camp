@@ -3,7 +3,7 @@ import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/co
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { isUnansweredQuestion } from '@/core/chat-file';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 export async function sendChatText(

@@ -1,5 +1,5 @@
 import { RowSkeleton } from '@/app/components';
-import { PageTitle } from '@dendelion/paper-ui';
+import { PageTitle } from '@dendelion/folk-ui';
 import { useStatsPage } from './hooks';
 import { StatsGrid } from './views';
 

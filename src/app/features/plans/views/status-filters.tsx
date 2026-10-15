@@ -1,7 +1,7 @@
 import { SidebarAction, SidebarSection } from '@/app/components';
 import { CheckboxFilterRow } from '@/app/components';
 import { useAppStore } from '@/app/stores/app-store';
-import { SidebarLabel } from '@dendelion/paper-ui';
+import { SidebarLabel } from '@dendelion/folk-ui';
 import { STATUS_LABEL } from '../constants';
 import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
 

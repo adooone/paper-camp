@@ -1,5 +1,5 @@
-import { Progress } from '@dendelion/paper-ui';
-import { color } from '@dendelion/paper-ui/tokens';
+import { Progress } from '@dendelion/folk-ui';
+import { color } from '@dendelion/folk-ui/tokens';
 import { StatCard, StatRow } from './stat-card';
 
 export interface TestCoverageCardProps {

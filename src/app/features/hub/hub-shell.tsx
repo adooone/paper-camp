@@ -1,4 +1,4 @@
-import { Layout } from '@dendelion/paper-ui';
+import { Layout } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 export interface HubShellProps {

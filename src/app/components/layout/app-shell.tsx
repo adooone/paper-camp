@@ -28,8 +28,8 @@ import {
   SidebarToggleIcon,
   ToastProvider,
   getSurfaceStyles,
-} from '@dendelion/paper-ui';
-import { colors, surface, withAlpha } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { colors, surface, withAlpha } from '@dendelion/folk-ui/tokens';
 import { Outlet } from '@tanstack/react-router';
 import { Suspense, lazy } from 'react';
 import { NavLabel, navItems } from './nav';

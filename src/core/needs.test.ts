@@ -44,9 +44,9 @@ describe('parseNeedsRef', () => {
   });
 
   it('parses a cross-project ref as slug/id', () => {
-    expect(parseNeedsRef('paper-ui/IDEA-14')).toEqual({
-      raw: 'paper-ui/IDEA-14',
-      projectSlug: 'paper-ui',
+    expect(parseNeedsRef('folk-ui/IDEA-14')).toEqual({
+      raw: 'folk-ui/IDEA-14',
+      projectSlug: 'folk-ui',
       id: 'IDEA-14',
     });
   });
@@ -78,18 +78,18 @@ describe('resolveNeedsRefs', () => {
     const otherRoot = await makeProject([{ id: 'IDEA-14', title: 'Other project idea' }]);
     const registry = {
       version: 1 as const,
-      projects: [{ slug: 'paper-ui', path: otherRoot, name: 'paper-ui' }],
+      projects: [{ slug: 'folk-ui', path: otherRoot, name: 'folk-ui' }],
     };
-    const result = await resolveNeedsRefs(root, ['paper-ui/IDEA-14'], registry);
+    const result = await resolveNeedsRefs(root, ['folk-ui/IDEA-14'], registry);
     expect(result).toEqual([
       {
-        raw: 'paper-ui/IDEA-14',
+        raw: 'folk-ui/IDEA-14',
         id: 'IDEA-14',
-        projectSlug: 'paper-ui',
+        projectSlug: 'folk-ui',
         found: true,
         done: false,
         title: 'Other project idea',
-        projectName: 'paper-ui',
+        projectName: 'folk-ui',
       },
     ]);
   });

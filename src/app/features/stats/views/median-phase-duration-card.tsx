@@ -1,5 +1,5 @@
 import { formatDuration } from '@/core/phase-run';
-import { EmptyState } from '@dendelion/paper-ui';
+import { EmptyState } from '@dendelion/folk-ui';
 import { StatCard, StatRow } from './stat-card';
 
 export interface MedianPhaseDurationCardProps {

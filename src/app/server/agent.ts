@@ -313,7 +313,7 @@ ${DESTRUCTIVE_GIT_BAN}
 
 ${FOREGROUND_COMMANDS_ONLY}
 
-Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because folk-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Never open the app, navigate to a URL, or take screenshots, even if the phase describes a visual check; note in the commit message that it's left to a human instead.
 
@@ -381,7 +381,7 @@ ${DESTRUCTIVE_GIT_BAN}
 
 ${FOREGROUND_COMMANDS_ONLY}
 
-Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because paper-ui has no equivalent still needs its one-line inline comment explaining the gap.
+Comments: do NOT add any comments to the code — none, the code is the documentation, reasoning goes in the commit message. Exception: per docs/CODE_STYLE.md, raw HTML used because folk-ui has no equivalent still needs its one-line inline comment explaining the gap.
 
 You are headless with no browser or display. Verify only with terminal commands (\`pnpm run check-types\`) — never open the app, navigate to a URL, or take screenshots, even if the fix describes a visual check; note in the commit message that it's left to a human instead.
 

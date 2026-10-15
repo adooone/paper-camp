@@ -1,4 +1,4 @@
-import { CloseIcon, Divider, IconButton, Input, Textarea } from '@dendelion/paper-ui';
+import { CloseIcon, Divider, IconButton, Input, Textarea } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 import type { KeyedNightCustomCheck } from '../hooks/use-night-section';
 

@@ -3,7 +3,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { formatDuration } from '@/core/phase-run';
 import { logRowIdForTask } from '@/core/run-rows';
 import { AGENT_LABELS, type AgentTaskState, type LogRow } from '@/types/index';
-import { Button, Card } from '@dendelion/paper-ui';
+import { Button, Card } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { StopRunButton } from './run-row-detail';

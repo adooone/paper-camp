@@ -1,4 +1,4 @@
-import { InlineCode } from '@dendelion/paper-ui';
+import { InlineCode } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 

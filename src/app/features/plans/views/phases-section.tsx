@@ -7,8 +7,8 @@ import type { RunningPhaseFill } from '@/app/features/plans/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { formatRunSummary } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
-import { Button, SectionHeading, Spinner, Table, Tooltip } from '@dendelion/paper-ui';
-import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
+import { Button, SectionHeading, Spinner, Table, Tooltip } from '@dendelion/folk-ui';
+import { colors, withAlpha } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
 import {
   AddReviewPhasesButton,

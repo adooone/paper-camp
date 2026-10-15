@@ -1,5 +1,5 @@
 import type { ResolvedIdea } from '@/types/index';
-import { Accordion } from '@dendelion/paper-ui';
+import { Accordion } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { IdeaRow } from './idea-row';
 

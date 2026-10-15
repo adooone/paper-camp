@@ -3,7 +3,7 @@ import { createIdea } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 // Distillation: turns one ephemeral `chat` thread message into a durable

@@ -1,4 +1,4 @@
-import { Button, Stamp } from '@dendelion/paper-ui';
+import { Button, Stamp } from '@dendelion/folk-ui';
 
 export interface ChatTitleActionsProps {
   unansweredCount: number;

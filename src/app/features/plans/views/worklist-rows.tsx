@@ -11,7 +11,7 @@ import {
   Stamp,
   Text,
   Tooltip,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';

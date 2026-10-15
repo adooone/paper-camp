@@ -2,7 +2,7 @@ import { PlanIdStamp } from '@/app/features/plans/components';
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import { formatDuration } from '@/core/phase-run';
 import { AGENT_LABELS, type LogRow } from '@/types/index';
-import { Row, Stamp, Text, Tooltip } from '@dendelion/paper-ui';
+import { Row, Stamp, Text, Tooltip } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatFullTimestamp, formatTime } from '../helpers';

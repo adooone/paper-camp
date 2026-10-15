@@ -1,4 +1,4 @@
-import { Divider } from '@dendelion/paper-ui';
+import { Divider } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 /** One part of a sidebar's single card. The divider above it only shows when another

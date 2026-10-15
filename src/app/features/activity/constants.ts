@@ -1,5 +1,5 @@
 import type { LogRowOutcome, LogRowType } from '@/types/index';
-import type { StampVariant } from '@dendelion/paper-ui';
+import type { StampVariant } from '@dendelion/folk-ui';
 
 export const LOG_PAGE_SIZE = 100;
 

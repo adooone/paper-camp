@@ -19,7 +19,7 @@ const rootStyle: CSSProperties = {
   pointerEvents: 'auto',
 };
 
-// A plain circle instead of paper-ui's IconButton — its SVG blob background
+// A plain circle instead of folk-ui's IconButton — its SVG blob background
 // reads as an arbitrary shape at trigger size; the owner wants it round.
 const triggerStyle = (open: boolean): CSSProperties => ({
   width: '48px',
@@ -55,7 +55,7 @@ const cardLayerStyle = (open: boolean): CSSProperties => ({
     : 'transform 0.26s ease, opacity 0.2s ease, visibility 0s 0.26s',
 });
 
-// Neutralises paper-ui's own Island position/transform/size (set via a
+// Neutralises folk-ui's own Island position/transform/size (set via a
 // hashed class) so the card flows inside the grow-from-trigger layer instead.
 const scoutCss = `
 .pc-scout-trigger:hover {

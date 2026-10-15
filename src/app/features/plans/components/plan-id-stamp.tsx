@@ -1,5 +1,5 @@
-import { Stamp } from '@dendelion/paper-ui';
-import { colors } from '@dendelion/paper-ui/tokens';
+import { Stamp } from '@dendelion/folk-ui';
+import { colors } from '@dendelion/folk-ui/tokens';
 
 interface PlanIdStampProps {
   id?: string;

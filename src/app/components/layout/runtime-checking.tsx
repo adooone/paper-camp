@@ -1,4 +1,4 @@
-import { Spinner } from '@dendelion/paper-ui';
+import { Spinner } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 const SLOW_CHECK_MS = 10_000;

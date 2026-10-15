@@ -1,4 +1,4 @@
-import { Button, Input } from '@dendelion/paper-ui';
+import { Button, Input } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 interface AddCandidateFormProps {

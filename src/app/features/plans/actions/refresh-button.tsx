@@ -1,5 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { Button, IconButton, RefreshIcon, useToast } from '@dendelion/paper-ui';
+import { Button, IconButton, RefreshIcon, useToast } from '@dendelion/folk-ui';
 
 interface RefreshButtonProps {
   label?: string;

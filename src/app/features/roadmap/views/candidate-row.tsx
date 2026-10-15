@@ -1,4 +1,4 @@
-import { Button } from '@dendelion/paper-ui';
+import { Button } from '@dendelion/folk-ui';
 
 interface CandidateRowProps {
   name: string;

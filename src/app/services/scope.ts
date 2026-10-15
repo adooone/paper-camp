@@ -1,4 +1,4 @@
-/** `<slug>@<machine>`, e.g. `paper-ui@deimos` — the hub's project slug and
+/** `<slug>@<machine>`, e.g. `folk-ui@deimos` — the hub's project slug and
  * machine name, not a runtime URL (IDEA-291). */
 export type ScopeKey = string;
 

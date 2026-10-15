@@ -1,4 +1,4 @@
-import { Progress } from '@dendelion/paper-ui';
+import { Progress } from '@dendelion/folk-ui';
 
 interface ProgressBarProps {
   pct: number;

@@ -19,7 +19,7 @@ import {
   type StampVariant,
   Tooltip,
   useToast,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { CapacityRow } from './capacity-row';
 import { formatLastRun, groupLabelClassName } from './shared';

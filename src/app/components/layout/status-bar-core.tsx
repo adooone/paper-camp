@@ -12,7 +12,7 @@ import {
   Stamp,
   Tooltip,
   getTextureStyles,
-} from '@dendelion/paper-ui';
+} from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
@@ -33,7 +33,7 @@ const branchNameClass = 'min-w-0 max-w-[40vw] truncate text-[var(--pui-text-prim
 const secondaryClass = 'opacity-60';
 const rightGroupClass = 'flex min-w-0 flex-1 items-center gap-2';
 const notificationButtonClass = 'relative inline-flex h-[32px] shrink-0 items-center';
-// Raw badge: paper-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
+// Raw badge: folk-ui's Stamp is a translucent wash, unreadable over the bell's strokes.
 const notificationBadgeClass =
   'pointer-events-none absolute top-0 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-watercolor-amber-dark px-1 font-handwritten text-xs font-semibold leading-none text-paper-50';
 

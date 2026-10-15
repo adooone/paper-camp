@@ -3,7 +3,7 @@ import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
 import type { IdeaEntry } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 import { canMarkPlanDone, effectiveStatus, isUntouchedPlan } from '../helpers';
 import { usePlanStatusPatch } from './use-plan-status-patch';

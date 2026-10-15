@@ -1,5 +1,5 @@
 import { CheckboxFilterRow } from '@/app/components';
-import { Stamp } from '@dendelion/paper-ui';
+import { Stamp } from '@dendelion/folk-ui';
 import type { ScopeRow } from '../hooks/use-scope';
 
 export interface ScopeProjectRowProps {

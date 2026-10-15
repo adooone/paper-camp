@@ -1,7 +1,7 @@
 import { diffDeskConfig } from '@/app/features/settings/helpers';
 import { discoverDesk, fetchConfig, saveConfig } from '@/app/services/system';
 import type { DeskConfig } from '@/types/index';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useState } from 'react';
 
 export interface DeskDiscoveryState {

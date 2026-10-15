@@ -1,7 +1,7 @@
 import { parseReviewFindings } from '@/app/features/plans/helpers';
 import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { PhaseItem } from '@/types/index';
-import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/paper-ui';
+import { Alert, Button, IconButton, Modal, PlusIcon, Textarea, Tooltip } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 interface AddReviewPhasesButtonProps {

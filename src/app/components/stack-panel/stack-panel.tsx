@@ -1,6 +1,6 @@
 import { useStackPanel } from '@/app/hooks/use-stack-panel';
-import { IconButton, Spinner } from '@dendelion/paper-ui';
-import { colors, withAlpha } from '@dendelion/paper-ui/tokens';
+import { IconButton, Spinner } from '@dendelion/folk-ui';
+import { colors, withAlpha } from '@dendelion/folk-ui/tokens';
 import { AgentSection } from './agent-section';
 import { DeskSection } from './desk-section';
 import { VersionFooter } from './version-footer';

@@ -2,7 +2,7 @@ import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { PrBadge } from '@/app/features/plans/components/pr-badge';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import type { ResolvedIdea } from '@/types/index';
-import { Stamp, Text } from '@dendelion/paper-ui';
+import { Stamp, Text } from '@dendelion/folk-ui';
 import { ideaProgressLabel } from '../helpers';
 
 interface IdeaRowProps {

@@ -1,7 +1,7 @@
 import { PageToolbar, PageToolbarRow, SidebarAction } from '@/app/components';
 import { isDefaultStatusFilter } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { Input } from '@dendelion/paper-ui';
+import { Input } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { NewIdeaButton, WorklistActionsMenu } from '../actions';
 import type { GroupMode } from '../helpers';

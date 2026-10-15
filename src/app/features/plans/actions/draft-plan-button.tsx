@@ -2,7 +2,7 @@ import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
-import { Button, SidebarItem, Tooltip, WandIcon, useToast } from '@dendelion/paper-ui';
+import { Button, SidebarItem, Tooltip, WandIcon, useToast } from '@dendelion/folk-ui';
 import { buildPlanDraftPrompt } from '../prompts';
 
 interface DraftPlanButtonProps {

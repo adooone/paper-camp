@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea } from '@/types/index';
-import { Button, MetaLine, Row, useToast } from '@dendelion/paper-ui';
+import { Button, MetaLine, Row, useToast } from '@dendelion/folk-ui';
 import { useCallback, useState } from 'react';
 import { PlanIdStamp } from '../components';
 import { PLAN_LIST_GRID, PLAN_ROW_COLUMNS, PLAN_ROW_HOST, RowIdCell, RowMarker } from './plan-rows';

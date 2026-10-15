@@ -15,8 +15,8 @@ import {
   Spinner,
   Stamp,
   Tooltip,
-} from '@dendelion/paper-ui';
-import { colors } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { colors } from '@dendelion/folk-ui/tokens';
 
 export const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   review: 'review',

@@ -1,6 +1,6 @@
 import { updatePlan } from '@/app/services/content';
 import { useAppStore } from '@/app/stores/app-store';
-import { useToast } from '@dendelion/paper-ui';
+import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 // Shared by plan-actions-column.tsx and the review queue so approve/reject/dropped

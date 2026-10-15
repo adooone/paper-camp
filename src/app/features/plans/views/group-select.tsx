@@ -1,5 +1,5 @@
 import { HANDWRITTEN_ACTION_CLASS } from '@/app/components';
-import { Button, CheckIcon, ChevronRightIcon, Menu } from '@dendelion/paper-ui';
+import { Button, CheckIcon, ChevronRightIcon, Menu } from '@dendelion/folk-ui';
 import type { GroupMode } from '../helpers';
 
 const GROUP_OPTIONS: { value: GroupMode; label: string }[] = [

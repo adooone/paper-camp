@@ -7,7 +7,7 @@ import {
 } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { Button, useToast } from '@dendelion/paper-ui';
+import { Button, useToast } from '@dendelion/folk-ui';
 import { useCallback } from 'react';
 
 type GitAction = 'push' | 'pull' | 'fix-divergence';

@@ -1,5 +1,5 @@
 import type { DeskCi } from '@/types/index';
-import { Input, SettingRow, Switch } from '@dendelion/paper-ui';
+import { Input, SettingRow, Switch } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 interface DeskCiEditorProps {

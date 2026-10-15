@@ -1,5 +1,5 @@
 import type { PlanEntry } from '@/types/index';
-import { Accordion, Stamp } from '@dendelion/paper-ui';
+import { Accordion, Stamp } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { IdeaRow } from './idea-row';
 

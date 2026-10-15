@@ -1,6 +1,6 @@
 import type { ScopeRow } from '@/app/features/scope';
 import type { LogSort } from '@/core/run-filters';
-import { Button, ChevronRightIcon, Row } from '@dendelion/paper-ui';
+import { Button, ChevronRightIcon, Row } from '@dendelion/folk-ui';
 import type { ScopedActivityEntry } from '../helpers';
 import { LOG_ROW_GRID_CLASS, LogRowView, WIDE_ONLY_CLASS } from './run-row';
 

@@ -1,4 +1,4 @@
-import { CommandLine, InlineCode } from '@dendelion/paper-ui';
+import { CommandLine, InlineCode } from '@dendelion/folk-ui';
 
 // Same two commands the relay drives interactively — shown as copy-paste fallback
 // when the relay itself can't run (no PTY, offline, unsupported CLI version).

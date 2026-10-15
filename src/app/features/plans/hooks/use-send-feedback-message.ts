@@ -1,21 +1,21 @@
 import { postFeedbackMessage, undoFeedbackEdit } from '@/app/services/agent-api';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { MountContext, PlanEntry } from '@/types/index';
-import type { ToastOptions } from '@dendelion/paper-ui';
+import type { ToastOptions } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 export interface SendFeedbackMessageCallbacks {
   /** Refreshes whatever this mount uses to list plans; a toolbar mount whose
    * activity-stream subscription already refetches for it can pass a no-op. */
   reload: () => Promise<void> | void;
-  /** paper-ui's `useToast().toast` on the desk — the toolbar lacks `<ToastProvider>`
+  /** folk-ui's `useToast().toast` on the desk — the toolbar lacks `<ToastProvider>`
    * (its portal would escape the shadow DOM), so it supplies its own instead. */
   notify: (options: ToastOptions) => void;
 }
 
 /** Posting a feedback message runs a one-shot agent before the reply lands in the
  * thread, so this can't reuse usePlanStatusPatch's plain PATCH-and-reload shape.
- * `reload`/`notify` are injected rather than read from the app store or paper-ui's
+ * `reload`/`notify` are injected rather than read from the app store or folk-ui's
  * toast context, so mounts without either (the toolbar — IDEA-130 phase 6) can
  * supply their own. */
 export const useSendFeedbackMessage = (

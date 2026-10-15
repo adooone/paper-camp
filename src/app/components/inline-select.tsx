@@ -1,4 +1,4 @@
-import { Button, CheckIcon, ChevronRightIcon, Menu } from '@dendelion/paper-ui';
+import { Button, CheckIcon, ChevronRightIcon, Menu } from '@dendelion/folk-ui';
 import { HANDWRITTEN_ACTION_CLASS } from './sidebar-action';
 
 export interface InlineSelectOption {

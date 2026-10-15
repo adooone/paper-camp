@@ -1,4 +1,4 @@
-import { Input } from '@dendelion/paper-ui';
+import { Input } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 interface TextFieldCellProps {

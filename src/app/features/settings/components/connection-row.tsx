@@ -1,6 +1,6 @@
 import { SignInAction } from '@/app/components/sign-in-action';
 import type { ConnectionResult } from '@/types/index';
-import { IconButton, RefreshIcon, SettingRow, Stamp, Tooltip } from '@dendelion/paper-ui';
+import { IconButton, RefreshIcon, SettingRow, Stamp, Tooltip } from '@dendelion/folk-ui';
 import { CAPABILITY_STATUS_STAMP } from '../constants';
 import { ConnectActionView } from './connect-action-view';
 

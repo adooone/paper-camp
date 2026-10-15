@@ -1,6 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Button, Checkbox, Modal } from '@dendelion/paper-ui';
+import { Button, Checkbox, Modal } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 interface DraftAllModalProps {

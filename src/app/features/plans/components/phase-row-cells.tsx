@@ -1,5 +1,5 @@
 import { formatDuration, formatTokens } from '@/core/phase-run';
-import { Checkbox, Spinner, Stamp } from '@dendelion/paper-ui';
+import { Checkbox, Spinner, Stamp } from '@dendelion/folk-ui';
 import { AgentStartButton } from '../actions/agent-start-button';
 import { STATUS_STAMP } from '../constants';
 import { type WorkRow, isRunningRow } from '../helpers';

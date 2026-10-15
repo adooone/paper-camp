@@ -3,7 +3,7 @@ import { useSubjectVocabulary } from '@/app/hooks/use-subject-vocabulary';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { RoadmapItem } from '@/types/index';
-import { Button, Modal, Select, useToast } from '@dendelion/paper-ui';
+import { Button, Modal, Select, useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 const NO_SUBJECT = '__no-subject__';

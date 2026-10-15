@@ -1,7 +1,7 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { FeedbackThread } from '@/app/features/plans/components';
-import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/paper-ui';
-import { surface } from '@dendelion/paper-ui/tokens';
+import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import { useEffect, useRef } from 'react';
 import { useChatPage } from './hooks';
 import { ChatComposer, ChatTitleActions, ClearChatModal } from './views';

@@ -1,5 +1,5 @@
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Accordion } from '@dendelion/paper-ui';
+import { Accordion } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { RoadmapItemRow } from './roadmap-item-row';
 

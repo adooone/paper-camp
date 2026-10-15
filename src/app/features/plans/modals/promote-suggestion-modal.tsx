@@ -2,7 +2,7 @@ import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { SuggestionEntry } from '@/types/index';
-import { Button, Modal, useToast } from '@dendelion/paper-ui';
+import { Button, Modal, useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
 interface PromoteSuggestionModalProps {

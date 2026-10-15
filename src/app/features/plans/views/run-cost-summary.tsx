@@ -1,5 +1,5 @@
 import { type UsageRollup, formatDuration, formatTokens } from '@/core/phase-run';
-import { Stamp, Tooltip } from '@dendelion/paper-ui';
+import { Stamp, Tooltip } from '@dendelion/folk-ui';
 
 // Same stamp as a phase row's run cost, and the same three-item shape — the
 // rollup swaps the phase's single model for a run count.

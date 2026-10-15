@@ -13,8 +13,8 @@ import {
   Stamp,
   Text,
   Tooltip,
-} from '@dendelion/paper-ui';
-import { color, colors } from '@dendelion/paper-ui/tokens';
+} from '@dendelion/folk-ui';
+import { color, colors } from '@dendelion/folk-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';

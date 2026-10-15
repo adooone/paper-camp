@@ -51,7 +51,7 @@ conditional style value.
 `chalkStatusText`, `EVENT_KIND_COLOR` — all `Record<Enum, { fill, text }>` or
 `Record<Enum, string>` maps of literal hex/rgba) resolve the same way: convert
 each map to hold Tailwind class names instead of color values, indexed the
-same way. (Several of these duplicate what paper-ui's `Stamp` component
+same way. (Several of these duplicate what folk-ui's `Stamp` component
 already renders per `docs/CODE_STYLE.md` — worth a follow-up, out of scope
 here.)
 
@@ -133,10 +133,10 @@ phase 2.
 
 ## `color` (tokens.ts) — IDEA-111 dependency never shipped
 
-[[IDEA-111]] (adopt paper-ui's `--pui-color-*-rgb` CSS-var tokens, per its
+[[IDEA-111]] (adopt folk-ui's `--pui-color-*-rgb` CSS-var tokens, per its
 plan write `text-accent-green` / `bg-canvas-300`) was **dropped** — it never
 published past its design decision. The currently installed
-`@dendelion/paper-ui@0.11.0` preset ships only `paper`/`ink`/`canvas` (50–950
+`@dendelion/folk-ui@0.11.0` preset ships only `paper`/`ink`/`canvas` (50–950
 scales) and `watercolor.{blue,green,amber,rose,slate}.{DEFAULT,light,dark}` —
 no `accent-*` names, no CSS-var-backed classes. This inventory maps against
 what is actually published, not the un-shipped IDEA-111 design:
@@ -174,7 +174,7 @@ one alpha in phase 3), `rgba(214,160,160,0.6|0.9)`, `rgba(214,196,160,0.6)`,
 `rgba(26,25,23,0.4)`, `rgba(61,53,43,0.12)` (border), plus the `STATUS_STAMP`-
 family fill/text colors already covered under "finite enum lookups" above.
 
-Since IDEA-111 is dropped, phase 2 cannot wait on a paper-ui republish — add
+Since IDEA-111 is dropped, phase 2 cannot wait on a folk-ui republish — add
 the desk/diff/overlay colors straight to this repo's `tailwind.config.ts`
 `theme.extend.colors`.
 
@@ -236,4 +236,4 @@ follow-up, out of scope here"): the `STATUS_STAMP`/`IDEA_STATUS_STAMP`/
 `features/plans/constants.ts`. Some of their colors match preset watercolor
 tones exactly; others (a purple, a mauve) don't and would need new config
 colors — deferred to whoever picks up that follow-up, since it may replace
-these with paper-ui's `Stamp` component instead of adding more one-off colors.
+these with folk-ui's `Stamp` component instead of adding more one-off colors.

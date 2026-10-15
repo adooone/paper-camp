@@ -1,5 +1,5 @@
 import type { DeskCheck } from '@/types/index';
-import { Button, CloseIcon, IconButton, PlusIcon, Table } from '@dendelion/paper-ui';
+import { Button, CloseIcon, IconButton, PlusIcon, Table } from '@dendelion/folk-ui';
 import type { KeyedDeskCheck } from '../hooks/use-desk-section';
 import { TextFieldCell } from './desk-table-cells';
 

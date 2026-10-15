@@ -2,7 +2,7 @@ import { SidebarSection, SidebarSkeleton } from '@/app/components';
 import { COMPACT_COLOR, CountBadge, gitStatusInfo } from '@/app/features/git/components';
 import { useGitFileList } from '@/app/features/git/hooks';
 import { splitPathForDisplay } from '@/app/utils/path-display';
-import { CheckAllIcon, Checkbox, IconButton, ListItem, Tooltip } from '@dendelion/paper-ui';
+import { CheckAllIcon, Checkbox, IconButton, ListItem, Tooltip } from '@dendelion/folk-ui';
 
 const sectionLabelClass = 'font-handwritten text-xs font-semibold leading-none opacity-[0.45]';
 
