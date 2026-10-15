@@ -1,7 +1,7 @@
-import { useIdeas, useOpenEntity, usePlans } from '@/app/hooks';
+import { useIdeas, useNotifications, useOpenEntity, usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
-import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
+import { refreshIdeas, refreshNotifications, refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import {
   applyPromotions,
@@ -43,8 +43,7 @@ export const useLogRows = () => {
   const { plans } = usePlans();
   const ideaEntries = useIdeas();
   const launchIssueFix = useAppStore((s) => s.launchIssueFix);
-  const notifications = useAppStore((s) => s.notifications);
-  const loadNotifications = useAppStore((s) => s.loadNotifications);
+  const { notifications } = useNotifications();
   const { checks } = useDeskChecks();
   const openEntity = useOpenEntity();
   const [promotingId, setPromotingId] = useState<string | null>(null);
@@ -120,7 +119,7 @@ export const useLogRows = () => {
   };
 
   const reloadEntities = async () => {
-    await Promise.all([refreshPlans(), loadNotifications()]);
+    await Promise.all([refreshPlans(), refreshNotifications()]);
   };
 
   const fixingIssueId = agentStatus.find(

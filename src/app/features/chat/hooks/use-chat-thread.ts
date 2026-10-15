@@ -1,10 +1,11 @@
 import type { ScopeRow } from '@/app/features/scope';
+import { useChat } from '@/app/hooks';
 import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/content';
-import { useAppStore } from '@/app/stores/app-store';
+import { refreshChat } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { isUnansweredQuestion } from '@/core/chat-file';
 import { useToast } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export async function sendChatText(
   text: string,
@@ -40,9 +41,9 @@ export async function sendChatText(
 }
 
 export function useChatThread() {
-  const thread = useAppStore((s) => s.chatThread) ?? [];
-  const loading = useAppStore((s) => s.chatLoading);
-  const loadChat = useAppStore((s) => s.loadChat);
+  const { chatThread, chatLoading } = useChat();
+  const thread = chatThread ?? [];
+  const loading = chatLoading;
   const { toast } = useToast();
 
   const [input, setInput] = useState('');
@@ -50,10 +51,6 @@ export function useChatThread() {
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
-
-  useEffect(() => {
-    loadChat();
-  }, [loadChat]);
 
   const sendText = async (text: string, opts: { restoreOnFailure: boolean }, target?: ScopeRow) => {
     setSending(true);
@@ -64,7 +61,7 @@ export function useChatThread() {
         postChatMessage: toForeign
           ? (t) => postChatMessageAt(target.runtimeUrl, t)
           : postChatMessage,
-        loadChat: toForeign ? async () => {} : loadChat,
+        loadChat: toForeign ? async () => {} : refreshChat,
         toast,
         setInput,
       });
@@ -93,7 +90,7 @@ export function useChatThread() {
     setClearing(true);
     try {
       await clearChat();
-      await loadChat();
+      await refreshChat();
       setConfirmOpen(false);
     } catch (err) {
       toast({

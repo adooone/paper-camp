@@ -1,5 +1,5 @@
+import { useCapabilities } from '@/app/hooks';
 import { CLIENT_VERSION } from '@/app/services/version';
-import { useAppStore } from '@/app/stores/app-store';
 import { Divider } from '@dendelion/folk-ui';
 
 export function versionLabel(runtimeVersion: string | null, clientVersion: string): string {
@@ -9,7 +9,7 @@ export function versionLabel(runtimeVersion: string | null, clientVersion: strin
 }
 
 export const VersionFooter = () => {
-  const runtimeVersion = useAppStore((s) => s.runtimeVersion);
+  const { runtimeVersion } = useCapabilities();
   return (
     <div className="shrink-0">
       <Divider surface="chalkboard" />

@@ -1,9 +1,14 @@
-import { getPlansError, refreshIdeas, refreshPlans } from '@/app/services/query-client';
-import { fetchCapabilitiesPayload } from '@/app/services/system';
+import {
+  getPlansError,
+  refreshAgentAuthStatus,
+  refreshIdeas,
+  refreshNightReport,
+  refreshPlans,
+  refreshSuggestions,
+} from '@/app/services/query-client';
 import type { DoctorFindingSummary } from '@/core/doctor';
 import type {
   BranchHygieneStatus,
-  CapabilityResult,
   ConsistencyIssue,
   GitStashEntry,
   GitStatusEntry,
@@ -44,11 +49,6 @@ export type StatusSlice = {
   gitStashes: GitStashEntry[];
   // Resolves false on failure (state left stale) so callers like quickCommit can tell.
   loadGitStatus: () => Promise<boolean>;
-
-  // Empty until loaded; gating selectors treat empty as "unknown" and don't block on it.
-  capabilities: CapabilityResult[];
-  runtimeVersion: string | null;
-  loadCapabilities: () => Promise<void>;
 };
 
 export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
@@ -64,14 +64,14 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           refreshPlans(),
           refreshIdeas(),
           get().loadArchivableIdeas(),
-          get().loadSuggestions(),
-          get().loadNightReport(),
+          refreshSuggestions(),
+          refreshNightReport(),
           get().loadStatus(),
           get().loadConsistency(),
           get().loadDoctor(),
           get().loadGitStatus(),
           get().loadAgentStatus(),
-          get().loadAgentAuthStatus(),
+          refreshAgentAuthStatus(),
         ]);
         // plansError is the one loader that surfaces failure; the rest swallow theirs.
         const error = getPlansError();
@@ -144,14 +144,5 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
         return false;
       }
     },
-
-    capabilities: [],
-    runtimeVersion: null,
-    loadCapabilities: loadSlice(
-      set,
-      fetchCapabilitiesPayload,
-      (data) => ({ capabilities: data?.capabilities ?? [], runtimeVersion: data?.version ?? null }),
-      () => ({ capabilities: [] }),
-    ),
   };
 }

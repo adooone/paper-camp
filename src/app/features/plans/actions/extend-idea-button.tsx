@@ -1,6 +1,7 @@
+import { useHasAnyAgent } from '@/app/hooks';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { getCachedIdeas } from '@/app/services/query-client';
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
 import { Button, Tooltip, useToast } from '@dendelion/folk-ui';
@@ -16,7 +17,7 @@ interface ExtendIdeaButtonProps {
  * `idea` prop) so a second Extend after the first one's Log entry landed still works. */
 export const ExtendIdeaButton = ({ idea, compact }: ExtendIdeaButtonProps) => {
   const launchIdeaExtend = useAppStore((s) => s.launchIdeaExtend);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
   const ideaId = idea.id;

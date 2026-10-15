@@ -1,6 +1,5 @@
 import { getCachedPlans, refreshPlans } from '@/app/services/query-client';
-import { fetchAgentAuthStatus } from '@/app/services/system';
-import type { AgentAuthStatus, AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
+import type { AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
   cancelLoginRelay as cancelLoginRelayApi,
   consumeReconcileQueue,
@@ -43,10 +42,6 @@ let previewCounter = 0;
 const nextPreviewId = () => `preview-${++previewCounter}`;
 
 export type AgentSlice = {
-  // null until loaded or when the agent has no auth-status probe; loggedIn:null means unknown.
-  agentAuthStatus: AgentAuthStatus | null;
-  loadAgentAuthStatus: () => Promise<void>;
-
   agentStatus: AgentTaskState[];
   loadAgentStatus: () => Promise<void>;
   launchAgent: (planId: string, phaseIndex: number) => Promise<void>;
@@ -91,14 +86,6 @@ export type AgentSlice = {
 
 export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
   return {
-    agentAuthStatus: null,
-    loadAgentAuthStatus: loadSlice(
-      set,
-      fetchAgentAuthStatus,
-      (data) => ({ agentAuthStatus: data }),
-      () => ({ agentAuthStatus: null }),
-    ),
-
     agentStatus: [],
     loadAgentStatus: async () => {
       try {

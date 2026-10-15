@@ -1,5 +1,6 @@
+import { useHasAnyAgent } from '@/app/hooks';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { Button, SidebarItem, Tooltip, WandIcon, useToast } from '@dendelion/folk-ui';
@@ -24,7 +25,7 @@ export const DraftPlanButton = ({
   sidebar = false,
 }: DraftPlanButtonProps) => {
   const launchPlanDraft = useAppStore((s) => s.launchPlanDraft);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const { state, errorMessage, run } = useActionFeedback();
   const { toast } = useToast();
 

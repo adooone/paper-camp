@@ -1,4 +1,5 @@
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useHasAnyAgent } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { IconButton, useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -11,7 +12,7 @@ interface AgentStartButtonProps {
 
 export const AgentStartButton = ({ planId, phaseIndex, disabled }: AgentStartButtonProps) => {
   const launchAgent = useAppStore((s) => s.launchAgent);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const { toast } = useToast();
   const [launching, setLaunching] = useState(false);
 

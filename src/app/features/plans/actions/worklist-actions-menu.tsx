@@ -1,5 +1,5 @@
-import { useIdeas } from '@/app/hooks';
-import { selectAgentBusy, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useHasAnyAgent, useIdeas, useSuggestions } from '@/app/hooks';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import {
   CheckIcon,
@@ -25,9 +25,9 @@ export const WorklistActionsMenu = () => {
   const launchPrioritise = useAppStore((s) => s.launchPrioritise);
   const refreshAll = useAppStore((s) => s.refreshAll);
   const ideaEntries = useIdeas();
-  const suggestions = useAppStore((s) => s.suggestions);
+  const { suggestions } = useSuggestions();
   const agentBusy = useAppStore(selectAgentBusy);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const { toast } = useToast();
   const [running, setRunning] = useState<RunningAction>(null);
   const [draftAllOpen, setDraftAllOpen] = useState(false);

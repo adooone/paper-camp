@@ -1,11 +1,11 @@
-import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import {
-  selectAgentNotSignedIn,
-  selectCapabilityGapCount,
-  selectLatestRateLimit,
-  selectUnansweredChatQuestionCount,
-  useAppStore,
-} from '@/app/stores/app-store';
+  useAgentNotSignedIn,
+  useCapabilityGapCount,
+  useNotifications,
+  useUnansweredChatQuestionCount,
+} from '@/app/hooks';
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
+import { selectLatestRateLimit, useAppStore } from '@/app/stores/app-store';
 import type { AgentTaskStatus } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -35,13 +35,13 @@ export function useStatusBar(): StatusBarState {
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
   const { checks: deskChecks } = useDeskChecks();
-  const capabilityGapCount = useAppStore(selectCapabilityGapCount);
-  const agentNotSignedIn = useAppStore(selectAgentNotSignedIn);
+  const capabilityGapCount = useCapabilityGapCount();
+  const agentNotSignedIn = useAgentNotSignedIn();
   const rateLimit = useAppStore(selectLatestRateLimit);
-  const unreadNotificationCount = useAppStore(
-    (s) => s.notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0,
-  );
-  const unansweredChatQuestionCount = useAppStore(selectUnansweredChatQuestionCount);
+  const { notifications } = useNotifications();
+  const unreadNotificationCount =
+    notifications?.filter((n) => n.kind === 'question' || !n.read).length ?? 0;
+  const unansweredChatQuestionCount = useUnansweredChatQuestionCount();
   const navigate = useNavigate();
 
   const activeTask = agentStatus.find(

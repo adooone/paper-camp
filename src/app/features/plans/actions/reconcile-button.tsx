@@ -1,4 +1,5 @@
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useHasAnyAgent } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -11,7 +12,7 @@ interface ReconcileButtonProps {
 
 export const ReconcileButton = ({ plan, disabled }: ReconcileButtonProps) => {
   const launchPlanReconcile = useAppStore((s) => s.launchPlanReconcile);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const [launching, setLaunching] = useState(false);
 
   // Snapshot + completion handling live in the store (launchPlanReconcile /

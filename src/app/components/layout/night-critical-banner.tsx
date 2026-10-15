@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/stores/app-store';
+import { useNightReport } from '@/app/hooks';
 import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { Button } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
@@ -18,7 +18,7 @@ export function formatCriticalSummary(criticals: NightSuggestionEntry[]): string
 }
 
 export const NightCriticalBanner = () => {
-  const nightReport = useAppStore((s) => s.nightReport);
+  const nightReport = useNightReport();
   const navigate = useNavigate();
 
   const criticals = criticalNightFindings(nightReport);

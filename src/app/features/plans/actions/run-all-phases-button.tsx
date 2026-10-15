@@ -1,4 +1,5 @@
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useHasAnyAgent } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { RunIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -10,7 +11,7 @@ interface RunAllPhasesButtonProps {
 
 export const RunAllPhasesButton = ({ plan, disabled }: RunAllPhasesButtonProps) => {
   const launchRunAll = useAppStore((s) => s.launchRunAll);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const [launching, setLaunching] = useState(false);
 
   const handleClick = async () => {

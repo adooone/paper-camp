@@ -1,4 +1,5 @@
-import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useGhOk, useHasAnyAgent } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { CheckAllIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -12,8 +13,8 @@ interface FixReviewButtonProps {
 // threads only exist server-side (a `gh api` call), so the route builds it via buildFixReviewPrompt.
 export const FixReviewButton = ({ plan, disabled }: FixReviewButtonProps) => {
   const launchFixReview = useAppStore((s) => s.launchFixReview);
-  const hasAgent = useAppStore(selectHasAnyAgent);
-  const ghOk = useAppStore(selectGhOk);
+  const hasAgent = useHasAnyAgent();
+  const ghOk = useGhOk();
   const [launching, setLaunching] = useState(false);
 
   const handleClick = async () => {

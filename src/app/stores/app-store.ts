@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice } from './slices/agent-slice';
 import { type CapacitySlice, createCapacitySlice } from './slices/capacity-slice';
-import { type ChatSlice, createChatSlice } from './slices/chat-slice';
 import { type DiffSlice, createDiffSlice } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
 import { type NightReportSlice, createNightReportSlice } from './slices/night-report-slice';
-import { type NotificationsSlice, createNotificationsSlice } from './slices/notifications-slice';
-import {
-  type ParkedQuestionsSlice,
-  createParkedQuestionsSlice,
-} from './slices/parked-questions-slice';
 import { type PlansSlice, createPlansSlice } from './slices/plans-slice';
 import { type RoadmapSlice, createRoadmapSlice } from './slices/roadmap-slice';
 import { type RuntimeSlice, createRuntimeSlice } from './slices/runtime-slice';
@@ -21,7 +15,6 @@ import { type TaskLogSlice, createTaskLogSlice } from './slices/task-log-slice';
 export type { DetailView } from './slices/plans-slice';
 
 export type AppStore = CapacitySlice &
-  ChatSlice &
   PlansSlice &
   RoadmapSlice &
   IdeasSlice &
@@ -32,51 +25,25 @@ export type AppStore = CapacitySlice &
   StatusSlice &
   AgentSlice &
   DiffSlice &
-  ParkedQuestionsSlice &
-  NotificationsSlice &
   RuntimeSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createCapacitySlice(set),
-  ...createChatSlice(set),
   ...createPlansSlice(set),
   ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
   ...createSuggestionsSlice(set, get),
-  ...createNightReportSlice(set, get),
+  ...createNightReportSlice(),
   ...createTaskLogSlice(set),
   ...createDocsSlice(set, get),
   ...createStatusSlice(set, get),
   ...createAgentSlice(set, get),
   ...createDiffSlice(set, get),
-  ...createParkedQuestionsSlice(set),
-  ...createNotificationsSlice(set, get),
   ...createRuntimeSlice(set),
 }));
 
 export const selectAgentBusy = (s: AppStore) =>
   s.agentStatus.some((t) => t.status !== 'done' && t.status !== 'error');
-
-// Capabilities haven't loaded yet: don't block launches on an unknown state.
-export const selectHasAnyAgent = (s: AppStore) =>
-  s.capabilities.length === 0 ||
-  s.capabilities.some((c) => c.id.startsWith('agent:') && c.status === 'ok');
-
-export const selectGhOk = (s: AppStore) => {
-  const gh = s.capabilities.find((c) => c.id === 'gh');
-  return gh === undefined || gh.status === 'ok';
-};
-
-export const selectCapabilityGapCount = (s: AppStore) =>
-  s.capabilities.filter((c) => c.status !== 'ok').length;
-
-export const selectUnansweredChatQuestionCount = (s: AppStore) =>
-  (s.chatThread ?? []).filter((m) => m.kind === 'question' && (m.state ?? 'open') === 'open')
-    .length;
-
-// loggedIn: null means unknown (non claude-code agent, or the probe couldn't tell) — only
-// an explicit false should surface as "not signed in".
-export const selectAgentNotSignedIn = (s: AppStore) => s.agentAuthStatus?.loggedIn === false;
 
 export const selectLatestRateLimit = (s: AppStore) =>
   s.agentStatus.find((t) => t.rateLimit)?.rateLimit ?? null;

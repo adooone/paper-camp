@@ -1,5 +1,6 @@
+import { useGhOk, useHasAnyAgent } from '@/app/hooks';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
-import { selectGhOk, selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { GithubIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -13,8 +14,8 @@ interface PrReviewButtonProps {
 // only exists behind a `gh` call, via buildPrReviewPrompt.
 export const PrReviewButton = ({ plan, disabled }: PrReviewButtonProps) => {
   const launchPrReview = useAppStore((s) => s.launchPrReview);
-  const hasAgent = useAppStore(selectHasAnyAgent);
-  const ghOk = useAppStore(selectGhOk);
+  const hasAgent = useHasAnyAgent();
+  const ghOk = useGhOk();
   const [launching, setLaunching] = useState(false);
   const status = usePrReviewStatus(plan.id);
 

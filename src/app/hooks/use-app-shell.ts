@@ -72,13 +72,6 @@ export interface AppShellState {
 export function useAppShell(): AppShellState {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const loadSuggestions = useAppStore((s) => s.loadSuggestions);
-  const loadNightReport = useAppStore((s) => s.loadNightReport);
-  const loadCapabilities = useAppStore((s) => s.loadCapabilities);
-  const loadAgentAuthStatus = useAppStore((s) => s.loadAgentAuthStatus);
-  const loadParkedQuestions = useAppStore((s) => s.loadParkedQuestions);
-  const loadNotifications = useAppStore((s) => s.loadNotifications);
-  const loadChat = useAppStore((s) => s.loadChat);
   const setActiveDocTitle = useAppStore((s) => s.setActiveDocTitle);
   const checkRuntimeReachable = useAppStore((s) => s.checkRuntimeReachable);
   const runtimeReachable = useAppStore((s) => s.runtimeReachable);
@@ -149,24 +142,8 @@ export function useAppShell(): AppShellState {
   useNotificationPush();
 
   useEffect(() => {
-    loadSuggestions();
-    loadNightReport();
-    loadCapabilities();
-    loadAgentAuthStatus();
-    loadParkedQuestions();
-    loadNotifications();
-    loadChat();
     checkRuntimeReachable();
-  }, [
-    loadSuggestions,
-    loadNightReport,
-    loadCapabilities,
-    loadAgentAuthStatus,
-    loadParkedQuestions,
-    loadNotifications,
-    loadChat,
-    checkRuntimeReachable,
-  ]);
+  }, [checkRuntimeReachable]);
 
   // An unused corpus (IDEA-1 only, no plans) points at USAGE.md instead of an empty
   // Ideas list; armed once at mount so a session that opened elsewhere never trips it.

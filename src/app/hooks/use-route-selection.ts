@@ -7,6 +7,7 @@ import type {
 } from '@/types/index';
 import { useParams } from '@tanstack/react-router';
 import { useIdeas } from './use-ideas';
+import { useNightReport } from './use-night-report';
 import { usePlans } from './use-plans';
 
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
@@ -131,7 +132,7 @@ export interface ActiveNightChunk {
 
 export function useActiveNightChunk(): ActiveNightChunk | null {
   const { chunk: chunkParam } = useParams({ strict: false });
-  const nightReport = useAppStore((s) => s.nightReport);
+  const nightReport = useNightReport();
   if (typeof chunkParam !== 'string') return null;
   const chunkName = decodeURIComponent(chunkParam);
   // The route has no date, and the same chunk can recur across night groups —

@@ -5,8 +5,10 @@ import {
   useActiveNightChunk,
   useActivePlan,
   useIdeas,
+  useNightReport,
   useOpenEntity,
   usePlans,
+  useSuggestions,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
@@ -18,8 +20,8 @@ import { DEFAULT_GROUP_MODE, type GroupMode, isGroupMode } from '../helpers';
 export const usePlansPage = () => {
   const { plans, plansError } = usePlans();
   const ideaEntries = useIdeas();
-  const suggestions = useAppStore((s) => s.suggestions);
-  const nightReport = useAppStore((s) => s.nightReport);
+  const { suggestions } = useSuggestions();
+  const nightReport = useNightReport();
   const setDetailView = useAppStore((s) => s.setDetailView);
   const planFilters = useAppStore((s) => s.planFilters);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);

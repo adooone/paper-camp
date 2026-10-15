@@ -1,4 +1,5 @@
-import { selectHasAnyAgent, useAppStore } from '@/app/stores/app-store';
+import { useHasAnyAgent } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
@@ -11,7 +12,7 @@ interface AuditPhasesButtonProps {
 
 export const AuditPhasesButton = ({ plan, disabled }: AuditPhasesButtonProps) => {
   const launchPlanAudit = useAppStore((s) => s.launchPlanAudit);
-  const hasAgent = useAppStore(selectHasAnyAgent);
+  const hasAgent = useHasAnyAgent();
   const [launching, setLaunching] = useState(false);
 
   const handleClick = async () => {

@@ -1,5 +1,5 @@
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
-import { refreshPlans } from '@/app/services/query-client';
+import { refreshNightReport, refreshPlans, refreshSuggestions } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { type RefObject, useEffect, useRef } from 'react';
 
@@ -80,8 +80,6 @@ export function useStackPanel(
         'activity',
         () => {
           const {
-            loadSuggestions,
-            loadNightReport,
             loadStatus,
             loadConsistency,
             loadDoctor,
@@ -91,8 +89,8 @@ export function useStackPanel(
             loadTaskLog,
           } = useAppStore.getState();
           refreshPlans();
-          loadSuggestions();
-          loadNightReport();
+          refreshSuggestions();
+          refreshNightReport();
           loadStatus();
           loadConsistency();
           loadDoctor();

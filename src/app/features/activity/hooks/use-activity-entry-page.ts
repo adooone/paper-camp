@@ -1,3 +1,4 @@
+import { markRead } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { resolveLogRow } from '@/core/run-rows';
 import type { LogRow } from '@/types/index';
@@ -7,7 +8,6 @@ import { useLogRows } from './use-run-rows';
 
 export const useActivityEntryPage = (entryId: string) => {
   const { loading, allRows, actions } = useLogRows();
-  const markRead = useAppStore((s) => s.markRead);
   const setActiveLogEntryTitle = useAppStore((s) => s.setActiveLogEntryTitle);
   // A run that just finished drops out of the agent status a beat before its tasks.log
   // row loads; holding the last row keeps the page from flashing "doesn't exist".
@@ -24,7 +24,7 @@ export const useActivityEntryPage = (entryId: string) => {
 
   useEffect(() => {
     if (unreadMarkId) markRead(unreadMarkId);
-  }, [unreadMarkId, markRead]);
+  }, [unreadMarkId]);
 
   return { loading, row, actions };
 };

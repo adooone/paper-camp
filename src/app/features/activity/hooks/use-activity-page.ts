@@ -1,5 +1,5 @@
 import { useScope } from '@/app/features/scope';
-import { useAppStore } from '@/app/stores/app-store';
+import { markRead } from '@/app/hooks';
 import { filterLogRows } from '@/core/run-filters';
 import { computeLogStats } from '@/core/run-stats';
 import { useMemo, useState } from 'react';
@@ -11,7 +11,6 @@ import { useScopeActivity } from './use-scope-activity';
 
 export const useActivityPage = () => {
   const { loading, allRows, availableTypes } = useLogRows();
-  const markRead = useAppStore((s) => s.markRead);
   const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
 
   const scope = useScope(null);

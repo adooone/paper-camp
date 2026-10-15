@@ -58,6 +58,34 @@ export function packageNameQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'package-name');
 }
 
+export function suggestionsQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'suggestions');
+}
+
+export function nightReportQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'night-report');
+}
+
+export function capabilitiesQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'capabilities');
+}
+
+export function agentAuthStatusQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'agent-auth-status');
+}
+
+export function parkedQuestionsQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'parked-questions');
+}
+
+export function notificationsQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'notifications');
+}
+
+export function chatQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'chat');
+}
+
 export function getCachedPlans(): ParseResult<PlanEntry> | null {
   return (
     queryClient.getQueryData<ParseResult<PlanEntry>>(
@@ -89,6 +117,55 @@ export function refreshPlans(): Promise<void> {
 export function refreshIdeas(): Promise<void> {
   return queryClient.invalidateQueries({
     queryKey: ideasQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshSuggestions(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: suggestionsQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshNightReport(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: nightReportQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshCapabilities(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: capabilitiesQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshAgentAuthStatus(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: agentAuthStatusQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshParkedQuestions(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: parkedQuestionsQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshNotifications(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: notificationsQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshChat(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: chatQueryKey(getRuntimeConnection().runtimeUrl),
     refetchType: 'all',
   });
 }
