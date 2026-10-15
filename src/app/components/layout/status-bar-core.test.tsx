@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { StatusBarCore, type StatusBarCoreProps } from './status-bar-core';
 
 const baseProps: StatusBarCoreProps = {
+  projectName: 'paper-camp',
+  projectIconDataUri: null,
   gitBranch: 'main',
   gitAhead: 0,
   changedFileCount: 0,
