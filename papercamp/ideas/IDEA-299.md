@@ -74,10 +74,11 @@ report, notifications, chat, capabilities, agent status and git status out of
 the store.
 
 ### Phases
-- [ ] Add the persisted query client
+- [x] Add the persisted query client
       Dependencies, `query-client.ts` with the IndexedDB persister, the
       `project` key prefix filter and version buster, and
       `PersistQueryClientProvider` in `main.tsx`.
+      run: 2m53s · 56 in · 9.4k out · sonnet-5 · sess:15e2f1e3-8d2f-4cac-b649-4f9b0cf5cf0a
 - [ ] Move plans and ideas onto queries
       `usePlans`/`useIdeas` keyed by runtime URL, the store fields removed,
       every `loadPlans`/`loadIdeas` caller switched to `refreshPlans`/
