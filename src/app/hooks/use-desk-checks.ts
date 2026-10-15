@@ -6,6 +6,7 @@ import { fetchChecks, fixDeskCheck, runDeskCheck } from '../services/checks-api'
 export interface DeskChecksClient {
   checks: DeskCheckState[];
   run: (name: string) => Promise<void>;
+  runAll: () => Promise<void>;
   fix: (name: string) => Promise<DeskCheckState>;
 }
 
@@ -45,6 +46,11 @@ export function useDeskChecks(): DeskChecksClient {
     [refresh],
   );
 
+  const runAll = useCallback(async () => {
+    await Promise.all(checks.map((check) => runDeskCheck(check.name)));
+    await refresh();
+  }, [checks, refresh]);
+
   const fix = useCallback(
     async (name: string) => {
       const check = await fixDeskCheck(name);
@@ -54,5 +60,5 @@ export function useDeskChecks(): DeskChecksClient {
     [refresh],
   );
 
-  return { checks, run, fix };
+  return { checks, run, runAll, fix };
 }

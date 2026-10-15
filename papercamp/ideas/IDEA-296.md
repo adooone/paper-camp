@@ -38,10 +38,9 @@ list ends with a separator and *Add a machine*, which opens the welcome screen.
 Under a mount prefix, where the host app decides the project, the name shows
 with no dropdown, as `ProjectSwitcher` does today.
 
-**The status bar names the project.** The status bar's left group starts with
-the project's icon and name, plain text in the status bar's secondary tone,
-before the branch. It isn't clickable; it keeps the project in view whichever
-page is open.
+**The status bar stays about git.** An earlier pass put the project's icon and
+name before the branch; it was dropped again. The header switcher already names
+the project, and the status bar starts with the branch.
 
 **The welcome screen is for pairing only.** `/projects` shows the logo, *Paper
 Camp*, and the *Add a machine* card from IDEA-292 — machine and code fields, the
@@ -53,15 +52,13 @@ through *Add a machine*, which then also offers *Back to <project>*.
 `MachineSection` and `ProjectRow` are deleted, along with anything else only
 they used.
 
-**Rename and forget move to Project › Settings.** The *Project Info* section
-gains two rows under the existing fields:
-- **Name on this device:** an input pre-filled with the label the switcher
-  shows, saved through `useHubMachines().renameRow` on blur. Empty restores the
-  repo's own name. The label is device-local, as it is today.
-- **Forget on this device:** a danger button that removes the project from this
-  browser through `forgetRow`, after a confirm. It then opens the next known
-  project, or the welcome screen when none is left. The project's files and the
-  machine's registry are untouched.
+**Rename moves to Project › Settings.** The *Project Info* section gains a
+**Name on this device** row: an input pre-filled with the label the switcher
+shows, saved through `useHubMachines().renameRow` on blur. Empty restores the
+repo's own name. The label is device-local, as it is today. There is no
+*forget*: the switcher lists what each machine serves, so forgetting on one
+device would only drop the custom name and the remembered last page, and a
+project is removed for real from the machine's registry instead.
 
 **The Project sidebar drops its project list.** The *Projects* section that
 [[IDEA-291]] put at the top of the Project page's sidebar goes; the header
@@ -93,10 +90,9 @@ Managing machines (forgetting a machine, its version, its update).
       one is known; numbers column, machine sections and project rows deleted
       with their hooks, helpers and tests.
       run: 5m16s · 92 in · 20.5k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
-- [x] Move rename and forget to Project › Settings
-      Name on this device and Forget on this device in Project Info, using
-      renameRow and forgetRow; forgetting opens the next project or the welcome
-      screen.
+- [x] Move rename to Project › Settings
+      Name on this device in Project Info, using renameRow; forget was dropped
+      as meaningless once the switcher lists every machine project.
       run: 2m56s · 40 in · 12.4k out · sonnet-5 · sess:b3bebcaf-156a-46cc-b35a-33585d1a1569
 - [x] Drop the project list from the Project sidebar
       Remove the Projects section so the sidebar starts with Roadmap; delete

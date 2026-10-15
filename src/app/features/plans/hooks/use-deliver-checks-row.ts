@@ -59,7 +59,7 @@ export const activeCheckFix = (
 };
 
 export const useDeliverChecksRow = () => {
-  const { checks: deskChecks, run: runDeskCheck, fix } = useDeskChecks();
+  const { checks: deskChecks, run: runDeskCheck, runAll: runAllChecks, fix } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
   const plans = useAppStore((s) => s.plans);
@@ -107,6 +107,7 @@ export const useDeliverChecksRow = () => {
     setDocsExpanded,
     navigate,
     runDeskCheck,
+    runAllChecks,
     linkedPlanFor,
     failing,
     failingCheck,

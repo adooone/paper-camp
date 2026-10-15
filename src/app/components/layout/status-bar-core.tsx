@@ -3,9 +3,7 @@ import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import {
   BellIcon,
   ChatIcon,
-  FolderIcon,
   GitBranchIcon,
-  Icon,
   IconButton,
   type MenuEntry,
   OverflowToolbar,
@@ -40,8 +38,6 @@ const notificationBadgeClass =
   'pointer-events-none absolute top-0 -right-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-watercolor-amber-dark px-1 font-handwritten text-xs font-semibold leading-none text-paper-50';
 
 export interface StatusBarCoreProps {
-  projectName: string | null;
-  projectIconDataUri: string | null;
   gitBranch: string | null;
   gitAhead: number;
   changedFileCount: number;
@@ -65,8 +61,6 @@ export interface StatusBarCoreProps {
 // Ambient status only. Branch, change count, spinner, chat, and bell always show; the
 // rest folds into a "more" menu when the bar runs out of width, lowest priority first.
 export const StatusBarCore = ({
-  projectName,
-  projectIconDataUri,
   gitBranch,
   gitAhead,
   changedFileCount,
@@ -152,16 +146,6 @@ export const StatusBarCore = ({
   return (
     <div className={barClass} style={getTextureStyles('kraft')}>
       <div className={leftGroupClass}>
-        <span className="flex items-center gap-1.5 shrink-0">
-          {projectIconDataUri ? (
-            <img src={projectIconDataUri} alt="" className="h-3 w-3 object-contain" />
-          ) : (
-            <Icon icon={<FolderIcon />} size="small" />
-          )}
-          <span className={`${secondaryClass} min-w-0 max-w-[20vw] truncate`}>
-            {projectName ?? 'Paper Camp'}
-          </span>
-        </span>
         <span className={branchClass}>
           <span className={mutedClass}>
             <GitBranchIcon size={12} />

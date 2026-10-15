@@ -109,10 +109,11 @@ The rest of the Git page's layout. Adding or editing checks (Project › Setting
 The commit form's fields.
 
 ### Phases
-- [ ] Collapse the check stamps into one status label
+- [x] Collapse the check stamps into one status label
       Summary stamp with passing, running, failing and not-run states, Fix or
       Auto-fix beside it on a failure, and the menu of every check with Run,
       Run all and the Docs findings toggle.
+      run: 8m39s · 114 in · 27.1k out · sonnet-5 · sess:0a6a28be-5f22-49ea-9fd1-cf53757e7899
 - [ ] Lay the footer out as one row with Push and Pull
       Status, state line, Push button with the ahead count and the Pull icon
       button; the commit form as a second row only when there are changes;

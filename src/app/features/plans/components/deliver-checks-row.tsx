@@ -1,7 +1,14 @@
 import { GitStashSurface } from '@/app/components';
-import { entityLink, entityRouteParam } from '@/app/hooks';
-import type { CheckStatus, DeskCheckState } from '@/types/index';
-import { Button, Stamp, type StampVariant, Tooltip } from '@dendelion/paper-ui';
+import { entityLink } from '@/app/hooks';
+import type { CheckStatus } from '@/types/index';
+import {
+  Button,
+  Menu,
+  type MenuEntry,
+  Stamp,
+  type StampVariant,
+  Tooltip,
+} from '@dendelion/paper-ui';
 import { useDeliverChecksRow } from '../hooks';
 
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
@@ -11,17 +18,25 @@ const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
   stale: 'neutral',
 };
 
-interface CheckStampProps {
-  label: string;
-  status: CheckStatus;
-  title: string;
-  anyRunning: boolean;
-  onClick: () => void;
-}
+const DOT_CLASS: Record<CheckStatus, string> = {
+  pass: 'bg-chalk-pass-text',
+  fail: 'bg-chalk-fail-text',
+  running: 'bg-chalk-running-text',
+  stale: 'bg-desk-text-muted',
+};
 
-const checkTooltip = (check: DeskCheckState) => `${check.cmd}. Click to run.`;
+const StatusDot = ({ status }: { status: CheckStatus }) => (
+  <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${DOT_CLASS[status]}`} />
+);
 
-interface FixStampProps {
+const menuItemLabel = (name: string, action: string) => (
+  <span className="flex w-full items-center justify-between gap-4">
+    <span>{name}</span>
+    <span className="text-desk-text-muted">{action}</span>
+  </span>
+);
+
+interface FixButtonProps {
   label: string;
   tooltip: string;
   variant: StampVariant;
@@ -29,19 +44,10 @@ interface FixStampProps {
   onClick: () => void;
 }
 
-const FixStamp = ({ label, tooltip, variant, disabled, onClick }: FixStampProps) => (
+const FixButton = ({ label, tooltip, variant, disabled, onClick }: FixButtonProps) => (
   <Tooltip content={tooltip}>
     <Stamp size="small" variant={variant} onClick={onClick} disabled={disabled}>
       {label}
-    </Stamp>
-  </Tooltip>
-);
-
-const CheckStamp = ({ label, status, title, anyRunning, onClick }: CheckStampProps) => (
-  <Tooltip content={title}>
-    <Stamp size="small" variant={CHECK_VARIANT[status]} onClick={onClick} disabled={anyRunning}>
-      {label}
-      <span className={status === 'running' ? 'visible' : 'invisible'}>…</span>
     </Stamp>
   </Tooltip>
 );
@@ -60,6 +66,7 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
     setDocsExpanded,
     navigate,
     runDeskCheck,
+    runAllChecks,
     linkedPlanFor,
     failing,
     failingCheck,
@@ -69,104 +76,131 @@ export const DeliverChecksRow = ({ showStash = true }: DeliverChecksRowProps = {
     fixCheck,
   } = useDeliverChecksRow();
 
+  const failingDeskChecks = deskChecks.filter((check) => check.status === 'fail');
+  const runningCount = deskChecks.filter((check) => check.status === 'running').length;
+  const totalChecks = deskChecks.length + 1;
+  const failingCount = failingDeskChecks.length + (hasDocIssues ? 1 : 0);
+  const firstFailingName = failingDeskChecks[0]?.name ?? (hasDocIssues ? 'Docs' : undefined);
+  const allStale = deskChecks.length > 0 && deskChecks.every((check) => check.status === 'stale');
+
+  let statusVariant: StampVariant;
+  let statusLabel: string;
+  if (failingCount > 0) {
+    statusVariant = 'error';
+    statusLabel =
+      failingCount === 1
+        ? `${firstFailingName} failing · 1 of ${totalChecks}`
+        : `${failingCount} of ${totalChecks} failing`;
+  } else if (anyRunning) {
+    statusVariant = 'warning';
+    statusLabel = `${runningCount} checks running…`;
+  } else if (allStale) {
+    statusVariant = 'neutral';
+    statusLabel = 'Checks not run';
+  } else {
+    statusVariant = 'success';
+    statusLabel = 'Checks passing';
+  }
+
+  const checkItems: MenuEntry[] = deskChecks.map((check) => {
+    const autoFix = check.status === 'fail' && Boolean(check.fixCmd);
+    return {
+      id: `check:${check.name}`,
+      label: menuItemLabel(check.name, autoFix ? 'Auto-fix' : 'Run'),
+      icon: <StatusDot status={check.status} />,
+      disabled: anyRunning,
+      onSelect: autoFix ? () => runAutoFix(check.name) : () => runDeskCheck(check.name),
+    };
+  });
+
+  const docsItem: MenuEntry = {
+    id: 'check:docs',
+    label: menuItemLabel(
+      'Docs',
+      hasDocIssues
+        ? `${consistency.length} finding${consistency.length === 1 ? '' : 's'}`
+        : 'no findings',
+    ),
+    icon: <StatusDot status={hasDocIssues ? 'fail' : 'pass'} />,
+    disabled: !hasDocIssues,
+    onSelect: () => setDocsExpanded((prev) => !prev),
+  };
+
+  const menuItems: MenuEntry[] = [
+    ...checkItems,
+    docsItem,
+    { id: 'run-all-separator', type: 'separator' },
+    {
+      id: 'run-all',
+      label: 'Run all',
+      disabled: anyRunning,
+      onSelect: runAllChecks,
+    },
+  ];
+
+  const fixButton = failingCheck?.fixCmd ? (
+    <FixButton
+      label={fixing ? 'Fixing…' : 'Auto-fix'}
+      tooltip={
+        fixing ? 'Running the fix command…' : `Run \`${failingCheck.fixCmd}\`, then re-check.`
+      }
+      variant={CHECK_VARIANT[failingCheck.status]}
+      disabled={fixing || fixState !== null}
+      onClick={() => runAutoFix(failingCheck.name)}
+    />
+  ) : failing ? (
+    <FixButton
+      label={fixState === 'own' ? 'Fixing…' : 'Fix'}
+      tooltip={
+        fixState === 'own'
+          ? 'An agent is fixing this check.'
+          : fixState === 'other'
+            ? 'Another fix is in flight — wait for it to finish.'
+            : `Send an agent to fix the ${failing.sourceKey} check.`
+      }
+      variant="error"
+      disabled={fixState !== null || fixing}
+      onClick={fixCheck}
+    />
+  ) : null;
+
   return (
     <div className="flex flex-col items-center gap-2">
-      {
-        // Every check stamp is shown (manifest order, Docs last) — a single
-        // "Health" summary hid which check is red.
-        <div className="flex flex-wrap items-start justify-center gap-2">
-          {deskChecks.map((check) => (
-            <CheckStamp
-              key={check.name}
-              label={check.name}
-              status={check.status}
-              title={checkTooltip(check)}
-              anyRunning={anyRunning}
-              onClick={() => runDeskCheck(check.name)}
-            />
-          ))}
-          <div>
-            <Tooltip
-              content={
-                hasDocIssues
-                  ? 'Plan/idea doc findings — orphan subjects, title style & stale references. Click to show.'
-                  : 'Plan/idea docs — no findings (orphan subjects, title style, stale references).'
-              }
-            >
-              {/* Raw <button>: Stamp has no aria-controls prop, and the expand toggle needs one. */}
-              <button
-                type="button"
-                className="inline-flex border-none bg-none bg-transparent p-0"
-                disabled={!hasDocIssues}
-                aria-expanded={hasDocIssues ? docsExpanded : undefined}
-                aria-controls="deliver-doc-findings"
-                onClick={() => {
-                  if (hasDocIssues) setDocsExpanded((prev) => !prev);
-                }}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Menu
+          trigger={
+            <Stamp size="small" variant={statusVariant}>
+              {statusLabel}
+            </Stamp>
+          }
+          items={menuItems}
+        />
+        {fixButton}
+        {showStash && <GitStashSurface />}
+      </div>
+      {docsExpanded && hasDocIssues && (
+        <div id="deliver-doc-findings" className="flex flex-col gap-2">
+          {consistency.map((issue, i) => {
+            const linkedPlan = linkedPlanFor(issue);
+            return (
+              <div
+                key={`${issue.kind}-${issue.title}-${i}`}
+                className="font-mono text-2xs opacity-70"
               >
-                <Stamp size="small" variant={hasDocIssues ? 'error' : 'success'}>
-                  Docs
-                </Stamp>
-              </button>
-            </Tooltip>
-            {docsExpanded && hasDocIssues && (
-              <div id="deliver-doc-findings" className="mt-2 flex flex-col gap-2">
-                {consistency.map((issue, i) => {
-                  const linkedPlan = linkedPlanFor(issue);
-                  return (
-                    <div
-                      key={`${issue.kind}-${issue.title}-${i}`}
-                      className="font-mono text-2xs opacity-70"
-                    >
-                      {linkedPlan ? (
-                        <Button
-                          variant="link"
-                          onClick={() => navigate(entityLink(linkedPlan))}
-                          className="text-inherit"
-                        >
-                          {issue.message}
-                        </Button>
-                      ) : (
-                        <span className="text-left">{issue.message}</span>
-                      )}
-                    </div>
-                  );
-                })}
+                {linkedPlan ? (
+                  <Button
+                    variant="link"
+                    onClick={() => navigate(entityLink(linkedPlan))}
+                    className="text-inherit"
+                  >
+                    {issue.message}
+                  </Button>
+                ) : (
+                  <span className="text-left">{issue.message}</span>
+                )}
               </div>
-            )}
-          </div>
-          {showStash && <GitStashSurface />}
-        </div>
-      }
-      {failing && (
-        <div className="flex h-8 items-center justify-center gap-2 font-handwritten text-sm text-desk-text-muted">
-          <span>The {failing.sourceKey} check failed.</span>
-          {failingCheck?.fixCmd && (
-            <FixStamp
-              label={fixing ? 'fixing…' : 'auto-fix'}
-              tooltip={
-                fixing
-                  ? 'Running the fix command…'
-                  : `Run \`${failingCheck.fixCmd}\`, then re-check.`
-              }
-              variant={CHECK_VARIANT[failingCheck.status]}
-              disabled={fixing || fixState !== null}
-              onClick={() => runAutoFix(failingCheck.name)}
-            />
-          )}
-          <FixStamp
-            label={fixState === 'own' ? 'fixing…' : 'fix'}
-            tooltip={
-              fixState === 'own'
-                ? 'An agent is fixing this check.'
-                : fixState === 'other'
-                  ? 'Another fix is in flight — wait for it to finish.'
-                  : `Send an agent to fix the ${failing.sourceKey} check.`
-            }
-            variant="error"
-            disabled={fixState !== null || fixing}
-            onClick={fixCheck}
-          />
+            );
+          })}
         </div>
       )}
     </div>
