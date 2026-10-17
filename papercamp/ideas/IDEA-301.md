@@ -4,6 +4,7 @@ title: Chat sounds like Scout
 type: feat
 status: review
 created: 2026-10-16
+updated: 2026-10-17
 tags:
   - app
   - ui
@@ -115,3 +116,4 @@ embedded toolbar's chat mount.
       `hasSidebar` includes `isChatArea`; the scope list renders on `/chat` with
       unanswered counts; `use-app-shell.test.ts` covers it.
       run: 1m55s · 52 in · 7.2k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049
+- [x] [manual] Update chat test expectations for new agent reply wording

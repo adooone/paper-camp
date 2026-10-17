@@ -166,7 +166,7 @@ describe('POST /api/chat', () => {
 
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
     expect(chatFile).toContain('[chat] We should add a dark mode toggle');
-    expect(chatFile).toMatch(/\[chat\] \[agent\] Added \[\[IDEA-\d+]] — Dark mode toggle\./);
+    expect(chatFile).toMatch(/\[chat\] \[agent\] Filed \[\[IDEA-\d+]] — Dark mode toggle\./);
 
     const ideaFiles = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8').catch(
       () => null,
@@ -213,7 +213,7 @@ describe('POST /api/chat', () => {
     expect(json()).toEqual({ ok: true });
 
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
-    expect(chatFile).toContain('[chat] [agent] Noted, thanks. — see [[IDEA-9]].');
+    expect(chatFile).toContain('[chat] [agent] Posted to [[IDEA-9]]: Noted, thanks.');
 
     const ideaFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'utf-8');
     expect(ideaFile).toContain('the log view is clipped again');
