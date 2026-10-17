@@ -1,5 +1,6 @@
 import { useHubMachines } from '@/app/features/hub/hooks/use-hub-machines';
 import { useProjectIdentity } from '@/app/hooks';
+import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import {
@@ -22,6 +23,31 @@ import { resolveCurrentProject } from '../current-project';
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
 export type ScopeCountKind = 'ideas' | 'activity' | 'chat' | null;
+
+export async function loadScopeCounts(
+  urls: string[],
+  countKind: Exclude<ScopeCountKind, null>,
+  currentRuntimeUrl: string,
+  fetchers: {
+    openIdeasCount: (url: string, isCurrent: boolean) => Promise<number | null>;
+    unansweredChatCount: (url: string, isCurrent: boolean) => Promise<number | null>;
+    unreadActivityCount: (url: string, isCurrent: boolean) => Promise<number | null>;
+  },
+): Promise<Record<string, number | null>> {
+  const entries = await Promise.all(
+    urls.map(async (url) => {
+      const isCurrent = url === currentRuntimeUrl;
+      const count =
+        countKind === 'ideas'
+          ? await fetchers.openIdeasCount(url, isCurrent)
+          : countKind === 'chat'
+            ? await fetchers.unansweredChatCount(url, isCurrent)
+            : await fetchers.unreadActivityCount(url, isCurrent);
+      return [url, count] as const;
+    }),
+  );
+  return Object.fromEntries(entries);
+}
 
 export interface ScopeRow {
   key: ScopeKey;
@@ -123,24 +149,24 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   useEffect(() => {
     if (!countKind) return;
-    const urls = urlsKey === '' ? [] : urlsKey.split('\n');
     let cancelled = false;
-    Promise.all(
-      urls.map(async (url) => {
-        const isCurrent = url === currentRuntimeUrl;
-        const count =
-          countKind === 'ideas'
-            ? await openIdeasCount(url, isCurrent)
-            : countKind === 'chat'
-              ? await unansweredChatCount(url, isCurrent)
-              : await unreadActivityCount(url, isCurrent);
-        return [url, count] as const;
-      }),
-    ).then((entries) => {
-      if (!cancelled) setCounts(Object.fromEntries(entries));
+    const load = () => {
+      const urls = urlsKey === '' ? [] : urlsKey.split('\n');
+      loadScopeCounts(urls, countKind, currentRuntimeUrl, {
+        openIdeasCount,
+        unansweredChatCount,
+        unreadActivityCount,
+      }).then((entries) => {
+        if (!cancelled) setCounts(entries);
+      });
+    };
+    load();
+    const unsubscribe = subscribeToActivityStream((payload) => {
+      if (payload.message === 'changed') load();
     });
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [urlsKey, countKind, currentRuntimeUrl]);
 

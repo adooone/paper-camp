@@ -17,7 +17,11 @@ import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
 import { pairWithToken } from './services/pairing-api';
 import { listProjects, projectEntryId } from './services/project-registry';
-import { persistOptions, queryClient } from './services/query-client';
+import {
+  persistOptions,
+  queryClient,
+  subscribeChatToActivityStream,
+} from './services/query-client';
 import { getRuntimeConnection } from './services/runtime-connection';
 import { fetchMachineProjects } from './services/system';
 import { probeSelfServed } from './stores/slices/runtime-slice';
@@ -36,6 +40,8 @@ async function pairIfNeeded(): Promise<void> {
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
+
+subscribeChatToActivityStream();
 
 // A machine link opens that machine's project list — unless this browser
 // already opened one there, or the machine has only one, then it opens directly.

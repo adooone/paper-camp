@@ -106,10 +106,11 @@ composer on idea pages, which keeps its own states.
       error and *Retry*; the reload case from a thread ending with a user
       message; tests.
       run: 4m25s · 94 in · 32.3k out · sonnet-5 · sess:2bdcc7d1-51d4-46d5-9279-f7aa3454e87f
-- [ ] Live thread and counts
+- [x] Live thread and counts
       The stream subscription in `query-client.ts` calling `refreshChat`;
       `useScope` refetching counts on `changed`; both following a runtime
       switch; tests.
+      run: 5m28s · 110 in · 29.3k out · sonnet-5 · sess:2bdcc7d1-51d4-46d5-9279-f7aa3454e87f
 - [ ] The opening frame
       `ChatPageSkeleton` as Suspense fallback and loading state; the composer
       constrained to the column; tests.
