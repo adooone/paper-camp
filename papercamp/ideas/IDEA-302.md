@@ -90,10 +90,11 @@ composer on idea pages, which keeps its own states.
       `withChatLock` around every `chat.md` read-modify-write; tests for the
       event order and the lock.
       run: 4m54s · 104 in · 31.1k out · sonnet-5 · sess:66ec4457-e60f-46e5-90de-145238e11d81
-- [ ] A retry endpoint
+- [x] A retry endpoint
       `POST /api/chat/retry` running the reply for the last stored message
       without a second append; the route's append and reply split into two
       functions; tests.
+      run: 2m17s · 38 in · 10.1k out · sonnet-5 · sess:66ec4457-e60f-46e5-90de-145238e11d81
 - [ ] The thinking bubble and the final-shape pending message
       `useChatStage` reducing stream events; the Scout bubble with dots, stage
       line, elapsed seconds and the 30 s hint; the pending message through

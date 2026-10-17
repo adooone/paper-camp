@@ -16,6 +16,58 @@ import { readBody, sendJson } from '../http';
 import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
 
+type ChatReplyContext = Pick<RouteContext, 'root' | 'agent' | 'git' | 'status' | 'activity'>;
+
+async function appendUserMessage(root: string, text: string): Promise<void> {
+  await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text });
+}
+
+async function runChatReply(
+  { root, agent, git, status, activity }: ChatReplyContext,
+  thread: ThreadMessage[],
+): Promise<{ error?: string }> {
+  const publishStage = (event: { stage: string } & Record<string, unknown>) =>
+    activity.publish({ type: 'chat', ...event });
+
+  let error: string | undefined;
+  try {
+    const [{ entries }, taskLogRaw] = await Promise.all([
+      readEntities(campFile(root, 'ideas')),
+      readMaybe(campFile(root, 'tasks.log')),
+    ]);
+    const taskLog = readTaskLog(taskLogRaw);
+    publishStage({ stage: 'reading', ideas: entries.length });
+    const replyText = await replyToChat(
+      thread,
+      { entities: entries, taskLog, agentStatus: agent.getStatus() },
+      {
+        runPrompt: agent.runChatReply,
+        createIdea: (title, content) => createIdeaEntity(root, { title, content }),
+        applyToEntity: async (entityId, feedbackText) => {
+          const result = await applyFeedbackMessage(
+            { root, git, status, agent },
+            entityId,
+            feedbackText,
+          );
+          return result ? { replyText: result.replyText, error: result.error } : null;
+        },
+        onStage: publishStage,
+      },
+    );
+    await appendToChatFile(
+      root,
+      agentThreadMessage(replyText, 'chat', undefined, undefined, nowMinuteString()),
+    );
+    publishStage({ stage: 'done' });
+  } catch (err) {
+    error = (err as Error).message;
+    publishStage({ stage: 'failed', error });
+  }
+
+  activity.notifyChanged();
+  return { error };
+}
+
 export function chatRoutes({ root, agent, git, status, activity }: RouteContext): Route[] {
   return [
     {
@@ -41,53 +93,19 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
           return;
         }
 
-        const userMessage: ThreadMessage = {
-          kind: 'chat',
-          date: nowMinuteString(),
-          text: text.trim(),
-        };
-        await appendToChatFile(root, userMessage);
+        await appendUserMessage(root, text.trim());
+        const thread = await readChatFile(root);
+        const { error } = await runChatReply({ root, agent, git, status, activity }, thread);
+        sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
+      },
+    },
 
-        const publishStage = (event: { stage: string } & Record<string, unknown>) =>
-          activity.publish({ type: 'chat', ...event });
-
-        let error: string | undefined;
-        try {
-          const thread = await readChatFile(root);
-          const [{ entries }, taskLogRaw] = await Promise.all([
-            readEntities(campFile(root, 'ideas')),
-            readMaybe(campFile(root, 'tasks.log')),
-          ]);
-          const taskLog = readTaskLog(taskLogRaw);
-          publishStage({ stage: 'reading', ideas: entries.length });
-          const replyText = await replyToChat(
-            thread,
-            { entities: entries, taskLog, agentStatus: agent.getStatus() },
-            {
-              runPrompt: agent.runChatReply,
-              createIdea: (title, content) => createIdeaEntity(root, { title, content }),
-              applyToEntity: async (entityId, feedbackText) => {
-                const result = await applyFeedbackMessage(
-                  { root, git, status, agent },
-                  entityId,
-                  feedbackText,
-                );
-                return result ? { replyText: result.replyText, error: result.error } : null;
-              },
-              onStage: publishStage,
-            },
-          );
-          await appendToChatFile(
-            root,
-            agentThreadMessage(replyText, 'chat', undefined, undefined, nowMinuteString()),
-          );
-          publishStage({ stage: 'done' });
-        } catch (err) {
-          error = (err as Error).message;
-          publishStage({ stage: 'failed', error });
-        }
-
-        activity.notifyChanged();
+    {
+      method: 'POST',
+      path: '/api/chat/retry',
+      handle: async (_req, res) => {
+        const thread = await readChatFile(root);
+        const { error } = await runChatReply({ root, agent, git, status, activity }, thread);
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
       },
     },

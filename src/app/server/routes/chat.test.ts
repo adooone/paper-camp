@@ -29,7 +29,7 @@ async function makeRoot(): Promise<string> {
   return root;
 }
 
-function route(root: string, method: string, ctx: Partial<RouteContext> = {}) {
+function routeAt(root: string, path: string, method: string, ctx: Partial<RouteContext> = {}) {
   const found = chatRoutes({
     root,
     activity: { notifyChanged: () => {}, publish: () => {} },
@@ -37,9 +37,13 @@ function route(root: string, method: string, ctx: Partial<RouteContext> = {}) {
     git: {} as unknown as RouteContext['git'],
     status: {} as unknown as RouteContext['status'],
     ...ctx,
-  } as RouteContext).find((r) => r.path === '/api/chat' && r.method === method);
-  if (!found) throw new Error(`no ${method} route registered for /api/chat`);
+  } as RouteContext).find((r) => r.path === path && r.method === method);
+  if (!found) throw new Error(`no ${method} route registered for ${path}`);
   return found;
+}
+
+function route(root: string, method: string, ctx: Partial<RouteContext> = {}) {
+  return routeAt(root, '/api/chat', method, ctx);
 }
 
 function fakeReq(body = ''): IncomingMessage {
@@ -374,6 +378,76 @@ describe('POST /api/chat', () => {
     await route(root, 'POST').handle(fakeReq(JSON.stringify({ text: '  ' })), res);
     expect(status()).toBe(400);
     expect(json()).toEqual({ error: 'text is required' });
+  });
+});
+
+describe('POST /api/chat/retry', () => {
+  it('runs the reply for the last stored message without appending it again', async () => {
+    const root = await makeRoot();
+    const today = new Date().toISOString().slice(0, 10);
+    await writeFile(
+      join(root, 'papercamp', 'chat.md'),
+      `### Thread\n- [x] ${today} [chat] What is running?\n`,
+      'utf-8',
+    );
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
+    );
+
+    const { res, status, json } = fakeRes();
+    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatReply)).handle(fakeReq(), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ ok: true });
+    expect(runChatReply).toHaveBeenCalledOnce();
+
+    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    const userOccurrences = chatFile.match(/What is running\?/g) ?? [];
+    expect(userOccurrences).toHaveLength(1);
+    expect(chatFile).toContain('[chat] [agent] Nothing is running.');
+  });
+
+  it('publishes the same stage events as a fresh send', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'chat.md'),
+      '### Thread\n- [x] 2026-09-11 [chat] Hello?\n',
+      'utf-8',
+    );
+    const runChatReply = vi.fn(async () => {
+      throw new Error('agent unavailable');
+    });
+    const publish = vi.fn();
+
+    const { res } = fakeRes();
+    await routeAt(root, '/api/chat/retry', 'POST', {
+      ...agentCtx(runChatReply),
+      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+    }).handle(fakeReq(), res);
+
+    expect(publish.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'chat', stage: 'reading', ideas: 0 },
+      { type: 'chat', stage: 'deciding' },
+      { type: 'chat', stage: 'failed', error: 'agent unavailable' },
+    ]);
+  });
+
+  it('returns the error without a toast-worthy throw when the agent run fails', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'chat.md'),
+      '### Thread\n- [x] 2026-09-11 [chat] Hello?\n',
+      'utf-8',
+    );
+    const runChatReply = vi.fn(async () => {
+      throw new Error('agent unavailable');
+    });
+
+    const { res, status, json } = fakeRes();
+    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatReply)).handle(fakeReq(), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true, error: 'agent unavailable' });
   });
 });
 
