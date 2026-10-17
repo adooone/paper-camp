@@ -2,7 +2,7 @@
 id: IDEA-301
 title: Chat sounds like Scout
 type: feat
-status: review
+status: done
 created: 2026-10-16
 updated: 2026-10-17
 tags:
