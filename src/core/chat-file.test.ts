@@ -45,6 +45,11 @@ describe('formatChatFile', () => {
     expect(formatChatFile([])).toBe('');
   });
 
+  it('round-trips a minute-precision timestamp unchanged', () => {
+    const messages: ThreadMessage[] = [{ kind: 'chat', date: '2026-09-11T14:05', text: 'Hello' }];
+    expect(parseChatFile(formatChatFile(messages))).toEqual(messages);
+  });
+
   it('round-trips a parked question carrying its entity id', () => {
     const messages: ThreadMessage[] = [
       {

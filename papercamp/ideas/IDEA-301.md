@@ -86,11 +86,12 @@ Streaming reply text. Message search, editing or deleting one message. The
 embedded toolbar's chat mount.
 
 ### Phases
-- [ ] Minute-precision chat timestamps
+- [x] Minute-precision chat timestamps
       `THH:MM` accepted by the thread entry anchor and written back verbatim;
       `nowMinuteString()` in `serialize`; the chat route and the parked question
       copy write it; `mergeScopedChatMessages` sorts on the full string; tests
       for parse, format, sort and a date-only line.
+      run: 3m20s · 84 in · 12.4k out · sonnet-5 · sess:a333bfbb-3834-4a07-85d7-74b768c38354
 - [ ] A ChatMessage component with Scout's avatar
       `chat-message.tsx` and `entity-link-text.tsx` under
       `features/chat/views/`; the page renders every message through them;

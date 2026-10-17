@@ -19,7 +19,7 @@ import {
   readEntities,
   readEntitiesWithDerivedStatus,
 } from '@/core/readers';
-import { agentThreadMessage, computePlanContentHash } from '@/core/serialize';
+import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import {
   type AgentId,
@@ -530,7 +530,10 @@ export function createAgentManager(
         ...(needsInput ? { status: 'in-progress' } : {}),
       }),
     );
-    await appendToChatFile(root, agentThreadMessage(message, 'question', planId, decision));
+    await appendToChatFile(
+      root,
+      agentThreadMessage(message, 'question', planId, decision, nowMinuteString()),
+    );
   }
 
   function registerTask(task: AgentTask): void {

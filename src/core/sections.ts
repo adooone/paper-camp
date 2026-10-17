@@ -17,7 +17,7 @@ const RUN_LINE_RE = /^run:\s*(.+)$/;
 const DATED_ENTRY_RE = /^-\s+(\d{4}-\d{2}-\d{2}):\s*(.*)$/;
 const NOTE_ANCHOR_RE = /^\[(?:phase:(\d+)|body)\]\s+(?:\[(decision|question)\]\s+)?(.*)$/;
 const THREAD_LINE_RE =
-  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2})\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(?:\[\[([A-Za-z]+-\d+)\]\]\s+)?(.*)$/;
+  /^-\s+\[([ xX])\]\s+(?:(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?)\s+)?\[(log|clarification|review|note|decision|question|chat)\]\s+(\[agent\]\s+)?(?:\[\[([A-Za-z]+-\d+)\]\]\s+)?(.*)$/;
 const NOTE_STATE_KINDS: ThreadMessageKind[] = ['note', 'decision', 'question'];
 const OPTION_LINE_RE = /^option:\s*(.*)$/i;
 const CONTEXT_LINE_RE = /^context:\s*(.*)$/i;

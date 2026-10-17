@@ -34,6 +34,10 @@ export function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function nowMinuteString(): string {
+  return new Date().toISOString().slice(0, 16);
+}
+
 /** Every agent-authored thread message must carry `from: 'agent'` or it renders as the
  * user's own message in the feedback chat — build them through here so it can't be forgotten. */
 export function agentThreadMessage(
@@ -41,10 +45,11 @@ export function agentThreadMessage(
   kind: ThreadMessage['kind'] = 'log',
   entityId?: string,
   decision?: { options?: ThreadMessageOption[]; context?: string },
+  date: string = todayDateString(),
 ): ThreadMessage {
   return {
     kind,
-    date: todayDateString(),
+    date,
     text,
     from: 'agent',
     ...(kind === 'question' ? { state: 'open' as const } : {}),

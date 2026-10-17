@@ -1,7 +1,7 @@
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { readTaskLog } from '@/core/parse';
 import { readEntities } from '@/core/readers';
-import { agentThreadMessage, todayDateString } from '@/core/serialize';
+import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
 import {
@@ -43,7 +43,7 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
 
         const userMessage: ThreadMessage = {
           kind: 'chat',
-          date: todayDateString(),
+          date: nowMinuteString(),
           text: text.trim(),
         };
         await appendToChatFile(root, userMessage);
@@ -72,7 +72,10 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
               },
             },
           );
-          await appendToChatFile(root, agentThreadMessage(replyText, 'chat'));
+          await appendToChatFile(
+            root,
+            agentThreadMessage(replyText, 'chat', undefined, undefined, nowMinuteString()),
+          );
         } catch (err) {
           error = (err as Error).message;
         }

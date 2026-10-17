@@ -65,3 +65,22 @@ describe('THREAD_SECTION option:/context: continuation lines', () => {
     expect(message.context).toBeUndefined();
   });
 });
+
+describe('THREAD_SECTION minute-precision timestamps', () => {
+  it('parses a THH:MM suffix on the date into the verbatim date string', () => {
+    const [message] = parse(['- [x] 2026-10-16T14:05 [chat] Hello']);
+    expect(message.date).toBe('2026-10-16T14:05');
+  });
+
+  it('parses a date-only line as before', () => {
+    const [message] = parse(['- [x] 2026-10-16 [chat] Hello']);
+    expect(message.date).toBe('2026-10-16');
+  });
+
+  it('round-trips a minute-precision timestamp through formatLines unchanged', () => {
+    const messages: ThreadMessage[] = [{ kind: 'chat', date: '2026-10-16T14:05', text: 'Hello' }];
+    const formatted = THREAD_SECTION.formatLines(messages);
+    expect(formatted[1]).toBe('- [x] 2026-10-16T14:05 [chat] Hello');
+    expect(parse(formatted.slice(1))).toEqual(messages);
+  });
+});
