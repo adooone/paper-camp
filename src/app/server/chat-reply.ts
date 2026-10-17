@@ -17,6 +17,12 @@ export type ChatMove =
   | { move: 'entity'; entityId: string }
   | { move: 'answer'; reply: string };
 
+export type ChatStageEvent =
+  | { stage: 'deciding' }
+  | { stage: 'filing' }
+  | { stage: 'posting'; entityId: string }
+  | { stage: 'answering' };
+
 export interface ChatMoveContext {
   entities: EntityEntry[];
   taskLog: TaskLogEntry[];
@@ -27,6 +33,7 @@ async function decideChatMove(
   thread: ThreadMessage[],
   context: ChatMoveContext,
   runPrompt: (prompt: string) => Promise<string>,
+  onStage?: (event: ChatStageEvent) => void,
 ): Promise<ChatMove> {
   const prompt = buildChatMovePrompt(
     thread,
@@ -34,6 +41,7 @@ async function decideChatMove(
     context.taskLog,
     context.agentStatus,
   );
+  onStage?.({ stage: 'deciding' });
   const output = await runPrompt(prompt);
 
   const jsonBlock = extractJsonBlock(output);
@@ -74,6 +82,7 @@ export interface ChatReplyDeps {
     entityId: string,
     text: string,
   ) => Promise<{ replyText?: string; error?: string } | null>;
+  onStage?: (event: ChatStageEvent) => void;
 }
 
 /** Executes whichever of the three moves (IDEA-251) the classification prompt picked,
@@ -83,14 +92,16 @@ export async function replyToChat(
   context: ChatMoveContext,
   deps: ChatReplyDeps,
 ): Promise<string> {
-  const move = await decideChatMove(thread, context, deps.runPrompt);
+  const move = await decideChatMove(thread, context, deps.runPrompt, deps.onStage);
 
   if (move.move === 'add_idea') {
+    deps.onStage?.({ stage: 'filing' });
     const id = await deps.createIdea(move.title, move.content);
     return `Filed [[${id}]] — ${move.title}.`;
   }
 
   if (move.move === 'entity') {
+    deps.onStage?.({ stage: 'posting', entityId: move.entityId });
     const result = await deps.applyToEntity(move.entityId, lastUserText(thread));
     if (!result) return `Couldn't find ${move.entityId} to post that to.`;
     if (result.error) {
@@ -99,5 +110,6 @@ export async function replyToChat(
     return `Posted to [[${move.entityId}]]: ${result.replyText}`;
   }
 
+  deps.onStage?.({ stage: 'answering' });
   return move.reply;
 }

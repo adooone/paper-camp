@@ -3,9 +3,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CORPUS_FORMAT_VERSION, CorpusTooNewError } from '@/core/corpus-format';
 import { readEntities } from '@/core/readers';
-import type { EntityEntry } from '@/types/index';
+import type { EntityEntry, ThreadMessage } from '@/types/index';
 import { afterAll, describe, expect, it } from 'vitest';
-import { checkStaleBaseForRunAll, entityFileInput, writeEntityFile } from './helpers';
+import {
+  appendToChatFile,
+  checkStaleBaseForRunAll,
+  entityFileInput,
+  readChatFile,
+  writeEntityFile,
+} from './helpers';
 
 describe('entityFileInput', () => {
   it('carries unknownFrontmatter through so routine writes never drop it', () => {
@@ -76,6 +82,40 @@ describe('writeEntityFile', () => {
     await expect(
       writeEntityFile(root, path, { id: 'IDEA-1', title: 'Test', created: '2026-08-19' }),
     ).rejects.toBeInstanceOf(CorpusTooNewError);
+  });
+});
+
+describe('withChatLock (via appendToChatFile)', () => {
+  const dirs: string[] = [];
+
+  afterAll(async () => {
+    await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  async function makeRoot(): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), 'papercamp-chat-lock-'));
+    dirs.push(root);
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    return root;
+  }
+
+  it('serializes overlapping appends so neither read-modify-write clobbers the other', async () => {
+    const root = await makeRoot();
+    const today = new Date().toISOString().slice(0, 10);
+    const message = (text: string): ThreadMessage => ({
+      kind: 'chat',
+      date: today,
+      text,
+    });
+
+    await Promise.all([
+      appendToChatFile(root, message('first')),
+      appendToChatFile(root, message('second')),
+      appendToChatFile(root, message('third')),
+    ]);
+
+    const thread = await readChatFile(root);
+    expect(thread.map((m) => m.text)).toEqual(['first', 'second', 'third']);
   });
 });
 

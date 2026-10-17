@@ -50,8 +50,8 @@ async function makeRoot(): Promise<string> {
 function route(root: string) {
   const found = planRoutes({
     root,
-    activity: { notifyChanged: () => {} },
-  } as RouteContext).find((r) => r.method === 'PATCH' && r.path === '/api/plans');
+    activity: { notifyChanged: () => {}, publish: () => {} },
+  } as unknown as RouteContext).find((r) => r.method === 'PATCH' && r.path === '/api/plans');
   if (!found) throw new Error('no PATCH /api/plans route registered');
   return found;
 }

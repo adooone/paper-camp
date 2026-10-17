@@ -48,6 +48,9 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
         };
         await appendToChatFile(root, userMessage);
 
+        const publishStage = (event: { stage: string } & Record<string, unknown>) =>
+          activity.publish({ type: 'chat', ...event });
+
         let error: string | undefined;
         try {
           const thread = await readChatFile(root);
@@ -56,6 +59,7 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
             readMaybe(campFile(root, 'tasks.log')),
           ]);
           const taskLog = readTaskLog(taskLogRaw);
+          publishStage({ stage: 'reading', ideas: entries.length });
           const replyText = await replyToChat(
             thread,
             { entities: entries, taskLog, agentStatus: agent.getStatus() },
@@ -70,14 +74,17 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
                 );
                 return result ? { replyText: result.replyText, error: result.error } : null;
               },
+              onStage: publishStage,
             },
           );
           await appendToChatFile(
             root,
             agentThreadMessage(replyText, 'chat', undefined, undefined, nowMinuteString()),
           );
+          publishStage({ stage: 'done' });
         } catch (err) {
           error = (err as Error).message;
+          publishStage({ stage: 'failed', error });
         }
 
         activity.notifyChanged();

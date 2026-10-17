@@ -12,12 +12,8 @@ export function createActivityManager(root: string) {
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
 
-  function broadcast() {
-    const data = `data: ${JSON.stringify({
-      message: 'changed',
-      timestamp: new Date().toISOString(),
-      type: 'activity',
-    })}\n\n`;
+  function writeToClients(payload: Record<string, unknown>) {
+    const data = `data: ${JSON.stringify(payload)}\n\n`;
     for (const client of clients) {
       try {
         client.write(data);
@@ -25,6 +21,14 @@ export function createActivityManager(root: string) {
         clients.delete(client);
       }
     }
+  }
+
+  function broadcast() {
+    writeToClients({
+      message: 'changed',
+      timestamp: new Date().toISOString(),
+      type: 'activity',
+    });
   }
 
   // Serializes passes: an event arriving while one is in flight queues a rerun
@@ -65,6 +69,9 @@ export function createActivityManager(root: string) {
     notifyChanged() {
       invalidateCorpusCache();
       scheduleRunPass();
+    },
+    publish(payload: { type: string } & Record<string, unknown>) {
+      writeToClients(payload);
     },
     subscribe(res: ServerResponse) {
       clients.add(res);

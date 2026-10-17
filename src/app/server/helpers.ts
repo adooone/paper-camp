@@ -126,30 +126,51 @@ export async function readChatFile(root: string): Promise<ThreadMessage[]> {
   return parseChatFile(await readMaybe(chatFilePath(root)));
 }
 
+// Every read-modify-write of chat.md must run as one critical section, or a question
+// parked by a background run can land between a route's read and its write and be lost.
+let chatLock: Promise<unknown> = Promise.resolve();
+
+export function withChatLock<T>(fn: () => Promise<T>): Promise<T> {
+  const result = chatLock.then(fn, fn);
+  chatLock = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
 // Persisted before the reply is generated so the user's message survives a slow or
 // failed agent run, then again once the reply lands — mirrors the feedback-message route.
 export async function appendToChatFile(root: string, message: ThreadMessage): Promise<void> {
-  const content = await readMaybe(chatFilePath(root));
-  await writeFile(chatFilePath(root), appendChatMessage(content, message), 'utf-8');
+  await withChatLock(async () => {
+    const content = await readMaybe(chatFilePath(root));
+    await writeFile(chatFilePath(root), appendChatMessage(content, message), 'utf-8');
+  });
 }
 
 export async function clearChatFile(root: string): Promise<void> {
-  const kept = (await readChatFile(root)).filter(
-    (m) => m.kind === 'question' && m.state === 'open',
-  );
-  await writeFile(chatFilePath(root), formatChatFile(kept), 'utf-8');
+  await withChatLock(async () => {
+    const kept = (await readChatFile(root)).filter(
+      (m) => m.kind === 'question' && m.state === 'open',
+    );
+    await writeFile(chatFilePath(root), formatChatFile(kept), 'utf-8');
+  });
 }
 
 // Mirrors a question's resolution (IDEA-251) into chat.md once it's answered on the
 // entity's own thread, so the chat copy stops pinning an already-resolved question.
 export async function resolveChatQuestion(root: string, entityId: string): Promise<void> {
-  const messages = await readChatFile(root);
-  const index = messages.findLastIndex(
-    (m) => m.kind === 'question' && m.state === 'open' && m.entityId === entityId,
-  );
-  if (index === -1) return;
-  const resolved = messages.map((m, i) => (i === index ? { ...m, state: 'resolved' as const } : m));
-  await writeFile(chatFilePath(root), formatChatFile(resolved), 'utf-8');
+  await withChatLock(async () => {
+    const messages = await readChatFile(root);
+    const index = messages.findLastIndex(
+      (m) => m.kind === 'question' && m.state === 'open' && m.entityId === entityId,
+    );
+    if (index === -1) return;
+    const resolved = messages.map((m, i) =>
+      i === index ? { ...m, state: 'resolved' as const } : m,
+    );
+    await writeFile(chatFilePath(root), formatChatFile(resolved), 'utf-8');
+  });
 }
 
 // Every read-normalize-write of run-order.md must run as one critical section, or an

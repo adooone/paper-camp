@@ -32,7 +32,7 @@ async function makeRoot(): Promise<string> {
 function route(root: string, method: string, ctx: Partial<RouteContext> = {}) {
   const found = chatRoutes({
     root,
-    activity: { notifyChanged: () => {} },
+    activity: { notifyChanged: () => {}, publish: () => {} },
     agent: { getStatus: () => [] } as unknown as RouteContext['agent'],
     git: {} as unknown as RouteContext['git'],
     status: {} as unknown as RouteContext['status'],
@@ -258,6 +258,114 @@ describe('POST /api/chat', () => {
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
     expect(chatFile).toContain('[chat] Hello?');
     expect(chatFile).not.toContain('[agent]');
+  });
+
+  it('publishes reading, deciding, filing, then done for the add_idea move', async () => {
+    const root = await makeRoot();
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({
+        result: JSON.stringify({ move: 'add_idea', title: 'Dark mode toggle', content: 'Body.' }),
+      }),
+    );
+    const publish = vi.fn();
+
+    const { res } = fakeRes();
+    await route(root, 'POST', {
+      ...agentCtx(runChatReply),
+      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+    }).handle(fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })), res);
+
+    expect(publish.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'chat', stage: 'reading', ideas: 0 },
+      { type: 'chat', stage: 'deciding' },
+      { type: 'chat', stage: 'filing' },
+      { type: 'chat', stage: 'done' },
+    ]);
+  });
+
+  it('publishes posting with the entity id for the entity move', async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
+      [
+        '---',
+        'id: IDEA-9',
+        'title: Existing idea',
+        'type: feat',
+        'status: in-progress',
+        'created: 2026-09-10',
+        'tags: []',
+        '---',
+        '',
+        'Body.',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
+    );
+    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+    const publish = vi.fn();
+
+    const { res } = fakeRes();
+    await route(root, 'POST', {
+      agent: {
+        runChatReply,
+        runFeedbackReply,
+        getStatus: () => [],
+      } as unknown as RouteContext['agent'],
+      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+    }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
+
+    expect(publish.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'chat', stage: 'reading', ideas: 1 },
+      { type: 'chat', stage: 'deciding' },
+      { type: 'chat', stage: 'posting', entityId: 'IDEA-9' },
+      { type: 'chat', stage: 'done' },
+    ]);
+  });
+
+  it('publishes answering for the answer move', async () => {
+    const root = await makeRoot();
+    const runChatReply = vi.fn(async () =>
+      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
+    );
+    const publish = vi.fn();
+
+    const { res } = fakeRes();
+    await route(root, 'POST', {
+      ...agentCtx(runChatReply),
+      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+    }).handle(fakeReq(JSON.stringify({ text: 'What is running?' })), res);
+
+    expect(publish.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'chat', stage: 'reading', ideas: 0 },
+      { type: 'chat', stage: 'deciding' },
+      { type: 'chat', stage: 'answering' },
+      { type: 'chat', stage: 'done' },
+    ]);
+  });
+
+  it('publishes failed with the error when the agent run throws', async () => {
+    const root = await makeRoot();
+    const runChatReply = vi.fn(async () => {
+      throw new Error('agent unavailable');
+    });
+    const publish = vi.fn();
+
+    const { res } = fakeRes();
+    await route(root, 'POST', {
+      ...agentCtx(runChatReply),
+      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+    }).handle(fakeReq(JSON.stringify({ text: 'Hello?' })), res);
+
+    expect(publish.mock.calls.map((call) => call[0])).toEqual([
+      { type: 'chat', stage: 'reading', ideas: 0 },
+      { type: 'chat', stage: 'deciding' },
+      { type: 'chat', stage: 'failed', error: 'agent unavailable' },
+    ]);
   });
 
   it('rejects an empty message', async () => {
