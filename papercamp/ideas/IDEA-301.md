@@ -92,13 +92,14 @@ embedded toolbar's chat mount.
       copy write it; `mergeScopedChatMessages` sorts on the full string; tests
       for parse, format, sort and a date-only line.
       run: 3m20s · 84 in · 12.4k out · sonnet-5 · sess:a333bfbb-3834-4a07-85d7-74b768c38354
-- [ ] A ChatMessage component with Scout's avatar
+- [x] A ChatMessage component with Scout's avatar
       `chat-message.tsx` and `entity-link-text.tsx` under
       `features/chat/views/`; the page renders every message through them;
       `QuestionCard` answerable without options and marked when resolved; no
       clamp, no agent, question,
       undo or promote affordances; tests for the link parsing and the question
       states.
+      run: 6m48s · 156 in · 38.9k out · sonnet-5 · sess:a333bfbb-3834-4a07-85d7-74b768c38354
 - [ ] Scout's replies lead with the verb
       `chat-reply.ts` wording for the three moves and the three prompt rules in
       `buildChatMovePrompt`; tests updated.

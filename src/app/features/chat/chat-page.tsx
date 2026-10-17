@@ -1,10 +1,9 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import { FeedbackThread } from '@/app/features/plans/components';
 import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import { useEffect, useRef } from 'react';
 import { useChatPage } from './hooks';
-import { ChatComposer, ChatTitleActions, ClearChatModal } from './views';
+import { ChatComposer, ChatMessage, ChatTitleActions, ClearChatModal } from './views';
 
 export const ChatPage = () => {
   const {
@@ -58,12 +57,9 @@ export const ChatPage = () => {
       )}
 
       {messages.map(({ message, index, project }) => (
-        <FeedbackThread
+        <ChatMessage
           key={`chat-${project?.key ?? 'own'}-${index}`}
-          messages={[message]}
-          undo={null}
-          undoing={false}
-          onUndo={() => {}}
+          message={message}
           onAnswer={(text) => handleAnswer(text, project)}
           answering={sending}
           project={project}

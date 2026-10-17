@@ -92,7 +92,11 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
           </ListItem>
         ))}
       </div>
-      {!answered && (
+      {answered ? (
+        <Stamp size="small" variant="success">
+          answered
+        </Stamp>
+      ) : (
         <div className="flex flex-col gap-2">
           <Textarea
             value={reply}
