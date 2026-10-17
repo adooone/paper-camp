@@ -39,6 +39,11 @@ export function isSendKey(e: { key: string; shiftKey: boolean }): boolean {
   return e.key === 'Enter' && !e.shiftKey;
 }
 
+export function threadEndsWithUserMessage(thread: ThreadMessage[]): boolean {
+  const last = thread.at(-1);
+  return last !== undefined && last.kind === 'chat' && last.from !== 'agent';
+}
+
 // Mirrors the server's nowMinuteString (@/core/serialize) rather than importing it, so
 // the pending bubble's timestamp matches the stored copy without pulling server code
 // into the browser bundle.

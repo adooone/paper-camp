@@ -46,6 +46,20 @@ export const postChatMessageAt = async (
   return data as { error?: string };
 };
 
+export const postChatRetry = async (): Promise<{ error?: string }> => {
+  const res = await apiFetch(apiUrl('/api/chat/retry'), { method: 'POST' });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Failed to retry message');
+  return data as { error?: string };
+};
+
+export const postChatRetryAt = async (baseUrl: string): Promise<{ error?: string }> => {
+  const res = await fetch(`${baseUrl}/api/chat/retry`, { method: 'POST' });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? 'Failed to retry message');
+  return data as { error?: string };
+};
+
 export const clearChat = async (): Promise<void> => {
   const res = await apiFetch(apiUrl('/api/chat'), { method: 'DELETE' });
   if (!res.ok) throw new Error(`Failed to clear chat: ${res.status}`);

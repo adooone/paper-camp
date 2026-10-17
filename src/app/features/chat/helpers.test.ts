@@ -1,7 +1,12 @@
 import type { ScopeRow } from '@/app/features/scope';
 import type { ThreadMessage } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { isNearBottom, isSendKey, mergeScopedChatMessages } from './helpers';
+import {
+  isNearBottom,
+  isSendKey,
+  mergeScopedChatMessages,
+  threadEndsWithUserMessage,
+} from './helpers';
 
 const project = (name: string) => ({ name }) as unknown as ScopeRow;
 
@@ -53,5 +58,25 @@ describe('isSendKey', () => {
 
   it('is false for any other key', () => {
     expect(isSendKey({ key: 'a', shiftKey: false })).toBe(false);
+  });
+});
+
+describe('threadEndsWithUserMessage', () => {
+  it('is false for an empty thread', () => {
+    expect(threadEndsWithUserMessage([])).toBe(false);
+  });
+
+  it('is true when the last message is a chat message with no reply yet', () => {
+    expect(threadEndsWithUserMessage([msg(undefined, 'hi')])).toBe(true);
+  });
+
+  it('is false once an agent reply has landed', () => {
+    const reply: ThreadMessage = { kind: 'chat', text: 'got it', from: 'agent' };
+    expect(threadEndsWithUserMessage([msg(undefined, 'hi'), reply])).toBe(false);
+  });
+
+  it('is false when the thread ends on a parked question', () => {
+    const question: ThreadMessage = { kind: 'question', text: 'which idea?', from: 'agent' };
+    expect(threadEndsWithUserMessage([msg(undefined, 'hi'), question])).toBe(false);
   });
 });

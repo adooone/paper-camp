@@ -5,6 +5,7 @@ import { isNearBottom } from './helpers';
 import { useChatPage } from './hooks';
 import {
   ChatComposer,
+  ChatFailureLine,
   ChatMessage,
   ChatStageBubble,
   ChatTitleActions,
@@ -24,6 +25,9 @@ export const ChatPage = () => {
     pending,
     sending,
     chatStage,
+    showFailureLine,
+    retryError,
+    handleRetry,
     input,
     setInput,
     handleSend,
@@ -142,6 +146,7 @@ export const ChatPage = () => {
           />
         )}
         {sending && chatStage && <ChatStageBubble stage={chatStage} />}
+        {showFailureLine && <ChatFailureLine error={retryError} onRetry={handleRetry} />}
 
         <div ref={bottomRef} />
       </div>
