@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.0](https://github.com/adooone/paper-camp/compare/v0.43.0...v0.44.0) (2026-10-17)
+
+
+### Features
+
+* **app:** A ChatMessage component with Scout's avatar ([55ef5db](https://github.com/adooone/paper-camp/commit/55ef5db7c1c81e3e8bf2245b3150e3c7b11800dd))
+* **app:** A retry endpoint ([47679b1](https://github.com/adooone/paper-camp/commit/47679b1b6ee15a34f9c2bed16d734cf6415d6277))
+* **app:** Add the persisted query client ([cc0a6ad](https://github.com/adooone/paper-camp/commit/cc0a6adeec7afbed436cfab63523417e44b9151a))
+* **app:** Collapse the check stamps into one status label ([f3a2e54](https://github.com/adooone/paper-camp/commit/f3a2e54b1b0e330ad202199c48199f32d8f277a2))
+* **app:** Cut the welcome screen to pairing ([e764aba](https://github.com/adooone/paper-camp/commit/e764aba02b01ccec50f06836428f8ee3fc521a09))
+* **app:** Drop the project list from the Project sidebar ([a90da42](https://github.com/adooone/paper-camp/commit/a90da42e4734320c94d68c75f82a3b48c2af8f5c))
+* **app:** Fold project identity into the switcher trigger ([d35d705](https://github.com/adooone/paper-camp/commit/d35d705a3ac56cb1ab5e77bb19d8da6c12acf115))
+* **app:** Gzip JSON responses ([ec4c8dd](https://github.com/adooone/paper-camp/commit/ec4c8ddc28ad7094f08e966ccdd151168ee8b0b2))
+* **app:** Land each other project's rows as it answers ([7c5f751](https://github.com/adooone/paper-camp/commit/7c5f7513616f765682df13877530181dc8fe038e))
+* **app:** Lay the footer out as one row with Push and Pull ([1dc2b0b](https://github.com/adooone/paper-camp/commit/1dc2b0bee62f2123a4e4d3ce329f1c4d2d9721a5))
+* **app:** Live thread and counts ([a00462e](https://github.com/adooone/paper-camp/commit/a00462e3fbf70e6a5ea860a3fdf3e6f307d5181c))
+* **app:** Make the current runtime switchable ([1886520](https://github.com/adooone/paper-camp/commit/18865204522fbbda4f18695d5f557a02ea06e0fa))
+* **app:** Migrate plans and ideas to TanStack Query caching ([a53b781](https://github.com/adooone/paper-camp/commit/a53b7814bb715543ed3b658ad29194b5aff286e7))
+* **app:** Minute-precision chat timestamps ([fa11829](https://github.com/adooone/paper-camp/commit/fa118293289c47b0dd2b3db73ac189a06473d47a))
+* **app:** Move plans and ideas onto queries ([afbf47b](https://github.com/adooone/paper-camp/commit/afbf47b5f7dee25c669161e8213c111a15fac399))
+* **app:** Move rename and forget to Project › Settings ([5aaaf4e](https://github.com/adooone/paper-camp/commit/5aaaf4eaf308c465c208ffd40f357815e9367b0c))
+* **app:** Move the boot reads onto per-project queries ([b47bc7c](https://github.com/adooone/paper-camp/commit/b47bc7cef64f51a061248431b641c75a25f75d34))
+* **app:** Name the project in the status bar ([1974111](https://github.com/adooone/paper-camp/commit/19741110be3f6fc57c7c0dd64f92a0adbffec79f))
+* **app:** Put Paper Camp and the project switcher in the header ([87f8662](https://github.com/adooone/paper-camp/commit/87f8662a0fb7477d62be9030760caf3dc2a2f538))
+* **app:** Put the same bar on the Git page and remove Sync to main ([2864019](https://github.com/adooone/paper-camp/commit/2864019c2847776ef4445f7a8be38f83c4ee4f02))
+* **app:** Read the header name from the cache ([e242524](https://github.com/adooone/paper-camp/commit/e242524da7a44463ac1568f7a0e07a1746e3a66b))
+* **app:** Reset the remaining project state on switch ([f2f15ec](https://github.com/adooone/paper-camp/commit/f2f15ecb167cc7a592ec628a3f988ec6227458fc))
+* **app:** Resubscribe live streams on switch ([4c84156](https://github.com/adooone/paper-camp/commit/4c84156d961c68ee43c37f15d024d3d3851c0cb0))
+* **app:** Scout's replies lead with the verb ([c451fcd](https://github.com/adooone/paper-camp/commit/c451fcd8f6b64283076ab60164d285054719d4b2))
+* **app:** Share the cache with other projects' rows ([2b421b1](https://github.com/adooone/paper-camp/commit/2b421b1aa09993cdc992dc1c621ab22f6751c4bc))
+* **app:** Show which projects are still loading ([b20a7fb](https://github.com/adooone/paper-camp/commit/b20a7fb29ed3b90c2055d7d71e8818370083708e))
+* **app:** Stage events from the chat route ([02c5abd](https://github.com/adooone/paper-camp/commit/02c5abda4c21f9d60450455bf3be67f64c0f1370))
+* **app:** Switch branches from the Git page's branch list ([7475103](https://github.com/adooone/paper-camp/commit/7475103493cca3ef17740905150d2f8b69e610f4))
+* **app:** Switch in place from the header ([23577cc](https://github.com/adooone/paper-camp/commit/23577ccc66fca6a8f38a963157a7e352ae8737d5))
+* **app:** The failure line with Retry ([b9f1789](https://github.com/adooone/paper-camp/commit/b9f1789940b07f5cbc50995ddc77c8dcace916b0))
+* **app:** The opening frame ([4fd3086](https://github.com/adooone/paper-camp/commit/4fd3086af2e95ec48218195789d2fa2049cbeaee))
+* **app:** The page as a chat ([faecbac](https://github.com/adooone/paper-camp/commit/faecbacdbb129bfb10208510fb8e81489658709f))
+* **app:** The scope sidebar on Chat ([8cab798](https://github.com/adooone/paper-camp/commit/8cab798a14485dd98a372fbe64b2686bc61d7662))
+* **app:** The thinking bubble and the final-shape pending message ([9417b01](https://github.com/adooone/paper-camp/commit/9417b017b51a17c8ca9d4fa473dbbbf3d052052c))
+* **ideas:** Draft multi-project streaming and caching ideas ([9c1aaab](https://github.com/adooone/paper-camp/commit/9c1aaab80d208dfe6ddf0015d9716c18993224a5))
+* **ideas:** File IDEA-301 and IDEA-302 for Chat feature ([b1c7fa1](https://github.com/adooone/paper-camp/commit/b1c7fa10c4f7b4d1fad61843d467f11db96976c6))
+
+
+### Bug Fixes
+
+* **app:** Fix Volta update recursion and stack panel width drift ([091f65f](https://github.com/adooone/paper-camp/commit/091f65f6fba201cfabf4f4c5b494e860aadc78b4))
+* **app:** lint ([a97b20e](https://github.com/adooone/paper-camp/commit/a97b20edfb5c7e9d3657dd1e87627fa0852f29b6))
+* **app:** lint, test ([a6befb7](https://github.com/adooone/paper-camp/commit/a6befb79aab2018650ec3778a340dbdc27f60f39))
+* **app:** lint, test ([03ad868](https://github.com/adooone/paper-camp/commit/03ad86818a4a23097f9496d143e513509fa1f849))
+* **app:** test ([01325d2](https://github.com/adooone/paper-camp/commit/01325d264563359045c05622846ce011402739e2))
+* **config:** bump nextId.idea past existing IDEA-298..300 ([7ad4ba5](https://github.com/adooone/paper-camp/commit/7ad4ba5b28be2ff508e901695a348c9bd0b335f0))
+* **server:** Update chat test expectations for new agent reply wording ([12a6c22](https://github.com/adooone/paper-camp/commit/12a6c22380f64083b557b1c0efbfb5cb069ce984))
+
 ## [0.43.0](https://github.com/adooone/paper-camp/compare/v0.42.0...v0.43.0) (2026-10-14)
 
 
