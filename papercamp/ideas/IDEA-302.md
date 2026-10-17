@@ -2,7 +2,7 @@
 id: IDEA-302
 title: Chat shows Scout at work
 type: feat
-status: planned
+status: review
 created: 2026-10-16
 tags:
   - app
@@ -111,6 +111,7 @@ composer on idea pages, which keeps its own states.
       `useScope` refetching counts on `changed`; both following a runtime
       switch; tests.
       run: 5m28s · 110 in · 29.3k out · sonnet-5 · sess:2bdcc7d1-51d4-46d5-9279-f7aa3454e87f
-- [ ] The opening frame
+- [x] The opening frame
       `ChatPageSkeleton` as Suspense fallback and loading state; the composer
       constrained to the column; tests.
+      run: 5m48s · 98 in · 21.9k out · sonnet-5 · sess:3548582e-a881-464e-995f-3c230b848335

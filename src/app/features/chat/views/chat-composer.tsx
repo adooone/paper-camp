@@ -32,7 +32,7 @@ export const ChatComposer = ({
   };
 
   return (
-    <Card size="small" accent accentColor="slate" texture={surface.card} className="mb-4">
+    <Card size="small" accent accentColor="slate" texture={surface.card} className="mb-4 w-full">
       <div className="flex flex-col gap-2">
         <Textarea
           ref={textareaRef}

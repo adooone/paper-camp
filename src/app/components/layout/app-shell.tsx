@@ -11,6 +11,7 @@ import {
   StatusBar,
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
+import { ChatPageSkeleton } from '@/app/features/chat/views/chat-page-skeleton';
 import { HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlansListSkeleton, StatusFilters } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
@@ -56,15 +57,17 @@ const GitFileList = lazy(() =>
     default: m.GitFileList,
   })),
 );
-// Plans has its own skeleton; Project (including its Roadmap pages) shares a
-// generic one; everything else falls back to a named spinner.
-const ROW_SKELETON_PREFIXES = ['/project', '/activity', '/chat'];
+// Plans and Chat have their own skeleton; Project (including its Roadmap
+// pages) and Activity share a generic one; everything else falls back to a
+// named spinner.
+const ROW_SKELETON_PREFIXES = ['/project', '/activity'];
 const SPINNER_ROUTE_LABELS: Record<string, string> = {
   '/git': 'Git',
 };
 
 function contentPlaceholder(pathname: string, isPlansArea: boolean) {
   if (isPlansArea) return <PlansListSkeleton />;
+  if (pathname === '/chat' || pathname.startsWith('/chat/')) return <ChatPageSkeleton />;
   if (ROW_SKELETON_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return <RowSkeleton />;
   }

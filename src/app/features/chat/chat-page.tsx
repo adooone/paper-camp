@@ -1,4 +1,3 @@
-import { RowSkeleton } from '@/app/components';
 import { Button, EmptyState, PageTitle } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isNearBottom } from './helpers';
@@ -7,6 +6,7 @@ import {
   ChatComposer,
   ChatFailureLine,
   ChatMessage,
+  ChatPageSkeleton,
   ChatStageBubble,
   ChatTitleActions,
   ClearChatModal,
@@ -96,6 +96,8 @@ export const ChatPage = () => {
 
   const hasChatHistory = messages.length > 0;
 
+  if (loading && !hasChatHistory) return <ChatPageSkeleton />;
+
   return (
     <div className="h-full flex flex-col min-h-0">
       <div className="mb-2 flex flex-nowrap items-center gap-3 shrink-0">
@@ -107,7 +109,6 @@ export const ChatPage = () => {
       </div>
 
       <div ref={threadRef} className="flex-1 min-h-0 overflow-y-auto">
-        {loading && !hasChatHistory && <RowSkeleton />}
         {!loading && !hasChatHistory && (
           <EmptyState
             message="Hi — I'm Scout. Tell me about work and I'll file it as an idea, mention an idea and I'll post there, or ask what's running."
