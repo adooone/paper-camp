@@ -44,9 +44,8 @@ export function threadEndsWithUserMessage(thread: ThreadMessage[]): boolean {
   return last !== undefined && last.kind === 'chat' && last.from !== 'agent';
 }
 
-// Mirrors the server's nowMinuteString (@/core/serialize) rather than importing it, so
-// the pending bubble's timestamp matches the stored copy without pulling server code
-// into the browser bundle.
+// Mirrors the server's nowMinuteString (@/core/serialize) without importing it,
+// so the pending bubble's timestamp matches without pulling server code into the bundle.
 export function nowMinuteString(): string {
   return new Date().toISOString().slice(0, 16);
 }

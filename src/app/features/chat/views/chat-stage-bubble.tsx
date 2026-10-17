@@ -3,7 +3,11 @@ import type { ChatStageInfo } from '../hooks/use-chat-stage';
 import { chatStageLine, showsSlowCliHint } from '../hooks/use-chat-stage';
 
 const metaLineClass = 'flex items-center gap-2 text-sm font-semibold opacity-[0.45]';
-const DOT_DELAYS_MS = [0, 150, 300];
+const DOT_DELAY_CLASSES = [
+  '[animation-delay:0ms]',
+  '[animation-delay:150ms]',
+  '[animation-delay:300ms]',
+];
 
 export const ChatStageBubble = ({ stage }: { stage: ChatStageInfo }) => (
   <div className="flex flex-col gap-1 items-start mb-3">
@@ -17,11 +21,10 @@ export const ChatStageBubble = ({ stage }: { stage: ChatStageInfo }) => (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
-                {DOT_DELAYS_MS.map((delay) => (
+                {DOT_DELAY_CLASSES.map((delayClass) => (
                   <span
-                    key={delay}
-                    className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-desk-chalk motion-reduce:animate-none"
-                    style={{ animationDelay: `${delay}ms` }}
+                    key={delayClass}
+                    className={`h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-desk-chalk motion-reduce:animate-none ${delayClass}`}
                   />
                 ))}
               </div>

@@ -172,10 +172,7 @@ export function refreshChat(): Promise<void> {
 }
 
 // The default ('') connection survives a runtime switch on its own (see
-// reconnectCurrentRuntime), so one subscription for the app's lifetime keeps
-// the thread live across both a running agent and a project switch. Called
-// once from main.tsx — not at module scope — so importing this module in a
-// test never opens a real EventSource.
+// reconnectCurrentRuntime); called once from main.tsx, not at module scope, so importing this module in a test never opens a real EventSource.
 export function subscribeChatToActivityStream(): () => void {
   return subscribeToActivityStream((payload) => {
     if (payload.message === 'changed') refreshChat();
