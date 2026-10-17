@@ -2,7 +2,7 @@
 id: IDEA-301
 title: Chat sounds like Scout
 type: feat
-status: planned
+status: review
 created: 2026-10-16
 tags:
   - app
@@ -111,6 +111,7 @@ embedded toolbar's chat mount.
       empty state with its three buttons, the unanswered stamp removed from the
       title row; tests for the scroll decision and the key handling.
       run: 7m45s · 128 in · 25.3k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049
-- [ ] The scope sidebar on Chat
+- [x] The scope sidebar on Chat
       `hasSidebar` includes `isChatArea`; the scope list renders on `/chat` with
       unanswered counts; `use-app-shell.test.ts` covers it.
+      run: 1m55s · 52 in · 7.2k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049

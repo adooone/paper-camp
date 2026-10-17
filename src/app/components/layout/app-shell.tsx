@@ -86,6 +86,7 @@ export const AppShell = () => {
     isPlansArea,
     isIdeasListArea,
     isActivityListArea,
+    isChatArea,
     isProjectArea,
     isGitArea,
     isInHub,
@@ -198,6 +199,15 @@ export const AppShell = () => {
                           <Suspense fallback={<SidebarSkeleton bare />}>
                             <ProjectsInView countKind="activity" />
                             <ActivityFilters />
+                          </Suspense>
+                        </div>
+                      </SidebarCard>
+                    )}
+                    {isChatArea && (
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <Suspense fallback={<SidebarSkeleton bare />}>
+                            <ProjectsInView countKind="chat" />
                           </Suspense>
                         </div>
                       </SidebarCard>

@@ -45,6 +45,27 @@ export function shouldShowUsageFallback(
   return ideaCount <= 1 && planCount === 0;
 }
 
+export interface SidebarAreaFlags {
+  pathname: string;
+  isPlansArea: boolean;
+  isIdeasListArea: boolean;
+  isActivityListArea: boolean;
+  isChatArea: boolean;
+  isProjectArea: boolean;
+  isGitArea: boolean;
+}
+
+export function computeHasSidebar(flags: SidebarAreaFlags): boolean {
+  return (
+    (flags.isPlansArea && flags.pathname !== '/') ||
+    flags.isIdeasListArea ||
+    flags.isActivityListArea ||
+    flags.isChatArea ||
+    flags.isProjectArea ||
+    flags.isGitArea
+  );
+}
+
 export interface AppShellState {
   navigate: ReturnType<typeof useNavigate>;
   pathname: string;
@@ -115,12 +136,15 @@ export function useAppShell(): AppShellState {
     .reduce((sum, r) => sum + (r.count ?? 0), 0);
   // List routes otherwise have no sidebar now that filters live in the toolbar;
   // only a plan/idea/finding detail still has an actions column to show.
-  const hasSidebar =
-    (isPlansArea && pathname !== '/') ||
-    isIdeasListArea ||
-    isActivityListArea ||
-    isProjectArea ||
-    isGitArea;
+  const hasSidebar = computeHasSidebar({
+    pathname,
+    isPlansArea,
+    isIdeasListArea,
+    isActivityListArea,
+    isChatArea,
+    isProjectArea,
+    isGitArea,
+  });
   const sidebarAreaKey = isPlansArea
     ? 'plans'
     : isActivityListArea
