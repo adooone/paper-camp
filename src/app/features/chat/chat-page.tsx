@@ -1,9 +1,16 @@
-import { DoodleIllustration, RowSkeleton } from '@/app/components';
-import { Card, EmptyState, PageTitle, Spinner } from '@dendelion/folk-ui';
+import { RowSkeleton } from '@/app/components';
+import { Button, Card, EmptyState, PageTitle, Spinner } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { isNearBottom } from './helpers';
 import { useChatPage } from './hooks';
 import { ChatComposer, ChatMessage, ChatTitleActions, ClearChatModal } from './views';
+
+const QUICK_PROMPTS = [
+  { label: "What's running right now?", fill: "What's running right now?" },
+  { label: "What's waiting on me?", fill: "What's waiting on me?" },
+  { label: 'File an idea for …', fill: 'File an idea for ' },
+];
 
 export const ChatPage = () => {
   const {
@@ -15,7 +22,6 @@ export const ChatPage = () => {
     setInput,
     handleSend,
     handleAnswer,
-    unansweredCount,
     confirmOpen,
     openConfirmClear,
     closeConfirmClear,
@@ -26,74 +32,147 @@ export const ChatPage = () => {
     setTargetProjectKey,
     currentScopeRow,
   } = useChatPage();
+
+  const threadRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const nearBottomRef = useRef(true);
+  const hasScrolledInitially = useRef(false);
+  const messageCountRef = useRef(messages.length);
+  const [newMessagesPending, setNewMessagesPending] = useState(false);
+
+  const scrollToBottom = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+    setNewMessagesPending(false);
+  }, []);
 
   useEffect(() => {
-    if (!loading) bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [loading]);
+    const el = threadRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      nearBottomRef.current = isNearBottom(el);
+      if (nearBottomRef.current) setNewMessagesPending(false);
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!hasScrolledInitially.current) {
+      hasScrolledInitially.current = true;
+      messageCountRef.current = messages.length;
+      scrollToBottom();
+      return;
+    }
+    if (messages.length === messageCountRef.current) return;
+    messageCountRef.current = messages.length;
+    if (nearBottomRef.current) {
+      scrollToBottom();
+    } else {
+      setNewMessagesPending(true);
+    }
+  }, [loading, messages.length, scrollToBottom]);
+
+  const fillComposer = (text: string) => {
+    setInput(text);
+    textareaRef.current?.focus();
+  };
+
+  const onSend = async () => {
+    await handleSend();
+    textareaRef.current?.focus();
+  };
 
   const hasChatHistory = messages.length > 0;
 
   return (
-    <div>
-      <div className="mb-2 flex flex-nowrap items-center gap-3">
-        <PageTitle className="shrink-0">Chat</PageTitle>
+    <div className="h-full flex flex-col min-h-0">
+      <div className="mb-2 flex flex-nowrap items-center gap-3 shrink-0">
+        <PageTitle className="shrink-0">Scout</PageTitle>
         <div className="flex-1" />
         {hasChatHistory && (
-          <ChatTitleActions
-            unansweredCount={unansweredCount}
-            hasChatHistory={hasChatHistory}
-            onClearChat={openConfirmClear}
-          />
+          <ChatTitleActions hasChatHistory={hasChatHistory} onClearChat={openConfirmClear} />
         )}
       </div>
 
-      {loading && !hasChatHistory && <RowSkeleton />}
-      {!loading && !hasChatHistory && (
-        <EmptyState
-          illustration={<DoodleIllustration name="resting-pen" />}
-          message="No messages yet."
-        />
-      )}
+      <div ref={threadRef} className="flex-1 min-h-0 overflow-y-auto">
+        {loading && !hasChatHistory && <RowSkeleton />}
+        {!loading && !hasChatHistory && (
+          <EmptyState
+            message="Hi — I'm Scout. Tell me about work and I'll file it as an idea, mention an idea and I'll post there, or ask what's running."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                {QUICK_PROMPTS.map((prompt) => (
+                  <Button
+                    key={prompt.label}
+                    variant="ghost"
+                    size="small"
+                    onClick={() => fillComposer(prompt.fill)}
+                  >
+                    {prompt.label}
+                  </Button>
+                ))}
+              </div>
+            }
+          />
+        )}
 
-      {messages.map(({ message, index, project }) => (
-        <ChatMessage
-          key={`chat-${project?.key ?? 'own'}-${index}`}
-          message={message}
-          onAnswer={(text) => handleAnswer(text, project)}
-          answering={sending}
-          project={project}
-        />
-      ))}
+        {messages.map(({ message, index, project }) => (
+          <ChatMessage
+            key={`chat-${project?.key ?? 'own'}-${index}`}
+            message={message}
+            onAnswer={(text) => handleAnswer(text, project)}
+            answering={sending}
+            project={project}
+          />
+        ))}
 
-      {pending && (
-        <div className="flex flex-col gap-1 items-end mb-3">
-          <div className="max-w-[85%]">
-            <Card size="small" surface="paper" texture="parchment" accent accentColor="blue">
-              {pending}
+        {pending && (
+          <div className="flex flex-col gap-1 items-end mb-3">
+            <div className="max-w-[85%]">
+              <Card size="small" surface="paper" texture="parchment" accent accentColor="blue">
+                {pending}
+              </Card>
+            </div>
+          </div>
+        )}
+        {sending && (
+          <div className="flex flex-col gap-1 items-start mb-3">
+            <Card size="small" texture={surface.nestedCard}>
+              <Spinner size="small" label="Agent thinking…" />
             </Card>
           </div>
-        </div>
-      )}
-      {sending && (
-        <div className="flex flex-col gap-1 items-start mb-3">
-          <Card size="small" texture={surface.nestedCard}>
-            <Spinner size="small" label="Agent thinking…" />
-          </Card>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {newMessagesPending && (
+        <div className="relative flex justify-center shrink-0">
+          <Button
+            variant="secondary"
+            size="small"
+            className="absolute -top-10"
+            onClick={scrollToBottom}
+          >
+            New messages
+          </Button>
         </div>
       )}
 
-      <div ref={bottomRef} />
-
-      <ChatComposer
-        input={input}
-        setInput={setInput}
-        sending={sending}
-        onSend={handleSend}
-        projectOptions={projectOptions}
-        targetProjectKey={targetProject?.key}
-        onTargetProjectChange={setTargetProjectKey}
-      />
+      <div className="shrink-0">
+        <ChatComposer
+          input={input}
+          setInput={setInput}
+          sending={sending}
+          onSend={onSend}
+          textareaRef={textareaRef}
+          projectOptions={projectOptions}
+          targetProjectKey={targetProject?.key}
+          onTargetProjectChange={setTargetProjectKey}
+        />
+      </div>
 
       <ClearChatModal
         open={confirmOpen}

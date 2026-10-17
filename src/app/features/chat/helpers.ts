@@ -25,3 +25,16 @@ export function mergeScopedChatMessages(
     (a.message.date ?? EPOCH).localeCompare(b.message.date ?? EPOCH),
   );
 }
+
+const NEAR_BOTTOM_PX = 80;
+
+export function isNearBottom(
+  el: { scrollTop: number; scrollHeight: number; clientHeight: number },
+  thresholdPx = NEAR_BOTTOM_PX,
+): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= thresholdPx;
+}
+
+export function isSendKey(e: { key: string; shiftKey: boolean }): boolean {
+  return e.key === 'Enter' && !e.shiftKey;
+}

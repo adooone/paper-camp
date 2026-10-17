@@ -1,5 +1,4 @@
 import { type ScopeRow, useScope } from '@/app/features/scope';
-import { isUnansweredQuestion } from '@/core/chat-file';
 import { useMemo, useState } from 'react';
 import { mergeScopedChatMessages } from '../helpers';
 import { useChatThread } from './use-chat-thread';
@@ -31,14 +30,6 @@ export function useChatPage() {
     [chat.thread, scopeChat.data, multiProject, currentScopeRow],
   );
 
-  const unansweredCount =
-    chat.unansweredCount +
-    scopeChat.data.reduce(
-      (sum, { messages: projectMessages }) =>
-        sum + projectMessages.filter(isUnansweredQuestion).length,
-      0,
-    );
-
   const handleSend = async () => {
     const sentToForeign = Boolean(targetProject && !targetProject.isCurrent);
     const ok = await chat.handleSend(targetProject);
@@ -60,7 +51,6 @@ export function useChatPage() {
     setInput: chat.setInput,
     handleSend,
     handleAnswer,
-    unansweredCount,
     confirmOpen: chat.confirmOpen,
     openConfirmClear: chat.openConfirmClear,
     closeConfirmClear: chat.closeConfirmClear,

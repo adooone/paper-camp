@@ -104,12 +104,13 @@ embedded toolbar's chat mount.
       `chat-reply.ts` wording for the three moves and the three prompt rules in
       `buildChatMovePrompt`; tests updated.
       run: 1m13s · 36 in · 3.3k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049
-- [ ] The page as a chat
+- [x] The page as a chat
       Thread scroll container with the pinned composer, open-to-newest and
       near-bottom auto-scroll with the *New messages* pill, Enter sends and
       Shift+Enter newline, focus kept after send, title *Scout*, the greeting
       empty state with its three buttons, the unanswered stamp removed from the
       title row; tests for the scroll decision and the key handling.
+      run: 7m45s · 128 in · 25.3k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049
 - [ ] The scope sidebar on Chat
       `hasSidebar` includes `isChatArea`; the scope list renders on `/chat` with
       unanswered counts; `use-app-shell.test.ts` covers it.

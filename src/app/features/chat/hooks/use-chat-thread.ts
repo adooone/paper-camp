@@ -3,7 +3,6 @@ import { useChat } from '@/app/hooks';
 import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/content';
 import { refreshChat } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { isUnansweredQuestion } from '@/core/chat-file';
 import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
@@ -112,7 +111,6 @@ export function useChatThread() {
     sending,
     handleSend,
     handleAnswer,
-    unansweredCount: thread.filter(isUnansweredQuestion).length,
     confirmOpen,
     openConfirmClear,
     closeConfirmClear,
