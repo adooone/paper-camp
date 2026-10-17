@@ -38,3 +38,10 @@ export function isNearBottom(
 export function isSendKey(e: { key: string; shiftKey: boolean }): boolean {
   return e.key === 'Enter' && !e.shiftKey;
 }
+
+// Mirrors the server's nowMinuteString (@/core/serialize) rather than importing it, so
+// the pending bubble's timestamp matches the stored copy without pulling server code
+// into the browser bundle.
+export function nowMinuteString(): string {
+  return new Date().toISOString().slice(0, 16);
+}

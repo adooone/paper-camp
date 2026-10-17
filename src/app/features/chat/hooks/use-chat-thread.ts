@@ -3,8 +3,10 @@ import { useChat } from '@/app/hooks';
 import { clearChat, postChatMessage, postChatMessageAt } from '@/app/services/content';
 import { refreshChat } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import type { ThreadMessage } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { nowMinuteString } from '../helpers';
 
 export async function sendChatText(
   text: string,
@@ -39,6 +41,11 @@ export async function sendChatText(
   }
 }
 
+export interface PendingChatMessage {
+  message: ThreadMessage;
+  project?: ScopeRow;
+}
+
 export function useChatThread() {
   const { chatThread, chatLoading } = useChat();
   const thread = chatThread ?? [];
@@ -46,21 +53,33 @@ export function useChatThread() {
   const { toast } = useToast();
 
   const [input, setInput] = useState('');
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingChatMessage | null>(null);
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
 
-  const sendText = async (text: string, opts: { restoreOnFailure: boolean }, target?: ScopeRow) => {
+  const sendText = async (
+    text: string,
+    opts: { restoreOnFailure: boolean },
+    target?: ScopeRow,
+    refetchForeign?: (runtimeUrl: string) => Promise<void>,
+  ) => {
     setSending(true);
-    setPending(text);
+    setPending({
+      message: { kind: 'chat', from: 'user', text, date: nowMinuteString() },
+      project: target,
+    });
     try {
       const toForeign = target && !target.isCurrent;
       return await sendChatText(text, opts, {
         postChatMessage: toForeign
           ? (t) => postChatMessageAt(target.runtimeUrl, t)
           : postChatMessage,
-        loadChat: toForeign ? async () => {} : refreshChat,
+        loadChat: toForeign
+          ? async () => {
+              if (refetchForeign) await refetchForeign(target.runtimeUrl);
+            }
+          : refreshChat,
         toast,
         setInput,
       });
@@ -70,17 +89,23 @@ export function useChatThread() {
     }
   };
 
-  const handleSend = async (target?: ScopeRow) => {
+  const handleSend = async (
+    target?: ScopeRow,
+    refetchForeign?: (runtimeUrl: string) => Promise<void>,
+  ) => {
     const text = input.trim();
     if (!text) return;
     setInput('');
-    return await sendText(text, { restoreOnFailure: true }, target);
+    return await sendText(text, { restoreOnFailure: true }, target, refetchForeign);
   };
 
   // A picked option answers exactly like a typed message, but never touches the
   // composer's draft — it isn't that draft.
-  const handleAnswer = async (text: string, target?: ScopeRow) =>
-    sendText(text, { restoreOnFailure: false }, target);
+  const handleAnswer = async (
+    text: string,
+    target?: ScopeRow,
+    refetchForeign?: (runtimeUrl: string) => Promise<void>,
+  ) => sendText(text, { restoreOnFailure: false }, target, refetchForeign);
 
   const openConfirmClear = () => setConfirmOpen(true);
   const closeConfirmClear = () => setConfirmOpen(false);

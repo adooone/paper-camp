@@ -95,11 +95,12 @@ composer on idea pages, which keeps its own states.
       without a second append; the route's append and reply split into two
       functions; tests.
       run: 2m17s · 38 in · 10.1k out · sonnet-5 · sess:66ec4457-e60f-46e5-90de-145238e11d81
-- [ ] The thinking bubble and the final-shape pending message
+- [x] The thinking bubble and the final-shape pending message
       `useChatStage` reducing stream events; the Scout bubble with dots, stage
       line, elapsed seconds and the 30 s hint; the pending message through
       `ChatMessage`; the spinner card removed; a foreign send keeping its bubble
       until the refetch; tests for the reducer and the timings.
+      run: 6m59s · 114 in · 51.7k out · sonnet-5 · sess:66ec4457-e60f-46e5-90de-145238e11d81
 - [ ] The failure line with Retry
       No toast on an agent error; the line under the user's bubble with the
       error and *Retry*; the reload case from a thread ending with a user

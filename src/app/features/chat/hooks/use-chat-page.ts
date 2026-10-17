@@ -1,6 +1,7 @@
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { useMemo, useState } from 'react';
 import { mergeScopedChatMessages } from '../helpers';
+import { useChatStage } from './use-chat-stage';
 import { useChatThread } from './use-chat-thread';
 import { useScopeChat } from './use-scope-chat';
 
@@ -32,21 +33,22 @@ export function useChatPage() {
 
   const handleSend = async () => {
     const sentToForeign = Boolean(targetProject && !targetProject.isCurrent);
-    const ok = await chat.handleSend(targetProject);
-    if (ok && sentToForeign && targetProject) await scopeChat.refetch(targetProject.runtimeUrl);
+    await chat.handleSend(targetProject, sentToForeign ? scopeChat.refetch : undefined);
   };
 
   const handleAnswer = async (text: string, project?: ScopeRow) => {
-    const ok = await chat.handleAnswer(text, project);
-    if (ok && project && !project.isCurrent) await scopeChat.refetch(project.runtimeUrl);
-    return ok;
+    const toForeign = Boolean(project && !project.isCurrent);
+    return await chat.handleAnswer(text, project, toForeign ? scopeChat.refetch : undefined);
   };
+
+  const chatStage = useChatStage(chat.sending);
 
   return {
     loading: chat.loading,
     messages,
     pending: chat.pending,
     sending: chat.sending,
+    chatStage,
     input: chat.input,
     setInput: chat.setInput,
     handleSend,

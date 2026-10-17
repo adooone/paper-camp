@@ -38,4 +38,21 @@ describe('sendChatText', () => {
     await expect(sendChatText('hi', { restoreOnFailure: false }, d)).resolves.toBe(false);
     expect(d.setInput).not.toHaveBeenCalled();
   });
+
+  it('awaits loadChat fully before resolving, so a caller clearing pending state after the call sees a settled refetch — including a foreign send whose loadChat is a target-project refetch', async () => {
+    let settled = false;
+    const d = deps({
+      loadChat: vi.fn(
+        () =>
+          new Promise<void>((resolve) =>
+            setTimeout(() => {
+              settled = true;
+              resolve();
+            }, 0),
+          ),
+      ),
+    });
+    await sendChatText('hi', { restoreOnFailure: true }, d);
+    expect(settled).toBe(true);
+  });
 });

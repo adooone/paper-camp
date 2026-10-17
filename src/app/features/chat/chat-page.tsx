@@ -1,10 +1,15 @@
 import { RowSkeleton } from '@/app/components';
-import { Button, Card, EmptyState, PageTitle, Spinner } from '@dendelion/folk-ui';
-import { surface } from '@dendelion/folk-ui/tokens';
+import { Button, EmptyState, PageTitle } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isNearBottom } from './helpers';
 import { useChatPage } from './hooks';
-import { ChatComposer, ChatMessage, ChatTitleActions, ClearChatModal } from './views';
+import {
+  ChatComposer,
+  ChatMessage,
+  ChatStageBubble,
+  ChatTitleActions,
+  ClearChatModal,
+} from './views';
 
 const QUICK_PROMPTS = [
   { label: "What's running right now?", fill: "What's running right now?" },
@@ -18,6 +23,7 @@ export const ChatPage = () => {
     messages,
     pending,
     sending,
+    chatStage,
     input,
     setInput,
     handleSend,
@@ -129,21 +135,13 @@ export const ChatPage = () => {
         ))}
 
         {pending && (
-          <div className="flex flex-col gap-1 items-end mb-3">
-            <div className="max-w-[85%]">
-              <Card size="small" surface="paper" texture="parchment" accent accentColor="blue">
-                {pending}
-              </Card>
-            </div>
-          </div>
+          <ChatMessage
+            message={pending.message}
+            onAnswer={async () => false}
+            project={pending.project}
+          />
         )}
-        {sending && (
-          <div className="flex flex-col gap-1 items-start mb-3">
-            <Card size="small" texture={surface.nestedCard}>
-              <Spinner size="small" label="Agent thinking…" />
-            </Card>
-          </div>
-        )}
+        {sending && chatStage && <ChatStageBubble stage={chatStage} />}
 
         <div ref={bottomRef} />
       </div>
