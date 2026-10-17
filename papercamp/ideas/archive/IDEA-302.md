@@ -2,8 +2,9 @@
 id: IDEA-302
 title: Chat shows Scout at work
 type: feat
-status: review
+status: done
 created: 2026-10-16
+updated: 2026-10-17
 tags:
   - app
   - server
