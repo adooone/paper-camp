@@ -1,3 +1,4 @@
+import { SidebarSection } from '@/app/components';
 import { usePlanActionsColumn } from '@/app/features/plans/hooks';
 import {
   CheckIcon,
@@ -6,7 +7,6 @@ import {
   Input,
   RefreshIcon,
   Select,
-  SidebarCard,
   SidebarField,
   SidebarItem,
   Stamp,
@@ -21,9 +21,9 @@ import {
 } from '../actions';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 
-export const PlanActionsColumn = () => {
-  const data = usePlanActionsColumn();
-  if (!data) return null;
+type ColumnData = NonNullable<ReturnType<typeof usePlanActionsColumn>>;
+
+const PlanFields = ({ data }: { data: ColumnData }) => {
   const {
     plan,
     updating,
@@ -42,7 +42,7 @@ export const PlanActionsColumn = () => {
   } = data;
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <div className="flex flex-col">
         <div className="flex flex-col">
           <SidebarItem active={detailView === 'details'} onClick={() => setDetailView('details')}>
@@ -53,8 +53,6 @@ export const PlanActionsColumn = () => {
           </SidebarItem>
         </div>
 
-        {/* Read-only: the dropped/reopen override lives in Actions below since
-          abandonment leaves no branch or PR to derive status from. */}
         <div className="h-[32px] flex items-center">
           <Stamp size="small" variant={STATUS_STAMP[displayStatus]}>
             {STATUS_LABEL[displayStatus]}
@@ -95,13 +93,11 @@ export const PlanActionsColumn = () => {
           </SidebarField>
         )}
       </div>
-    </SidebarCard>
+    </SidebarSection>
   );
 };
 
-export const PlanActionsCommandsColumn = () => {
-  const data = usePlanActionsColumn();
-  if (!data) return null;
+const PlanCommands = ({ data }: { data: ColumnData }) => {
   const {
     plan,
     agentBusy,
@@ -125,7 +121,7 @@ export const PlanActionsCommandsColumn = () => {
   } = data;
 
   return (
-    <SidebarCard className="shrink-0">
+    <SidebarSection>
       <div className="flex flex-col">
         {canCreateBranch && <CreateBranchButton plan={plan} disabled={agentBusy || updating} />}
         {canRunAll && <RunAllPhasesButton plan={plan} disabled={agentBusy || updating} />}
@@ -174,6 +170,17 @@ export const PlanActionsCommandsColumn = () => {
           </SidebarItem>
         )}
       </div>
-    </SidebarCard>
+    </SidebarSection>
+  );
+};
+
+export const PlanActionsColumn = () => {
+  const data = usePlanActionsColumn();
+  if (!data) return null;
+  return (
+    <>
+      <PlanFields data={data} />
+      <PlanCommands data={data} />
+    </>
   );
 };

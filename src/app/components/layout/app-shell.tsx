@@ -12,12 +12,7 @@ import {
 } from '@/app/components';
 import { PageBreadcrumb } from '@/app/components/page-breadcrumb';
 import { HubShell } from '@/app/features/hub';
-import {
-  PlanActionsColumn,
-  PlanActionsCommandsColumn,
-  PlansListSkeleton,
-  StatusFilters,
-} from '@/app/features/plans/index';
+import { PlanActionsColumn, PlansListSkeleton, StatusFilters } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
 import {
@@ -180,8 +175,13 @@ export const AppShell = () => {
                     mobileOpen={mobileSidebarOpen}
                     onMobileClose={closeMobileSidebar}
                   >
-                    {isPlansArea && !isIdeasListArea && <PlanActionsColumn />}
-                    {isPlansArea && !isIdeasListArea && <PlanActionsCommandsColumn />}
+                    {isPlansArea && !isIdeasListArea && (
+                      <SidebarCard className="min-h-0">
+                        <div className={SIDEBAR_SCROLL_CLASS}>
+                          <PlanActionsColumn />
+                        </div>
+                      </SidebarCard>
+                    )}
                     {isIdeasListArea && (
                       <SidebarCard className="min-h-0">
                         <div className={SIDEBAR_SCROLL_CLASS}>
