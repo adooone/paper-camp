@@ -24,7 +24,7 @@ describe('replyToChat', () => {
 
     expect(createIdea).toHaveBeenCalledWith('Dark mode toggle', 'Body.');
     expect(applyToEntity).not.toHaveBeenCalled();
-    expect(reply).toBe('Added [[IDEA-42]] — Dark mode toggle.');
+    expect(reply).toBe('Filed [[IDEA-42]] — Dark mode toggle.');
   });
 
   it('appends the latest message to an entity through the feedback path', async () => {
@@ -40,7 +40,7 @@ describe('replyToChat', () => {
     );
 
     expect(applyToEntity).toHaveBeenCalledWith('IDEA-9', 'the log view is clipped again');
-    expect(reply).toBe('Noted. — see [[IDEA-9]].');
+    expect(reply).toBe('Posted to [[IDEA-9]]: Noted.');
   });
 
   it('reports when the named entity does not exist', async () => {

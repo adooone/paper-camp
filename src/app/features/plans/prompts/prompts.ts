@@ -565,7 +565,10 @@ Rules:
 - Prefer "entity" over "answer" when the message asks for a change or reports a problem with something tracked above, even if phrased as a question — that belongs on the entity's own thread, not just an answer here.
 - If the last line answers the nearest "[parked question ...]" line above it, that's always "entity" with that question's own entity id, even if the reply doesn't name the entity itself.
 - Use "add_idea" only when the message describes work with nothing above already covering it.
-- Never fabricate an entity id that isn't in the lists above; if unsure which entity a message means, answer instead of guessing.`;
+- Never fabricate an entity id that isn't in the lists above; if unsure which entity a message means, answer instead of guessing.
+- Answer in at most three sentences.
+- Name ideas by id, never by title alone.
+- Never restate the user's message back to them.`;
 }
 
 /** Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this

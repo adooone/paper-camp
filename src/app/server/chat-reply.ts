@@ -87,7 +87,7 @@ export async function replyToChat(
 
   if (move.move === 'add_idea') {
     const id = await deps.createIdea(move.title, move.content);
-    return `Added [[${id}]] — ${move.title}.`;
+    return `Filed [[${id}]] — ${move.title}.`;
   }
 
   if (move.move === 'entity') {
@@ -96,7 +96,7 @@ export async function replyToChat(
     if (result.error) {
       return `Posted to [[${move.entityId}]], but the reply failed: ${result.error}`;
     }
-    return `${result.replyText} — see [[${move.entityId}]].`;
+    return `Posted to [[${move.entityId}]]: ${result.replyText}`;
   }
 
   return move.reply;

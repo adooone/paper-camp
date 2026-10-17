@@ -100,9 +100,10 @@ embedded toolbar's chat mount.
       undo or promote affordances; tests for the link parsing and the question
       states.
       run: 6m48s · 156 in · 38.9k out · sonnet-5 · sess:a333bfbb-3834-4a07-85d7-74b768c38354
-- [ ] Scout's replies lead with the verb
+- [x] Scout's replies lead with the verb
       `chat-reply.ts` wording for the three moves and the three prompt rules in
       `buildChatMovePrompt`; tests updated.
+      run: 1m13s · 36 in · 3.3k out · sonnet-5 · sess:ed9410a2-1cc6-4fcb-9ec9-2c480b79b049
 - [ ] The page as a chat
       Thread scroll container with the pinned composer, open-to-newest and
       near-bottom auto-scroll with the *New messages* pill, Enter sends and
