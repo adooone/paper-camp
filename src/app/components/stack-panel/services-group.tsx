@@ -31,11 +31,15 @@ const ACTION_ICONS: Record<ServiceAction, () => React.ReactNode> = {
   restart: () => <RefreshIcon />,
 };
 
-const ServiceRow = ({ service, client }: { service: ServiceState; client: ServicesClient }) => {
-  const navigate = useNavigate();
+export const ServiceActionButtons = ({
+  service,
+  client,
+}: {
+  service: ServiceState;
+  client: ServicesClient;
+}) => {
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
-  const { word, tone } = serviceStatus(service);
 
   const runAction = (action: ServiceAction) => async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,13 +58,33 @@ const ServiceRow = ({ service, client }: { service: ServiceState; client: Servic
     }
   };
 
+  if (busy) return <Spinner size="small" surface="chalkboard" label="Working" />;
+  return (
+    <>
+      {serviceActions(service).map((action) => (
+        <IconButton
+          key={action}
+          icon={ACTION_ICONS[action]()}
+          surface="chalkboard"
+          size="small"
+          variant="ghost"
+          label={`${action[0].toUpperCase()}${action.slice(1)} ${service.name}`}
+          onClick={runAction(action)}
+        />
+      ))}
+    </>
+  );
+};
+
+const ServiceRow = ({ service, client }: { service: ServiceState; client: ServicesClient }) => {
+  const navigate = useNavigate();
+  const { word, tone } = serviceStatus(service);
+
   return (
     // Raw button: folk-ui has no full-width clickable row primitive.
     <button
       type="button"
-      onClick={() =>
-        navigate({ to: '/activity/services/$name', params: { name: service.name } } as never)
-      }
+      onClick={() => navigate({ to: '/activity/services/$name', params: { name: service.name } })}
       className="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left"
     >
       <span
@@ -87,21 +111,7 @@ const ServiceRow = ({ service, client }: { service: ServiceState; client: Servic
         {word}
       </span>
       <span className="flex shrink-0 items-center gap-1">
-        {busy ? (
-          <Spinner size="small" surface="chalkboard" label="Working" />
-        ) : (
-          serviceActions(service).map((action) => (
-            <IconButton
-              key={action}
-              icon={ACTION_ICONS[action]()}
-              surface="chalkboard"
-              size="small"
-              variant="ghost"
-              label={`${action[0].toUpperCase()}${action.slice(1)} ${service.name}`}
-              onClick={runAction(action)}
-            />
-          ))
-        )}
+        <ServiceActionButtons service={service} client={client} />
       </span>
     </button>
   );

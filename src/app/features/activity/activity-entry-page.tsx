@@ -7,7 +7,7 @@ import type { LogRowActions } from './hooks/use-run-rows';
 import { useTaskOutput } from './hooks/use-task-output';
 import { EntryDetailsCard, LogOutputPane } from './views';
 
-const pageClass = 'flex h-[calc(100dvh-var(--pc-header-h)-32px)] flex-col gap-2';
+export const pageClass = 'flex h-[calc(100dvh-var(--pc-header-h)-32px)] flex-col gap-2';
 
 const TaskEntry = ({
   row,

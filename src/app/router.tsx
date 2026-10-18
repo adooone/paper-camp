@@ -54,6 +54,11 @@ const ActivityEntryPage = lazy(() =>
     }),
   ),
 );
+const ServicePage = lazy(() =>
+  importWithRecovery('ServicePage', () => import('@/app/features/activity/index')).then((m) => ({
+    default: m.ServicePage,
+  })),
+);
 const ChatPage = lazy(() =>
   importWithRecovery('ChatPage', () => import('@/app/features/chat/index')).then((m) => ({
     default: m.ChatPage,
@@ -322,6 +327,13 @@ const activityRoute = createRoute({
   },
 });
 
+const activityServiceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/activity/services/$name',
+  component: ServicePage,
+  staticData: { layer: 'runtime' },
+});
+
 const activityEntryRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/activity/$entryId',
@@ -382,6 +394,7 @@ const routeTree = rootRoute.addChildren([
   tasksRoute,
   issuesRoute,
   activityRoute,
+  activityServiceRoute,
   activityEntryRoute,
   logRoute,
   logEntryRoute,

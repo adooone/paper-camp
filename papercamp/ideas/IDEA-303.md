@@ -2,6 +2,7 @@
 id: IDEA-303
 title: Services as one line each
 type: feat
+status: review
 created: 2026-10-18
 tags:
   - app
@@ -128,8 +129,9 @@ instead of the 1.5 s poll.
       navigating to the service page; the per-service card, `Disclosure` and
       `ServiceLog` deleted; tests for which actions each state shows.
       run: 2m47s · 30 in · 9.1k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
-- [ ] The service page
+- [x] The service page
       `useLiveLines` extracted from `useTaskOutput`; `ServicePage` with the
       service switcher, the header with stamp, actions and facts, and
       `LogOutputPane` live while running; the route registered; the unknown
       name state; tests.
+      run: 4m25s · 46 in · 17.2k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
