@@ -2,6 +2,7 @@
 id: IDEA-304
 title: CI as one line per workflow
 type: feat
+status: review
 created: 2026-10-18
 tags:
   - app
@@ -126,6 +127,7 @@ the readiness row.
       the version line linking to the release PR, the three thin states, the
       sized skeleton; the links row and `DraftPrSection` deleted; tests.
       run: 5m52s · 88 in · 26.4k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
-- [ ] Readiness under the Draft PR switch
+- [x] Readiness under the Draft PR switch
       The *Scout secrets* `SettingRow` in `DeskCiEditor` reading the CI query
       with the present, missing and unchecked wordings; tests.
+      run: 2m36s · 66 in · 9.4k out · sonnet-5 · sess:cd7251e9-9c6b-44d0-8e02-04938e810325

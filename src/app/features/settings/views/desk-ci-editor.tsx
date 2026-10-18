@@ -1,4 +1,5 @@
-import type { DeskCi } from '@/types/index';
+import { useCiRelease } from '@/app/hooks/use-ci-release';
+import type { DeskCi, DraftPrReadiness } from '@/types/index';
 import { Input, SettingRow, Switch } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
 
@@ -6,6 +7,36 @@ interface DeskCiEditorProps {
   ci: DeskCi;
   onSave: (ci: DeskCi) => void;
 }
+
+export const scoutSecretsValue = (draftPr: DraftPrReadiness | null): string => {
+  if (!draftPr || !draftPr.secretsChecked) return "couldn't check — needs admin on the repo";
+  const missing = [
+    !draftPr.scoutAppId && 'SCOUT_APP_ID',
+    !draftPr.scoutPrivateKey && 'SCOUT_PRIVATE_KEY',
+  ].filter((name): name is string => Boolean(name));
+  return missing.length > 0
+    ? `missing: ${missing.join(', ')}`
+    : 'SCOUT_APP_ID and SCOUT_PRIVATE_KEY present';
+};
+
+const ScoutSecretsRow = () => {
+  const { ci } = useCiRelease();
+  const draftPr = ci?.draftPr ?? null;
+  return (
+    <SettingRow
+      label="Scout secrets"
+      hint={
+        draftPr?.secretsChecked && (
+          <>
+            <div>Install the Scout GitHub App on the repo.</div>
+            <div>Add the secrets.</div>
+          </>
+        )
+      }
+      control={<span className="text-sm text-desk-text-muted">{scoutSecretsValue(draftPr)}</span>}
+    />
+  );
+};
 
 export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
   const [local, setLocal] = useState(ci);
@@ -69,6 +100,7 @@ export const DeskCiEditor = ({ ci, onSave }: DeskCiEditorProps) => {
           />
         }
       />
+      {local.draftPr && <ScoutSecretsRow />}
     </>
   );
 };
