@@ -801,6 +801,7 @@ export interface CiReleaseState {
   fetchedAt: string;
   /** Null when the run list call failed, distinct from a repo with no runs. */
   runs: CiRun[] | null;
+  releasePlease: boolean;
   releasePr: ReleasePr | null;
   releasedVersion: string | null;
   draftPr: DraftPrReadiness | null;

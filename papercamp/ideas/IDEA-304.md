@@ -119,12 +119,13 @@ the readiness row.
       `refresh()`; `refreshAll` invalidating it; the `refreshing` watcher and
       the hook's `loading` removed; tests.
       run: 3m17s · 74 in · 12.7k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
-- [ ] One card of one-line rows
+- [x] One card of one-line rows
       `CiGroup` as one chalkboard card: the label row with the read time and
       the refresh button, a row per workflow linking to GitHub with the status
       word and the job-name tooltip, the draft-PR row with the secrets state,
       the version line linking to the release PR, the three thin states, the
       sized skeleton; the links row and `DraftPrSection` deleted; tests.
+      run: 5m52s · 88 in · 26.4k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
 - [ ] Readiness under the Draft PR switch
       The *Scout secrets* `SettingRow` in `DeskCiEditor` reading the CI query
       with the present, missing and unchecked wordings; tests.

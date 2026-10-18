@@ -286,6 +286,7 @@ export async function fetchCiReleaseState(
     available,
     fetchedAt: new Date().toISOString(),
     runs: runRows ? await withFailedJobs(ci.repo, latestRunPerWorkflow(runRows, branch)) : null,
+    releasePlease: ci.releasePlease ?? false,
     releasePr: prRows ? pickReleasePr(prRows) : null,
     releasedVersion: releasedTag ? releasedTag.replace(/^v/, '') : null,
     draftPr,

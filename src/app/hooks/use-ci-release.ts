@@ -7,6 +7,7 @@ import { fetchCiRelease } from '../services/ci-api';
 
 export interface CiReleaseClient {
   ci: CiReleaseState | null;
+  loading: boolean;
   refresh: () => Promise<void>;
 }
 
@@ -15,7 +16,7 @@ export function useCiRelease(): CiReleaseClient {
   const queryClient = useQueryClient();
   const queryKey = ciQueryKey(runtimeUrl);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey,
     queryFn: () => fetchCiRelease(),
     staleTime: Number.POSITIVE_INFINITY,
@@ -25,5 +26,5 @@ export function useCiRelease(): CiReleaseClient {
     queryClient.setQueryData(queryKey, await fetchCiRelease(true));
   }, [queryClient, queryKey]);
 
-  return { ci: data ?? null, refresh };
+  return { ci: data ?? null, loading: isLoading, refresh };
 }
