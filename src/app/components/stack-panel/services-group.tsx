@@ -1,92 +1,51 @@
-import { useServicesClient } from '@/app/hooks/use-services-client';
-import { fetchServiceLog } from '@/app/services/services-api';
+import { type ServicesClient, useServicesClient } from '@/app/hooks/use-services-client';
 import { SERVICE_DOT_CLASS, serviceStatus } from '@/core/service-status';
 import type { ServiceState } from '@/types/index';
 import {
   Card,
-  Disclosure,
   EmptyState,
   IconButton,
+  RefreshIcon,
   RunIcon,
   Spinner,
   StopIcon,
   useToast,
 } from '@dendelion/folk-ui';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { groupLabelClassName } from './shared';
-
-const LOG_POLL_MS = 1500;
 
 export const SERVICES_GROUP_LABEL = 'Services';
 
-const StatusDot = ({ service }: { service: ServiceState }) => {
-  const { word, tone } = serviceStatus(service);
-  return (
-    <span
-      role="img"
-      aria-label={word}
-      className={`h-2 w-2 shrink-0 rounded-full ${SERVICE_DOT_CLASS[tone]}`}
-      title={word}
-    />
-  );
+export type ServiceAction = 'start' | 'stop' | 'restart';
+
+export const serviceActions = (service: ServiceState): ServiceAction[] => {
+  if (service.status === 'stopped' || service.status === 'crashed') return ['start'];
+  if (service.status === 'running' && service.pid !== null) return ['stop', 'restart'];
+  return [];
 };
 
-const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
-  const [log, setLog] = useState('');
-  const preRef = useRef<HTMLPreElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const next = await fetchServiceLog(name);
-      if (!cancelled) setLog(next.join('\n'));
-    };
-    load();
-    const timer = running ? setInterval(load, LOG_POLL_MS) : undefined;
-    return () => {
-      cancelled = true;
-      if (timer) clearInterval(timer);
-    };
-  }, [name, running]);
-
-  useEffect(() => {
-    const pre = preRef.current;
-    if (pre && log) pre.scrollTop = pre.scrollHeight;
-  }, [log]);
-
-  return (
-    <pre
-      ref={preRef}
-      className="m-0 mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-[8px] bg-desk-bg/60 p-2 font-mono text-2xs leading-relaxed text-desk-text-muted"
-    >
-      {log || 'No output yet.'}
-    </pre>
-  );
+const ACTION_ICONS: Record<ServiceAction, () => React.ReactNode> = {
+  start: () => <RunIcon />,
+  stop: () => <StopIcon />,
+  restart: () => <RefreshIcon />,
 };
 
-const ServiceRow = ({
-  service,
-  onStart,
-  onStop,
-}: {
-  service: ServiceState;
-  onStart: (name: string) => Promise<void>;
-  onStop: (name: string) => Promise<void>;
-}) => {
+const ServiceRow = ({ service, client }: { service: ServiceState; client: ServicesClient }) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
-  const [showLog, setShowLog] = useState(false);
-  const isRunning = service.status === 'running' || service.status === 'stopping';
-  const owned = service.pid !== null;
+  const { word, tone } = serviceStatus(service);
 
-  const toggleRun = async () => {
+  const runAction = (action: ServiceAction) => async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (busy) return;
     setBusy(true);
     try {
-      await (isRunning ? onStop : onStart)(service.name);
+      await client[action](service.name);
     } catch (err) {
       toast({
-        title: isRunning ? 'Failed to stop service' : 'Failed to start service',
+        title: `Failed to ${action} service`,
         description: (err as Error).message,
         variant: 'error',
       });
@@ -96,64 +55,75 @@ const ServiceRow = ({
   };
 
   return (
-    <Card surface="chalkboard" size="small">
-      <div className="flex items-center justify-between gap-2">
-        <Disclosure
-          expanded={showLog}
-          onToggle={() => setShowLog((v) => !v)}
-          className="min-w-0 text-desk-chalk"
+    // Raw button: folk-ui has no full-width clickable row primitive.
+    <button
+      type="button"
+      onClick={() =>
+        navigate({ to: '/activity/services/$name', params: { name: service.name } } as never)
+      }
+      className="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left"
+    >
+      <span
+        role="img"
+        aria-label={word}
+        title={word}
+        className={`h-2 w-2 shrink-0 rounded-full ${SERVICE_DOT_CLASS[tone]}`}
+      />
+      <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-desk-chalk">
+        {service.name}
+      </span>
+      {service.port && (
+        <a
+          href={`http://localhost:${service.port}`}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="shrink-0 font-mono text-2xs text-desk-text-muted"
         >
-          <span className="flex min-w-0 items-center gap-2">
-            <StatusDot service={service} />
-            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-display-luminari text-sm">
-              {service.name}
-            </span>
-            {service.port && (
-              <span className="shrink-0 font-mono text-2xs text-desk-text-muted">
-                :{service.port}
-              </span>
-            )}
-          </span>
-        </Disclosure>
-        <div className="flex shrink-0 items-center gap-1">
-          {busy ? (
-            <Spinner size="small" surface="chalkboard" label="Working" />
-          ) : !isRunning || owned ? (
+          :{service.port}
+        </a>
+      )}
+      <span className="min-w-0 flex-1 truncate text-right font-mono text-2xs text-desk-text-muted">
+        {word}
+      </span>
+      <span className="flex shrink-0 items-center gap-1">
+        {busy ? (
+          <Spinner size="small" surface="chalkboard" label="Working" />
+        ) : (
+          serviceActions(service).map((action) => (
             <IconButton
-              icon={isRunning ? <StopIcon /> : <RunIcon />}
+              key={action}
+              icon={ACTION_ICONS[action]()}
               surface="chalkboard"
               size="small"
               variant="ghost"
-              label={isRunning ? `Stop ${service.name}` : `Start ${service.name}`}
-              onClick={toggleRun}
+              label={`${action[0].toUpperCase()}${action.slice(1)} ${service.name}`}
+              onClick={runAction(action)}
             />
-          ) : null}
-        </div>
-      </div>
-      {showLog && <ServiceLog name={service.name} running={isRunning} />}
-    </Card>
+          ))
+        )}
+      </span>
+    </button>
   );
 };
 
 export const ServicesGroup = () => {
-  const { services, start, stop } = useServicesClient();
-  const onStart = useCallback((name: string) => start(name), [start]);
-  const onStop = useCallback((name: string) => stop(name), [stop]);
+  const client = useServicesClient();
 
   return (
     <div>
       <h4 className={`${groupLabelClassName} m-0`}>{SERVICES_GROUP_LABEL}</h4>
-      <div className="flex flex-col gap-2">
-        {services.length > 0 ? (
-          services.map((service) => (
-            <ServiceRow key={service.name} service={service} onStart={onStart} onStop={onStop} />
-          ))
+      <Card surface="chalkboard" size="small">
+        {client.services.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {client.services.map((service) => (
+              <ServiceRow key={service.name} service={service} client={client} />
+            ))}
+          </div>
         ) : (
-          <Card surface="chalkboard" size="small">
-            <EmptyState message="No services declared." />
-          </Card>
+          <EmptyState message="No services declared." />
         )}
-      </div>
+      </Card>
     </div>
   );
 };

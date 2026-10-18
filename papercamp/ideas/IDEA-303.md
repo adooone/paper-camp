@@ -122,11 +122,12 @@ instead of the 1.5 s poll.
       restart mutations and the stream invalidation on service events only;
       `fetchServiceLog` returning lines; tests.
       run: 3m34s · 40 in · 13.4k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
-- [ ] One card of one-line rows
+- [x] One card of one-line rows
       `ServicesGroup` as one chalkboard card with a row per service: dot, name,
       port link, status word, the actions the state allows, the row
       navigating to the service page; the per-service card, `Disclosure` and
       `ServiceLog` deleted; tests for which actions each state shows.
+      run: 2m47s · 30 in · 9.1k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
 - [ ] The service page
       `useLiveLines` extracted from `useTaskOutput`; `ServicePage` with the
       service switcher, the header with stamp, actions and facts, and
