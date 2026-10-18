@@ -2,7 +2,7 @@
 id: IDEA-303
 title: Services as one line each
 type: feat
-status: review
+status: done
 created: 2026-10-18
 updated: 2026-10-18
 tags:

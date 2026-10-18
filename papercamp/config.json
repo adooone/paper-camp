@@ -14,7 +14,7 @@
   "defaultAgents": {
     "phase": {
       "agent": "claude-code",
-      "model": "fable",
+      "model": "sonnet",
       "effort": "medium"
     },
     "planDraft": {
