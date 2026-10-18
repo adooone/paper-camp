@@ -1,8 +1,6 @@
 import { useCiRelease } from '@/app/hooks/use-ci-release';
-import { useAppStore } from '@/app/stores/app-store';
 import type { CiRun, CiRunStatus, DraftPrReadiness } from '@/types/index';
 import { Card, EmptyState } from '@dendelion/folk-ui';
-import { useEffect, useRef } from 'react';
 import { groupLabelClassName } from './shared';
 
 export const CI_GROUP_LABEL = 'CI & release';
@@ -62,24 +60,13 @@ const DraftPrSection = ({ draftPr }: { draftPr: DraftPrReadiness }) => {
 };
 
 export const CiGroup = () => {
-  const { ci, loading, refresh } = useCiRelease();
-  const refreshing = useAppStore((s) => s.refreshing);
-  const wasRefreshing = useRef(false);
-
-  useEffect(() => {
-    if (wasRefreshing.current && !refreshing) refresh();
-    wasRefreshing.current = refreshing;
-  }, [refreshing, refresh]);
+  const { ci } = useCiRelease();
 
   const body = () => {
     if (!ci) {
       return (
         <Card surface="chalkboard" size="small">
-          {loading ? (
-            <p className="m-0 text-center text-xs opacity-50">Checking CI…</p>
-          ) : (
-            <EmptyState message="No CI source declared." />
-          )}
+          <EmptyState message="No CI source declared." />
         </Card>
       );
     }

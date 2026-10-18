@@ -91,6 +91,10 @@ export function servicesQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'services');
 }
 
+export function ciQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'ci');
+}
+
 export function getCachedPlans(): ParseResult<PlanEntry> | null {
   return (
     queryClient.getQueryData<ParseResult<PlanEntry>>(
@@ -178,6 +182,13 @@ export function refreshChat(): Promise<void> {
 export function refreshServices(): Promise<void> {
   return queryClient.invalidateQueries({
     queryKey: servicesQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshCi(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: ciQueryKey(getRuntimeConnection().runtimeUrl),
     refetchType: 'all',
   });
 }

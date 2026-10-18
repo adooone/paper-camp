@@ -1,6 +1,7 @@
 import {
   getPlansError,
   refreshAgentAuthStatus,
+  refreshCi,
   refreshIdeas,
   refreshNightReport,
   refreshPlans,
@@ -83,6 +84,7 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
           get().loadArchivableIdeas(),
           refreshSuggestions(),
           refreshNightReport(),
+          refreshCi(),
           get().loadStatus(),
           get().loadConsistency(),
           get().loadDoctor(),

@@ -40,4 +40,13 @@ describe('subscribeChatToActivityStream', () => {
     activityListener?.({ message: 'chat' });
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
+
+  it('refreshCi invalidates the current runtime ci query', async () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    await mod.refreshCi();
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: mod.ciQueryKey('http://localhost:1234'),
+      refetchType: 'all',
+    });
+  });
 });

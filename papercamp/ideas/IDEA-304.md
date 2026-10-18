@@ -114,10 +114,11 @@ the readiness row.
       `?fresh=1` clearing the repo's cache entry; `ciRunWord`; the
       `pr-review-status` caller treating null runs as not green; tests.
       run: 3m43s · 66 in · 16.2k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
-- [ ] CI as a query
+- [x] CI as a query
       `useCiRelease` on `useQuery(['ci'])` with `staleTime: Infinity` and
       `refresh()`; `refreshAll` invalidating it; the `refreshing` watcher and
       the hook's `loading` removed; tests.
+      run: 3m17s · 74 in · 12.7k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
 - [ ] One card of one-line rows
       `CiGroup` as one chalkboard card: the label row with the read time and
       the refresh button, a row per workflow linking to GitHub with the status

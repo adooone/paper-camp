@@ -1,28 +1,29 @@
+import { ciQueryKey } from '@/app/services/query-client';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { CiReleaseState } from '@/types/index';
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { fetchCiRelease } from '../services/ci-api';
 
 export interface CiReleaseClient {
   ci: CiReleaseState | null;
-  loading: boolean;
   refresh: () => Promise<void>;
 }
 
 export function useCiRelease(): CiReleaseClient {
-  const [ci, setCi] = useState<CiReleaseState | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { runtimeUrl } = useRuntimeConnection();
+  const queryClient = useQueryClient();
+  const queryKey = ciQueryKey(runtimeUrl);
+
+  const { data } = useQuery({
+    queryKey,
+    queryFn: () => fetchCiRelease(),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 
   const refresh = useCallback(async () => {
-    try {
-      setCi(await fetchCiRelease());
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    queryClient.setQueryData(queryKey, await fetchCiRelease(true));
+  }, [queryClient, queryKey]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  return { ci, loading, refresh };
+  return { ci: data ?? null, refresh };
 }
