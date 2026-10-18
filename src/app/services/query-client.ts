@@ -87,6 +87,10 @@ export function chatQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'chat');
 }
 
+export function servicesQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'services');
+}
+
 export function getCachedPlans(): ParseResult<PlanEntry> | null {
   return (
     queryClient.getQueryData<ParseResult<PlanEntry>>(
@@ -167,6 +171,13 @@ export function refreshNotifications(): Promise<void> {
 export function refreshChat(): Promise<void> {
   return queryClient.invalidateQueries({
     queryKey: chatQueryKey(getRuntimeConnection().runtimeUrl),
+    refetchType: 'all',
+  });
+}
+
+export function refreshServices(): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: servicesQueryKey(getRuntimeConnection().runtimeUrl),
     refetchType: 'all',
   });
 }

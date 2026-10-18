@@ -29,9 +29,17 @@ export const stopService = async (name: string): Promise<void> => {
   await handleResponse(response, 'Failed to stop service');
 };
 
-export const fetchServiceLog = async (name: string): Promise<string> => {
+export const restartService = async (name: string): Promise<void> => {
+  const response = await apiFetch(
+    apiUrl(`/api/services/restart?name=${encodeURIComponent(name)}`),
+    { method: 'POST' },
+  );
+  await handleResponse(response, 'Failed to restart service');
+};
+
+export const fetchServiceLog = async (name: string): Promise<string[]> => {
   const response = await apiFetch(apiUrl(`/api/services/logs?name=${encodeURIComponent(name)}`));
-  if (!response.ok) return '';
-  const body = (await response.json()) as { log?: string };
-  return body.log ?? '';
+  if (!response.ok) return [];
+  const body = (await response.json()) as { lines?: string[] };
+  return body.lines ?? [];
 };

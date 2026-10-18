@@ -1,5 +1,6 @@
 import { useServicesClient } from '@/app/hooks/use-services-client';
 import { fetchServiceLog } from '@/app/services/services-api';
+import { SERVICE_DOT_CLASS, serviceStatus } from '@/core/service-status';
 import type { ServiceState } from '@/types/index';
 import {
   Card,
@@ -18,23 +19,14 @@ const LOG_POLL_MS = 1500;
 
 export const SERVICES_GROUP_LABEL = 'Services';
 
-export const dotClass = (service: ServiceState): string => {
-  if (service.status === 'crashed') return 'bg-chalk-fail-text';
-  if (service.status === 'running') {
-    return service.health === 'up' ? 'bg-chalk-pass-text' : 'bg-chalk-running-text';
-  }
-  if (service.status === 'stopping') return 'bg-chalk-running-text';
-  return 'bg-desk-text-muted';
-};
-
 const StatusDot = ({ service }: { service: ServiceState }) => {
-  const label = service.status === 'running' ? `running · ${service.health}` : service.status;
+  const { word, tone } = serviceStatus(service);
   return (
     <span
       role="img"
-      aria-label={label}
-      className={`h-2 w-2 shrink-0 rounded-full ${dotClass(service)}`}
-      title={label}
+      aria-label={word}
+      className={`h-2 w-2 shrink-0 rounded-full ${SERVICE_DOT_CLASS[tone]}`}
+      title={word}
     />
   );
 };
@@ -47,7 +39,7 @@ const ServiceLog = ({ name, running }: { name: string; running: boolean }) => {
     let cancelled = false;
     const load = async () => {
       const next = await fetchServiceLog(name);
-      if (!cancelled) setLog(next);
+      if (!cancelled) setLog(next.join('\n'));
     };
     load();
     const timer = running ? setInterval(load, LOG_POLL_MS) : undefined;

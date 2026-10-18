@@ -116,11 +116,12 @@ instead of the 1.5 s poll.
       `desk-services.test.ts` around a fake pty covering start, crash, stop,
       restart, the marker and the ring limit; route tests.
       run: 3m50s · 38 in · 17.1k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
-- [ ] The status table and the services query
+- [x] The status table and the services query
       `serviceStatus` in `src/core/service-status.ts` with its tests replacing
       `dotClass`; `useServicesClient` on `useQuery` with start, stop and
       restart mutations and the stream invalidation on service events only;
       `fetchServiceLog` returning lines; tests.
+      run: 3m34s · 40 in · 13.4k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
 - [ ] One card of one-line rows
       `ServicesGroup` as one chalkboard card with a row per service: dot, name,
       port link, status word, the actions the state allows, the row
