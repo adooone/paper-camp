@@ -103,13 +103,50 @@ describe('GET /api/services/logs', () => {
     expect(status()).toBe(404);
   });
 
-  it('returns the joined log tail', async () => {
+  it('returns the log tail as lines', async () => {
     const { res, status, json } = fakeRes();
-    await route('/api/services/logs', 'GET', { getLog: () => 'line 1\nline 2' }).handle(
+    await route('/api/services/logs', 'GET', { getLog: () => ['line 1', 'line 2'] }).handle(
       fakeReq('/api/services/logs?name=app'),
       res,
     );
     expect(status()).toBe(200);
-    expect(json()).toEqual({ name: 'app', log: 'line 1\nline 2' });
+    expect(json()).toEqual({ name: 'app', lines: ['line 1', 'line 2'] });
+  });
+});
+
+describe('POST /api/services/restart', () => {
+  it('rejects a missing name with 400', async () => {
+    const restart = vi.fn(async () => {});
+    const { res, status } = fakeRes();
+    await route('/api/services/restart', 'POST', { restart }).handle(
+      fakeReq('/api/services/restart'),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(restart).not.toHaveBeenCalled();
+  });
+
+  it('restarts a named service and returns 202', async () => {
+    const restart = vi.fn(async () => {});
+    const { res, status } = fakeRes();
+    await route('/api/services/restart', 'POST', { restart }).handle(
+      fakeReq('/api/services/restart?name=app'),
+      res,
+    );
+    expect(status()).toBe(202);
+    expect(restart).toHaveBeenCalledWith('app');
+  });
+
+  it('reports an unknown service as 404', async () => {
+    const restart = vi.fn(async () => {
+      throw new Error('No service named "ghost" in the desk manifest');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/services/restart', 'POST', { restart }).handle(
+      fakeReq('/api/services/restart?name=ghost'),
+      res,
+    );
+    expect(status()).toBe(404);
+    expect((json() as { error: string }).error).toMatch(/ghost/);
   });
 });

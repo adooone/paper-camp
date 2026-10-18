@@ -110,11 +110,12 @@ Settings and the discovery proposal. Streaming log lines over the SSE stream
 instead of the 1.5 s poll.
 
 ### Phases
-- [ ] Restart, the lines log and the kept buffer
+- [x] Restart, the lines log and the kept buffer
       `restart` on the manager and its route; `start` appending the marker
       instead of clearing; the logs route answering `lines`; a
       `desk-services.test.ts` around a fake pty covering start, crash, stop,
       restart, the marker and the ring limit; route tests.
+      run: 3m50s · 38 in · 17.1k out · fable-5 · sess:47aa41ba-dc47-4a50-b7ae-577211107bd2
 - [ ] The status table and the services query
       `serviceStatus` in `src/core/service-status.ts` with its tests replacing
       `dotClass`; `useServicesClient` on `useQuery` with start, stop and

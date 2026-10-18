@@ -22,6 +22,13 @@ function stripAnsi(text: string): string {
   return text.replace(ANSI_ESCAPE_RE, '');
 }
 
+function startedMarker(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `── started ${hh}:${mm} ──`;
+}
+
 interface RunningService {
   status: ServiceRunStatus;
   health: ServiceHealth;
@@ -100,14 +107,18 @@ export function createDeskServiceManager(
     }
   }
 
+  function trimLog(runtime: RunningService) {
+    if (runtime.log.length > MAX_LOG_LINES) {
+      runtime.log.splice(0, runtime.log.length - MAX_LOG_LINES);
+    }
+  }
+
   function appendLog(runtime: RunningService, chunk: string) {
     const combined = runtime.partial + stripAnsi(chunk);
     const parts = combined.split('\n');
     runtime.partial = parts.pop() ?? '';
     for (const line of parts) runtime.log.push(line);
-    if (runtime.log.length > MAX_LOG_LINES) {
-      runtime.log.splice(0, runtime.log.length - MAX_LOG_LINES);
-    }
+    trimLog(runtime);
   }
 
   function stopHealthPolling(runtime: RunningService) {
@@ -153,10 +164,11 @@ export function createDeskServiceManager(
     if (runtime.status === 'running' || runtime.status === 'stopping') return;
 
     runtime.status = 'running';
-    runtime.log = [];
     runtime.partial = '';
     runtime.exitCode = null;
     runtime.health = 'unknown';
+    runtime.log.push(startedMarker());
+    trimLog(runtime);
 
     let pty: typeof import('node-pty');
     try {
@@ -236,6 +248,17 @@ export function createDeskServiceManager(
     }, KILL_GRACE_MS);
   }
 
+  async function restart(name: string): Promise<void> {
+    const runtime = runtimes.get(name);
+    const proc = runtime?.proc;
+    if (proc && runtime?.status === 'running') {
+      const exited = new Promise<void>((resolve) => proc.onExit(() => resolve()));
+      stop(name);
+      await exited;
+    }
+    await start(name);
+  }
+
   function toState(service: DeskService, runtime: RunningService): ServiceState {
     return {
       name: service.name,
@@ -265,11 +288,10 @@ export function createDeskServiceManager(
     );
   }
 
-  function getLog(name: string): string | null {
+  function getLog(name: string): string[] | null {
     const service = loadManifestServices(root).find((s) => s.name === name);
     if (!service) return null;
-    const runtime = runtimeFor(name);
-    return runtime.log.join('\n');
+    return [...runtimeFor(name).log];
   }
 
   async function killAll(): Promise<void> {
@@ -282,6 +304,7 @@ export function createDeskServiceManager(
   return {
     start,
     stop,
+    restart,
     getStatus,
     getLog,
     killAll,

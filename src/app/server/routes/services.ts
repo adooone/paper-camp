@@ -45,6 +45,25 @@ export function serviceRoutes({ services }: RouteContext): Route[] {
     },
 
     {
+      method: 'POST',
+      path: '/api/services/restart',
+      handle: async (req, res) => {
+        const name = requestUrl(req).searchParams.get('name');
+        if (!name) {
+          sendJson(res, 400, { error: 'name is required' });
+          return;
+        }
+        try {
+          await services.restart(name);
+        } catch (err) {
+          sendJson(res, 404, { error: (err as Error).message });
+          return;
+        }
+        sendJson(res, 202, { ok: true });
+      },
+    },
+
+    {
       method: 'GET',
       path: '/api/services/logs',
       handle: (req, res) => {
@@ -53,12 +72,12 @@ export function serviceRoutes({ services }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'name is required' });
           return;
         }
-        const log = services.getLog(name);
-        if (log === null) {
+        const lines = services.getLog(name);
+        if (lines === null) {
           sendJson(res, 404, { error: `No service named "${name}" in the desk manifest` });
           return;
         }
-        sendJson(res, 200, { name, log });
+        sendJson(res, 200, { name, lines });
       },
     },
   ];
