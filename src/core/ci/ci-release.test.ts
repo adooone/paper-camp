@@ -1,6 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { EventEmitter } from 'node:events';
+import { describe, expect, it, vi } from 'vitest';
+
+const { mockSpawn } = vi.hoisted(() => ({ mockSpawn: vi.fn() }));
+vi.mock('node:child_process', () => ({ spawn: mockSpawn }));
+
 import {
+  ciRunWord,
   failedJobNames,
+  fetchCiReleaseState,
   hasSecret,
   latestDraftPrRun,
   latestRunPerWorkflow,
@@ -8,6 +15,22 @@ import {
   parseVersion,
   pickReleasePr,
 } from './ci-release';
+
+function fakeProc(code: number, stdout: string) {
+  const proc = new EventEmitter() as EventEmitter & {
+    stdout: EventEmitter;
+    stderr: EventEmitter;
+    kill: () => void;
+  };
+  proc.stdout = new EventEmitter();
+  proc.stderr = new EventEmitter();
+  proc.kill = vi.fn();
+  queueMicrotask(() => {
+    if (stdout) proc.stdout.emit('data', Buffer.from(stdout));
+    proc.emit('close', code);
+  });
+  return proc;
+}
 
 describe('mapRunStatus', () => {
   it('maps completed conclusions', () => {
@@ -152,5 +175,67 @@ describe('hasSecret', () => {
 
   it('returns false when the secret is absent', () => {
     expect(hasSecret([{ name: 'OTHER' }], 'SCOUT_PRIVATE_KEY')).toBe(false);
+  });
+});
+
+describe('ciRunWord', () => {
+  it('maps each run status to its word', () => {
+    expect(ciRunWord('success')).toBe('passed');
+    expect(ciRunWord('failure')).toBe('failed');
+    expect(ciRunWord('in_progress')).toBe('running');
+    expect(ciRunWord('queued')).toBe('queued');
+    expect(ciRunWord('cancelled')).toBe('cancelled');
+    expect(ciRunWord('unknown')).toBe('unknown');
+  });
+});
+
+describe('fetchCiReleaseState', () => {
+  it('stamps fetchedAt and sets runs to null when the run list call fails', async () => {
+    mockSpawn.mockImplementation((_cmd: string, args: string[]) => {
+      if (args[0] === 'run') return fakeProc(1, '');
+      if (args[0] === 'pr') return fakeProc(0, '[]');
+      if (args[0] === 'release') return fakeProc(0, '[]');
+      return fakeProc(1, '');
+    });
+    const state = await fetchCiReleaseState({ repo: 'o/r', releasePlease: true }, 0);
+    expect(state.available).toBe(true);
+    expect(state.runs).toBeNull();
+    expect(new Date(state.fetchedAt).toString()).not.toBe('Invalid Date');
+  });
+
+  it('marks secretsChecked false when the secrets call fails', async () => {
+    mockSpawn.mockImplementation((_cmd: string, args: string[]) => {
+      if (args[0] === 'run') return fakeProc(0, '[]');
+      if (args[0] === 'pr') return fakeProc(0, '[]');
+      if (args[0] === 'release') return fakeProc(0, '[]');
+      if (args[0] === 'api') return fakeProc(1, '');
+      return fakeProc(1, '');
+    });
+    const state = await fetchCiReleaseState({ repo: 'o/r', draftPr: true }, 0);
+    expect(state.draftPr).toEqual({
+      scoutAppId: false,
+      scoutPrivateKey: false,
+      secretsChecked: false,
+      lastRun: null,
+    });
+  });
+
+  it('marks secretsChecked true and reads presence when the secrets call succeeds', async () => {
+    mockSpawn.mockImplementation((_cmd: string, args: string[]) => {
+      if (args[0] === 'run') return fakeProc(0, '[]');
+      if (args[0] === 'pr') return fakeProc(0, '[]');
+      if (args[0] === 'release') return fakeProc(0, '[]');
+      if (args[0] === 'api') {
+        return fakeProc(0, JSON.stringify({ secrets: [{ name: 'SCOUT_APP_ID' }] }));
+      }
+      return fakeProc(1, '');
+    });
+    const state = await fetchCiReleaseState({ repo: 'o/r', draftPr: true }, 0);
+    expect(state.draftPr).toEqual({
+      scoutAppId: true,
+      scoutPrivateKey: false,
+      secretsChecked: true,
+      lastRun: null,
+    });
   });
 });

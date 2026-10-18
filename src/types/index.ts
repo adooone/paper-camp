@@ -787,6 +787,8 @@ export interface ReleasePr {
 export interface DraftPrReadiness {
   scoutAppId: boolean;
   scoutPrivateKey: boolean;
+  /** False when the secrets call itself failed (needs admin), distinct from a missing secret. */
+  secretsChecked: boolean;
   lastRun: CiRun | null;
 }
 
@@ -796,7 +798,9 @@ export interface CiReleaseState {
   repo: string;
   branch: string;
   available: boolean;
-  runs: CiRun[];
+  fetchedAt: string;
+  /** Null when the run list call failed, distinct from a repo with no runs. */
+  runs: CiRun[] | null;
   releasePr: ReleasePr | null;
   releasedVersion: string | null;
   draftPr: DraftPrReadiness | null;

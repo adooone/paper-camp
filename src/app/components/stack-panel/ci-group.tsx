@@ -99,7 +99,7 @@ export const CiGroup = () => {
     return (
       <Card surface="chalkboard" size="small">
         <div className="flex flex-col gap-2 text-sm">
-          {ci.runs.length > 0 ? (
+          {ci.runs && ci.runs.length > 0 ? (
             ci.runs.map((run) => <RunRow key={run.workflow} run={run} />)
           ) : (
             <span className="text-xs text-desk-text-muted opacity-70">

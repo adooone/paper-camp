@@ -787,6 +787,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           const ciState = await fetchCiReleaseState({ ...ci, branch: pr.headBranch });
           ciGreen =
             ciState.available &&
+            ciState.runs !== null &&
             ciState.runs.length > 0 &&
             ciState.runs.every((r) => r.status === 'success');
         }

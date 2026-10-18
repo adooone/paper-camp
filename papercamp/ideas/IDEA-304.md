@@ -109,10 +109,11 @@ A CI page in Activity. The `pr-review-status` route's use of
 the readiness row.
 
 ### Phases
-- [ ] fetchedAt, null runs and the readiness flag
+- [x] fetchedAt, null runs and the readiness flag
       `fetchedAt`, `runs: CiRun[] | null` and `secretsChecked` on the state;
       `?fresh=1` clearing the repo's cache entry; `ciRunWord`; the
       `pr-review-status` caller treating null runs as not green; tests.
+      run: 3m43s · 66 in · 16.2k out · sonnet-5 · sess:cf4931c8-4e6c-4319-8465-0d7caf29f8e6
 - [ ] CI as a query
       `useCiRelease` on `useQuery(['ci'])` with `staleTime: Infinity` and
       `refresh()`; `refreshAll` invalidating it; the `refreshing` watcher and

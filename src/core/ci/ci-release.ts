@@ -185,10 +185,31 @@ export function hasSecret(rows: GhSecretRow[], name: string): boolean {
   return rows.some((row) => row.name === name);
 }
 
+const CI_RUN_WORDS: Record<CiRunStatus, string> = {
+  success: 'passed',
+  failure: 'failed',
+  in_progress: 'running',
+  queued: 'queued',
+  cancelled: 'cancelled',
+  unknown: 'unknown',
+};
+
+export function ciRunWord(status: CiRunStatus): string {
+  return CI_RUN_WORDS[status];
+}
+
 const cache = new Map<string, { state: CiReleaseState; fetchedAt: number }>();
+
+function ciCacheKey(ci: DeskCi): string {
+  return `${ci.repo}#${ci.branch ?? 'main'}`;
+}
 
 export function clearCiCache(): void {
   cache.clear();
+}
+
+export function clearCiCacheEntry(ci: DeskCi): void {
+  cache.delete(ciCacheKey(ci));
 }
 
 export async function fetchCiReleaseState(
@@ -196,7 +217,7 @@ export async function fetchCiReleaseState(
   ttlMs = CI_CACHE_TTL_MS,
 ): Promise<CiReleaseState> {
   const branch = ci.branch ?? 'main';
-  const key = `${ci.repo}#${branch}`;
+  const key = ciCacheKey(ci);
   const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.state;
 
@@ -254,6 +275,7 @@ export async function fetchCiReleaseState(
     ? {
         scoutAppId: hasSecret(draftPrSecretRows?.secrets ?? [], 'SCOUT_APP_ID'),
         scoutPrivateKey: hasSecret(draftPrSecretRows?.secrets ?? [], 'SCOUT_PRIVATE_KEY'),
+        secretsChecked: draftPrSecretRows !== undefined,
         lastRun: draftPrRunRows ? latestDraftPrRun(draftPrRunRows) : null,
       }
     : null;
@@ -262,7 +284,8 @@ export async function fetchCiReleaseState(
     repo: ci.repo,
     branch,
     available,
-    runs: runRows ? await withFailedJobs(ci.repo, latestRunPerWorkflow(runRows, branch)) : [],
+    fetchedAt: new Date().toISOString(),
+    runs: runRows ? await withFailedJobs(ci.repo, latestRunPerWorkflow(runRows, branch)) : null,
     releasePr: prRows ? pickReleasePr(prRows) : null,
     releasedVersion: releasedTag ? releasedTag.replace(/^v/, '') : null,
     draftPr,

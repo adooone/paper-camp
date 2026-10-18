@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fetchCiReleaseState } from '@/core/ci';
+import { clearCiCacheEntry, fetchCiReleaseState } from '@/core/ci';
 import { deskConfigSchema } from '@/core/parse';
 import type { DeskCi } from '@/types/index';
-import { sendJson } from '../http';
+import { requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function loadManifestCi(root: string): DeskCi | null {
@@ -26,12 +26,13 @@ export function ciRoutes({ root }: RouteContext): Route[] {
     {
       method: 'GET',
       path: '/api/ci',
-      handle: async (_req, res) => {
+      handle: async (req, res) => {
         const ci = loadManifestCi(root);
         if (!ci) {
           sendJson(res, 200, null);
           return;
         }
+        if (requestUrl(req).searchParams.get('fresh') === '1') clearCiCacheEntry(ci);
         sendJson(res, 200, await fetchCiReleaseState(ci));
       },
     },
