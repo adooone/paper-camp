@@ -185,18 +185,7 @@ export function hasSecret(rows: GhSecretRow[], name: string): boolean {
   return rows.some((row) => row.name === name);
 }
 
-const CI_RUN_WORDS: Record<CiRunStatus, string> = {
-  success: 'passed',
-  failure: 'failed',
-  in_progress: 'running',
-  queued: 'queued',
-  cancelled: 'cancelled',
-  unknown: 'unknown',
-};
-
-export function ciRunWord(status: CiRunStatus): string {
-  return CI_RUN_WORDS[status];
-}
+export { ciRunWord } from './ci-run-word';
 
 const cache = new Map<string, { state: CiReleaseState; fetchedAt: number }>();
 
