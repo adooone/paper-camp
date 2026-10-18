@@ -4,7 +4,7 @@ import { surface } from '@dendelion/folk-ui/tokens';
 const ROW_KEYS = ['a', 'b', 'c'];
 
 export const ChatPageSkeleton = () => (
-  <div className="h-full flex flex-col min-h-0">
+  <div className="flex flex-1 flex-col min-h-0">
     <output aria-live="polite" className="sr-only">
       Loading…
     </output>

@@ -171,7 +171,9 @@ export const AppShell = () => {
         >
           <div className="flex flex-col h-full min-h-0">
             <div className="flex flex-1 min-h-0 justify-center items-start box-border overflow-y-auto [scrollbar-gutter:stable] -mt-8 -ml-8 -mr-8 pt-0 pl-8 pr-8 pb-[var(--pc-content-pad-bottom)]">
-              <div className="flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full min-h-full">
+              <div
+                className={`flex min-w-0 justify-center lg:[--pc-sidebar-h:calc(100vh-160px)] gap-6 w-full min-h-full ${isChatArea ? 'h-full' : ''}`}
+              >
                 {hasSidebar && (
                   <SidebarShell
                     routeKey={sidebarAreaKey}

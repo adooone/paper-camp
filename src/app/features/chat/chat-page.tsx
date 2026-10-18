@@ -99,7 +99,7 @@ export const ChatPage = () => {
   if (loading && !hasChatHistory) return <ChatPageSkeleton />;
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <div className="flex flex-1 flex-col min-h-0">
       <div className="mb-2 flex flex-nowrap items-center gap-3 shrink-0">
         <PageTitle className="shrink-0">Scout</PageTitle>
         <div className="flex-1" />
