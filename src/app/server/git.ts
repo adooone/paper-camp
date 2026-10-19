@@ -46,6 +46,13 @@ export interface DirectCompletionCheck {
   missing: string[];
 }
 
+export interface StatusSnapshot {
+  branch: string;
+  ahead: number;
+  behind: number;
+  entries: GitStatusEntry[];
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 export class RebaseConflictError extends Error {
@@ -93,6 +100,54 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return entries;
   }
 
+  // One `status --porcelain=v2 --branch` call replaces the separate status/ahead/behind
+  // spawns: the branch.ab header carries both counts, measured against the same ref.
+  function parsePorcelainV2Branch(output: string): StatusSnapshot {
+    let branch = '';
+    let ahead = 0;
+    let behind = 0;
+    const entries: GitStatusEntry[] = [];
+    for (const line of output.split('\n')) {
+      if (!line) continue;
+      if (line.startsWith('# branch.head ')) {
+        branch = line.slice('# branch.head '.length).trim();
+        continue;
+      }
+      if (line.startsWith('# branch.ab ')) {
+        const match = /\+(\d+) -(\d+)/.exec(line);
+        if (match) {
+          ahead = Number.parseInt(match[1], 10);
+          behind = Number.parseInt(match[2], 10);
+        }
+        continue;
+      }
+      if (line.startsWith('#')) continue;
+      const kind = line[0];
+      if (kind === '1' || kind === '2') {
+        const parts = line.split(' ');
+        const xy = parts[1] ?? '..';
+        const status = `${xy[0] === '.' ? ' ' : xy[0]}${xy[1] === '.' ? ' ' : xy[1]}`;
+        const staged = xy[0] !== '.';
+        if (kind === '1') {
+          entries.push({ path: parts.slice(8).join(' '), status, staged });
+        } else {
+          const [path, renameSource] = parts.slice(9).join(' ').split('\t');
+          entries.push({ path, status, staged, renameSource });
+        }
+        continue;
+      }
+      if (kind === 'u') {
+        const parts = line.split(' ');
+        entries.push({ path: parts.slice(10).join(' '), status: parts[1] ?? '', staged: true });
+        continue;
+      }
+      if (kind === '?') {
+        entries.push({ path: line.slice(2), status: '??', staged: false });
+      }
+    }
+    return { branch, ahead, behind, entries };
+  }
+
   const GIT_TIMEOUT_MS = 30_000;
 
   function runGit(args: string[]): Promise<string> {
@@ -102,7 +157,9 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
       const proc = spawn('git', ['-c', 'core.quotepath=off', ...args], {
         cwd: root,
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+        // A read command (status, log) would otherwise take an opportunistic lock on
+        // the index to refresh its stat cache, racing a concurrent `git add`/`commit`.
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' },
       });
       let stdout = '';
       let stderr = '';
@@ -141,6 +198,10 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return runGit(args).then(parsePorcelain);
   }
 
+  function getStatusSnapshot(): Promise<StatusSnapshot> {
+    return runGit(['status', '--porcelain=v2', '--branch']).then(parsePorcelainV2Branch);
+  }
+
   async function assertCleanWorkingTree(): Promise<void> {
     const status = await runGitStatus();
     if (status.length > 0) {
@@ -170,7 +231,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
         return status === undefined || status[1] !== ' ';
       });
       if (toAdd.length > 0) {
-        await runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]);
+        await withIndex(() => runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]));
       }
     }
     const args = ['commit'];
@@ -200,6 +261,13 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     await commit(files, subject, refsId ? `Refs: ${refsId}` : undefined, { noVerify: true });
   }
 
+  function branchExists(branch: string): boolean {
+    return (
+      spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
+        .status === 0
+    );
+  }
+
   async function ensureBranch(plan: PlanEntry): Promise<string | undefined> {
     const planId = plan.id;
     const branch = branchName(planId, plan.kind, plan.title);
@@ -216,11 +284,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
 
     // Whether the branch already exists decides create-vs-checkout — inferring it from
     // a `checkout -b` failure would misreport a dirty/blocked worktree as "branch exists".
-    const branchExists =
-      spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
-        .status === 0;
-
-    if (branchExists) {
+    if (branchExists(branch)) {
       const checkoutResult = spawnSync('git', ['checkout', branch], { cwd: root });
       if (checkoutResult.status !== 0) {
         throw new Error(checkoutResult.stderr.toString().trim() || `Unable to check out ${branch}`);
@@ -282,59 +346,16 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // Checked before the switch, not left to `git checkout`'s own refusal, so the
   // error names the real reason (dirty tree vs unknown branch) rather than git's wording.
   async function checkoutBranch(branch: string): Promise<void> {
-    const exists =
-      spawnSync('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${branch}`], { cwd: root })
-        .status === 0;
-    if (!exists) {
+    if (!branchExists(branch)) {
       throw new Error(`Branch ${branch} does not exist`);
     }
     await assertCleanWorkingTree();
     await runGit(['checkout', branch]);
   }
 
-  async function hasUpstream(): Promise<boolean> {
-    try {
-      await runGit(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // No upstream: fall back to commits not reachable from any remote-tracking branch.
-  async function getAheadCount(): Promise<number> {
-    try {
-      const args = (await hasUpstream())
-        ? ['rev-list', '--count', '@{u}..HEAD']
-        : ['rev-list', '--count', 'HEAD', '--not', '--remotes'];
-      const output = await runGit(args);
-      return Number.parseInt(output.trim(), 10) || 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  // No upstream: fall back to commits reachable from origin/main but not HEAD, so a
-  // fresh branch still reports how far behind it is.
-  async function getBehindCount(): Promise<number> {
-    try {
-      const args = (await hasUpstream())
-        ? ['rev-list', '--count', 'HEAD..@{u}']
-        : ['rev-list', '--count', `HEAD..${await mainRef()}`];
-      const output = await runGit(args);
-      return Number.parseInt(output.trim(), 10) || 0;
-    } catch {
-      return 0;
-    }
-  }
-
   async function getLiveState(): Promise<GitLiveState> {
-    const [entries, ahead, behind] = await Promise.all([
-      runGitStatus(),
-      getAheadCount(),
-      getBehindCount(),
-    ]);
-    return { branch: getCurrentBranch(), ahead, behind, dirtyCount: entries.length };
+    const { branch, ahead, behind, entries } = await getStatusSnapshot();
+    return { branch, ahead, behind, dirtyCount: entries.length };
   }
 
   // A branch tracking a differently named one (cut from origin/main) can't `git push`:
@@ -919,20 +940,19 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
   // onto the remote so a diverged branch is repaired instead of failing loudly.
-  async function runGitPull(): Promise<void> {
-    await runGit(['fetch', '--prune']);
-    const branch = getCurrentBranch();
-    await reconcileOnto(`origin/${branch}`);
-  }
-
-  // Same rebase-then-report path as runGitPull, but returns a GitSyncResult instead
-  // of throwing so the caller can hand a conflict to the recovery agent.
   async function fixDivergence(): Promise<GitSyncResult> {
     await runGit(['fetch', '--prune']).catch(() => {});
     const branch = getCurrentBranch();
     try {
-      const ref = (await hasUpstream()) ? '@{u}' : await mainRef();
-      await reconcileOnto(ref);
+      const hasUpstream = await runGit([
+        'rev-parse',
+        '--abbrev-ref',
+        '--symbolic-full-name',
+        '@{u}',
+      ])
+        .then(() => true)
+        .catch(() => false);
+      await reconcileOnto(hasUpstream ? '@{u}' : await mainRef());
       return { ok: true };
     } catch (err) {
       const message = (err as Error).message;
@@ -952,6 +972,13 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
           : {}),
       };
     }
+  }
+
+  // Same operation as fixDivergence, for the plain-pull caller that wants a throw
+  // on failure instead of a GitSyncResult to hand to the recovery agent.
+  async function runGitPull(): Promise<void> {
+    const result = await fixDivergence();
+    if (!result.ok) throw new Error(result.message);
   }
 
   return {
@@ -976,14 +1003,11 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     diff,
     getWorkingDiff,
     ensureBranch,
-    getPhaseStateAtRef,
     findStaleBaseRef,
     getFeatureBranchPlanId,
-    getAheadCount,
-    getBehindCount,
+    getStatusSnapshot,
     getLiveState,
     push,
-    isMergedIntoMain,
     getBranchHygieneStatus,
     hasPendingSyncStash,
     getStashes,

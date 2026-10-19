@@ -40,14 +40,8 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       method: 'GET',
       path: '/api/git/status',
       handle: async (_req, res) => {
-        const branch = git.getCurrentBranch();
-        // getStatus and getBranchHygieneStatus both run `git status`, which races on
-        // .git/index.lock if run concurrently — getAheadCount/getBehindCount don't.
-        const [entries, ahead, behind, stashPending, stashes] = await Promise.all([
-          git.getStatus(),
-          git.getAheadCount(),
-          git.getBehindCount(),
-          git.hasPendingSyncStash(),
+        const [{ branch, ahead, behind, entries }, stashes] = await Promise.all([
+          git.getStatusSnapshot(),
           git.getStashes(),
         ]);
         const branchHygiene = await git.getBranchHygieneStatus();
@@ -58,7 +52,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
           behind,
           diverged: ahead > 0 && behind > 0,
           branchHygiene,
-          stashPending,
+          stashPending: stashes.some((stash) => stash.own),
           stashes,
         });
       },

@@ -90,6 +90,44 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
   return { res, status: () => statusCode, json: () => JSON.parse(body) };
 }
 
+describe('GET /api/git/status', () => {
+  it('reports branch, entries, and hygiene from the combined snapshot', async () => {
+    const root = initGitRepo(1);
+    writeFileSync(join(root, 'untracked.txt'), 'x\n');
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/git/status').handle(fakeReq('/api/git/status'), res);
+    expect(status()).toBe(200);
+    const body = json() as {
+      branch: string;
+      entries: { path: string }[];
+      ahead: number;
+      behind: number;
+      diverged: boolean;
+      branchHygiene: string;
+      stashPending: boolean;
+      stashes: unknown[];
+    };
+    expect(body.branch).toBe('main');
+    expect(body.entries).toContainEqual(expect.objectContaining({ path: 'untracked.txt' }));
+    expect(body.ahead).toBe(0);
+    expect(body.behind).toBe(0);
+    expect(body.diverged).toBe(false);
+    expect(body.branchHygiene).toBe('dirty');
+    expect(body.stashPending).toBe(false);
+    expect(body.stashes).toEqual([]);
+  });
+
+  it('derives stashPending from the stash list, not a separate call', async () => {
+    const root = initGitRepo(1);
+    writeFileSync(join(root, 'file-0.txt'), 'changed\n');
+    git(root, 'stash', 'push', '-m', 'papercamp-sync');
+    const { res, json } = fakeRes();
+    await route(root, '/api/git/status').handle(fakeReq('/api/git/status'), res);
+    const body = json() as { stashPending: boolean };
+    expect(body.stashPending).toBe(true);
+  });
+});
+
 describe('GET /api/git/log', () => {
   it('returns the first-parent log with no skip param', async () => {
     const root = initGitRepo(2);

@@ -268,73 +268,6 @@ describe('onRemoteChanged', () => {
   });
 });
 
-describe('isMergedIntoMain', () => {
-  let root: string;
-  let initialSha: string;
-  let manager: ReturnType<typeof gitManager>;
-
-  beforeAll(async () => {
-    root = await initRepo();
-    initialSha = git(root, 'rev-parse', 'HEAD');
-    manager = gitManager(root);
-  });
-
-  beforeEach(() => {
-    resetRepo(root, initialSha);
-  });
-
-  it('returns false on main itself', async () => {
-    expect(await manager.isMergedIntoMain()).toBe(false);
-  });
-
-  it('returns true for a fresh branch still at main tip', async () => {
-    // This is why getBranchHygieneStatus needs the behind-count guard: git considers
-    // a zero-commit branch "merged" the moment it is created.
-    git(root, 'checkout', '-b', 'feat/feat-1-fresh');
-    expect(await manager.isMergedIntoMain()).toBe(true);
-  });
-
-  it('returns false for a branch with commits not on main', async () => {
-    git(root, 'checkout', '-b', 'feat/feat-2-active');
-    await commitFile(root, 'feature.txt', 'new\n', 'add feature');
-    expect(await manager.isMergedIntoMain()).toBe(false);
-  });
-});
-
-describe('getPhaseStateAtRef', () => {
-  let root: string;
-  let initialSha: string;
-  let manager: ReturnType<typeof gitManager>;
-
-  beforeAll(async () => {
-    root = await initRepo();
-    initialSha = git(root, 'rev-parse', 'HEAD');
-    manager = gitManager(root);
-  });
-
-  beforeEach(() => {
-    resetRepo(root, initialSha);
-  });
-
-  it('returns null when the entity does not exist at that ref', async () => {
-    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toBeNull();
-  });
-
-  it('returns the checked/unchecked count for an entity committed at that ref', async () => {
-    await commitEntityPhases(root, 'IDEA-1', [true, true, false]);
-    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 3 });
-  });
-
-  it('reads a ref other than HEAD, not the working tree', async () => {
-    await commitEntityPhases(root, 'IDEA-1', [true, false]);
-    const mainSha = git(root, 'rev-parse', 'HEAD');
-    git(root, 'checkout', '-b', 'feat/idea-1-work');
-    await commitEntityPhases(root, 'IDEA-1', [true, true]);
-    expect(await manager.getPhaseStateAtRef('IDEA-1', mainSha)).toEqual({ done: 1, total: 2 });
-    expect(await manager.getPhaseStateAtRef('IDEA-1', 'HEAD')).toEqual({ done: 2, total: 2 });
-  });
-});
-
 describe('findStaleBaseRef', () => {
   let root: string;
   let initialSha: string;
@@ -827,7 +760,7 @@ describe('fixDivergence', () => {
   });
 });
 
-describe('getAheadCount', () => {
+describe('getStatusSnapshot', () => {
   let root: string;
   let initialSha: string;
   let manager: ReturnType<typeof gitManager>;
@@ -842,24 +775,49 @@ describe('getAheadCount', () => {
     resetRepo(root, initialSha);
   });
 
-  it('counts commits past the upstream when one is configured', async () => {
+  it('reports the branch name and zero ahead/behind with no upstream', async () => {
+    const snapshot = await manager.getStatusSnapshot();
+    expect(snapshot.branch).toBe('main');
+    expect(snapshot.ahead).toBe(0);
+    expect(snapshot.behind).toBe(0);
+  });
+
+  it('counts commits past the upstream once one is configured', async () => {
     await addOrigin(root);
-    expect(await manager.getAheadCount()).toBe(0);
+    expect((await manager.getStatusSnapshot()).ahead).toBe(0);
     await commitFile(root, 'a.txt', 'a\n', 'local commit');
-    expect(await manager.getAheadCount()).toBe(1);
+    expect((await manager.getStatusSnapshot()).ahead).toBe(1);
   });
 
-  it('counts commits missing from every remote-tracking branch when no upstream is set', async () => {
-    await addOrigin(root);
-    git(root, 'checkout', '-b', 'feat/feat-1-unpushed');
-    await commitFile(root, 'a.txt', 'a\n', 'branch commit');
-    // Only the one new commit counts — history already on origin/main does not.
-    expect(await manager.getAheadCount()).toBe(1);
+  it('counts commits the upstream has that local is missing', async () => {
+    const remote = await addOrigin(root);
+    const clone = await mkdtemp(join(tmpdir(), 'papercamp-git-clone2-'));
+    roots.push(clone);
+    git('.', 'clone', remote, clone);
+    git(clone, 'config', 'user.email', 'test@example.com');
+    git(clone, 'config', 'user.name', 'Test User');
+    git(clone, 'config', 'commit.gpgsign', 'false');
+    await commitFile(clone, 'elsewhere.txt', 'elsewhere\n', 'push from elsewhere');
+    git(clone, 'push', 'origin', 'main');
+    git(root, 'fetch', 'origin');
+    expect((await manager.getStatusSnapshot()).behind).toBe(1);
   });
 
-  it('counts every local commit when the repo has no remotes at all', async () => {
-    await commitFile(root, 'a.txt', 'a\n', 'second commit');
-    expect(await manager.getAheadCount()).toBe(2);
+  it('parses untracked, staged, and renamed entries in the v1 status-marker convention', async () => {
+    await writeFile(join(root, 'untracked.txt'), 'new\n');
+    await commitFile(root, 'staged.txt', 'v1\n', 'add staged.txt');
+    git(root, 'mv', 'staged.txt', 'renamed.txt');
+    const { entries } = await manager.getStatusSnapshot();
+    expect(entries).toContainEqual(
+      expect.objectContaining({ path: 'untracked.txt', status: '??', staged: false }),
+    );
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        path: 'renamed.txt',
+        renameSource: 'staged.txt',
+        staged: true,
+      }),
+    );
   });
 });
 
