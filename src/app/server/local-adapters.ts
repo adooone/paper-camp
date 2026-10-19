@@ -50,6 +50,26 @@ export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | 
   }
 }
 
+const AUTH_STATUS_TTL_MS = 60_000;
+const authStatusCache = new Map<
+  string,
+  { value: Promise<AgentAuthStatus | null>; expiresAt: number }
+>();
+
+export function clearClaudeAuthStatusCache(root: string): void {
+  authStatusCache.delete(root);
+}
+
+// Shared by the connections badge and the capability probe so a `claude login` in a
+// terminal clears one cache and both surfaces see it within the TTL instead of disagreeing.
+export function cachedClaudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
+  const cached = authStatusCache.get(root);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const value = claudeAuthStatus(root);
+  authStatusCache.set(root, { value, expiresAt: Date.now() + AUTH_STATUS_TTL_MS });
+  return value;
+}
+
 async function probeGit(root: string): Promise<CapabilityResult> {
   const repo = await run('git', ['rev-parse', '--is-inside-work-tree'], root);
   if (repo.code !== 0) {
@@ -106,7 +126,7 @@ function agentConnect(id: AgentId, result: CapabilityResult): ConnectAction | nu
 
 async function agentSignedIn(id: AgentId, root: string): Promise<boolean | null> {
   if (id !== 'claude-code') return null;
-  const status = await claudeAuthStatus(root);
+  const status = await cachedClaudeAuthStatus(root);
   return status?.loggedIn ?? null;
 }
 

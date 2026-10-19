@@ -13,7 +13,8 @@ export function capabilitiesRoutes({ root }: RouteContext): Route[] {
     {
       method: 'GET',
       path: '/api/capabilities',
-      handle: async (_req, res) => {
+      handle: async (req, res) => {
+        if (requestUrl(req).searchParams.has('recheck')) clearCapabilitiesCache(root);
         sendJson(res, 200, {
           capabilities: await probeCapabilities(root),
           version: PAPER_CAMP_VERSION,

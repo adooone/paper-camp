@@ -1,7 +1,14 @@
 import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectionResult } from '../../types';
 import { EXTERNAL_SERVICES, type ExternalServiceDefinition } from './external-services';
-import { LOCAL_ADAPTERS, type LocalAdapterDefinition, claudeAuthStatus } from './local-adapters';
+import {
+  LOCAL_ADAPTERS,
+  type LocalAdapterDefinition,
+  cachedClaudeAuthStatus,
+  clearClaudeAuthStatusCache,
+} from './local-adapters';
 import { run } from './run';
+
+const PROBE_TTL_MS = 60_000;
 
 export type { ProbeResult } from './run';
 export { run } from './run';
@@ -27,9 +34,13 @@ function trustDialogState(plugin: Plugin, root: string): Promise<boolean | null>
   return plugin.def.trustDialogAccepted(root);
 }
 
-const capabilitiesCache = new Map<string, Promise<CapabilityResult[]>>();
-const connectionsCache = new Map<string, Promise<ConnectionResult[]>>();
-const agentAuthStatusCache = new Map<string, Map<AgentId, Promise<AgentAuthStatus>>>();
+interface TtlEntry<T> {
+  value: Promise<T>;
+  expiresAt: number;
+}
+
+const capabilitiesCache = new Map<string, TtlEntry<CapabilityResult[]>>();
+const connectionsCache = new Map<string, TtlEntry<ConnectionResult[]>>();
 
 // A daemon holds one middleware (and root) per mounted project in the same process,
 // so every cache below is keyed by root rather than shared process-wide.
@@ -39,16 +50,15 @@ export function clearCapabilitiesCache(root: string): void {
 }
 
 export function clearAgentAuthStatusCache(root: string): void {
-  agentAuthStatusCache.delete(root);
+  clearClaudeAuthStatusCache(root);
 }
 
 export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  let cached = capabilitiesCache.get(root);
-  if (!cached) {
-    cached = Promise.all(PLUGINS.map((p) => p.def.probe(root)));
-    capabilitiesCache.set(root, cached);
-  }
-  return cached;
+  const cached = capabilitiesCache.get(root);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const value = Promise.all(PLUGINS.map((p) => p.def.probe(root)));
+  capabilitiesCache.set(root, { value, expiresAt: Date.now() + PROBE_TTL_MS });
+  return value;
 }
 
 async function toConnectionResult(
@@ -75,12 +85,11 @@ async function toConnectionResult(
 }
 
 export async function probeConnections(root: string): Promise<ConnectionResult[]> {
-  let cached = connectionsCache.get(root);
-  if (!cached) {
-    cached = Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
-    connectionsCache.set(root, cached);
-  }
-  return cached;
+  const cached = connectionsCache.get(root);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const value = Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
+  connectionsCache.set(root, { value, expiresAt: Date.now() + PROBE_TTL_MS });
+  return value;
 }
 
 /** Runs a plugin's connect action when it's safe to run non-interactively, then
@@ -115,15 +124,6 @@ const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {
 // report unknown rather than being probed with a command they don't have.
 export async function probeAgentAuthStatus(id: AgentId, root: string): Promise<AgentAuthStatus> {
   if (id !== 'claude-code') return UNKNOWN_AUTH_STATUS;
-  let byId = agentAuthStatusCache.get(root);
-  if (!byId) {
-    byId = new Map();
-    agentAuthStatusCache.set(root, byId);
-  }
-  let cached = byId.get(id);
-  if (!cached) {
-    cached = claudeAuthStatus(root).then((status) => status ?? UNKNOWN_AUTH_STATUS);
-    byId.set(id, cached);
-  }
-  return cached;
+  const status = await cachedClaudeAuthStatus(root);
+  return status ?? UNKNOWN_AUTH_STATUS;
 }

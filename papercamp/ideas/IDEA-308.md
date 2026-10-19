@@ -104,8 +104,9 @@ exists.
       `stopping` before `kill()` in `killAll`, restart-while-stopping, no
       healthcheck probes for stopped services; tests.
       run: 1m14s · 32 in · 5.4k out · sonnet-5 · sess:d0043b9f-e28a-49f9-82f9-657326427a62
-- [ ] Probes with a TTL and a recheck
+- [x] Probes with a TTL and a recheck
       60 s TTL, `?recheck=1` on both routes, one shared auth probe; tests.
+      run: 3m58s · 104 in · 17.9k out · sonnet-5 · sess:d0043b9f-e28a-49f9-82f9-657326427a62
 - [ ] Git with fewer spawns and no lock races
       Optional locks off, add inside `withIndex`, one porcelain status
       command, duplicate pull and branch paths folded, consistent main ref;

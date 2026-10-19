@@ -358,7 +358,8 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     {
       method: 'GET',
       path: '/api/agent/auth-status',
-      handle: async (_req, res) => {
+      handle: async (req, res) => {
+        if (requestUrl(req).searchParams.has('recheck')) clearAgentAuthStatusCache(root);
         const defaultAgents = readDefaultAgentIds(root);
         const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
         sendJson(res, 200, await probeAgentAuthStatus(id, root));

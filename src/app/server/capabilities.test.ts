@@ -416,4 +416,58 @@ describe('probe caching', () => {
     expect(byId(await probeCapabilities('/other-repo'), 'gh').status).toBe('warn');
     clearCapabilitiesCache('/other-repo');
   });
+
+  it('re-probes capabilities once the 60s TTL elapses, without clearing the cache', async () => {
+    vi.useFakeTimers();
+    try {
+      expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
+      mock.bin('gh', () => mock.ok());
+      vi.advanceTimersByTime(60_001);
+      expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('warn');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('re-probes connections once the 60s TTL elapses', async () => {
+    vi.useFakeTimers();
+    try {
+      expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('ok');
+      mock.git.name = '';
+      vi.advanceTimersByTime(60_001);
+      expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('warn');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('re-probes agent auth status once the 60s TTL elapses', async () => {
+    vi.useFakeTimers();
+    try {
+      expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+        loggedIn: null,
+        authMethod: null,
+        apiProvider: null,
+      });
+      mock.bin('claude', () =>
+        mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
+      );
+      vi.advanceTimersByTime(60_001);
+      expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shares the agent auth probe between probeAgentAuthStatus and probeConnections', async () => {
+    expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
+      loggedIn: null,
+      authMethod: null,
+      apiProvider: null,
+    });
+    mock.bin('claude', () =>
+      mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
+    );
+    expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').authenticated).toBeNull();
+  });
 });
