@@ -58,10 +58,8 @@ export interface DocsCheckRuntime {
 export interface DeskCheckManagerState {
   runtimes: Map<string, CheckRuntime>;
   inFlight: Map<string, Promise<CheckStatus>>;
-  // Docs has no on-demand Stack check to hold a live snapshot, so its cached
-  // result and the corpus fingerprint it was produced on travel together here
-  // (IDEA-255, IDEA-308). The corpus fingerprint — not HEAD — because Docs reads
-  // the working-tree corpus, which can differ from HEAD's.
+  // Docs has no on-demand Stack check, so its cached result and the corpus
+  // fingerprint it was produced on (not HEAD, since Docs reads the tree) travel together here.
   docs: DocsCheckRuntime | null;
 }
 
@@ -127,9 +125,8 @@ export function createDeskCheckManager(
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
 
     const promise = (async () => {
-      // Captured before the command starts, so a commit landing mid-run can't
-      // stamp this result with a fingerprint it predates. A failing lookup
-      // still lets the check settle, with a fingerprint that never matches.
+      // Captured before the command starts, so a commit landing mid-run can't stamp this
+      // result with a fingerprint it predates; a failing lookup still lets the check settle.
       const fingerprint = getFingerprint
         ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
         : EMPTY_FINGERPRINT;
@@ -228,9 +225,8 @@ export function createDeskCheckManager(
     return failing;
   }
 
-  // Reuses each check's own last result when it was produced on the current
-  // tree, whether from an earlier sweep or an on-demand Stack click
-  // (IDEA-255, IDEA-308).
+  // Reuses each check's own last result when it was produced on the current tree,
+  // whether from an earlier sweep or an on-demand Stack click.
   async function getCachedOrRunChecks(): Promise<FailingCheck[]> {
     const { headSha, treeHash } = getFingerprint
       ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
