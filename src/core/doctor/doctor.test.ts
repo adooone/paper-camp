@@ -52,6 +52,16 @@ describe('collectDoctorContext hasPermissionsAllow', () => {
       '{"permissions":{"allow":["Edit(src/**)"]}}\n',
       'utf-8',
     );
+    await writeFile(
+      join(root, '.mcp.json'),
+      '{"mcpServers":{"paper-camp":{"command":"paper-camp","args":["mcp"]}}}\n',
+      'utf-8',
+    );
+    await writeFile(
+      join(root, 'opencode.json'),
+      '{"mcp":{"paper-camp":{"type":"local","command":["paper-camp","mcp"],"enabled":true}}}\n',
+      'utf-8',
+    );
 
     const context = await collectDoctorContext(paperCampDir);
 
@@ -67,6 +77,53 @@ describe('collectDoctorContext hasPermissionsAllow', () => {
     const findings = runDoctorChecks(context);
 
     expect(findings).toContainEqual(expect.objectContaining({ rule: 'missing-permissions-allow' }));
+  });
+});
+
+describe('collectDoctorContext hasMcpJsonEntry / hasOpencodeJsonEntry', () => {
+  it('is false for both when neither file exists', async () => {
+    const root = await makeTempDir('papercamp-doctor-no-mcp-');
+    const paperCampDir = await makePaperCampDir(root);
+
+    const context = await collectDoctorContext(paperCampDir);
+
+    expect(context.hasMcpJsonEntry).toBe(false);
+    expect(context.hasOpencodeJsonEntry).toBe(false);
+  });
+
+  it('is true when each file carries the paper-camp entry', async () => {
+    const root = await makeTempDir('papercamp-doctor-mcp-present-');
+    const paperCampDir = await makePaperCampDir(root);
+    await writeFile(
+      join(root, '.mcp.json'),
+      '{"mcpServers":{"paper-camp":{"command":"paper-camp","args":["mcp"]}}}\n',
+      'utf-8',
+    );
+    await writeFile(
+      join(root, 'opencode.json'),
+      '{"mcp":{"paper-camp":{"type":"local","command":["paper-camp","mcp"],"enabled":true}}}\n',
+      'utf-8',
+    );
+
+    const context = await collectDoctorContext(paperCampDir);
+
+    expect(context.hasMcpJsonEntry).toBe(true);
+    expect(context.hasOpencodeJsonEntry).toBe(true);
+  });
+
+  it('flows into runDoctorChecks as missing-mcp-entry findings', async () => {
+    const root = await makeTempDir('papercamp-doctor-mcp-finding-');
+    const paperCampDir = await makePaperCampDir(root);
+
+    const context = await collectDoctorContext(paperCampDir);
+    const findings = runDoctorChecks(context);
+
+    expect(findings).toContainEqual(
+      expect.objectContaining({ rule: 'missing-mcp-entry', file: '.mcp.json' }),
+    );
+    expect(findings).toContainEqual(
+      expect.objectContaining({ rule: 'missing-mcp-entry', file: 'opencode.json' }),
+    );
   });
 });
 

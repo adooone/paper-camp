@@ -17,6 +17,8 @@ export interface DoctorContext {
   files: DoctorEntityFile[];
   config: PaperCampConfig | null;
   hasPermissionsAllow?: boolean;
+  hasMcpJsonEntry?: boolean;
+  hasOpencodeJsonEntry?: boolean;
   draftPrWorkflowContent?: string | null;
   pullRequestTemplateContent?: string | null;
 }
@@ -75,6 +77,22 @@ async function readHasPermissionsAllow(root: string): Promise<boolean> {
   }
 }
 
+async function readHasPaperCampEntry(path: string, key: string): Promise<boolean> {
+  let raw: string;
+  try {
+    raw = await readFile(path, 'utf-8');
+  } catch (error) {
+    if (isEnoent(error)) return false;
+    throw error;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, Record<string, unknown> | undefined>;
+    return Boolean(parsed[key]?.['paper-camp']);
+  } catch {
+    return false;
+  }
+}
+
 async function readFileOptional(path: string): Promise<string | null> {
   try {
     return await readFile(path, 'utf-8');
@@ -114,6 +132,8 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
     files,
     config: await readConfig(join(paperCampDir, 'config.json')),
     hasPermissionsAllow: await readHasPermissionsAllow(root),
+    hasMcpJsonEntry: await readHasPaperCampEntry(join(root, '.mcp.json'), 'mcpServers'),
+    hasOpencodeJsonEntry: await readHasPaperCampEntry(join(root, 'opencode.json'), 'mcp'),
     draftPrWorkflowContent: await readFileOptional(
       join(root, '.github', 'workflows', 'draft-pr.yml'),
     ),

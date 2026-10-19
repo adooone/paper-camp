@@ -2,7 +2,7 @@
 id: IDEA-305
 title: MCP in every agent run
 type: fix
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - server
@@ -68,6 +68,7 @@ files, and `paper-camp doctor` is green on this repo.
       `runInit` and `--settings` write or merge the `paper-camp` entry in both
       files, idempotently; scaffold tests for create and merge.
       run: 2m6s · 46 in · 8.4k out · sonnet-5 · sess:0e49ae85-99f2-4b7f-b319-006b47b83c98
-- [ ] Doctor check, docs and skill wording
+- [x] Doctor check, docs and skill wording
       Tooling check for the two entries; `docs/MCP.md` corrected; the
       `SKILL.md` template and this repo's skill drop the "if connected" hedge.
+      run: 4m1s · 82 in · 15.7k out · sonnet-5 · sess:0e49ae85-99f2-4b7f-b319-006b47b83c98

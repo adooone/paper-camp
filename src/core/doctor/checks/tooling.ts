@@ -3,6 +3,8 @@ import type { DoctorCheck } from '../doctor';
 import type { DoctorFinding } from '../finding';
 
 const CLAUDE_SETTINGS_PATH = '.claude/settings.json';
+const MCP_JSON_PATH = '.mcp.json';
+const OPENCODE_JSON_PATH = 'opencode.json';
 const DRAFT_PR_WORKFLOW_PATH = '.github/workflows/draft-pr.yml';
 const PULL_REQUEST_TEMPLATE_PATH = '.github/pull_request_template.md';
 
@@ -18,6 +20,29 @@ const checkPermissionsAllowMissing: DoctorCheck = ({ hasPermissionsAllow }) =>
         },
       ]
     : [];
+
+const checkMcpEntryMissing: DoctorCheck = ({ hasMcpJsonEntry, hasOpencodeJsonEntry }) => {
+  const findings: DoctorFinding[] = [];
+  if (hasMcpJsonEntry === false) {
+    findings.push({
+      file: MCP_JSON_PATH,
+      line: 1,
+      rule: 'missing-mcp-entry',
+      message:
+        'no paper-camp entry — headless claude-code runs still get it inline, but an interactive session opened here does not; run `paper-camp init --settings` to add it.',
+    });
+  }
+  if (hasOpencodeJsonEntry === false) {
+    findings.push({
+      file: OPENCODE_JSON_PATH,
+      line: 1,
+      rule: 'missing-mcp-entry',
+      message:
+        'no paper-camp entry — opencode runs in this project never see the paper-camp MCP server; run `paper-camp init --settings` to add it.',
+    });
+  }
+  return findings;
+};
 
 const checkDefaultAgentsMissing: DoctorCheck = ({ config }) =>
   config && !config.defaultAgents
@@ -84,6 +109,7 @@ const checkDraftPrTemplatesStale: DoctorCheck = ({
 
 export const toolingChecks: DoctorCheck[] = [
   checkPermissionsAllowMissing,
+  checkMcpEntryMissing,
   checkDefaultAgentsMissing,
   checkDraftPrTemplatesStale,
 ];

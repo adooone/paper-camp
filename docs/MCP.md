@@ -6,9 +6,7 @@ write a `papercamp/` project through a standardized interface instead of raw fil
 
 The server is a thin wrapper: every tool routes through the same `src/core` readers/serializers
 the CLI and dashboard already use, so id allocation, archive-on-done, and index regeneration all
-still hold. Every write tool runs through the same `checkBranchConflictForPlan` guard the
-dashboard uses, so an MCP client cannot start or advance a plan the branch does not own, and
-writes are serialized so concurrent stdio calls can't mint duplicate ids.
+still hold, and writes are serialized so concurrent stdio calls can't mint duplicate ids.
 
 ## Running the server
 
@@ -21,21 +19,40 @@ paper-camp mcp
 
 ## Registering with a client
 
-Add an entry pointing at the installed `paper-camp` binary, with `cwd` set to the project root
-whose `papercamp/` folder you want the server to operate on. For example, in a client config
-that uses the common `mcpServers` shape (Claude Desktop, Claude Code's `.mcp.json`, etc.):
+`paper-camp init` (and `paper-camp init --settings`) scaffold both of these automatically, so
+you don't normally write them by hand. The server reads/writes the `papercamp/` project rooted
+at the client's working directory — there is no `cwd` field, so entries must not add one.
+
+`.mcp.json`, for Claude Code:
 
 ```json
 {
   "mcpServers": {
     "paper-camp": {
       "command": "paper-camp",
-      "args": ["mcp"],
-      "cwd": "/absolute/path/to/your/project"
+      "args": ["mcp"]
     }
   }
 }
 ```
+
+`opencode.json`, for opencode:
+
+```json
+{
+  "mcp": {
+    "paper-camp": {
+      "type": "local",
+      "command": ["paper-camp", "mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+Headless `claude-code` runs launched by Paper Camp carry this same `paper-camp` entry inline on
+every run, regardless of what's scaffolded in the project — `paper-camp doctor` only checks the
+two project files, which matter for interactive sessions and headless opencode runs.
 
 ## Tools
 

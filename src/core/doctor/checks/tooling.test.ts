@@ -27,6 +27,40 @@ describe('missing-permissions-allow', () => {
   });
 });
 
+function runMcp(hasMcpJsonEntry?: boolean, hasOpencodeJsonEntry?: boolean) {
+  const context: DoctorContext = {
+    files: [],
+    config: null,
+    hasMcpJsonEntry,
+    hasOpencodeJsonEntry,
+  };
+  return toolingChecks.flatMap((check) => check(context));
+}
+
+describe('missing-mcp-entry', () => {
+  it('warns on each file missing the paper-camp entry', () => {
+    const findings = runMcp(false, false);
+    expect(findings).toHaveLength(2);
+    expect(findings[0]).toMatchObject({ file: '.mcp.json', rule: 'missing-mcp-entry' });
+    expect(findings[1]).toMatchObject({ file: 'opencode.json', rule: 'missing-mcp-entry' });
+    expect(findings[0].message).toContain('init --settings');
+    expect(findings[1].message).toContain('init --settings');
+  });
+
+  it('warns only on the file missing the entry', () => {
+    expect(runMcp(true, false)).toMatchObject([{ file: 'opencode.json' }]);
+    expect(runMcp(false, true)).toMatchObject([{ file: '.mcp.json' }]);
+  });
+
+  it('is silent when both files carry the entry', () => {
+    expect(runMcp(true, true)).toEqual([]);
+  });
+
+  it('is silent when the context does not report on either file', () => {
+    expect(runMcp(undefined, undefined)).toEqual([]);
+  });
+});
+
 function runDraftPr(
   draftPr: boolean | undefined,
   draftPrWorkflowContent?: string | null,

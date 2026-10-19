@@ -12,12 +12,13 @@ state before acting and how to keep it honest as you work.
 
 ## The MCP is the write path
 
-If a `papercamp` MCP server is connected in this session, every change to the
-corpus goes through its tools — not a raw file edit. The tools own the file
-grammar and enforce the guards (id allocation, branch conflicts) the format
-assumes; hand-writing the grammar from examples re-derives it slightly wrong
-each time and corrupts the file's structure. Reads go through the tools too, so
-you see the same shapes a write will expect.
+The `papercamp` MCP server is present in every run Paper Camp launches and in
+every session opened in an initialised project, so every change to the corpus
+goes through its tools — not a raw file edit. The tools own the file grammar
+and enforce the guards (id allocation, branch conflicts) the format assumes;
+hand-writing the grammar from examples re-derives it slightly wrong each time
+and corrupts the file's structure. Reads go through the tools too, so you see
+the same shapes a write will expect.
 
 - **Read**: `list_plans`, `get_plan`.
 - **Create** an idea → `add_idea`; a typed work entity → `draft_plan`.
@@ -31,10 +32,11 @@ you see the same shapes a write will expect.
   `promote_thread_message`.
 - **Archive (drop)** an entity → `archive_entity`.
 
-Raw file edits are a fallback for when no `papercamp` MCP server is connected.
-Only then, edit the markdown directly, mirroring the structure of the existing
-files under `papercamp/` exactly (see the grammar note at the end). Everything
-else in this skill still applies conceptually; only the mechanism changes.
+Raw file edits are a fallback for sessions opened outside an initialised
+project, where no `papercamp` MCP server is registered. Only then, edit the
+markdown directly, mirroring the structure of the existing files under
+`papercamp/` exactly (see the grammar note at the end). Everything else in
+this skill still applies conceptually; only the mechanism changes.
 
 ## Before doing any work
 
@@ -65,7 +67,8 @@ Skip files that don't exist yet (a fresh project may have empty logs).
 ## Keep the project current as you go
 
 Route each of these through the MCP tool named below; fall back to the raw-file
-mechanics (in parentheses) only when no `papercamp` MCP server is connected.
+mechanics (in parentheses) only outside an initialised project, where no
+`papercamp` MCP server is registered.
 
 - **Plan phases**: when you finish a phase, mark it done with `update_phase`
   (raw fallback: flip that one checkbox from `- [ ]` to `- [x]` in the plan's

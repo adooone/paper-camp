@@ -169,11 +169,12 @@ open questions logged as notes bound to the idea they concern. This skill
 tells you how to read that state before acting and how to keep it honest as
 you work.
 
-If a \`papercamp\` MCP server is connected in this session, prefer its tools
-(list/get plans, update phase, etc.) over raw file access —
-they enforce the same guards (id allocation, branch conflicts) that the file
-grammar below assumes. Everything in this skill still applies conceptually;
-only the mechanism changes.
+The \`papercamp\` MCP server is present in every run Paper Camp launches and in
+every session opened in an initialised project — prefer its tools (list/get
+plans, update phase, etc.) over raw file access, since they enforce the same
+guards (id allocation, branch conflicts) that the file grammar below assumes.
+Everything in this skill still applies conceptually; only the mechanism
+changes.
 
 ## Before doing any work
 

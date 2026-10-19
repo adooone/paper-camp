@@ -98,6 +98,13 @@ export const DOCTOR_RULES = [
       'config.json has no defaultAgents, so every run uses the built-in agent and model — choose them in Settings → General so a project never runs on a fallback it did not pick.',
   },
   {
+    id: 'missing-mcp-entry',
+    category: 'tooling',
+    severity: 'warning',
+    summary:
+      '.mcp.json or opencode.json has no paper-camp entry, so runs and sessions in this project never see the paper-camp MCP server — run `paper-camp init --settings` to add it.',
+  },
+  {
     id: 'draft-pr-template-outdated',
     category: 'tooling',
     severity: 'warning',
