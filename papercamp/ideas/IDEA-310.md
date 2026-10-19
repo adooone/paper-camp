@@ -2,7 +2,7 @@
 id: IDEA-310
 title: Capacity card with a weekly bar
 type: feat
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - app
@@ -83,6 +83,7 @@ and the card shows the weekly utilisation under the five-hour one.
       `refreshCapacity()`; the slice removed; live overlay from running tasks
       only; the failure toast and the mount rule; tests.
       run: 7m32s · 156 in · 51.9k out · sonnet-5 · sess:1af93c6a-df08-41f3-9475-20ebe8f77b20
-- [ ] Two bars with reset states
+- [x] Two bars with reset states
       `5h` and `wk` rows, the `reset` stamp, the taller card class;
       `agent-section.test.ts` and a `capacity-row.test.ts` cover both.
+      run: 4m37s · 60 in · 19.6k out · sonnet-5 · sess:d3a582d8-c491-4e1f-811a-6fd03d6e734a

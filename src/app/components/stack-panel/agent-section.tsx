@@ -41,9 +41,11 @@ const ProjectTab = ({ project }: { project: ScopeRow }) => (
 
 // Shared by the task and capacity cards so they read as one stack. Their contents flex
 // to fit it; nothing inside carries a height of its own.
-const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
+export const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 // Reserved so the Desk section below holds still as tasks start, finish, and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
+// One line taller than the task cards: the capacity card carries a second bar row.
+export const CAPACITY_CARD_HEIGHT_CLASS = 'h-[6.125rem]';
 
 export const foreignProject = (project?: ScopeRow): ScopeRow | undefined =>
   project && !project.isCurrent ? project : undefined;
@@ -437,7 +439,7 @@ export const AgentSection = () => {
         ))}
       </div>
       <div className="mt-2 shrink-0">
-        <CapacityRow heightClassName={TASK_CARD_HEIGHT_CLASS} />
+        <CapacityRow heightClassName={CAPACITY_CARD_HEIGHT_CLASS} />
       </div>
     </div>
   );

@@ -1,7 +1,14 @@
 import type { ScopeRow } from '@/app/features/scope';
 import type { AgentTaskState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { foreignProject, taskCardTitle, taskKindLabel, taskSubtitle } from './agent-section';
+import {
+  CAPACITY_CARD_HEIGHT_CLASS,
+  TASK_CARD_HEIGHT_CLASS,
+  foreignProject,
+  taskCardTitle,
+  taskKindLabel,
+  taskSubtitle,
+} from './agent-section';
 
 const task = (overrides: Partial<AgentTaskState> = {}): AgentTaskState => ({
   id: 't1',
@@ -113,5 +120,17 @@ describe('foreignProject', () => {
   it('passes through a project that is not the current one', () => {
     const row = scopeRow({ isCurrent: false });
     expect(foreignProject(row)).toBe(row);
+  });
+});
+
+describe('CAPACITY_CARD_HEIGHT_CLASS', () => {
+  const remOf = (heightClass: string): number => {
+    const match = heightClass.match(/\[(\d+(?:\.\d+)?)rem\]/);
+    if (!match) throw new Error(`not a rem height class: ${heightClass}`);
+    return Number(match[1]);
+  };
+
+  it('is exactly one line taller than the task card height', () => {
+    expect(remOf(CAPACITY_CARD_HEIGHT_CLASS) - remOf(TASK_CARD_HEIGHT_CLASS)).toBe(1.5);
   });
 });

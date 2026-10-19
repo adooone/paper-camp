@@ -1,6 +1,7 @@
 import { useCapacity } from '@/app/hooks/use-capacity';
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { RateLimitSnapshot, RateLimitWindow } from '@/types/index';
 import {
   Card,
   IconButton,
@@ -8,6 +9,7 @@ import {
   RefreshIcon,
   Spinner,
   Stamp,
+  type StampVariant,
   Tooltip,
 } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
@@ -27,7 +29,9 @@ const levelText = {
 
 const LIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
 
-function formatGap(ms: number): string {
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export function formatGap(ms: number): string {
   const minutes = Math.max(0, Math.round(ms / 60_000));
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
@@ -35,9 +39,82 @@ function formatGap(ms: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
+export function formatResetTime(ms: number): string {
+  const date = new Date(ms);
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  return `${WEEKDAY_SHORT[date.getDay()]} ${hh}:${mm}`;
+}
+
+export function formatResetTooltip(resetAtMs: number): string {
+  return `window reset at ${new Date(resetAtMs).toLocaleTimeString()} — refresh for a reading`;
+}
+
+export function formatWeeklyTooltip(pct: number, resetAtMs?: number): string {
+  const resets = resetAtMs === undefined ? '' : `, resets ${formatResetTime(resetAtMs)}`;
+  return `Weekly window: ${pct}%${resets}`;
+}
+
+export interface WindowView {
+  pct: number;
+  isReset: boolean;
+  resetAtMs?: number;
+}
+
+export function windowView(window: RateLimitWindow | undefined, now: number): WindowView | null {
+  if (!window) return null;
+  const resetAtMs = window.resetsAt === undefined ? undefined : resetsAtMs(window.resetsAt);
+  const isReset = resetAtMs !== undefined && resetAtMs <= now;
+  return { pct: Math.round(window.utilization * 100), isReset, resetAtMs };
+}
+
 export interface CapacityRowProps {
   heightClassName?: string;
 }
+
+const CapacityBarRow = ({
+  label,
+  view,
+  level,
+  fallback,
+  tooltip,
+  extraStamp,
+}: {
+  label: string;
+  view: WindowView | null;
+  level: keyof typeof levelVariant;
+  fallback: string;
+  tooltip: string;
+  extraStamp?: React.ReactNode;
+}) => {
+  const isReset = view?.isReset ?? false;
+  const pct = view?.pct ?? 0;
+  const stampVariant: StampVariant = isReset ? 'warning' : levelVariant[level];
+  const stampText = isReset ? 'reset' : view ? `${pct}%` : fallback;
+
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-2">
+      <span className="w-6 shrink-0 font-handwritten text-xs text-desk-text-muted">{label}</span>
+      <Progress
+        className="min-w-0 flex-1"
+        value={isReset ? 0 : pct}
+        max={100}
+        // The chalk *Text* tokens are the light marks that read on the board.
+        color={levelText[level]}
+        surface="chalkboard"
+        sketch
+      />
+      <span className="flex shrink-0 items-center gap-2">
+        {extraStamp}
+        <Tooltip content={tooltip} surface="chalkboard">
+          <Stamp surface="chalkboard" size="small" variant={stampVariant} className="leading-none">
+            {stampText}
+          </Stamp>
+        </Tooltip>
+      </span>
+    </div>
+  );
+};
 
 export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -49,7 +126,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
     return () => clearInterval(id);
   }, []);
 
-  const live =
+  const live: RateLimitSnapshot | null =
     agentStatus.find((t) => LIVE_STATUSES.has(t.status) && t.rateLimit)?.rateLimit ?? null;
 
   // On mount only: a probe is cheap but not free, so a fresh five-hour window
@@ -62,17 +139,27 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
 
   const snapshot = live ?? record?.snapshot ?? null;
   const level = capacityLevel(snapshot?.status ?? 'allowed');
-  const fiveHour = snapshot?.unifiedWindows?.five_hour;
-  const pct = fiveHour ? Math.round(fiveHour.utilization * 100) : 0;
+  const fiveHourWindow = snapshot?.unifiedWindows?.five_hour;
+  const weeklyWindow = snapshot?.unifiedWindows?.seven_day;
+  const fiveHour = windowView(fiveHourWindow, now);
+  const weekly = windowView(weeklyWindow, now);
+  const fallback = snapshot?.status ?? 'no report';
+
+  const fiveHourTooltip = fiveHour?.isReset
+    ? formatResetTooltip(fiveHour.resetAtMs as number)
+    : `5-hour window usage: ${level}`;
+  const weeklyTooltip = weekly?.isReset
+    ? formatResetTooltip(weekly.resetAtMs as number)
+    : formatWeeklyTooltip(weekly?.pct ?? 0, weekly?.resetAtMs);
 
   return (
     <Card surface="chalkboard" size="small" className={heightClassName}>
       <div className="flex h-full flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
-            {fiveHour?.resetsAt === undefined
+            {fiveHourWindow?.resetsAt === undefined
               ? 'Capacity'
-              : `Resets in ${formatGap(resetsAtMs(fiveHour.resetsAt) - now)}`}
+              : `Resets in ${formatGap(resetsAtMs(fiveHourWindow.resetsAt) - now)}`}
           </span>
           {refreshing ? (
             <span className="inline-flex shrink-0">
@@ -94,18 +181,14 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
             />
           )}
         </div>
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <Progress
-            className="min-w-0 flex-1"
-            value={pct}
-            max={100}
-            // The chalk *Text* tokens are the light marks that read on the board.
-            color={levelText[level]}
-            surface="chalkboard"
-            sketch
-          />
-          <span className="flex shrink-0 items-center gap-2">
-            {snapshot?.overage && (
+        <CapacityBarRow
+          label="5h"
+          view={fiveHour}
+          level={level}
+          fallback={fallback}
+          tooltip={fiveHourTooltip}
+          extraStamp={
+            snapshot?.overage && (
               <Tooltip
                 content="Extra usage beyond the plan's included capacity."
                 surface="chalkboard"
@@ -114,19 +197,16 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
                   overage
                 </Stamp>
               </Tooltip>
-            )}
-            <Tooltip content={`5-hour window usage: ${level}`} surface="chalkboard">
-              <Stamp
-                surface="chalkboard"
-                size="small"
-                variant={levelVariant[level]}
-                className="leading-none"
-              >
-                {fiveHour ? `${pct}%` : (snapshot?.status ?? 'no report')}
-              </Stamp>
-            </Tooltip>
-          </span>
-        </div>
+            )
+          }
+        />
+        <CapacityBarRow
+          label="wk"
+          view={weekly}
+          level={level}
+          fallback={fallback}
+          tooltip={weeklyTooltip}
+        />
       </div>
     </Card>
   );
