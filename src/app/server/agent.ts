@@ -2135,7 +2135,6 @@ export function createAgentManager(
       proc.on('close', (code) => {
         settle(async () => {
           if (code === 0) {
-            void setStatus(task, 'done');
             // opencode outputs JSON events; extract the text parts for the response.
             const result = isClaude
               ? stdout
@@ -2150,6 +2149,8 @@ export function createAgentManager(
                   })
                   .filter(Boolean)
                   .join('\n');
+            pushLine(task, result);
+            await setStatus(task, 'done');
             resolve(result);
           } else {
             const errText = extractFailureText(

@@ -53,9 +53,10 @@ verdict (and the retry reason when there was one), and after a run that moves
 nothing every active idea carries a fresh `Run order:` note.
 
 ### Phases
-- [ ] Read-only prompt output in the task log
+- [x] Read-only prompt output in the task log
       `runReadOnlyPrompt` pushes the returned text and errors; agent tests
       cover a success and a failure.
+      run: 6m3s · 96 in · 25.7k out · sonnet-5 · sess:c9e5d16c-e17c-4288-9652-9707fa981a7f
 - [ ] One task across the retry
       The `task` option, `runPrompt(prompt, retryReason?)`, `[retry]` line;
       `prioritise.test.ts` asserts one task for two attempts.

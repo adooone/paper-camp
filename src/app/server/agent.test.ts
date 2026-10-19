@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -29,6 +30,10 @@ vi.setConfig({ testTimeout: 20_000 });
 const agentScript = vi.hoisted(() => ({
   current: 'process.exit(0)',
   buildArgs: undefined as ((prompt: string, opts?: { resume?: string }) => string[]) | undefined,
+  // runReadOnlyPrompt builds its own argv (see agent.ts), so buildArgs can't reach it —
+  // tests that exercise it swap the adapter's command for a script that ignores argv
+  // entirely and answers from READONLY_* env vars instead.
+  readOnlyCommand: undefined as string | undefined,
 }));
 
 // setStatus asks this instead of matching CLI output — tests drive it directly
@@ -47,7 +52,9 @@ vi.mock('./local-adapters', () => ({
 
 vi.mock('./agents', () => {
   const adapter = {
-    command: process.execPath,
+    get command() {
+      return agentScript.readOnlyCommand ?? process.execPath;
+    },
     buildArgs: (prompt: string, opts?: { resume?: string }) =>
       agentScript.buildArgs ? agentScript.buildArgs(prompt, opts) : ['-e', agentScript.current],
     parseLine: (line: string) => {
@@ -143,6 +150,7 @@ afterAll(async () => {
 beforeEach(() => {
   agentScript.current = 'process.exit(0)';
   agentScript.buildArgs = undefined;
+  agentScript.readOnlyCommand = undefined;
   authStatus.current = null;
 });
 
@@ -204,6 +212,25 @@ async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry
   const plan = entityToPlan(parseEntityFile(planMd).entries[0]);
   return { root, plan };
 }
+
+// A command for the runReadOnlyPrompt tests: its argv is whatever hardcoded flags
+// agent.ts builds ('-p --output-format json' etc.), which this script ignores
+// entirely, answering from READONLY_* env vars instead so a test can choose the
+// child's stdout/stderr/exit code without needing a real CLI on PATH.
+const readOnlyDir = mkdtempSync(join(tmpdir(), 'papercamp-agent-test-readonly-'));
+roots.push(readOnlyDir);
+const readOnlyCommand = join(readOnlyDir, 'fake-readonly-agent.js');
+writeFileSync(
+  readOnlyCommand,
+  [
+    '#!/usr/bin/env node',
+    'process.stdout.write(process.env.READONLY_STDOUT ?? "");',
+    'if (process.env.READONLY_STDERR) process.stderr.write(process.env.READONLY_STDERR);',
+    'process.exit(Number(process.env.READONLY_EXIT ?? "0"));',
+    '',
+  ].join('\n'),
+);
+chmodSync(readOnlyCommand, 0o755);
 
 type Manager = ReturnType<typeof createAgentManager>;
 
@@ -1552,6 +1579,40 @@ describe('runCommitSuggest', () => {
     const err = (await manager.runCommitSuggest('prompt').catch((e) => e)) as { kind?: string };
     expect(err).toBeInstanceOf(Error);
     expect(err.kind).toBeUndefined();
+  });
+});
+
+describe('runReadOnlyPrompt output (IDEA-312)', () => {
+  beforeEach(() => {
+    agentScript.readOnlyCommand = readOnlyCommand;
+    process.env.READONLY_STDOUT = '';
+    process.env.READONLY_STDERR = '';
+    process.env.READONLY_EXIT = '0';
+  });
+
+  it('pushes the returned text as the task line on success', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    process.env.READONLY_STDOUT = 'order: IDEA-1, IDEA-2 — IDEA-2 blocks on nothing';
+    const manager = createAgentManager(root);
+
+    const result = await manager.runPrioritise('prompt');
+
+    expect(result).toBe('order: IDEA-1, IDEA-2 — IDEA-2 blocks on nothing');
+    expect(currentStatus(manager)?.lines).toContain(
+      'order: IDEA-1, IDEA-2 — IDEA-2 blocks on nothing',
+    );
+  });
+
+  it('pushes the failure text as the task line on error', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    process.env.READONLY_STDERR = 'Agent verdict was not valid JSON';
+    process.env.READONLY_EXIT = '1';
+    const manager = createAgentManager(root);
+
+    await expect(manager.runPrioritise('prompt')).rejects.toThrow(
+      'Agent verdict was not valid JSON',
+    );
+    expect(currentStatus(manager)?.lines.join('\n')).toContain('Agent verdict was not valid JSON');
   });
 });
 
