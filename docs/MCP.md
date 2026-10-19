@@ -4,18 +4,24 @@ Paper Camp ships a [Model Context Protocol](https://modelcontextprotocol.io) ser
 client — Claude Code, Claude Desktop, Cursor, or anything else that speaks MCP — can read and
 write a `papercamp/` project through a standardized interface instead of raw file access.
 
-The server is a thin wrapper: every tool routes through the same `src/core` readers/serializers
-the CLI and dashboard already use, so id allocation, archive-on-done, and index regeneration all
-still hold, and writes are serialized so concurrent stdio calls can't mint duplicate ids.
+The server is a thin HTTP client: every tool calls the same `/api/...` routes the dashboard
+uses, against the `paper-camp` daemon running on this machine — so id allocation,
+archive-on-done, and index regeneration all happen in exactly one place, and an MCP write
+produces the same `changed` tick a dashboard write does.
 
 ## Running the server
 
-The server runs over stdio and reads/writes the `papercamp/` project rooted at the current
-working directory:
+The server runs over stdio, reads/writes the `papercamp/` project rooted at the current
+working directory, and requires a running daemon with that project registered:
 
 ```bash
+paper-camp start   # once per machine
+paper-camp init     # once per project, registers it with the daemon
 paper-camp mcp
 ```
+
+If no daemon is reachable, or this directory isn't a registered project, every tool fails with
+the same message: run `paper-camp start` and register this repo with `paper-camp init`.
 
 ## Registering with a client
 

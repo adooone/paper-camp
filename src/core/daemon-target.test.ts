@@ -4,10 +4,10 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { writeDaemonState } from '../core/daemon-state';
-import { type MachineRegistry, addProject, saveRegistry } from '../core/machine-registry';
 import { MACHINE_PROJECTS_PATH } from '../types/index';
+import { writeDaemonState } from './daemon-state';
 import { resolveDaemonTarget } from './daemon-target';
+import { type MachineRegistry, addProject, saveRegistry } from './machine-registry';
 
 describe('resolveDaemonTarget', () => {
   const dirs: string[] = [];

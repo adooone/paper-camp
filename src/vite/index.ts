@@ -1,7 +1,7 @@
 import type { HtmlTagDescriptor, Plugin, ViteDevServer } from 'vite';
 import { readConfigIntegration } from '../cli/dev-port';
+import { resolveDaemonTarget } from '../core/daemon-target';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
-import { resolveDaemonTarget } from './daemon-target';
 
 export const TOOLBAR_OFF_MESSAGE =
   'paper-camp: toolbar off — run `paper-camp start` and register this repo with `paper-camp init`';

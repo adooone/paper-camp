@@ -7,7 +7,7 @@ import {
   readCorpus,
   updateEntity,
 } from '@/core/corpus';
-import { computeNeedsBlockedIds } from '@/core/needs';
+import { computeNeedsBlockedIds, resolveNeedsRefs } from '@/core/needs';
 import { readEntities } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { agentThreadMessage } from '@/core/serialize';
@@ -42,7 +42,14 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         }
         const newId = await createIdea(root, { ...input, title: input.title.trim() });
         activity.notifyChanged();
-        sendJson(res, 201, { ok: true, id: newId });
+        const unresolvedNeeds = input.needs
+          ? (await resolveNeedsRefs(root, input.needs)).filter((r) => !r.found).map((r) => r.raw)
+          : [];
+        sendJson(res, 201, {
+          ok: true,
+          id: newId,
+          ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }),
+        });
       },
     },
 
@@ -176,7 +183,10 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         }
 
         activity.notifyChanged();
-        sendJson(res, 200, { ok: true });
+        const unresolvedNeeds = updates.needs
+          ? (await resolveNeedsRefs(root, updates.needs)).filter((r) => !r.found).map((r) => r.raw)
+          : [];
+        sendJson(res, 200, { ok: true, ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }) });
       },
     },
 

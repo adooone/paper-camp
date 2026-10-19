@@ -1,6 +1,6 @@
 import { resolve, sep } from 'node:path';
-import { daemonStatePath, readRunningDaemonState } from '../core/daemon-state';
-import { defaultRegistryPath, loadRegistry } from '../core/machine-registry';
+import { daemonStatePath, readRunningDaemonState } from './daemon-state';
+import { defaultRegistryPath, loadRegistry } from './machine-registry';
 
 export interface DaemonTarget {
   origin: string;

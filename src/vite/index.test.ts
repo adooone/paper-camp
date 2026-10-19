@@ -2,11 +2,11 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { resolveDaemonTarget } from '../core/daemon-target';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
-import { resolveDaemonTarget } from './daemon-target';
 import { type PaperCampToolbarOptions, TOOLBAR_OFF_MESSAGE, paperCamp } from './index';
 
-vi.mock('./daemon-target', () => ({ resolveDaemonTarget: vi.fn() }));
+vi.mock('../core/daemon-target', () => ({ resolveDaemonTarget: vi.fn() }));
 
 interface FakeServer {
   config: { root: string; mode?: string };

@@ -1,17 +1,18 @@
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { GitManager } from '../app/server/git';
-import { campFile, readMaybe } from '../app/server/helpers';
-import { CorpusError, appendThread, createIdea, readCorpus, updateEntity } from '../core/corpus';
-import { resolveNeedsRefs } from '../core/needs';
-import { parseSuggestions } from '../core/parse';
-import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
-import { agentThreadMessage, removeSuggestionLine } from '../core/serialize';
-import { promoteThreadMessage } from '../core/thread';
-import { PLAN_KINDS, PLAN_STATUSES, type ThreadMessage } from '../types/index';
+import { resolveDaemonTarget } from '../core/daemon-target';
+import {
+  PLAN_KINDS,
+  PLAN_STATUSES,
+  type PlanEntry,
+  type ResolvedRoadmap,
+  type SuggestionEntry,
+  type ThreadMessage,
+} from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
+
+export const NO_DAEMON_ERROR =
+  'run `paper-camp start` and register this repo with `paper-camp init`';
 
 function json(data: Record<string, unknown>) {
   return {
@@ -20,13 +21,47 @@ function json(data: Record<string, unknown>) {
   };
 }
 
-async function fetchWorkEntries(root: string) {
-  const { work, warnings, resolved } = await readCorpus(root, { live: true });
-  return { entries: work, warnings, resolved };
+/** A tool-scoped HTTP client against this repo's daemon-mounted project, resolved
+ * fresh per call — the daemon may not have been running at MCP server startup. */
+interface DaemonClient {
+  get<T>(path: string): Promise<T>;
+  post<T>(path: string, body?: unknown): Promise<T>;
+  patch<T>(path: string, body: unknown): Promise<T>;
 }
 
-// Wraps the same `src/core` readers/parsers as the dashboard's `/api/*` routes
-// (src/app/server/routes/reads.ts), so MCP clients see identical data shapes.
+async function daemonClient(root: string): Promise<DaemonClient> {
+  const target = await resolveDaemonTarget(root);
+  if (!target) throw new Error(NO_DAEMON_ERROR);
+  const base = `${target.origin}/p/${target.slug}`;
+
+  async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const response = await fetch(`${base}${path}`, {
+      method,
+      ...(body !== undefined && {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    });
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : undefined;
+    if (!response.ok) {
+      throw new Error(
+        (data as { error?: string } | undefined)?.error ?? `request failed: ${response.status}`,
+      );
+    }
+    return data as T;
+  }
+
+  return {
+    get: (path) => request('GET', path),
+    post: (path, body) => request('POST', path, body),
+    patch: (path, body) => request('PATCH', path, body),
+  };
+}
+
+// Every tool is a thin HTTP client against the daemon's `/api/*` routes — the same
+// routes the dashboard uses — so id allocation, archive-on-done, index regeneration
+// and the `changed` tick all happen in exactly one place.
 export function registerReadTools(server: McpServer, root: string): void {
   server.registerTool(
     'list_plans',
@@ -40,7 +75,8 @@ export function registerReadTools(server: McpServer, root: string): void {
       },
     },
     async () => {
-      const result = await fetchWorkEntries(root);
+      const client = await daemonClient(root);
+      const result = await client.get<{ entries: PlanEntry[]; warnings: unknown[] }>('/api/plans');
       return json({ ...result });
     },
   );
@@ -58,33 +94,15 @@ export function registerReadTools(server: McpServer, root: string): void {
       },
     },
     async ({ id }) => {
-      const { entries } = await fetchWorkEntries(root);
+      const client = await daemonClient(root);
+      const { entries } = await client.get<{ entries: PlanEntry[] }>('/api/plans');
       const entry = entries.find((p) => p.id === id) ?? null;
       return json({ entry });
     },
   );
 }
 
-// Routes through the same core serializers and checkBranchConflictForPlan guard as the
-// dashboard's route handlers, so an MCP client can't do what a dashboard user is blocked from.
-export function registerWriteTools(server: McpServer, root: string, git: GitManager): void {
-  // stdio can multiplex concurrent calls; without this, add_idea/draft_plan's
-  // read-then-write id allocation could interleave and mint duplicate ids.
-  let writeChain: Promise<unknown> = Promise.resolve();
-  const runExclusive = <T>(fn: () => Promise<T>): Promise<T> => {
-    const result = writeChain.then(fn, fn);
-    writeChain = result.then(
-      () => undefined,
-      () => undefined,
-    );
-    return result;
-  };
-
-  // Serialised, not branch-gated: which branch you are on no longer decides what you
-  // may work on, so this only keeps concurrent writes from interleaving.
-  const guardedWrite = <T>(_targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
-    runExclusive(fn);
-
+export function registerWriteTools(server: McpServer, root: string): void {
   server.registerTool(
     'add_idea',
     {
@@ -102,19 +120,15 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    ({ title, content, needs }) =>
-      guardedWrite(undefined, async () => {
-        if (!title.trim()) throw new Error('title is required');
-        const id = await createIdea(root, { title, content, needs });
-        const unresolvedNeeds = (await resolveNeedsRefs(root, needs ?? []))
-          .filter((r) => !r.found)
-          .map((r) => r.raw);
-        return json({
-          ok: true,
-          id,
-          ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }),
-        });
-      }),
+    async ({ title, content, needs }) => {
+      if (!title.trim()) throw new Error('title is required');
+      const client = await daemonClient(root);
+      const result = await client.post<{ ok: true; id: string; unresolvedNeeds?: string[] }>(
+        '/api/entities',
+        { title: title.trim(), content, needs },
+      );
+      return json(result);
+    },
   );
 
   server.registerTool(
@@ -130,12 +144,16 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    ({ title, content, kind }) =>
-      guardedWrite(undefined, async () => {
-        if (!title.trim()) throw new Error('title is required');
-        const id = await createIdea(root, { title, content, type: kind ?? 'feat' });
-        return json({ ok: true, id });
-      }),
+    async ({ title, content, kind }) => {
+      if (!title.trim()) throw new Error('title is required');
+      const client = await daemonClient(root);
+      const result = await client.post<{ ok: true; id: string }>('/api/entities', {
+        title: title.trim(),
+        content,
+        type: kind ?? 'feat',
+      });
+      return json(result);
+    },
   );
 
   server.registerTool(
@@ -152,28 +170,25 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: okResultSchema.shape,
     },
-    ({ id, phaseIndex, done, status }) =>
-      guardedWrite(id, async () => {
-        try {
-          await updateEntity(root, id, (entry) => {
-            if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
-              throw new Error(
-                `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
-              );
-            }
-            return {
-              phases: entry.phases.map((phase, i) =>
-                i === phaseIndex ? { ...phase, done } : phase,
-              ),
-              ...(status !== undefined && { status }),
-            };
-          });
-        } catch (error) {
-          if (error instanceof CorpusError) throw new Error(error.message);
-          throw error;
-        }
-        return json({ ok: true });
-      }),
+    async ({ id, phaseIndex, done, status }) => {
+      const client = await daemonClient(root);
+      const { entries } = await client.get<{ entries: PlanEntry[] }>('/api/plans');
+      const entry = entries.find((p) => p.id === id);
+      if (!entry) throw new Error(`entity "${id}" not found`);
+      if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
+        throw new Error(
+          `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
+        );
+      }
+      const phases = entry.phases.map((phase, i) =>
+        i === phaseIndex ? { ...phase, done } : phase,
+      );
+      await client.patch(`/api/entities?id=${encodeURIComponent(id)}`, {
+        phases,
+        ...(status !== undefined && { status }),
+      });
+      return json({ ok: true });
+    },
   );
 
   server.registerTool(
@@ -197,46 +212,22 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: okResultSchema.shape,
     },
-    ({ id, title, content, tags, type, needs }) =>
-      guardedWrite(id, async () => {
-        if (title !== undefined && !title.trim()) throw new Error('title cannot be empty');
-        try {
-          await updateEntity(root, id, () => ({
-            ...(title !== undefined && { title: title.trim() }),
-            ...(content !== undefined && { body: content.trim() }),
-            ...(tags !== undefined && { tags }),
-            ...(type !== undefined && { type }),
-            ...(needs !== undefined && { needs }),
-          }));
-        } catch (error) {
-          if (error instanceof CorpusError) throw new Error(error.message);
-          throw error;
-        }
-
-        const unresolvedNeeds = needs
-          ? (await resolveNeedsRefs(root, needs)).filter((r) => !r.found).map((r) => r.raw)
-          : [];
-        return json({ ok: true, ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }) });
-      }),
+    async ({ id, title, content, tags, type, needs }) => {
+      if (title !== undefined && !title.trim()) throw new Error('title cannot be empty');
+      const client = await daemonClient(root);
+      const result = await client.patch<{ ok: true; unresolvedNeeds?: string[] }>(
+        `/api/entities?id=${encodeURIComponent(id)}`,
+        {
+          ...(title !== undefined && { title: title.trim() }),
+          ...(content !== undefined && { body: content.trim() }),
+          ...(tags !== undefined && { tags }),
+          ...(type !== undefined && { type }),
+          ...(needs !== undefined && { needs }),
+        },
+      );
+      return json(result);
+    },
   );
-
-  const NOTE_STATE_KINDS = new Set<ThreadMessage['kind']>(['note', 'decision', 'question']);
-
-  async function appendThreadMessage(
-    id: string,
-    kind: ThreadMessage['kind'],
-    text: string,
-  ): Promise<void> {
-    if (!text.trim()) throw new Error('text is required');
-    const message = agentThreadMessage(text.trim(), kind);
-    if (NOTE_STATE_KINDS.has(kind) && message.state === undefined) message.state = 'open';
-    try {
-      await appendThread(root, id, message);
-    } catch (error) {
-      if (error instanceof CorpusError) throw new Error(error.message);
-      throw error;
-    }
-  }
 
   function registerAppendTool(
     name: string,
@@ -255,11 +246,15 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         },
         outputSchema: okResultSchema.shape,
       },
-      ({ id, text }) =>
-        guardedWrite(id, async () => {
-          await appendThreadMessage(id, kind, text);
-          return json({ ok: true });
-        }),
+      async ({ id, text }) => {
+        if (!text.trim()) throw new Error('text is required');
+        const client = await daemonClient(root);
+        await client.post(`/api/entities/thread?id=${encodeURIComponent(id)}`, {
+          kind,
+          text: text.trim(),
+        });
+        return json({ ok: true });
+      },
     );
   }
 
@@ -302,21 +297,18 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    ({ title, date }) =>
-      guardedWrite(undefined, async () => {
-        const suggestionsPath = campFile(root, 'suggestions.md');
-        const raw = await readMaybe(suggestionsPath);
-        const suggestion = parseSuggestions(raw).find(
-          (s) => s.title === title.trim() && (date === undefined || s.date === date),
-        );
-        if (!suggestion) throw new Error(`suggestion "${title}" not found`);
-        const id = await createIdea(root, {
-          title: suggestion.title,
-          content: suggestion.description,
-        });
-        await writeFile(suggestionsPath, removeSuggestionLine(raw, suggestion), 'utf-8');
-        return json({ ok: true, id });
-      }),
+    async ({ title, date }) => {
+      const client = await daemonClient(root);
+      const { entries } = await client.get<{ entries: SuggestionEntry[] }>('/api/suggestions');
+      const suggestion = entries.find(
+        (s) => s.title === title.trim() && (date === undefined || s.date === date),
+      );
+      if (!suggestion) throw new Error(`suggestion "${title}" not found`);
+      const result = await client.post<{ ok: true; id: string }>('/api/suggestions/promote', {
+        suggestion,
+      });
+      return json(result);
+    },
   );
 
   server.registerTool(
@@ -336,34 +328,23 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: idResultSchema.shape,
     },
-    ({ horizonTitle, itemName, candidateName, subject }) =>
-      guardedWrite(undefined, async () => {
-        const roadmapPath = join(root, 'ROADMAP.md');
-        const raw = await readMaybe(roadmapPath);
-        if (!raw) throw new Error('ROADMAP.md not found');
-        const item = parseRoadmap(raw)
-          .horizons.find((h) => h.title === horizonTitle)
-          ?.items.find((it) => it.name === itemName);
-        if (!item || (candidateName !== undefined && !item.candidates.includes(candidateName))) {
-          throw new Error('roadmap item or candidate not found');
-        }
-        const id = await createIdea(root, {
-          title: candidateName ?? item.name,
-          subject: subject?.trim() || (candidateName ? item.name : undefined),
-          content: candidateName
-            ? `From the roadmap: ${horizonTitle} — ${item.name}.`
-            : `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
-        });
-        const withoutCandidate = candidateName
-          ? removeRoadmapItem(raw, horizonTitle, item.name, candidateName)
-          : raw;
-        await writeFile(
-          roadmapPath,
-          linkRoadmapItem(withoutCandidate, horizonTitle, item.name, id),
-          'utf-8',
-        );
-        return json({ ok: true, id });
-      }),
+    async ({ horizonTitle, itemName, candidateName, subject }) => {
+      const client = await daemonClient(root);
+      const roadmap = await client.get<ResolvedRoadmap | null>('/api/roadmap');
+      const item = roadmap?.horizons
+        .find((h) => h.title === horizonTitle)
+        ?.items.find((it) => it.name === itemName);
+      if (!item || (candidateName !== undefined && !item.candidates.includes(candidateName))) {
+        throw new Error('roadmap item or candidate not found');
+      }
+      const result = await client.post<{ ok: true; id: string }>('/api/roadmap/promote', {
+        horizonTitle,
+        item,
+        subject,
+        candidateName,
+      });
+      return json(result);
+    },
   );
 
   server.registerTool(
@@ -380,26 +361,15 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: okResultSchema.shape,
     },
-    ({ id, index, target, note }) =>
-      guardedWrite(id, async () => {
-        try {
-          await updateEntity(root, id, (entry) => {
-            const thread = entry.thread ?? [];
-            if (index < 0 || index >= thread.length) {
-              throw new Error(
-                `thread index ${index} out of range (thread has ${thread.length} messages)`,
-              );
-            }
-            return {
-              thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
-            };
-          });
-        } catch (error) {
-          if (error instanceof CorpusError) throw new Error(error.message);
-          throw error;
-        }
-        return json({ ok: true });
-      }),
+    async ({ id, index, target, note }) => {
+      const client = await daemonClient(root);
+      await client.post(`/api/entities/thread/promote?id=${encodeURIComponent(id)}`, {
+        index,
+        target,
+        note,
+      });
+      return json({ ok: true });
+    },
   );
 
   server.registerTool(
@@ -412,18 +382,10 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
       },
       outputSchema: okResultSchema.shape,
     },
-    ({ id }) =>
-      guardedWrite(id, async () => {
-        try {
-          await updateEntity(root, id, (entry) => {
-            if (entry.archived) throw new Error(`entity "${id}" not found`);
-            return { status: 'dropped' };
-          });
-        } catch (error) {
-          if (error instanceof CorpusError) throw new Error(error.message);
-          throw error;
-        }
-        return json({ ok: true });
-      }),
+    async ({ id }) => {
+      const client = await daemonClient(root);
+      await client.post(`/api/entities/archive?id=${encodeURIComponent(id)}`);
+      return json({ ok: true });
+    },
   );
 }
