@@ -9,6 +9,7 @@ import {
 } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
 import { createIdea, readCorpus, resolveEntityFilePath, updateEntity } from '@/core/corpus';
+import { loadDeskConfig } from '@/core/desk-config';
 import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
@@ -47,7 +48,6 @@ import { readBody, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
 import { readReviewedShas } from '../pr-review-state';
-import { loadManifestCi } from './ci';
 import type { Route, RouteContext } from './types';
 
 // Shared by every feedback-thread route (message, undo, promote, summarize): finds
@@ -749,10 +749,10 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         const prs = await resolvePrsByEntity(root);
         const pr = prs?.get(planId);
         const reviewed = await readReviewedShas(root);
-        const ci = loadManifestCi(root);
+        const ci = loadDeskConfig(root).ci ?? null;
         let ciGreen: boolean | null = null;
         if (ci && pr?.headBranch) {
-          const ciState = await fetchCiReleaseState({ ...ci, branch: pr.headBranch });
+          const ciState = await fetchCiReleaseState(root, { ...ci, branch: pr.headBranch });
           ciGreen =
             ciState.available &&
             ciState.runs !== null &&

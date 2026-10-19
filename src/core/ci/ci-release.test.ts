@@ -197,7 +197,7 @@ describe('fetchCiReleaseState', () => {
       if (args[0] === 'release') return fakeProc(0, '[]');
       return fakeProc(1, '');
     });
-    const state = await fetchCiReleaseState({ repo: 'o/r', releasePlease: true }, 0);
+    const state = await fetchCiReleaseState('r', { repo: 'o/r', releasePlease: true }, 0);
     expect(state.available).toBe(true);
     expect(state.runs).toBeNull();
     expect(new Date(state.fetchedAt).toString()).not.toBe('Invalid Date');
@@ -211,7 +211,7 @@ describe('fetchCiReleaseState', () => {
       if (args[0] === 'api') return fakeProc(1, '');
       return fakeProc(1, '');
     });
-    const state = await fetchCiReleaseState({ repo: 'o/r', draftPr: true }, 0);
+    const state = await fetchCiReleaseState('r', { repo: 'o/r', draftPr: true }, 0);
     expect(state.draftPr).toEqual({
       scoutAppId: false,
       scoutPrivateKey: false,
@@ -230,7 +230,7 @@ describe('fetchCiReleaseState', () => {
       }
       return fakeProc(1, '');
     });
-    const state = await fetchCiReleaseState({ repo: 'o/r', draftPr: true }, 0);
+    const state = await fetchCiReleaseState('r', { repo: 'o/r', draftPr: true }, 0);
     expect(state.draftPr).toEqual({
       scoutAppId: true,
       scoutPrivateKey: false,

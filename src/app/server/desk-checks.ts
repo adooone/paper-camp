@@ -2,9 +2,10 @@ import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFingerprint, readCorpus } from '@/core/corpus';
-import { deskConfigSchema, findConsistencyIssues } from '@/core/parse';
+import { loadDeskConfig } from '@/core/desk-config';
+import { findConsistencyIssues } from '@/core/parse';
 import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
-import type { CheckStatus, DeskCheck, DeskCheckState, FailingCheck } from '../../types';
+import type { CheckStatus, DeskCheckState, FailingCheck } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import { readMaybe } from './helpers';
 
@@ -80,21 +81,6 @@ function repoHasVitest(root: string): boolean {
 
 export type DeskCheckManager = ReturnType<typeof createDeskCheckManager>;
 
-export function loadManifestChecks(root: string): DeskCheck[] {
-  let raw: string;
-  try {
-    raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
-  } catch {
-    return [];
-  }
-  try {
-    const parsed = deskConfigSchema.safeParse(JSON.parse(raw).desk ?? {});
-    return parsed.success ? (parsed.data.checks ?? []) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function createDeskCheckManager(
   root: string,
   getFingerprint?: () => Promise<CheckFingerprint>,
@@ -137,7 +123,7 @@ export function createDeskCheckManager(
     const alreadyRunning = inFlight.get(name);
     if (alreadyRunning) return alreadyRunning;
 
-    const check = loadManifestChecks(root).find((c) => c.name === name);
+    const check = (loadDeskConfig(root).checks ?? []).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
 
     const promise = (async () => {
@@ -159,7 +145,7 @@ export function createDeskCheckManager(
   }
 
   async function runFix(name: string): Promise<DeskCheckState> {
-    const check = loadManifestChecks(root).find((c) => c.name === name);
+    const check = (loadDeskConfig(root).checks ?? []).find((c) => c.name === name);
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
     if (!check.fixCmd) throw new MissingFixCmdError(`Check "${name}" has no fix command`);
 
@@ -169,7 +155,7 @@ export function createDeskCheckManager(
   }
 
   function getStatus(): DeskCheckState[] {
-    return loadManifestChecks(root).map((check) => {
+    return (loadDeskConfig(root).checks ?? []).map((check) => {
       const runtime = runtimeFor(check.name);
       return {
         name: check.name,
@@ -226,7 +212,7 @@ export function createDeskCheckManager(
       fix.once('error', reject);
     });
 
-    const names = loadManifestChecks(root).map((c) => c.name);
+    const names = (loadDeskConfig(root).checks ?? []).map((c) => c.name);
     const hasVitest = repoHasVitest(root);
     const [deskResults, docsResult] = await Promise.all([
       Promise.all(names.map((name) => runManifestCheck(name, hasVitest))),
@@ -249,7 +235,7 @@ export function createDeskCheckManager(
     const { headSha, treeHash } = getFingerprint
       ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
       : EMPTY_FINGERPRINT;
-    const names = loadManifestChecks(root).map((c) => c.name);
+    const names = (loadDeskConfig(root).checks ?? []).map((c) => c.name);
     const hasVitest = repoHasVitest(root);
 
     const deskFresh = (name: string): boolean => {

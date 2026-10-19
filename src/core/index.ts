@@ -1,3 +1,4 @@
+export * from './desk-config';
 export * from './env';
 export * from './readers';
 export * from './parse';

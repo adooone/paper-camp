@@ -1,7 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { deskConfigSchema } from '@/core/parse';
+import { loadDeskConfig } from '@/core/desk-config';
 import type * as Pty from 'node-pty';
 import type { DeskService, ServiceHealth, ServiceRunStatus, ServiceState } from '../../types';
 import { appendNotification } from './notification-log';
@@ -65,18 +63,7 @@ export function createEmptyServiceState(): DeskServiceManagerState {
 export type DeskServiceManager = ReturnType<typeof createDeskServiceManager>;
 
 function loadManifestServices(root: string): DeskService[] {
-  let raw: string;
-  try {
-    raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
-  } catch {
-    return [];
-  }
-  try {
-    const parsed = deskConfigSchema.safeParse(JSON.parse(raw).desk ?? {});
-    return parsed.success ? (parsed.data.services ?? []) : [];
-  } catch {
-    return [];
-  }
+  return loadDeskConfig(root).services ?? [];
 }
 
 export function createDeskServiceManager(

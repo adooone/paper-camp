@@ -189,24 +189,27 @@ export { ciRunWord } from './ci-run-word';
 
 const cache = new Map<string, { state: CiReleaseState; fetchedAt: number }>();
 
-function ciCacheKey(ci: DeskCi): string {
-  return `${ci.repo}#${ci.branch ?? 'main'}`;
+function ciCacheKey(root: string, ci: DeskCi): string {
+  return `${root}::${ci.repo}#${ci.branch ?? 'main'}`;
 }
 
-export function clearCiCache(): void {
-  cache.clear();
+export function clearCiCache(root: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(`${root}::`)) cache.delete(key);
+  }
 }
 
-export function clearCiCacheEntry(ci: DeskCi): void {
-  cache.delete(ciCacheKey(ci));
+export function clearCiCacheEntry(root: string, ci: DeskCi): void {
+  cache.delete(ciCacheKey(root, ci));
 }
 
 export async function fetchCiReleaseState(
+  root: string,
   ci: DeskCi,
   ttlMs = CI_CACHE_TTL_MS,
 ): Promise<CiReleaseState> {
   const branch = ci.branch ?? 'main';
-  const key = ciCacheKey(ci);
+  const key = ciCacheKey(root, ci);
   const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < ttlMs) return cached.state;
 

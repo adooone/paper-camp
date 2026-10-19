@@ -30,7 +30,7 @@ export function statusRoutes({ root, activity }: RouteContext): Route[] {
       handle: async (_req, res) => {
         const previous = peekCachedPrs(root);
         await clearPrCache(root);
-        clearCiCache();
+        clearCiCache(root);
         // clearPrCache already zeroed the persisted fetchedAt, so this fetches live
         // regardless of TTL, re-persisting on success and keeping the old map on failure.
         const fresh = await resolvePrsByEntity(root);

@@ -2,7 +2,7 @@
 id: IDEA-308
 title: Honest checks, git and services
 type: fix
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - server
@@ -112,5 +112,6 @@ exists.
       command, duplicate pull and branch paths folded, consistent main ref;
       tests.
       run: 12m8s · 130 in · 60.2k out · sonnet-5 · sess:d0043b9f-e28a-49f9-82f9-657326427a62
-- [ ] One manifest reader and a per-root CI cache
+- [x] One manifest reader and a per-root CI cache
       `loadDeskConfig(root)` replaces the three loaders; `clearCiCache(root)`.
+      run: 3m26s · 104 in · 12.9k out · sonnet-5 · sess:c226b837-1a6a-49e5-bcf1-5315a6a819e8
