@@ -251,6 +251,8 @@ export function createDeskServiceManager(
       const exited = new Promise<void>((resolve) => proc.onExit(() => resolve()));
       stop(name);
       await exited;
+    } else if (proc && runtime?.status === 'stopping') {
+      await new Promise<void>((resolve) => proc.onExit(() => resolve()));
     }
     await start(name);
   }
@@ -270,18 +272,7 @@ export function createDeskServiceManager(
   }
 
   async function getStatus(): Promise<ServiceState[]> {
-    return Promise.all(
-      loadManifestServices(root).map(async (service) => {
-        const runtime = runtimeFor(service.name);
-        if (runtime.status !== 'stopped' || !service.healthcheck) {
-          return toState(service, runtime);
-        }
-        const health = await probeHealthcheck(service.healthcheck);
-        return health === 'up'
-          ? { ...toState(service, runtime), status: 'running' as const, health }
-          : toState(service, runtime);
-      }),
-    );
+    return loadManifestServices(root).map((service) => toState(service, runtimeFor(service.name)));
   }
 
   function getLog(name: string): string[] | null {
@@ -292,6 +283,7 @@ export function createDeskServiceManager(
 
   async function killAll(): Promise<void> {
     for (const runtime of runtimes.values()) {
+      if (runtime.proc) runtime.status = 'stopping';
       stopHealthPolling(runtime);
       runtime.proc?.kill();
     }

@@ -146,6 +146,38 @@ describe('createDeskServiceManager', () => {
     expect(crashAt).toBeLessThan(markers[1]);
   });
 
+  it('restart waits for an in-flight stop before spawning anew', async () => {
+    const manager = makeManager();
+    await manager.start('app');
+    manager.stop('app');
+    expect((await stateOf(manager)).status).toBe('stopping');
+    const restarting = manager.restart('app');
+    expect(ptys).toHaveLength(1);
+    ptys[0].emitExit(0);
+    await restarting;
+    expect(ptys).toHaveLength(2);
+    expect((await stateOf(manager)).status).toBe('running');
+  });
+
+  it('killAll marks runtimes stopping so no crash notification is written', async () => {
+    const manager = makeManager();
+    await manager.start('app');
+    await manager.killAll();
+    expect((await stateOf(manager)).status).toBe('stopping');
+    ptys[0].emitExit(1);
+    const state = await stateOf(manager);
+    expect(state.status).toBe('stopped');
+  });
+
+  it('getStatus reports a stopped service from its pid alone, without probing', async () => {
+    const manager = makeManager();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const state = await stateOf(manager);
+    expect(state.status).toBe('stopped');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it('the log keeps only the last 500 lines', async () => {
     const manager = makeManager();
     await manager.start('app');

@@ -100,9 +100,10 @@ exists.
       `runChecksAndWait` and `getCachedOrRunChecks` move; `StatusManager` and
       its hot-swap state removed; `/api/status` inlined; call sites updated.
       run: 7m42s · 196 in · 32.3k out · sonnet-5 · sess:9639e81b-bba2-4453-b55c-3cda24701f5d
-- [ ] Services stop on purpose
+- [x] Services stop on purpose
       `stopping` before `kill()` in `killAll`, restart-while-stopping, no
       healthcheck probes for stopped services; tests.
+      run: 1m14s · 32 in · 5.4k out · sonnet-5 · sess:d0043b9f-e28a-49f9-82f9-657326427a62
 - [ ] Probes with a TTL and a recheck
       60 s TTL, `?recheck=1` on both routes, one shared auth probe; tests.
 - [ ] Git with fewer spawns and no lock races
