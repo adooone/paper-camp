@@ -33,7 +33,7 @@ function syncFailurePayload(result: GitSyncFailure, agent: AgentManager) {
   };
 }
 
-export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
+export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -81,6 +81,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           const warning = await git.ensureBranch(entityToPlan(entity));
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, branch: git.getCurrentBranch(), warning });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -124,6 +125,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 409, { error: merge.message });
             return;
           }
+          activity.notifyChanged();
           // The PR merged upstream at this point, so a failure below is reported as
           // merged-but-unfinished rather than rolled into the generic 409 catch below.
           try {
@@ -172,6 +174,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.push();
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -195,6 +198,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           await git.commit(files ?? [], title.trim(), message?.trim());
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -214,6 +218,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           await git.stagePath(path);
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -227,6 +232,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.stageAll();
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -240,6 +246,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.unstageAll();
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -259,6 +266,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           await git.unstagePath(path);
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -276,6 +284,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -312,6 +321,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
       handle: async (_req, res) => {
         try {
           await git.runGitPull();
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -331,6 +341,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -352,6 +363,7 @@ export function gitRoutes({ root, git, agent }: RouteContext): Route[] {
             return;
           }
           await git.checkoutBranch(branch);
+          activity.notifyChanged();
           sendJson(res, 200, { ok: true, branch: git.getCurrentBranch() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });

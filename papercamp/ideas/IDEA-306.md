@@ -109,9 +109,10 @@ branch.
       Immediate debounced `changed`, per-root cache invalidation, a second
       tick only when `run-order.md` changed, no self-rescheduling on failure.
       run: 1m53s · 42 in · 10k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
-- [ ] Every writer signals
+- [x] Every writer signals
       Git routes, `/api/refresh` and the background fetch call
       `notifyChanged`; route tests assert the broadcast.
+      run: 6m36s · 154 in · 28.1k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
 - [ ] One subscriber on the client
       `subscribeProjectToActivityStream` and `refreshProjectState`; the
       per-hook `changed` branches removed; hook tests updated.

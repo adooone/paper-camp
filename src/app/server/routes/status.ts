@@ -7,7 +7,6 @@ import {
   resolvePrsByEntity,
 } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
-import { invalidateCorpusCache } from '../corpus-cache';
 import { campFile } from '../helpers';
 import { sendJson } from '../http';
 import { appendNotification } from '../notification-log';
@@ -31,9 +30,6 @@ export function statusRoutes({ root, activity, status }: RouteContext): Route[] 
         const previous = peekCachedPrs(root);
         await clearPrCache(root);
         clearCiCache();
-        // The corpus cache bakes PR state into each entry and is only invalidated by
-        // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
-        invalidateCorpusCache(root);
         // clearPrCache already zeroed the persisted fetchedAt, so this fetches live
         // regardless of TTL, re-persisting on success and keeping the old map on failure.
         const fresh = await resolvePrsByEntity(root);
@@ -53,6 +49,7 @@ export function statusRoutes({ root, activity, status }: RouteContext): Route[] 
             }
           }
         }
+        activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
     },

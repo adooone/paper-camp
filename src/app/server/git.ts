@@ -72,7 +72,7 @@ const toLiteralPathspec = (file: string) => `:(literal)${file}`;
 
 export type GitManager = ReturnType<typeof createGitManager>;
 
-export function createGitManager(root: string) {
+export function createGitManager(root: string, onRemoteChanged?: () => void) {
   function parsePorcelain(output: string): GitStatusEntry[] {
     const entries: GitStatusEntry[] = [];
     for (const line of output.split('\n')) {
@@ -363,13 +363,24 @@ export function createGitManager(root: string) {
       .catch(() => 'main');
   }
 
+  async function originMainSha(): Promise<string | null> {
+    return runGit(['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'])
+      .then((out) => out.trim())
+      .catch(() => null);
+  }
+
   let lastOriginMainFetch = 0;
   // Fire-and-forget so a status poll never blocks on the network; the next poll
   // (SSE-driven, frequent) reads the refreshed ref.
   function refreshOriginMainQuietly(): void {
     if (Date.now() - lastOriginMainFetch < 60_000) return;
     lastOriginMainFetch = Date.now();
-    void runGit(['fetch', 'origin', 'main']).catch(() => {});
+    void (async () => {
+      const before = await originMainSha();
+      await runGit(['fetch', 'origin', 'main']).catch(() => {});
+      const after = await originMainSha();
+      if (after && after !== before) onRemoteChanged?.();
+    })();
   }
 
   // Entity files are branch-local, so a ref's phase state can only be read from that

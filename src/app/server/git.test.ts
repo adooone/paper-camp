@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlanEntry } from '../../types';
 import { createGitManager } from './git';
 
@@ -230,6 +230,41 @@ describe('getBranchHygieneStatus', () => {
     const masterRoot = await initRepo('master');
     const masterManager = gitManager(masterRoot);
     expect(await masterManager.getBranchHygieneStatus()).toBe('clean-on-main');
+  });
+});
+
+describe('onRemoteChanged', () => {
+  it('is not called when the background fetch finds origin/main unchanged', async () => {
+    const root = await initRepo();
+    await addOrigin(root);
+    const onRemoteChanged = vi.fn();
+    const manager = gitManager(root, onRemoteChanged);
+
+    await manager.getBranchHygieneStatus(); // triggers the throttled background fetch
+
+    expect(onRemoteChanged).not.toHaveBeenCalled();
+  });
+
+  it('is called once the background fetch finds origin/main moved', async () => {
+    const root = await initRepo();
+    const remote = await addOrigin(root);
+    const clone = await mkdtemp(join(tmpdir(), 'papercamp-git-clone-'));
+    roots.push(clone);
+    git('.', 'clone', remote, clone);
+    git(clone, 'config', 'user.email', 'test@example.com');
+    git(clone, 'config', 'user.name', 'Test User');
+    git(clone, 'config', 'commit.gpgsign', 'false');
+    await commitFile(clone, 'elsewhere.txt', 'elsewhere\n', 'push from elsewhere');
+    git(clone, 'push', 'origin', 'main');
+
+    const onRemoteChanged = vi.fn();
+    const manager = gitManager(root, onRemoteChanged);
+    await manager.getBranchHygieneStatus(); // throttled fetch is fire-and-forget
+    for (let i = 0; i < 50 && onRemoteChanged.mock.calls.length === 0; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    expect(onRemoteChanged).toHaveBeenCalledOnce();
   });
 });
 

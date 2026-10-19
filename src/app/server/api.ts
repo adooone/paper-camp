@@ -182,8 +182,8 @@ export function createApiMiddleware(
   isMachineBusy?: () => boolean,
   pairCode?: PairCodeManager,
 ): ApiMiddleware {
-  const git = createGitManager(root);
   const activity = createActivityManager(root, activityState);
+  const git = createGitManager(root, () => activity.notifyChanged());
   const publish = (payload: { type: string } & Record<string, unknown>) =>
     activity.publish(payload);
   const services = createDeskServiceManager(root, publish, serviceState);
