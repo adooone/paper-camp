@@ -48,15 +48,25 @@ export function usageForEntry(entry: TaskLogEntry): RunUsage | undefined {
 }
 
 /** The most recent tasks.log entry per plan that's still `interrupted` — a newer
- * `started` line on that plan becomes the newest entry, dropping it from this list. */
-export function interruptedNotices(taskLog: TaskLogEntry[]): TaskLogEntry[] {
+ * `started` line on that plan becomes the newest entry, dropping it from this list.
+ * `closedIds` drops plans that are done/dropped and can never run again; `readIds`
+ * drops entries whose matching notification (the task id) was marked read. */
+export function interruptedNotices(
+  taskLog: TaskLogEntry[],
+  { closedIds, readIds }: { closedIds: Set<string>; readIds: Set<string> },
+): TaskLogEntry[] {
   const latestByPlan = new Map<string, TaskLogEntry>();
   for (const entry of taskLog) {
     if (!entry.planId) continue;
     const current = latestByPlan.get(entry.planId);
     if (!current || entry.startedAt > current.startedAt) latestByPlan.set(entry.planId, entry);
   }
-  return [...latestByPlan.values()].filter((entry) => entry.outcome === 'interrupted');
+  return [...latestByPlan.values()].filter(
+    (entry) =>
+      entry.outcome === 'interrupted' &&
+      !closedIds.has(entry.planId as string) &&
+      !readIds.has(entry.id),
+  );
 }
 
 function unreadCompletedIds(notifications: Notification[]): Set<string> {

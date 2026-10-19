@@ -65,36 +65,75 @@ const parkedQuestion = (overrides: Partial<ParkedQuestion> = {}): ParkedQuestion
   ...overrides,
 });
 
+const noFilters = { closedIds: new Set<string>(), readIds: new Set<string>() };
+
 describe('interruptedNotices', () => {
   it('surfaces a plan whose latest entry never finished', () => {
-    const notices = interruptedNotices([
-      taskLogEntry({
-        outcome: 'interrupted',
-        reason: 'the server stopped while this task was running',
-      }),
-    ]);
+    const notices = interruptedNotices(
+      [
+        taskLogEntry({
+          outcome: 'interrupted',
+          reason: 'the server stopped while this task was running',
+        }),
+      ],
+      noFilters,
+    );
     expect(notices.map((e) => e.planId)).toEqual(['IDEA-1']);
   });
 
   it('drops a plan once a newer run has started on it', () => {
-    const notices = interruptedNotices([
-      taskLogEntry({ id: 'task-1', outcome: 'interrupted', startedAt: '2026-08-01T00:00:00.000Z' }),
-      taskLogEntry({
-        id: 'task-2',
-        startedAt: '2026-08-02T00:00:00.000Z',
-        endedAt: undefined,
-        outcome: undefined,
-      }),
-    ]);
+    const notices = interruptedNotices(
+      [
+        taskLogEntry({
+          id: 'task-1',
+          outcome: 'interrupted',
+          startedAt: '2026-08-01T00:00:00.000Z',
+        }),
+        taskLogEntry({
+          id: 'task-2',
+          startedAt: '2026-08-02T00:00:00.000Z',
+          endedAt: undefined,
+          outcome: undefined,
+        }),
+      ],
+      noFilters,
+    );
     expect(notices).toEqual([]);
   });
 
   it('ignores entries with no plan and finished entries', () => {
-    const notices = interruptedNotices([
-      taskLogEntry({ planId: undefined, outcome: 'interrupted' }),
-      taskLogEntry({ outcome: 'done' }),
-    ]);
+    const notices = interruptedNotices(
+      [
+        taskLogEntry({ planId: undefined, outcome: 'interrupted' }),
+        taskLogEntry({ outcome: 'done' }),
+      ],
+      noFilters,
+    );
     expect(notices).toEqual([]);
+  });
+
+  it('drops a plan whose derived status is done or dropped', () => {
+    const notices = interruptedNotices([taskLogEntry({ outcome: 'interrupted' })], {
+      closedIds: new Set(['IDEA-1']),
+      readIds: new Set(),
+    });
+    expect(notices).toEqual([]);
+  });
+
+  it('drops an entry whose matching notification was marked read', () => {
+    const notices = interruptedNotices([taskLogEntry({ id: 'task-1', outcome: 'interrupted' })], {
+      closedIds: new Set(),
+      readIds: new Set(['task-1']),
+    });
+    expect(notices).toEqual([]);
+  });
+
+  it('keeps an interrupted entry on an open idea with an unread notification', () => {
+    const notices = interruptedNotices([taskLogEntry({ id: 'task-1', outcome: 'interrupted' })], {
+      closedIds: new Set(['IDEA-2']),
+      readIds: new Set(['task-2']),
+    });
+    expect(notices.map((e) => e.planId)).toEqual(['IDEA-1']);
   });
 });
 

@@ -37,10 +37,11 @@ idea shows the card until it is dismissed or the idea runs again, and the
 dismiss marks the Inbox item read.
 
 ### Phases
-- [ ] Filter closed and read entries
+- [x] Filter closed and read entries
       `interruptedNotices(taskLog, { closedIds, readIds })`; the section
       derives both sets from the plans and notifications queries;
       `run-rows.test.ts` covers closed, read and open cases.
+      run: 3m29s · 88 in · 12.9k out · sonnet-5 · sess:a324914f-b21e-4636-bf73-ee3cc0e0833d
 - [ ] Dismiss on the card
       Close button calling `markRead`; foreign notifications in
       `useScopeRuns`; `agent-section.test.ts` updated.

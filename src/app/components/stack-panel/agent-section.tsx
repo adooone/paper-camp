@@ -1,5 +1,8 @@
 import { useScopeRuns } from '@/app/features/activity/hooks';
 import { type ScopeRow, useScope } from '@/app/features/scope';
+import { useNotifications, usePlans } from '@/app/hooks';
+import { fetchPlansAt } from '@/app/services/content/plans-api';
+import { plansQueryKey } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { interruptedNotices, logRowIdForTask } from '@/core/run-rows';
@@ -7,6 +10,7 @@ import {
   AGENT_LABELS,
   type AgentTaskState,
   type AgentTaskStatus,
+  type StoredNotification,
   type TaskKind,
   type TaskLogEntry,
 } from '@/types/index';
@@ -20,6 +24,7 @@ import {
   Tooltip,
   useToast,
 } from '@dendelion/folk-ui';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { CapacityRow } from './capacity-row';
 import { formatLastRun, groupLabelClassName } from './shared';
@@ -294,6 +299,26 @@ export const AgentSection = () => {
   const otherScopeProjects = multiProject ? checkedScopeRows.filter((r) => !r.isCurrent) : [];
   const foreignRuns = useScopeRuns(otherScopeProjects);
 
+  const { plans } = usePlans();
+  const { notifications } = useNotifications();
+  const foreignPlansQueries = useQueries({
+    queries: otherScopeProjects.map((project) => ({
+      queryKey: plansQueryKey(project.runtimeUrl),
+      queryFn: async () => (await fetchPlansAt(project.runtimeUrl)) ?? { entries: [] },
+    })),
+  });
+  const closedIds = new Set(
+    [...(plans?.entries ?? []), ...foreignPlansQueries.flatMap((q) => q.data?.entries ?? [])]
+      .filter((plan) => plan.status === 'done' || plan.status === 'dropped')
+      .map((plan) => plan.id)
+      .filter((id): id is string => id !== undefined),
+  );
+  const readIds = new Set(
+    (notifications ?? [])
+      .filter((n): n is StoredNotification => n.kind !== 'question' && n.read)
+      .map((n) => n.id),
+  );
+
   const ownTask = multiProject ? currentScopeRow : undefined;
   const allTasks: ScopedTask[] = [
     ...agentStatus.map((task) => ({ task, project: ownTask })),
@@ -304,9 +329,15 @@ export const AgentSection = () => {
   const visibleTasks = allTasks.slice(0, MAX_VISIBLE_TASKS);
   const hiddenCount = allTasks.length - visibleTasks.length;
   const notices: ScopedNotice[] = [
-    ...interruptedNotices(taskLog).map((entry) => ({ entry, project: ownTask })),
+    ...interruptedNotices(taskLog, { closedIds, readIds }).map((entry) => ({
+      entry,
+      project: ownTask,
+    })),
     ...foreignRuns.flatMap(({ project, taskLog: foreignTaskLog }) =>
-      interruptedNotices(foreignTaskLog).map((entry) => ({ entry, project })),
+      interruptedNotices(foreignTaskLog, { closedIds, readIds }).map((entry) => ({
+        entry,
+        project,
+      })),
     ),
   ];
 
