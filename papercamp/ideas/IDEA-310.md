@@ -78,10 +78,11 @@ and the card shows the weekly utilisation under the five-hour one.
       `agent.ts` and the probe; stats, night gate and night pause read it;
       `latestCapacity` and `mergeLiveCapacity` removed; tests.
       run: 6m42s · 172 in · 33.1k out · sonnet-5 · sess:6828e320-8459-44a1-b152-886312ce1955
-- [ ] One route and one query
+- [x] One route and one query
       `GET /api/capacity`, the `capacity` stream event, `useCapacity()` and
       `refreshCapacity()`; the slice removed; live overlay from running tasks
       only; the failure toast and the mount rule; tests.
+      run: 7m32s · 156 in · 51.9k out · sonnet-5 · sess:1af93c6a-df08-41f3-9475-20ebe8f77b20
 - [ ] Two bars with reset states
       `5h` and `wk` rows, the `reset` stamp, the taller card class;
       `agent-section.test.ts` and a `capacity-row.test.ts` cover both.

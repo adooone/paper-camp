@@ -1,10 +1,17 @@
-import { writeCapacity } from '@/core/capacity';
+import { readCapacity, writeCapacity } from '@/core/capacity';
 import { probeCapacity } from '../capacity-probe';
 import { sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
-export function capacityRoutes({ root }: RouteContext): Route[] {
+export function capacityRoutes({ root, activity }: RouteContext): Route[] {
   return [
+    {
+      method: 'GET',
+      path: '/api/capacity',
+      handle: async (_req, res) => {
+        sendJson(res, 200, await readCapacity(root));
+      },
+    },
     {
       method: 'POST',
       path: '/api/capacity/refresh',
@@ -15,7 +22,8 @@ export function capacityRoutes({ root }: RouteContext): Route[] {
           return;
         }
         await writeCapacity(root, snapshot, 'probe');
-        sendJson(res, 200, { snapshot, capturedAt: new Date().toISOString() });
+        activity.publish({ type: 'capacity' });
+        sendJson(res, 200, await readCapacity(root));
       },
     },
   ];

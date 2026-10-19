@@ -1,17 +1,21 @@
-import { apiUrl } from '@/app/services/api-base';
-import type { CapacityStat } from '@/types/index';
+import { apiFetch, apiUrl } from '@/app/services/api-base';
+import type { CapacityRecord } from '@/core/capacity';
 
 // Generous: the probe spawns the CLI and waits for its first stream line.
 const PROBE_TIMEOUT_MS = 30_000;
 
-export const refreshCapacityProbe = async (): Promise<CapacityStat | null> => {
-  const response = await fetch(apiUrl('/api/capacity/refresh'), {
+export const fetchCapacity = async (): Promise<CapacityRecord | null> => {
+  const response = await apiFetch(apiUrl('/api/capacity'));
+  if (!response.ok) return null;
+  return (await response.json()) as CapacityRecord | null;
+};
+
+export const probeCapacity = async (): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/capacity/refresh'), {
     method: 'POST',
     signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
   });
-  if (!response.ok) return null;
-  const body = (await response.json()) as Partial<CapacityStat>;
-  return body.snapshot && body.capturedAt
-    ? { snapshot: body.snapshot, capturedAt: body.capturedAt }
-    : null;
+  if (response.ok) return;
+  const body = await response.json().catch(() => ({ error: 'Capacity probe failed' }));
+  throw new Error(body.error ?? 'Capacity probe failed');
 };

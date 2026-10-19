@@ -1,6 +1,6 @@
+import { useCapacity } from '@/app/hooks/use-capacity';
 import { useAppStore } from '@/app/stores/app-store';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { CapacityStat, RateLimitSnapshot, TaskLogEntry } from '@/types/index';
 import {
   Card,
   IconButton,
@@ -10,7 +10,7 @@ import {
   Stamp,
   Tooltip,
 } from '@dendelion/folk-ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { chalkStatusText } from './shared';
 
 const levelVariant = {
@@ -25,6 +25,8 @@ const levelText = {
   rejected: chalkStatusText.fail,
 } as const;
 
+const LIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
+
 function formatGap(ms: number): string {
   const minutes = Math.max(0, Math.round(ms / 60_000));
   if (minutes < 60) return `${minutes}m`;
@@ -33,44 +35,13 @@ function formatGap(ms: number): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
-  let latest: CapacityStat | null = null;
-  let latestMs = Number.NEGATIVE_INFINITY;
-  for (const entry of entries) {
-    if (!entry.rateLimit || entry.endedAt === undefined) continue;
-    if (
-      entry.rateLimit.resetsAt !== undefined &&
-      resetsAtMs(entry.rateLimit.resetsAt) <= Date.now()
-    )
-      continue;
-    const at = Date.parse(entry.endedAt);
-    if (Number.isNaN(at)) continue;
-    if (at >= latestMs) {
-      latestMs = at;
-      latest = { snapshot: entry.rateLimit, capturedAt: entry.endedAt };
-    }
-  }
-  return latest;
-}
-
-function mergeLiveCapacity(
-  live: RateLimitSnapshot | null,
-  stat: CapacityStat | null,
-): { snapshot: RateLimitSnapshot; capturedAt: string | null } | null {
-  if (live) return { snapshot: live, capturedAt: null };
-  return stat ? { snapshot: stat.snapshot, capturedAt: stat.capturedAt } : null;
-}
-
 export interface CapacityRowProps {
   heightClassName?: string;
 }
 
 export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
-  const taskLog = useAppStore((s) => s.taskLog);
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const refreshCapacity = useAppStore((s) => s.refreshCapacity);
-  const probed = useAppStore((s) => s.probedCapacity);
-  const [refreshing, setRefreshing] = useState(false);
+  const { record, refreshing, refresh } = useCapacity();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -78,22 +49,18 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
     return () => clearInterval(id);
   }, []);
 
-  const live = agentStatus.find((t) => t.rateLimit)?.rateLimit ?? null;
-  const logged = useMemo(() => latestCapacity(taskLog), [taskLog]);
-  const capacity = mergeLiveCapacity(live, probed ?? logged);
+  const live =
+    agentStatus.find((t) => LIVE_STATUSES.has(t.status) && t.rateLimit)?.rateLimit ?? null;
 
-  const refresh = useCallback(() => {
-    setRefreshing(true);
-    void refreshCapacity().finally(() => setRefreshing(false));
-  }, [refreshCapacity]);
-
-  // Once per session: a probe is cheap but not free, so a later mount reuses the
-  // reading already in the store and leaves refreshing to the button.
+  // On mount only: a probe is cheap but not free, so a fresh five-hour window
+  // reuses the reading already on file and leaves refreshing to the button.
   useEffect(() => {
-    if (probed === null) refresh();
-  }, [probed, refresh]);
+    const fiveHour = record?.snapshot.unifiedWindows?.five_hour;
+    const expired = fiveHour?.resetsAt !== undefined && resetsAtMs(fiveHour.resetsAt) <= Date.now();
+    if (!record || expired) refresh();
+  }, [record, refresh]);
 
-  const snapshot = capacity?.snapshot ?? null;
+  const snapshot = live ?? record?.snapshot ?? null;
   const level = capacityLevel(snapshot?.status ?? 'allowed');
   const fiveHour = snapshot?.unifiedWindows?.five_hour;
   const pct = fiveHour ? Math.round(fiveHour.utilization * 100) : 0;

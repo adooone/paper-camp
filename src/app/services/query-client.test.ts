@@ -54,4 +54,13 @@ describe('subscribeProjectToActivityStream', () => {
       refetchType: 'all',
     });
   });
+
+  it('refreshCapacity invalidates the current runtime capacity query', async () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    await mod.refreshCapacity();
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: mod.capacityQueryKey('http://localhost:1234'),
+      refetchType: 'all',
+    });
+  });
 });

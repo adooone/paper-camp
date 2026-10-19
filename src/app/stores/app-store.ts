@@ -1,10 +1,5 @@
 import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice, createInitialAgentState } from './slices/agent-slice';
-import {
-  type CapacitySlice,
-  createCapacitySlice,
-  createInitialCapacityState,
-} from './slices/capacity-slice';
 import { type DiffSlice, createDiffSlice, createInitialDiffState } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice, createInitialDocsState } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
@@ -36,8 +31,7 @@ type ResetSlice = {
   resetProjectState: () => void;
 };
 
-export type AppStore = CapacitySlice &
-  PlansSlice &
+export type AppStore = PlansSlice &
   RoadmapSlice &
   IdeasSlice &
   SuggestionsSlice &
@@ -51,7 +45,6 @@ export type AppStore = CapacitySlice &
   ResetSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
-  ...createCapacitySlice(set),
   ...createPlansSlice(set),
   ...createRoadmapSlice(set, get),
   ...createIdeasSlice(set, get),
@@ -70,7 +63,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ...createInitialTaskLogState(),
       ...createInitialDocsState(),
       ...createInitialRoadmapState(),
-      ...createInitialCapacityState(),
       ...createInitialStatusState(),
     }),
 }));
