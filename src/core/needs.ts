@@ -1,10 +1,15 @@
 import type { EntityEntry, PlanEntry, ResolvedNeed } from '../types/index';
-import { readCorpus } from './corpus';
+import type { CorpusSnapshot } from './corpus';
 import { type MachineRegistry, defaultRegistryPath, loadRegistry } from './machine-registry';
 import { isBlockingNeed } from './needs-status';
 import { isClosedEntity } from './status';
 
 export { isBlockingNeed, hasBlockingNeed } from './needs-status';
+
+/** Supplied by the caller (always `readCorpus` from `./corpus`) rather than imported
+ * directly — `corpus.ts` calls into this module, so importing it back here would be
+ * a circular dependency. */
+export type ReadCorpusFn = (root: string) => Promise<CorpusSnapshot>;
 
 export interface NeedsRef {
   raw: string;
@@ -32,6 +37,7 @@ export function parseNeedsRef(raw: string): NeedsRef {
 export async function resolveNeedsRefs(
   root: string,
   needs: string[],
+  readCorpusFn: ReadCorpusFn,
   registry?: MachineRegistry,
   entriesByRoot: EntriesByRoot = new Map(),
 ): Promise<ResolvedNeed[]> {
@@ -41,7 +47,7 @@ export async function resolveNeedsRefs(
   async function entriesForRoot(projectRoot: string): Promise<Map<string, EntityEntry>> {
     const cached = entriesByRoot.get(projectRoot);
     if (cached) return cached;
-    const { entries } = await readCorpus(projectRoot);
+    const { entries } = await readCorpusFn(projectRoot);
     const byId = new Map(entries.map((entry) => [entry.id, entry]));
     entriesByRoot.set(projectRoot, byId);
     return byId;
@@ -81,6 +87,7 @@ export async function resolveNeedsRefs(
 export async function attachResolvedNeeds(
   root: string,
   plans: PlanEntry[],
+  readCorpusFn: ReadCorpusFn,
   entriesByRoot: EntriesByRoot = new Map(),
 ): Promise<PlanEntry[]> {
   if (plans.every((plan) => plan.needs.length === 0)) return plans;
@@ -90,7 +97,13 @@ export async function attachResolvedNeeds(
       if (plan.needs.length === 0) return plan;
       return {
         ...plan,
-        resolvedNeeds: await resolveNeedsRefs(root, plan.needs, registry, entriesByRoot),
+        resolvedNeeds: await resolveNeedsRefs(
+          root,
+          plan.needs,
+          readCorpusFn,
+          registry,
+          entriesByRoot,
+        ),
       };
     }),
   );
@@ -102,6 +115,7 @@ export async function attachResolvedNeeds(
 export async function computeNeedsBlockedIds(
   root: string,
   entries: { id: string; needs: string[] }[],
+  readCorpusFn: ReadCorpusFn,
   entriesByRoot: EntriesByRoot = new Map(),
 ): Promise<Set<string>> {
   const withNeeds = entries.filter((e) => e.needs.length > 0);
@@ -109,7 +123,13 @@ export async function computeNeedsBlockedIds(
   const registry = await loadRegistry(defaultRegistryPath());
   const blocked = new Set<string>();
   for (const entry of withNeeds) {
-    const resolved = await resolveNeedsRefs(root, entry.needs, registry, entriesByRoot);
+    const resolved = await resolveNeedsRefs(
+      root,
+      entry.needs,
+      readCorpusFn,
+      registry,
+      entriesByRoot,
+    );
     if (resolved.some(isBlockingNeed)) blocked.add(entry.id);
   }
   return blocked;
@@ -118,9 +138,13 @@ export async function computeNeedsBlockedIds(
 /** Refuses a phase/run-all launch whose plan waits on an unmet need — the first
  * blocking need wins when there's more than one. A ref that can't be resolved
  * never blocks (see `isBlockingNeed`). */
-export async function checkNeedsForRun(root: string, needs: string[]): Promise<string | null> {
+export async function checkNeedsForRun(
+  root: string,
+  needs: string[],
+  readCorpusFn: ReadCorpusFn,
+): Promise<string | null> {
   if (needs.length === 0) return null;
-  const blocking = (await resolveNeedsRefs(root, needs)).find(isBlockingNeed);
+  const blocking = (await resolveNeedsRefs(root, needs, readCorpusFn)).find(isBlockingNeed);
   if (!blocking) return null;
   return `waits for ${blocking.projectName ? `${blocking.projectName} ` : ''}${blocking.id}`;
 }

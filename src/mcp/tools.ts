@@ -60,8 +60,7 @@ async function daemonClient(root: string): Promise<DaemonClient> {
 }
 
 // Every tool is a thin HTTP client against the daemon's `/api/*` routes — the same
-// routes the dashboard uses — so id allocation, archive-on-done, index regeneration
-// and the `changed` tick all happen in exactly one place.
+// routes the dashboard uses — so writes, archiving and the `changed` tick happen in one place.
 export function registerReadTools(server: McpServer, root: string): void {
   server.registerTool(
     'list_plans',

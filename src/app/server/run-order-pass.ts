@@ -25,7 +25,7 @@ function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): st
 export async function runRunOrderPass(root: string): Promise<string[]> {
   // File-watcher-triggered, not a human ask: serve cache/disk only, never a live `gh` call.
   const { entries, work } = await readCorpus(root);
-  const blockedIds = await computeNeedsBlockedIds(root, entries);
+  const blockedIds = await computeNeedsBlockedIds(root, entries, readCorpus);
   const classified = classifyRunOrderEntries(
     entries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),
     work,

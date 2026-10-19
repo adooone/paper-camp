@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { PlanStatus } from '../types/index';
+import { readCorpus } from './corpus';
 import {
   checkNeedsForRun,
   computeNeedsBlockedIds,
@@ -55,7 +56,7 @@ describe('parseNeedsRef', () => {
 describe('resolveNeedsRefs', () => {
   it('resolves a same-project ref against the current project', async () => {
     const root = await makeProject([{ id: 'IDEA-1', title: 'Local idea' }]);
-    const result = await resolveNeedsRefs(root, ['IDEA-1', 'IDEA-99'], {
+    const result = await resolveNeedsRefs(root, ['IDEA-1', 'IDEA-99'], readCorpus, {
       version: 1,
       projects: [],
     });
@@ -67,7 +68,10 @@ describe('resolveNeedsRefs', () => {
 
   it('reports a found need as done once its status is done', async () => {
     const root = await makeProject([{ id: 'IDEA-1', title: 'Local idea', status: 'done' }]);
-    const result = await resolveNeedsRefs(root, ['IDEA-1'], { version: 1, projects: [] });
+    const result = await resolveNeedsRefs(root, ['IDEA-1'], readCorpus, {
+      version: 1,
+      projects: [],
+    });
     expect(result).toEqual([
       { raw: 'IDEA-1', id: 'IDEA-1', found: true, done: true, title: 'Local idea' },
     ]);
@@ -80,7 +84,7 @@ describe('resolveNeedsRefs', () => {
       version: 1 as const,
       projects: [{ slug: 'folk-ui', path: otherRoot, name: 'folk-ui' }],
     };
-    const result = await resolveNeedsRefs(root, ['folk-ui/IDEA-14'], registry);
+    const result = await resolveNeedsRefs(root, ['folk-ui/IDEA-14'], readCorpus, registry);
     expect(result).toEqual([
       {
         raw: 'folk-ui/IDEA-14',
@@ -96,7 +100,7 @@ describe('resolveNeedsRefs', () => {
 
   it('reports an unregistered project slug as unresolved rather than throwing', async () => {
     const root = await makeProject([]);
-    const result = await resolveNeedsRefs(root, ['missing-project/IDEA-1'], {
+    const result = await resolveNeedsRefs(root, ['missing-project/IDEA-1'], readCorpus, {
       version: 1,
       projects: [],
     });
@@ -128,15 +132,15 @@ describe('isBlockingNeed / hasBlockingNeed', () => {
 describe('checkNeedsForRun', () => {
   it('refuses with the blocking need, naming the project for a cross-project ref', async () => {
     const root = await makeProject([{ id: 'IDEA-2', title: 'Still open' }]);
-    const message = await checkNeedsForRun(root, ['IDEA-2']);
+    const message = await checkNeedsForRun(root, ['IDEA-2'], readCorpus);
     expect(message).toBe('waits for IDEA-2');
   });
 
   it('does not block on a done need or an unresolved ref', async () => {
     const root = await makeProject([{ id: 'IDEA-2', title: 'Done already', status: 'done' }]);
-    expect(await checkNeedsForRun(root, ['IDEA-2'])).toBeNull();
-    expect(await checkNeedsForRun(root, ['IDEA-404'])).toBeNull();
-    expect(await checkNeedsForRun(root, [])).toBeNull();
+    expect(await checkNeedsForRun(root, ['IDEA-2'], readCorpus)).toBeNull();
+    expect(await checkNeedsForRun(root, ['IDEA-404'], readCorpus)).toBeNull();
+    expect(await checkNeedsForRun(root, [], readCorpus)).toBeNull();
   });
 });
 
@@ -147,11 +151,15 @@ describe('computeNeedsBlockedIds', () => {
       { id: 'IDEA-2', title: 'Still open' },
       { id: 'IDEA-3', title: 'No needs' },
     ]);
-    const blocked = await computeNeedsBlockedIds(root, [
-      { id: 'IDEA-1', needs: ['IDEA-2'] },
-      { id: 'IDEA-2', needs: [] },
-      { id: 'IDEA-3', needs: [] },
-    ]);
+    const blocked = await computeNeedsBlockedIds(
+      root,
+      [
+        { id: 'IDEA-1', needs: ['IDEA-2'] },
+        { id: 'IDEA-2', needs: [] },
+        { id: 'IDEA-3', needs: [] },
+      ],
+      readCorpus,
+    );
     expect(blocked).toEqual(new Set(['IDEA-1']));
   });
 });

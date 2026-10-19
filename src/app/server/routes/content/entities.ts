@@ -43,7 +43,9 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         const newId = await createIdea(root, { ...input, title: input.title.trim() });
         activity.notifyChanged();
         const unresolvedNeeds = input.needs
-          ? (await resolveNeedsRefs(root, input.needs)).filter((r) => !r.found).map((r) => r.raw)
+          ? (await resolveNeedsRefs(root, input.needs, readCorpus))
+              .filter((r) => !r.found)
+              .map((r) => r.raw)
           : [];
         sendJson(res, 201, {
           ok: true,
@@ -167,7 +169,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           const { work } = await readCorpus(root, { live: true });
           const updatedEntry = { ...target, ...buildOverrides(target) } as EntityEntry;
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
-          const blockedIds = await computeNeedsBlockedIds(root, nextEntries);
+          const blockedIds = await computeNeedsBlockedIds(root, nextEntries, readCorpus);
           const classified = classifyRunOrderEntries(
             nextEntries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),
             work,
@@ -184,7 +186,9 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
 
         activity.notifyChanged();
         const unresolvedNeeds = updates.needs
-          ? (await resolveNeedsRefs(root, updates.needs)).filter((r) => !r.found).map((r) => r.raw)
+          ? (await resolveNeedsRefs(root, updates.needs, readCorpus))
+              .filter((r) => !r.found)
+              .map((r) => r.raw)
           : [];
         sendJson(res, 200, { ok: true, ...(unresolvedNeeds.length > 0 && { unresolvedNeeds }) });
       },

@@ -436,7 +436,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
       async ({ planId, phaseIndex }) => {
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
-        const waits = await checkNeedsForRun(root, resolved.plan.needs);
+        const waits = await checkNeedsForRun(root, resolved.plan.needs, readCorpus);
         if (waits) return { ok: false, error: waits };
         return agent.start(
           resolved.plan,
@@ -565,7 +565,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         if (!resolved.ok) return resolved;
         const staleBase = await checkStaleBaseForRunAll(git, planId);
         if (staleBase) return { ok: false, error: staleBase };
-        const waits = await checkNeedsForRun(root, resolved.plan.needs);
+        const waits = await checkNeedsForRun(root, resolved.plan.needs, readCorpus);
         if (waits) return { ok: false, error: waits };
         return agent.startRunAllPhases(
           resolved.plan,

@@ -100,11 +100,10 @@ async function buildSnapshot(
     return { ...p, status: deriveBoardStatus(ticketStatuses) };
   });
 
-  // Seeding the local root up front means attachResolvedNeeds never calls back into
-  // readCorpus for a same-project `needs:` ref — that would re-enter this very call
-  // while its own promise is still pending in the cache below and deadlock.
+  // Seeding the local root up front means attachResolvedNeeds never calls readCorpus
+  // back for a same-project `needs:` ref while this call's own promise is pending below.
   const entriesByRoot: EntriesByRoot = new Map([[root, new Map(entries.map((e) => [e.id, e]))]]);
-  const work = await attachResolvedNeeds(root, workWithBoard, entriesByRoot);
+  const work = await attachResolvedNeeds(root, workWithBoard, readCorpus, entriesByRoot);
 
   const notes = entries.filter((e) => e.kind === 'note').map(entityToIdea);
 
