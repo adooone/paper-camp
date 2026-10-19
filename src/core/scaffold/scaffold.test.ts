@@ -126,6 +126,75 @@ describe('initProject Claude Code integration scaffolding', () => {
   });
 });
 
+describe('initProject MCP scaffolding', () => {
+  it('writes .mcp.json and opencode.json with the paper-camp entry', async () => {
+    const root = await makeTempDir('papercamp-scaffold-mcp-');
+
+    await initProject(root, { projectName: 'demo' });
+
+    const mcp = JSON.parse(await readFile(join(root, '.mcp.json'), 'utf-8'));
+    expect(mcp.mcpServers['paper-camp']).toEqual({ command: 'paper-camp', args: ['mcp'] });
+
+    const opencode = JSON.parse(await readFile(join(root, 'opencode.json'), 'utf-8'));
+    expect(opencode.mcp['paper-camp']).toEqual({
+      type: 'local',
+      command: ['paper-camp', 'mcp'],
+      enabled: true,
+    });
+  });
+
+  it('merges the paper-camp entry into an existing .mcp.json without touching other servers', async () => {
+    const root = await makeTempDir('papercamp-scaffold-mcp-merge-');
+
+    await writeFile(
+      join(root, '.mcp.json'),
+      `${JSON.stringify({ mcpServers: { other: { command: 'other-server' } } }, null, 2)}\n`,
+      'utf-8',
+    );
+
+    await initProject(root, { projectName: 'demo' });
+
+    const mcp = JSON.parse(await readFile(join(root, '.mcp.json'), 'utf-8'));
+    expect(mcp.mcpServers.other).toEqual({ command: 'other-server' });
+    expect(mcp.mcpServers['paper-camp']).toEqual({ command: 'paper-camp', args: ['mcp'] });
+  });
+
+  it('merges mcp.paper-camp into an existing opencode.json without touching other keys', async () => {
+    const root = await makeTempDir('papercamp-scaffold-opencode-merge-');
+
+    await writeFile(
+      join(root, 'opencode.json'),
+      `${JSON.stringify({ theme: 'dark', mcp: { other: { type: 'local' } } }, null, 2)}\n`,
+      'utf-8',
+    );
+
+    await initProject(root, { projectName: 'demo' });
+
+    const opencode = JSON.parse(await readFile(join(root, 'opencode.json'), 'utf-8'));
+    expect(opencode.theme).toBe('dark');
+    expect(opencode.mcp.other).toEqual({ type: 'local' });
+    expect(opencode.mcp['paper-camp']).toEqual({
+      type: 'local',
+      command: ['paper-camp', 'mcp'],
+      enabled: true,
+    });
+  });
+
+  it('leaves .mcp.json and opencode.json untouched when already up to date', async () => {
+    const root = await makeTempDir('papercamp-scaffold-mcp-noop-');
+    const { buildMcpJson, buildOpencodeJson } = await import('./templates');
+    const mcpBefore = buildMcpJson();
+    const opencodeBefore = buildOpencodeJson();
+    await writeFile(join(root, '.mcp.json'), mcpBefore, 'utf-8');
+    await writeFile(join(root, 'opencode.json'), opencodeBefore, 'utf-8');
+
+    await initProject(root, { projectName: 'demo' });
+
+    expect(await readFile(join(root, '.mcp.json'), 'utf-8')).toBe(mcpBefore);
+    expect(await readFile(join(root, 'opencode.json'), 'utf-8')).toBe(opencodeBefore);
+  });
+});
+
 describe('initProject machine registry', () => {
   it('registers the project, honouring PAPERCAMP_CONFIG_DIR', async () => {
     const root = await makeTempDir('papercamp-scaffold-registry-');

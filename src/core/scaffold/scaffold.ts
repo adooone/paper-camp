@@ -14,7 +14,11 @@ import {
   PULL_REQUEST_TEMPLATE_HEADER,
   SKILL_MD_CONTENT,
   buildClaudeSettingsJson,
+  buildMcpJson,
+  buildOpencodeJson,
   mergeClaudeSettingsJson,
+  mergeMcpJson,
+  mergeOpencodeJson,
 } from './templates';
 
 const PACKAGE_JSON_SEARCH_DEPTH = 5;
@@ -175,6 +179,28 @@ export async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<
     }
   } else {
     await writeFile(settingsPath, buildClaudeSettingsJson(targetDir), 'utf-8');
+  }
+
+  const mcpPath = join(targetDir, '.mcp.json');
+  if (await exists(mcpPath)) {
+    const existing = await readFile(mcpPath, 'utf-8');
+    const merged = mergeMcpJson(existing);
+    if (merged !== existing) {
+      await writeFile(mcpPath, merged, 'utf-8');
+    }
+  } else {
+    await writeFile(mcpPath, buildMcpJson(), 'utf-8');
+  }
+
+  const opencodePath = join(targetDir, 'opencode.json');
+  if (await exists(opencodePath)) {
+    const existing = await readFile(opencodePath, 'utf-8');
+    const merged = mergeOpencodeJson(existing);
+    if (merged !== existing) {
+      await writeFile(opencodePath, merged, 'utf-8');
+    }
+  } else {
+    await writeFile(opencodePath, buildOpencodeJson(), 'utf-8');
   }
 }
 

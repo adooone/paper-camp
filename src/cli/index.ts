@@ -172,6 +172,8 @@ export async function runInit(targetDir: string, projectName?: string): Promise<
     console.log('  papercamp/ideas/archive/');
     console.log('  .claude/skills/paper-camp/SKILL.md');
     console.log('  .claude/settings.json     (SessionStart hook)');
+    console.log('  .mcp.json                 (paper-camp MCP server)');
+    console.log('  opencode.json             (paper-camp MCP server)');
     return true;
   } catch (error) {
     if (error instanceof AlreadyInitializedError) {
@@ -187,6 +189,8 @@ export async function runInitSettings(targetDir: string): Promise<boolean> {
   console.log(`Wrote Claude Code integration in ${targetDir}`);
   console.log('  .claude/skills/paper-camp/SKILL.md');
   console.log('  .claude/settings.json     (permissions.allow, SessionStart hook)');
+  console.log('  .mcp.json                 (paper-camp MCP server)');
+  console.log('  opencode.json             (paper-camp MCP server)');
   return true;
 }
 

@@ -64,9 +64,10 @@ files, and `paper-camp doctor` is green on this repo.
       `buildArgs` appends `--mcp-config` with the inline JSON and keeps
       `--strict-mcp-config`; `claude-code.test.ts` asserts the exact args.
       run: 52s · 22 in · 2.3k out · sonnet-5 · sess:0e49ae85-99f2-4b7f-b319-006b47b83c98
-- [ ] Scaffold `.mcp.json` and `opencode.json` from init
+- [x] Scaffold `.mcp.json` and `opencode.json` from init
       `runInit` and `--settings` write or merge the `paper-camp` entry in both
       files, idempotently; scaffold tests for create and merge.
+      run: 2m6s · 46 in · 8.4k out · sonnet-5 · sess:0e49ae85-99f2-4b7f-b319-006b47b83c98
 - [ ] Doctor check, docs and skill wording
       Tooling check for the two entries; `docs/MCP.md` corrected; the
       `SKILL.md` template and this repo's skill drop the "if connected" hedge.

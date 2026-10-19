@@ -110,6 +110,52 @@ export function buildClaudeSettingsJson(targetDir: string): string {
   )}\n`;
 }
 
+const MCP_SERVER_ENTRY = { command: 'paper-camp', args: ['mcp'] };
+
+export function buildMcpJson(): string {
+  return `${JSON.stringify({ mcpServers: { 'paper-camp': MCP_SERVER_ENTRY } }, null, 2)}\n`;
+}
+
+export function mergeMcpJson(existingContent: string): string {
+  let config: Record<string, unknown>;
+  try {
+    config = JSON.parse(existingContent);
+  } catch {
+    return existingContent;
+  }
+
+  const mcpServers = (config.mcpServers as Record<string, unknown> | undefined) ?? {};
+  if (JSON.stringify(mcpServers['paper-camp']) === JSON.stringify(MCP_SERVER_ENTRY)) {
+    return existingContent;
+  }
+
+  config.mcpServers = { ...mcpServers, 'paper-camp': MCP_SERVER_ENTRY };
+  return `${JSON.stringify(config, null, 2)}\n`;
+}
+
+const OPENCODE_MCP_ENTRY = { type: 'local', command: ['paper-camp', 'mcp'], enabled: true };
+
+export function buildOpencodeJson(): string {
+  return `${JSON.stringify({ mcp: { 'paper-camp': OPENCODE_MCP_ENTRY } }, null, 2)}\n`;
+}
+
+export function mergeOpencodeJson(existingContent: string): string {
+  let config: Record<string, unknown>;
+  try {
+    config = JSON.parse(existingContent);
+  } catch {
+    return existingContent;
+  }
+
+  const mcp = (config.mcp as Record<string, unknown> | undefined) ?? {};
+  if (JSON.stringify(mcp['paper-camp']) === JSON.stringify(OPENCODE_MCP_ENTRY)) {
+    return existingContent;
+  }
+
+  config.mcp = { ...mcp, 'paper-camp': OPENCODE_MCP_ENTRY };
+  return `${JSON.stringify(config, null, 2)}\n`;
+}
+
 export const SKILL_MD_CONTENT = `---
 name: paper-camp
 description: Work inside a project that has a papercamp/ folder — its unified idea entities (each holding its plan as a section), with decisions and open questions logged as notes on the idea they bind. Use this whenever the working directory contains papercamp/ (papercamp/ideas/), and especially before starting, continuing, or completing any plan phase, drafting an idea, logging a decision, or answering "what are we working on / what's next".
