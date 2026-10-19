@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { branchName, resolvePrsByEntity } from '@/core/git-pr';
@@ -705,6 +706,11 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return (await runGit(['rev-parse', 'HEAD'])).trim();
   }
 
+  async function getTreeHash(): Promise<string> {
+    const output = await runGit(['status', '--porcelain=v2']);
+    return createHash('sha1').update(output).digest('hex');
+  }
+
   async function getLastCommitFor(file: string): Promise<string> {
     return runGit(['log', '-1', '--format=%H', '--', toLiteralPathspec(file)])
       .then((output) => output.trim())
@@ -964,6 +970,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     stagePath,
     unstagePath,
     getHeadSha,
+    getTreeHash,
     getLastCommitFor,
     revert,
     diff,

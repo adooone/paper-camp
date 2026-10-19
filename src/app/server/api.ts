@@ -187,7 +187,12 @@ export function createApiMiddleware(
   const publish = (payload: { type: string } & Record<string, unknown>) =>
     activity.publish(payload);
   const services = createDeskServiceManager(root, publish, serviceState);
-  const checks = createDeskCheckManager(root, () => git.getHeadSha(), publish, checkState);
+  const checks = createDeskCheckManager(
+    root,
+    async () => ({ headSha: await git.getHeadSha(), treeHash: await git.getTreeHash() }),
+    publish,
+    checkState,
+  );
   const status = createStatusManager(root, checks, git, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);

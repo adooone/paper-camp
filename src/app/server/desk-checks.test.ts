@@ -41,6 +41,40 @@ describe('runCheck', () => {
   });
 });
 
+describe('runCheck fingerprint', () => {
+  it('captures the fingerprint before the command runs, not after', async () => {
+    const root = await tmpRoot('sleep 0.05');
+    let calls = 0;
+    const getFingerprint = async () => {
+      calls += 1;
+      return { headSha: `sha-${calls}`, treeHash: `tree-${calls}` };
+    };
+    const { runCheck, getState } = createDeskCheckManager(root, getFingerprint);
+
+    await runCheck('test');
+
+    expect(calls).toBe(1);
+    expect(getState().runtimes.get('test')).toEqual(
+      expect.objectContaining({ headSha: 'sha-1', treeHash: 'tree-1', status: 'pass' }),
+    );
+  });
+
+  it('settles the check instead of hanging when the fingerprint lookup fails', async () => {
+    const root = await tmpRoot('true');
+    const getFingerprint = async () => {
+      throw new Error('git unavailable');
+    };
+    const { runCheck, getState } = createDeskCheckManager(root, getFingerprint);
+
+    const status = await runCheck('test');
+
+    expect(status).toBe('pass');
+    expect(getState().runtimes.get('test')).toEqual(
+      expect.objectContaining({ headSha: null, treeHash: null, status: 'pass' }),
+    );
+  });
+});
+
 describe('runFix', () => {
   it('runs the fix command, re-runs the check, and returns the refreshed state', async () => {
     const root = await tmpRoot('test -f marker.txt', 'touch marker.txt');

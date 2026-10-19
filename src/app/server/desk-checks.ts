@@ -4,17 +4,25 @@ import { join } from 'node:path';
 import { deskConfigSchema } from '@/core/parse';
 import type { CheckStatus, DeskCheck, DeskCheckState } from '../../types';
 
+export interface CheckFingerprint {
+  headSha: string | null;
+  treeHash: string | null;
+}
+
+const EMPTY_FINGERPRINT: CheckFingerprint = { headSha: null, treeHash: null };
+
 export interface CheckRuntime {
   status: CheckStatus;
   lastRun: string | null;
   output: string;
-  // The HEAD this result was produced against — lets a baseline reuse it instead
-  // of re-running the check when nothing has changed since (IDEA-255).
+  // The tree this result was produced against — lets a baseline reuse it instead
+  // of re-running the check when nothing has changed since (IDEA-255, IDEA-308).
   headSha: string | null;
+  treeHash: string | null;
 }
 
 function emptyRuntime(): CheckRuntime {
-  return { status: 'stale', lastRun: null, output: '', headSha: null };
+  return { status: 'stale', lastRun: null, output: '', ...EMPTY_FINGERPRINT };
 }
 
 export class MissingFixCmdError extends Error {}
@@ -64,7 +72,7 @@ export function loadManifestChecks(root: string): DeskCheck[] {
 
 export function createDeskCheckManager(
   root: string,
-  getHeadSha?: () => Promise<string>,
+  getFingerprint?: () => Promise<CheckFingerprint>,
   publish?: (payload: { type: string } & Record<string, unknown>) => void,
   state: DeskCheckManagerState = createEmptyCheckState(),
 ) {
@@ -83,12 +91,18 @@ export function createDeskCheckManager(
     publish?.({ message: `check: ${name}`, timestamp: new Date().toISOString(), type: 'check' });
   }
 
-  function setResult(name: string, status: CheckStatus, output: string, headSha: string | null) {
+  function setResult(
+    name: string,
+    status: CheckStatus,
+    output: string,
+    fingerprint: CheckFingerprint,
+  ) {
     const runtime = runtimeFor(name);
     runtime.status = status;
     runtime.output = output;
     runtime.lastRun = new Date().toISOString();
-    runtime.headSha = headSha;
+    runtime.headSha = fingerprint.headSha;
+    runtime.treeHash = fingerprint.treeHash;
     broadcast(name);
   }
 
@@ -102,12 +116,17 @@ export function createDeskCheckManager(
     if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
 
     const promise = (async () => {
-      setResult(name, 'running', '', null);
+      // Captured before the command starts, so a commit landing mid-run can't
+      // stamp this result with a fingerprint it predates. A failing lookup
+      // still lets the check settle, with a fingerprint that never matches.
+      const fingerprint = getFingerprint
+        ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
+        : EMPTY_FINGERPRINT;
+      setResult(name, 'running', '', fingerprint);
       const { code, output } = await run(check.cmd, root);
       inFlight.delete(name);
       const status = code === 0 ? 'pass' : 'fail';
-      const headSha = getHeadSha ? await getHeadSha() : null;
-      setResult(name, status, output, headSha);
+      setResult(name, status, output, fingerprint);
       return status;
     })();
     inFlight.set(name, promise);

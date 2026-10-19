@@ -92,9 +92,10 @@ at most three git spawns in a traced request, and `status.ts` no longer
 exists.
 
 ### Phases
-- [ ] Check freshness keyed on the tree
+- [x] Check freshness keyed on the tree
       `{ headSha, treeHash }` captured before the run, Docs on the fingerprint,
       settled results on `getHeadSha` failure, async `runChecksAndWait`; tests.
+      run: 4m59s · 78 in · 26.3k out · sonnet-5 · sess:9639e81b-bba2-4453-b55c-3cda24701f5d
 - [ ] The run-all gate inside the check manager
       `runChecksAndWait` and `getCachedOrRunChecks` move; `StatusManager` and
       its hot-swap state removed; `/api/status` inlined; call sites updated.
