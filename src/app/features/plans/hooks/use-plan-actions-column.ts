@@ -17,7 +17,7 @@ export const usePlanActionsColumn = () => {
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitStatus = useAppStore((s) => s.gitStatus);
   const { plans: allPlans } = usePlans();
-  const { patch: patchByTitle, updating } = usePlanStatusPatch();
+  const { patch: patchById, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
   const setDetailView = useAppStore((s) => s.setDetailView);
@@ -69,7 +69,10 @@ export const usePlanActionsColumn = () => {
   };
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
 
-  const patch = (updates: Parameters<typeof patchByTitle>[1]) => patchByTitle(plan.title, updates);
+  const patch = (updates: Parameters<typeof patchById>[1]) => {
+    if (!plan.id) return Promise.resolve(false);
+    return patchById(plan.id, updates);
+  };
 
   const handleArchive = async () => {
     if (!plan.id) return;

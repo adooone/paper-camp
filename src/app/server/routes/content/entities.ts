@@ -1,80 +1,67 @@
-import { unlink } from 'node:fs/promises';
-import { join } from 'node:path';
-import { CorpusError, type EntityFileInput, readCorpus, updateEntity } from '@/core/corpus';
+import {
+  CorpusError,
+  type CreateIdeaInput,
+  type EntityFileInput,
+  appendThread,
+  createIdea,
+  readCorpus,
+  updateEntity,
+} from '@/core/corpus';
 import { computeNeedsBlockedIds } from '@/core/needs';
 import { readEntities } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
-import { replaceThreadKinds } from '@/core/thread';
+import { agentThreadMessage } from '@/core/serialize';
+import { promoteThreadMessage, replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
   type AgentId,
   type EntityEntry,
+  type EntityType,
   type LogEntry,
   type PhaseItem,
   type PlanStatus,
   type ThreadMessage,
 } from '@/types/index';
-import {
-  campFile,
-  fileExists,
-  readRunOrderFile,
-  withRunOrderLock,
-  writeRunOrderFile,
-} from '../../helpers';
+import { campFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
-function findWorkEntity(
-  entries: EntityEntry[],
-  key: string,
-  opts?: { includeNotes?: boolean },
-): EntityEntry | undefined {
-  return entries.find(
-    (e) => (opts?.includeNotes || e.kind !== 'note') && (e.title === key || e.id === key),
-  );
-}
+const NOTE_STATE_KINDS = new Set<ThreadMessage['kind']>(['note', 'decision', 'question']);
 
-export function planRoutes({ root, git, activity }: RouteContext): Route[] {
+export function entityRoutes({ root, activity }: RouteContext): Route[] {
   return [
     {
-      method: 'DELETE',
-      path: '/api/plans',
+      method: 'POST',
+      path: '/api/entities',
       handle: async (req, res) => {
-        const title = requestUrl(req).searchParams.get('title');
-        if (!title?.trim()) {
+        const reqBody = await readBody(req);
+        const input = JSON.parse(reqBody) as Partial<CreateIdeaInput>;
+        if (!input.title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const target = findWorkEntity(entries, title.trim());
-        if (!target) {
-          sendJson(res, 404, { error: 'entity not found' });
-          return;
-        }
-        const filePath = join(ideasDir, `${target.id}.md`);
-        if (!(await fileExists(filePath))) {
-          sendJson(res, 404, { error: 'entity file not found' });
-          return;
-        }
-        await unlink(filePath);
+        const newId = await createIdea(root, { ...input, title: input.title.trim() });
         activity.notifyChanged();
-        sendJson(res, 200, { ok: true });
+        sendJson(res, 201, { ok: true, id: newId });
       },
     },
 
     {
       method: 'PATCH',
-      path: '/api/plans',
+      path: '/api/entities',
       handle: async (req, res) => {
-        const title = requestUrl(req).searchParams.get('title');
-        if (!title?.trim()) {
-          sendJson(res, 400, { error: 'title is required' });
+        const id = requestUrl(req).searchParams.get('id');
+        if (!id?.trim()) {
+          sendJson(res, 400, { error: 'id is required' });
           return;
         }
         const reqBody = await readBody(req);
         const updates = JSON.parse(reqBody) as {
+          title?: string;
           body?: string;
+          tags?: string[];
+          type?: EntityType;
+          needs?: string[];
           phases?: PhaseItem[];
           fixes?: PhaseItem[];
           /** `null` clears the stored override (e.g. reopening a dropped plan). */
@@ -94,7 +81,7 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
         const { entries } = await readEntities(ideasDir);
         // order is the one field notes can carry too — the up/down worklist
         // controls need to reorder a note against its plan/idea neighbours.
-        const target = findWorkEntity(entries, title.trim(), { includeNotes: true });
+        const target = entries.find((e) => e.id === id.trim());
 
         if (!target) {
           sendJson(res, 404, { error: 'entity not found' });
@@ -116,7 +103,11 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
         }
 
         const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => ({
+          ...(updates.title !== undefined && { title: updates.title.trim() }),
           ...(updates.body !== undefined && { body: updates.body }),
+          ...(updates.tags !== undefined && { tags: updates.tags }),
+          ...(updates.type !== undefined && { type: updates.type }),
+          ...(updates.needs !== undefined && { needs: updates.needs }),
           ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
           ...(updates.fixes !== undefined && { fixes: updates.fixes }),
@@ -173,8 +164,8 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           const classified = classifyRunOrderEntries(
             nextEntries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),
             work,
-            (id) =>
-              id === target.id && updates.status !== undefined
+            (entryId) =>
+              entryId === target.id && updates.status !== undefined
                 ? { value: updates.status ?? undefined }
                 : undefined,
           );
@@ -184,6 +175,110 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           });
         }
 
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/entities/thread',
+      handle: async (req, res) => {
+        const id = requestUrl(req).searchParams.get('id');
+        if (!id?.trim()) {
+          sendJson(res, 400, { error: 'id is required' });
+          return;
+        }
+        const reqBody = await readBody(req);
+        const { kind, text } = JSON.parse(reqBody) as {
+          kind?: ThreadMessage['kind'];
+          text?: string;
+        };
+        if (!kind || !text?.trim()) {
+          sendJson(res, 400, { error: 'kind and text are required' });
+          return;
+        }
+        const message = agentThreadMessage(text.trim(), kind);
+        if (NOTE_STATE_KINDS.has(kind) && message.state === undefined) message.state = 'open';
+        try {
+          await appendThread(root, id.trim(), message);
+        } catch (error) {
+          if (error instanceof CorpusError) {
+            sendJson(res, error.status, { error: error.message });
+            return;
+          }
+          throw error;
+        }
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/entities/thread/promote',
+      handle: async (req, res) => {
+        const id = requestUrl(req).searchParams.get('id');
+        if (!id?.trim()) {
+          sendJson(res, 400, { error: 'id is required' });
+          return;
+        }
+        const reqBody = await readBody(req);
+        const { index, target, note } = JSON.parse(reqBody) as {
+          index?: number;
+          target?: 'decision' | 'log';
+          note?: string;
+        };
+        if (typeof index !== 'number' || (target !== 'decision' && target !== 'log')) {
+          sendJson(res, 400, { error: 'index and a decision/log target are required' });
+          return;
+        }
+        try {
+          await updateEntity(root, id.trim(), (entry) => {
+            const thread = entry.thread ?? [];
+            if (index < 0 || index >= thread.length) {
+              throw new CorpusError(
+                `thread index ${index} out of range (thread has ${thread.length} messages)`,
+                400,
+              );
+            }
+            return {
+              thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
+            };
+          });
+        } catch (error) {
+          if (error instanceof CorpusError) {
+            sendJson(res, error.status, { error: error.message });
+            return;
+          }
+          throw error;
+        }
+        activity.notifyChanged();
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/entities/archive',
+      handle: async (req, res) => {
+        const id = requestUrl(req).searchParams.get('id');
+        if (!id?.trim()) {
+          sendJson(res, 400, { error: 'id is required' });
+          return;
+        }
+        try {
+          await updateEntity(root, id.trim(), (entry) => {
+            if (entry.archived) throw new CorpusError(`entity "${id}" not found`, 404);
+            return { status: 'dropped' };
+          });
+        } catch (error) {
+          if (error instanceof CorpusError) {
+            sendJson(res, error.status, { error: error.message });
+            return;
+          }
+          throw error;
+        }
         activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },

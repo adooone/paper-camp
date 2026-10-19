@@ -40,7 +40,7 @@ interface EntityDetailProps {
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { plans: allPlans } = usePlans();
   const { toast } = useToast();
-  const { patch: patchByTitle, updating } = usePlanStatusPatch();
+  const { patch: patchById, updating } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
   const detailView = useAppStore((s) => s.detailView);
@@ -68,30 +68,33 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   }, [loadTaskLog]);
 
   const handleTogglePhase = async (index: number) => {
+    if (!plan.id) return;
     const nextPhases: PhaseItem[] = plan.phases.map((phase, i) =>
       i === index ? { ...phase, done: !phase.done } : phase,
     );
     const allChecked = nextPhases.every((p) => p.done);
     if (allChecked && plan.status === 'in-progress') {
-      await patchByTitle(plan.title, { phases: nextPhases, status: 'review' });
+      await patchById(plan.id, { phases: nextPhases, status: 'review' });
     } else {
-      await patchByTitle(plan.title, { phases: nextPhases });
+      await patchById(plan.id, { phases: nextPhases });
     }
   };
 
   const handleAddPhases = async (newPhases: PhaseItem[]) => {
-    await patchByTitle(plan.title, { phases: [...plan.phases, ...newPhases] });
+    if (!plan.id) return;
+    await patchById(plan.id, { phases: [...plan.phases, ...newPhases] });
   };
 
   const handleToggleFix = async (index: number) => {
+    if (!plan.id) return;
     const nextFixes: PhaseItem[] = (plan.fixes ?? []).map((fix, i) =>
       i === index ? { ...fix, done: !fix.done } : fix,
     );
     const allChecked = nextFixes.every((f) => f.done);
     if (allChecked && plan.status === 'in-progress') {
-      await patchByTitle(plan.title, { fixes: nextFixes, status: 'review' });
+      await patchById(plan.id, { fixes: nextFixes, status: 'review' });
     } else {
-      await patchByTitle(plan.title, { fixes: nextFixes });
+      await patchById(plan.id, { fixes: nextFixes });
     }
   };
 

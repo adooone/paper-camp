@@ -42,7 +42,7 @@ export const ReconcileQueueReview = () => {
     // Keep the item queued so the user can retry rather than silently losing the
     // revert if the patch fails.
     const ok = await patch(
-      plan.title,
+      head.planId,
       { body: head.before.body, phases: head.before.phases },
       { errorTitle: 'Discard failed' },
     );

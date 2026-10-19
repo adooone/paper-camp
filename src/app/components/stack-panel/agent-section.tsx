@@ -1,7 +1,7 @@
 import { useScopeRuns } from '@/app/features/activity/hooks';
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { markRead, useNotifications, usePlans } from '@/app/hooks';
-import { fetchPlansAt } from '@/app/services/content/plans-api';
+import { fetchPlansAt } from '@/app/services/content/entities-api';
 import { plansQueryKey } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';

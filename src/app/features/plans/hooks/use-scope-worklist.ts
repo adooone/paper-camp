@@ -1,6 +1,6 @@
 import type { ScopeRow } from '@/app/features/scope';
+import { fetchPlansAt } from '@/app/services/content/entities-api';
 import { fetchIdeasAt } from '@/app/services/content/ideas-api';
-import { fetchPlansAt } from '@/app/services/content/plans-api';
 import { ideasQueryKey, plansQueryKey } from '@/app/services/query-client';
 import { useQueries } from '@tanstack/react-query';
 import { type PlanListFilters, type WorklistRow, selectWorklistRows } from '../helpers';

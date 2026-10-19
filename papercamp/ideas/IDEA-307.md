@@ -105,9 +105,10 @@ runs against a real `http.Server` built from `createApiMiddleware`.
       The three write primitives with the closed-entity guard and archive
       handling; hooks, agent.ts and routes call them; tests.
       run: 18m42s · 302 in · 114.3k out · sonnet-5 · sess:595fed08-40b3-4a28-b717-12daa2e77c9b
-- [ ] Id-keyed entity routes
+- [x] Id-keyed entity routes
       `routes/content/entities.ts` replaces the title-keyed plans routes;
       `plans-api.ts` and its callers move; route tests.
+      run: 8m42s · 186 in · 38k out · sonnet-5 · sess:48994b56-70c4-4bef-8cbf-c69bdbf63b45
 - [ ] MCP tools as daemon HTTP clients
       `resolveDaemonTarget` in core; every tool maps to one route; the
       no-daemon error; `docs/MCP.md`; tools test against a real server.

@@ -1,5 +1,6 @@
 import type {
   AgentId,
+  EntityType,
   LogEntry,
   ParseResult,
   PhaseItem,
@@ -36,10 +37,14 @@ export const fetchPlansAt = async (baseUrl: string): Promise<ParseResult<PlanEnt
   }
 };
 
-export const updatePlan = async (
-  title: string,
+export const patchEntity = async (
+  id: string,
   updates: {
+    title?: string;
     body?: string;
+    tags?: string[];
+    type?: EntityType;
+    needs?: string[];
     phases?: PhaseItem[];
     fixes?: PhaseItem[];
     /** `null` clears the stored status override (e.g. reopening a dropped plan). */
@@ -53,7 +58,7 @@ export const updatePlan = async (
     order?: number | null;
   },
 ): Promise<void> => {
-  const response = await fetch(apiUrl(`/api/plans?title=${encodeURIComponent(title)}`), {
+  const response = await fetch(apiUrl(`/api/entities?id=${encodeURIComponent(id)}`), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
@@ -62,6 +67,6 @@ export const updatePlan = async (
   // instead of resolving silently, so callers can toast the reason.
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new Error(data?.error ?? `Failed to update plan (${response.status})`);
+    throw new Error(data?.error ?? `Failed to update entity (${response.status})`);
   }
 };

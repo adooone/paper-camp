@@ -38,8 +38,8 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
             type="button"
             variant="ghost"
             size="small"
-            disabled={updating}
-            onClick={() => patch(idea.title, { status: null })}
+            disabled={updating || !idea.id}
+            onClick={() => idea.id && patch(idea.id, { status: null })}
           >
             Reopen
           </Button>
@@ -50,8 +50,8 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
               type="button"
               variant="secondary"
               size="small"
-              disabled={updating}
-              onClick={() => patch(idea.title, { status: 'done' })}
+              disabled={updating || !idea.id}
+              onClick={() => idea.id && patch(idea.id, { status: 'done' })}
             >
               Done
             </Button>
@@ -59,8 +59,8 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
               type="button"
               variant="ghost"
               size="small"
-              disabled={updating}
-              onClick={() => patch(idea.title, { status: 'dropped' })}
+              disabled={updating || !idea.id}
+              onClick={() => idea.id && patch(idea.id, { status: 'dropped' })}
             >
               Drop
             </Button>

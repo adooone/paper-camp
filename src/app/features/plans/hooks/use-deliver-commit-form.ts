@@ -44,7 +44,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
   const { checks: deskChecks } = useDeskChecks();
   const agentBusy = useAppStore(selectAgentBusy);
   const launchRunAll = useAppStore((s) => s.launchRunAll);
-  const { patch: patchByTitle } = usePlanStatusPatch();
+  const { patch: patchById } = usePlanStatusPatch();
   const [fixing, setFixing] = useState(false);
 
   const { title: suggestedTitle } = useMemo(() => deriveSuggestedCommit(plan), [plan]);
@@ -56,7 +56,7 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
       // leave the entity file dirty, and committing that appends another row, forever.
       if (!plan.id || isCorpusOnlyCommit(filePaths)) return {};
       const planId = plan.id;
-      const phaseRecorded = await patchByTitle(plan.title, {
+      const phaseRecorded = await patchById(planId, {
         phases: appendManualPhase(plan.phases, title),
       });
       if (!phaseRecorded) return {};
@@ -64,11 +64,11 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
         extraPath: planEntityPath(planId),
         // Leaving it would record a phase for a commit that never landed.
         onFailure: async () => {
-          await patchByTitle(plan.title, { phases: plan.phases });
+          await patchById(planId, { phases: plan.phases });
         },
       };
     },
-    [plan, filePaths, patchByTitle],
+    [plan, filePaths, patchById],
   );
 
   const matchesSuggestionTask = useCallback((t: AgentTaskState) => t.planId === plan.id, [plan.id]);
@@ -88,12 +88,12 @@ export const useDeliverCommitForm = (plan: PlanEntry, files: CommitFormFile[]) =
     setFixing(true);
     try {
       const nextFixes = upsertCheckFixes(plan.fixes ?? [], deskChecks);
-      const wrote = await patchByTitle(plan.title, { fixes: nextFixes });
+      const wrote = await patchById(planId, { fixes: nextFixes });
       if (wrote) await launchRunAll(planId);
     } finally {
       setFixing(false);
     }
-  }, [plan, fixing, agentBusy, status, deskChecks, patchByTitle, launchRunAll]);
+  }, [plan, fixing, agentBusy, status, deskChecks, patchById, launchRunAll]);
 
   return {
     ...base,

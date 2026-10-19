@@ -1,22 +1,22 @@
-import { updatePlan } from '@/app/services/content';
+import { patchEntity } from '@/app/services/content';
 import { refreshPlans } from '@/app/services/query-client';
 import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
 // Shared by plan-actions-column.tsx and the review queue so approve/reject/dropped
-// go through one updatePlan + reload + error-toast path instead of each caller reimplementing it.
+// go through one patchEntity + reload + error-toast path instead of each caller reimplementing it.
 export const usePlanStatusPatch = () => {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
   const patch = async (
-    title: string,
-    updates: Parameters<typeof updatePlan>[1],
+    id: string,
+    updates: Parameters<typeof patchEntity>[1],
     options?: { errorTitle?: string },
   ) => {
     setUpdating(true);
     try {
-      await updatePlan(title, updates);
+      await patchEntity(id, updates);
       await refreshPlans();
       return true;
     } catch (err) {
