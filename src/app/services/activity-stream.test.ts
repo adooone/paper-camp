@@ -38,6 +38,25 @@ describe('subscribeToActivityStream', () => {
     unsubscribe();
     expect(FakeEventSource.instances[0]?.closed).toBe(true);
   });
+
+  it('delivers the redialled connection hello as a changed resync signal', () => {
+    vi.useFakeTimers();
+    const received: unknown[] = [];
+    const unsubscribe = subscribeToActivityStream((payload) => received.push(payload));
+    const first = FakeEventSource.instances[0];
+
+    first?.onerror?.();
+    vi.advanceTimersByTime(1000);
+
+    const second = FakeEventSource.instances[1];
+    second?.onmessage?.({
+      data: JSON.stringify({ message: 'changed', type: 'activity' }),
+    } as MessageEvent<string>);
+
+    expect(received).toEqual([{ message: 'changed', type: 'activity' }]);
+    unsubscribe();
+    vi.useRealTimers();
+  });
 });
 
 describe('switchRuntime', () => {

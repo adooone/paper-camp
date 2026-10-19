@@ -101,9 +101,10 @@ branch.
       checks and the agent manager publish through the activity manager; the
       stream route subscribes once. Tests for the swap and the fan-out.
       run: 7m49s · 172 in · 30.3k out · sonnet-5 · sess:a447bf15-941a-43e0-91ad-f037555d7a65
-- [ ] Heartbeat and hello-as-changed
+- [x] Heartbeat and hello-as-changed
       25 s `: ping`, cleared on close; hello carries `changed`;
       `activity-stream.test.ts` covers the resync.
+      run: 1m40s · 40 in · 8k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
 - [ ] Broadcast before the run-order pass
       Immediate debounced `changed`, per-root cache invalidation, a second
       tick only when `run-order.md` changed, no self-rescheduling on failure.

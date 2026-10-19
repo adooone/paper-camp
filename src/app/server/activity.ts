@@ -14,6 +14,8 @@ export function createEmptyActivityState(): ActivityManagerState {
   return { clients: new Set() };
 }
 
+const HEARTBEAT_INTERVAL_MS = 25_000;
+
 export function createActivityManager(
   root: string,
   state: ActivityManagerState = createEmptyActivityState(),
@@ -89,12 +91,26 @@ export function createActivityManager(
     getState: (): ActivityManagerState => state,
     subscribe(res: ServerResponse) {
       clients.add(res);
-      const connected = JSON.stringify({
-        message: 'Watching for changes…',
+      const hello = JSON.stringify({
+        message: 'changed',
+        type: 'activity',
         timestamp: new Date().toISOString(),
       });
-      res.write(`data: ${connected}\n\n`);
-      res.on('close', () => clients.delete(res));
+      res.write(`data: ${hello}\n\n`);
+      // Redialled proxies (cloudflared, tailscale serve) drop idle connections
+      // silently; the ping keeps this one alive without the browser ever seeing it.
+      const heartbeat = setInterval(() => {
+        try {
+          res.write(': ping\n\n');
+        } catch {
+          clients.delete(res);
+        }
+      }, HEARTBEAT_INTERVAL_MS);
+      heartbeat.unref?.();
+      res.on('close', () => {
+        clearInterval(heartbeat);
+        clients.delete(res);
+      });
     },
   };
 }
