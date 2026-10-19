@@ -3,7 +3,6 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { createStore, del, get, set } from 'idb-keyval';
-import { useAppStore } from '../stores/app-store';
 import { subscribeToActivityStream } from './activity-stream';
 import { getRuntimeConnection } from './runtime-connection';
 import { CLIENT_VERSION } from './version';
@@ -194,9 +193,9 @@ export function refreshCi(): Promise<void> {
   });
 }
 
-// The default ('') connection survives a runtime switch on its own (see
-// reconnectCurrentRuntime); called once from main.tsx, not at module scope, so importing this module in a test never opens a real EventSource.
-export function subscribeProjectToActivityStream(): () => void {
+// Called once from main.tsx, not at module scope, so importing this module in a test never
+// opens a real EventSource. `onChanged` is passed in rather than importing the store, to avoid a query-client <-> app-store import cycle.
+export function subscribeProjectToActivityStream(onChanged?: () => void): () => void {
   return subscribeToActivityStream((payload) => {
     if (payload.message !== 'changed') return;
     const { runtimeUrl } = getRuntimeConnection();
@@ -204,6 +203,6 @@ export function subscribeProjectToActivityStream(): () => void {
       queryKey: [PROJECT_QUERY_PREFIX, runtimeUrl],
       refetchType: 'all',
     });
-    useAppStore.getState().refreshProjectState();
+    onChanged?.();
   });
 }

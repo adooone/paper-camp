@@ -16,16 +16,12 @@ vi.mock('./runtime-connection', () => ({
   getRuntimeConnection: () => ({ runtimeUrl: 'http://localhost:1234', pairingToken: null }),
 }));
 
-vi.mock('../stores/app-store', () => ({
-  useAppStore: { getState: () => ({ refreshProjectState }) },
-}));
-
 describe('subscribeProjectToActivityStream', () => {
   let mod: typeof import('./query-client');
 
   beforeAll(async () => {
     mod = await import('./query-client');
-    mod.subscribeProjectToActivityStream();
+    mod.subscribeProjectToActivityStream(refreshProjectState);
   });
 
   it('subscribes to the current runtime stream', () => {

@@ -24,6 +24,7 @@ import {
 } from './services/query-client';
 import { getRuntimeConnection } from './services/runtime-connection';
 import { fetchMachineProjects } from './services/system';
+import { useAppStore } from './stores/app-store';
 import { probeSelfServed } from './stores/slices/runtime-slice';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
@@ -41,7 +42,7 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
-subscribeProjectToActivityStream();
+subscribeProjectToActivityStream(() => useAppStore.getState().refreshProjectState());
 
 // A machine link opens that machine's project list — unless this browser
 // already opened one there, or the machine has only one, then it opens directly.
