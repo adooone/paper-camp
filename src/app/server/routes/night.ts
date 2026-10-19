@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { closeSync, openSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
+import { readCapacity } from '@/core/capacity';
 import { daemonLogPath } from '@/core/daemon-state';
 import {
   clearNightProject,
@@ -12,9 +13,7 @@ import {
 } from '@/core/machine-registry';
 import { computeNightHealthMap, selectNightChunks } from '@/core/night-health';
 import { isNightPassRunning, markNightPass } from '@/core/night-shift';
-import { readTaskLog } from '@/core/parse';
-import { latestCapacity, resetsAtMs } from '@/core/rate-limit';
-import { readMaybe } from '../helpers';
+import { resetsAtMs } from '@/core/rate-limit';
 import { readBody, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
@@ -79,8 +78,7 @@ export function nightRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 200, { ok: true, pausedUntil: null });
           return;
         }
-        const taskLogRaw = await readMaybe(join(root, 'papercamp', 'tasks.log'));
-        const snapshot = latestCapacity(readTaskLog(taskLogRaw))?.snapshot ?? null;
+        const snapshot = (await readCapacity(root))?.snapshot ?? null;
         const resetsAt = snapshot?.unifiedWindows?.five_hour?.resetsAt;
         if (resetsAt === undefined) {
           sendJson(res, 400, { error: 'no capacity snapshot yet — run an agent task first' });

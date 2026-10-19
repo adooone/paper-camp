@@ -1,7 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
-import { join } from 'node:path';
 import {
   type ApiMiddleware,
   applyCorsHeaders,
@@ -20,6 +18,7 @@ import {
   machinePairingPath,
   savePairingState,
 } from '../app/server/pairing';
+import { readCapacity } from '../core/capacity';
 import {
   type DaemonState,
   type UpdateEvent,
@@ -40,8 +39,6 @@ import { evaluateNightGate } from '../core/night-gate';
 import { computeNightHealthMap } from '../core/night-health';
 import { startNightShift } from '../core/night-shift';
 import { readNightFindings } from '../core/night-suggestions';
-import { readTaskLog } from '../core/parse';
-import { latestCapacity } from '../core/rate-limit';
 import { checkLatestVersion } from '../core/registry-version';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
@@ -145,10 +142,7 @@ export async function buildNightGateResponse(
   const nightConfig = await readNightConfig(project.path);
   const resolved = resolveNightConfig(nightConfig);
   const apiMiddleware = mounted.get(slug);
-  const taskLogRaw = await readFile(join(project.path, 'papercamp', 'tasks.log'), 'utf-8').catch(
-    () => '',
-  );
-  const snapshot = latestCapacity(readTaskLog(taskLogRaw))?.snapshot ?? null;
+  const snapshot = (await readCapacity(project.path))?.snapshot ?? null;
   const openFindings = (await readNightFindings(project.path)).length;
 
   const gate = evaluateNightGate({

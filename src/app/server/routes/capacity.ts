@@ -1,3 +1,4 @@
+import { writeCapacity } from '@/core/capacity';
 import { probeCapacity } from '../capacity-probe';
 import { sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -13,6 +14,7 @@ export function capacityRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 503, { error: 'Claude reported no capacity — is the CLI signed in?' });
           return;
         }
+        await writeCapacity(root, snapshot, 'probe');
         sendJson(res, 200, { snapshot, capturedAt: new Date().toISOString() });
       },
     },

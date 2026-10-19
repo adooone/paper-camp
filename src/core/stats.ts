@@ -12,12 +12,10 @@ import type {
   TasksPerWeek,
   UsagePerWeek,
 } from '../types/index';
+import { readCapacity } from './capacity';
 import { computeNightHealthMap } from './night-health';
 import { readTaskLog } from './parse';
-import { latestCapacity } from './rate-limit';
 import { readEntitiesWithDerivedStatus } from './readers';
-
-export { latestCapacity } from './rate-limit';
 
 async function walk(dir: string): Promise<string[]> {
   const names = await readdir(dir).catch(() => []);
@@ -229,7 +227,7 @@ export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost
 
 export async function computeProjectStats(root: string): Promise<ProjectStats> {
   const ideasDir = join(root, 'papercamp', 'ideas');
-  const [comments, testLines, testCoveragePct, { entries }, taskLogRaw, nightHealth] =
+  const [comments, testLines, testCoveragePct, { entries }, taskLogRaw, nightHealth, capacity] =
     await Promise.all([
       runCommentStats(root),
       countTestLines(root),
@@ -237,6 +235,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
       readEntitiesWithDerivedStatus(ideasDir),
       readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
       computeNightHealthMap(root),
+      readCapacity(root),
     ]);
   const { openQuestions, decisions } = countThreadNotes(entries);
   const taskLog = readTaskLog(taskLogRaw);
@@ -252,7 +251,7 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
     usagePerWeek: usagePerWeek(taskLog),
     medianPhaseDurationMs: medianPhaseDurationMs(taskLog),
     mostExpensiveIdeas: mostExpensiveIdeas(taskLog),
-    capacity: latestCapacity(taskLog),
+    capacity,
     nightHealth,
   };
 }

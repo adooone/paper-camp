@@ -73,10 +73,11 @@ and keeps the old reading, the Stats page and the card show the same numbers,
 and the card shows the weekly utilisation under the five-hour one.
 
 ### Phases
-- [ ] One capacity file
+- [x] One capacity file
       `src/core/capacity.ts` with `writeCapacity`/`readCapacity`; writes from
       `agent.ts` and the probe; stats, night gate and night pause read it;
       `latestCapacity` and `mergeLiveCapacity` removed; tests.
+      run: 6m42s · 172 in · 33.1k out · sonnet-5 · sess:6828e320-8459-44a1-b152-886312ce1955
 - [ ] One route and one query
       `GET /api/capacity`, the `capacity` stream event, `useCapacity()` and
       `refreshCapacity()`; the slice removed; live overlay from running tasks

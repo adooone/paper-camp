@@ -8,6 +8,7 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import { createPairCodeManager } from '../app/server/pair-code';
 import type { PairingManagerState } from '../app/server/pairing';
+import { writeCapacity } from '../core/capacity';
 import {
   type MachineRegistry,
   addProject,
@@ -15,6 +16,7 @@ import {
   setNightProject,
 } from '../core/machine-registry';
 import { appendNightFindings } from '../core/night-suggestions';
+import type { RateLimitSnapshot } from '../types/index';
 import {
   buildNightGateResponse,
   createDaemonRequestHandler,
@@ -301,7 +303,7 @@ describe('buildNightGateResponse', () => {
   async function makeProjectDir(
     name: string,
     nightConfig?: Record<string, unknown>,
-    taskLogLines: string[] = [],
+    capacity?: RateLimitSnapshot,
   ): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'paper-camp-night-gate-project-'));
     dirs.push(dir);
@@ -312,33 +314,17 @@ describe('buildNightGateResponse', () => {
       JSON.stringify({ ...(nightConfig !== undefined && { night: nightConfig }) }),
       'utf-8',
     );
-    if (taskLogLines.length > 0) {
-      await writeFile(
-        join(projectPath, 'papercamp', 'tasks.log'),
-        `${taskLogLines.join('\n')}\n`,
-        'utf-8',
-      );
-    }
+    if (capacity) await writeCapacity(projectPath, capacity, 'run');
     return projectPath;
   }
 
-  const capacityLine = (fiveHourPct: number, sevenDayPct: number) =>
-    JSON.stringify({
-      id: '1',
-      taskKind: 'phase',
-      planTitle: 'x',
-      agentId: 'claude-code',
-      startedAt: '2026-01-01T00:00:00.000Z',
-      endedAt: '2026-01-01T00:05:00.000Z',
-      outcome: 'done',
-      rateLimit: {
-        status: 'allowed',
-        unifiedWindows: {
-          five_hour: { utilization: fiveHourPct / 100 },
-          seven_day: { utilization: sevenDayPct / 100 },
-        },
-      },
-    });
+  const capacitySnapshot = (fiveHourPct: number, sevenDayPct: number): RateLimitSnapshot => ({
+    status: 'allowed',
+    unifiedWindows: {
+      five_hour: { utilization: fiveHourPct / 100 },
+      seven_day: { utilization: sevenDayPct / 100 },
+    },
+  });
 
   const fakeApi = (active: boolean, lastRequestAt: number | null) =>
     ({
@@ -394,7 +380,7 @@ describe('buildNightGateResponse', () => {
   });
 
   it('opens the gate for an unmounted project with a healthy capacity snapshot', async () => {
-    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const projectPath = await makeProjectDir('demo', undefined, capacitySnapshot(10, 10));
     const registry = setNightProject(
       addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
       'demo',
@@ -413,7 +399,7 @@ describe('buildNightGateResponse', () => {
   });
 
   it('blocks on a mounted project with an active task and a busy dashboard', async () => {
-    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const projectPath = await makeProjectDir('demo', undefined, capacitySnapshot(10, 10));
     const registry = setNightProject(
       addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
       'demo',
@@ -439,9 +425,11 @@ describe('buildNightGateResponse', () => {
   });
 
   it('honours the project-level ceiling/floor overrides from its own config.json', async () => {
-    const projectPath = await makeProjectDir('demo', { ceiling: 5, floor: 5 }, [
-      capacityLine(10, 10),
-    ]);
+    const projectPath = await makeProjectDir(
+      'demo',
+      { ceiling: 5, floor: 5 },
+      capacitySnapshot(10, 10),
+    );
     const registry = setNightProject(
       addProject({ version: 1, projects: [] }, projectPath, 'Demo').registry,
       'demo',
@@ -453,7 +441,7 @@ describe('buildNightGateResponse', () => {
   });
 
   it('blocks with open-findings when suggestions.md has a still-fresh finding', async () => {
-    const projectPath = await makeProjectDir('demo', undefined, [capacityLine(10, 10)]);
+    const projectPath = await makeProjectDir('demo', undefined, capacitySnapshot(10, 10));
     const commit = await commitProjectFile(projectPath, join('src', 'a.ts'));
     await writeFile(
       join(projectPath, 'papercamp', 'suggestions.md'),

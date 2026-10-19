@@ -1,5 +1,6 @@
 import { useAppStore } from '@/app/stores/app-store';
-import { capacityLevel, latestCapacity, mergeLiveCapacity, resetsAtMs } from '@/core/rate-limit';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { CapacityStat, RateLimitSnapshot, TaskLogEntry } from '@/types/index';
 import {
   Card,
   IconButton,
@@ -30,6 +31,34 @@ function formatGap(ms: number): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return minutes % 60 ? `${hours}h ${minutes % 60}m` : `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
+}
+
+function latestCapacity(entries: TaskLogEntry[]): CapacityStat | null {
+  let latest: CapacityStat | null = null;
+  let latestMs = Number.NEGATIVE_INFINITY;
+  for (const entry of entries) {
+    if (!entry.rateLimit || entry.endedAt === undefined) continue;
+    if (
+      entry.rateLimit.resetsAt !== undefined &&
+      resetsAtMs(entry.rateLimit.resetsAt) <= Date.now()
+    )
+      continue;
+    const at = Date.parse(entry.endedAt);
+    if (Number.isNaN(at)) continue;
+    if (at >= latestMs) {
+      latestMs = at;
+      latest = { snapshot: entry.rateLimit, capturedAt: entry.endedAt };
+    }
+  }
+  return latest;
+}
+
+function mergeLiveCapacity(
+  live: RateLimitSnapshot | null,
+  stat: CapacityStat | null,
+): { snapshot: RateLimitSnapshot; capturedAt: string | null } | null {
+  if (live) return { snapshot: live, capturedAt: null };
+  return stat ? { snapshot: stat.snapshot, capturedAt: stat.capturedAt } : null;
 }
 
 export interface CapacityRowProps {

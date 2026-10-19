@@ -9,6 +9,7 @@ import {
   buildPlanDraftPrompt,
   buildReconcilePrompt,
 } from '@/app/features/plans/prompts';
+import { writeCapacity } from '@/core/capacity';
 import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
@@ -767,7 +768,10 @@ export function createAgentManager(
       if (!parsed) return;
       if (parsed.milestone) noteAnchor(task, parsed.milestone);
       if (parsed.reason) task.errorReason = parsed.reason;
-      if (parsed.rateLimit) task.rateLimit = parsed.rateLimit;
+      if (parsed.rateLimit) {
+        task.rateLimit = parsed.rateLimit;
+        writeCapacity(root, parsed.rateLimit, 'run').catch(() => {});
+      }
       if (parsed.usage) task.runUsage = parsed.usage;
       if (parsed.text) pushLine(task, parsed.text);
       if (parsed.done) {
@@ -866,7 +870,10 @@ export function createAgentManager(
         if (parsed?.turnContextTokens !== undefined) {
           lastTurnContextTokens = parsed.turnContextTokens;
         }
-        if (parsed?.rateLimit) task.rateLimit = parsed.rateLimit;
+        if (parsed?.rateLimit) {
+          task.rateLimit = parsed.rateLimit;
+          writeCapacity(root, parsed.rateLimit, 'run').catch(() => {});
+        }
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
           if (opts.trackBlocker) task.blocker = { question: parsed.reason };

@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { writeCapacity } from '@/core/capacity';
 import {
   addProject,
   defaultRegistryPath,
@@ -240,22 +241,13 @@ describe('POST /api/night/pause', () => {
     await useConfigDir();
     const root = await makeProjectDir('demo');
     await enableNight(root);
-    await writeFile(
-      join(root, 'papercamp', 'tasks.log'),
-      `${JSON.stringify({
-        id: '1',
-        taskKind: 'phase',
-        planTitle: 'x',
-        agentId: 'claude-code',
-        startedAt: '2026-01-01T00:00:00.000Z',
-        endedAt: '2026-01-01T00:05:00.000Z',
-        outcome: 'done',
-        rateLimit: {
-          status: 'allowed',
-          unifiedWindows: { five_hour: { utilization: 0.1, resetsAt: 1800000000 } },
-        },
-      })}\n`,
-      'utf-8',
+    await writeCapacity(
+      root,
+      {
+        status: 'allowed',
+        unifiedWindows: { five_hour: { utilization: 0.1, resetsAt: 1800000000 } },
+      },
+      'run',
     );
 
     const { res, status, json } = fakeRes();
