@@ -464,9 +464,8 @@ export function createAgentManager(
   const state: AgentManagerState = passedState ?? createEmptyAgentState();
   const { tasks } = state;
 
-  // getPrioritiseVerdict's retry calls runPrioritise a second time with the same
-  // logical click — this binds that second call back to the first one's task
-  // instead of registering an unrelated one (IDEA-312).
+  // getPrioritiseVerdict's retry calls runPrioritise again for the same click —
+  // this binds it back to the first call's task instead of a new one (IDEA-312).
   let prioritiseTask: AgentTask | undefined;
 
   let interruptedOnBoot = 0;
