@@ -144,20 +144,21 @@ function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): st
 export interface ApplyPrioritiseResult {
   /** Ids whose position changed and were written to run-order.md. */
   moved: string[];
-  /** Subset of `moved` that also got the `why` thread message appended. */
+  /** Every ranked id that got the `why` thread message appended, moved or not. */
   annotated: string[];
   /** Set when annotation stopped early because a write failed. */
   annotationError?: string;
 }
 
 /** Applies a prioritise verdict: reorders papercamp/run-order.md to the agent's
- *  target sequence and appends the matching `why` line as a log comment to each
- *  ranked idea whose position actually moved.
+ *  target sequence and appends the matching `why` line as a log comment to every
+ *  ranked idea, whether or not its position actually moved — a confirmed order is
+ *  still a reason worth keeping.
  *
  *  The reorder and the annotations are two separate writes — if an annotation
  *  fails partway through, the reorder that already happened is not rolled
  *  back or hidden: `moved` always reflects the ids actually reordered on
- *  disk, and `annotated` reports how many of them got their `why` line. */
+ *  disk, and `annotated` reports how many ranked ideas got their `why` line. */
 export async function applyPrioritiseVerdict(
   root: string,
   verdict: PrioritiseVerdict,
@@ -180,7 +181,6 @@ export async function applyPrioritiseVerdict(
     if (moved.length > 0) await writeRunOrderFile(root, reconciled);
     return moved;
   });
-  if (moved.length === 0) return { moved: [], annotated: [] };
 
   const reasonFor = (id: string) => {
     const index = verdict.order.indexOf(id);
@@ -189,7 +189,7 @@ export async function applyPrioritiseVerdict(
 
   const annotated: string[] = [];
   let annotationError: string | undefined;
-  for (const id of moved) {
+  for (const id of verdict.order) {
     const primaryFile = join(ideasDir, `${id}.md`);
     const file = (await fileExists(primaryFile))
       ? primaryFile

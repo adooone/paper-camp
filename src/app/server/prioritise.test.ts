@@ -432,7 +432,7 @@ describe('applyPrioritiseVerdict', () => {
     ]);
   });
 
-  it('leaves an already-matching order untouched, with no log writes', async () => {
+  it('still annotates every idea when the order already matches, with no run-order write', async () => {
     const root = tmpRoot();
     write(root, {
       id: 'IDEA-1',
@@ -456,9 +456,10 @@ describe('applyPrioritiseVerdict', () => {
     });
 
     expect(result.moved).toEqual([]);
-    expect(result.annotated).toEqual([]);
-    expect(readLog(root, 'IDEA-1')).toEqual([]);
-    expect(readLog(root, 'IDEA-2')).toEqual([]);
+    expect(result.annotated.sort()).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(readLog(root, 'IDEA-1')).toEqual([expect.stringContaining('stays first')]);
+    expect(readLog(root, 'IDEA-2')).toEqual([expect.stringContaining('stays second')]);
+    expect(readRunOrder(root)).toEqual(['IDEA-1 — First', 'IDEA-2 — Second']);
   });
 
   it('keeps the reorder and reports the failure when annotating a moved idea fails', async () => {
@@ -477,20 +478,20 @@ describe('applyPrioritiseVerdict', () => {
       status: 'planned',
       created: '2026-07-02',
     });
-    writeRunOrder(root, ['IDEA-1 — First', 'IDEA-2 — Second']);
+    writeRunOrder(root, ['IDEA-2 — Second', 'IDEA-1 — First']);
     const idea2File = join(root, 'papercamp', 'ideas', 'IDEA-2.md');
     chmodSync(idea2File, 0o444);
 
     try {
       const result = await applyPrioritiseVerdict(root, {
-        order: ['IDEA-2', 'IDEA-1'],
+        order: ['IDEA-1', 'IDEA-2'],
         why: ['unblocks IDEA-1', 'waits on IDEA-2'],
       });
 
       expect(result.moved.sort()).toEqual(['IDEA-1', 'IDEA-2']);
       expect(result.annotated).toEqual(['IDEA-1']);
       expect(result.annotationError).toContain('IDEA-2');
-      expect(readRunOrder(root)).toEqual(['IDEA-2 — Second', 'IDEA-1 — First']);
+      expect(readRunOrder(root)).toEqual(['IDEA-1 — First', 'IDEA-2 — Second']);
     } finally {
       chmodSync(idea2File, 0o644);
     }

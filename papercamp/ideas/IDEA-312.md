@@ -2,7 +2,7 @@
 id: IDEA-312
 title: One visible prioritise run
 type: fix
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - server
@@ -61,6 +61,7 @@ nothing every active idea carries a fresh `Run order:` note.
       The `task` option, `runPrompt(prompt, retryReason?)`, `[retry]` line;
       `prioritise.test.ts` asserts one task for two attempts.
       run: 6m45s · 90 in · 35.8k out · sonnet-5 · sess:c9e5d16c-e17c-4288-9652-9707fa981a7f
-- [ ] Rank notes for every ranked idea
+- [x] Rank notes for every ranked idea
       Notes written for the whole verdict; broadcast whenever anything was
       written; tests for the unchanged-order case.
+      run: 1m46s · 36 in · 9.5k out · sonnet-5 · sess:a548ebba-e554-4ead-bb7b-4f185c25675c

@@ -604,7 +604,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
           const verdict = await getPrioritiseVerdict(withNeeds, roadmapText, agent.runPrioritise);
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
-          if (moved.length > 0) activity.notifyChanged();
+          if (moved.length > 0 || annotated.length > 0) activity.notifyChanged();
           sendJson(res, 200, {
             ok: true,
             moved,
