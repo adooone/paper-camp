@@ -19,7 +19,6 @@ import { sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
 import { buildRoutes, readRoutes } from './routes/index';
-import { type StatusManagerState, createStatusManager } from './status';
 
 export interface ApiMiddleware {
   (req: IncomingMessage, res: ServerResponse, next: () => void): Promise<void>;
@@ -27,7 +26,6 @@ export interface ApiMiddleware {
   services: DeskServiceManager;
   checks: DeskCheckManager;
   pairing: PairingManager;
-  getStatusState: () => StatusManagerState;
   getServiceState: () => DeskServiceManagerState;
   getCheckState: () => DeskCheckManagerState;
   getPairingState: () => PairingManagerState;
@@ -173,7 +171,6 @@ export function handlePreflight(req: IncomingMessage, res: ServerResponse): void
 export function createApiMiddleware(
   root: string,
   agentState?: AgentManagerState,
-  statusState?: StatusManagerState,
   serviceState?: DeskServiceManagerState,
   checkState?: DeskCheckManagerState,
   pairingState?: PairingManagerState,
@@ -193,7 +190,6 @@ export function createApiMiddleware(
     publish,
     checkState,
   );
-  const status = createStatusManager(root, checks, git, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(
@@ -216,7 +212,6 @@ export function createApiMiddleware(
     activity,
     agent,
     git,
-    status,
     services,
     checks,
     pairing,
@@ -277,7 +272,6 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).services = services;
   (handler as ApiMiddleware).checks = checks;
   (handler as ApiMiddleware).pairing = pairing;
-  (handler as ApiMiddleware).getStatusState = status.getState;
   (handler as ApiMiddleware).getServiceState = services.getState;
   (handler as ApiMiddleware).getCheckState = checks.getState;
   (handler as ApiMiddleware).getPairingState = pairing.getState;

@@ -35,7 +35,7 @@ function routeAt(root: string, path: string, method: string, ctx: Partial<RouteC
     activity: { notifyChanged: () => {}, publish: () => {} },
     agent: { getStatus: () => [] } as unknown as RouteContext['agent'],
     git: {} as unknown as RouteContext['git'],
-    status: {} as unknown as RouteContext['status'],
+    checks: {} as unknown as RouteContext['checks'],
     ...ctx,
   } as RouteContext).find((r) => r.path === path && r.method === method);
   if (!found) throw new Error(`no ${method} route registered for ${path}`);

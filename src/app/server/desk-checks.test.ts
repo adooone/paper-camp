@@ -1,8 +1,19 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { promisify } from 'node:util';
+import { corpusFingerprint } from '@/core/corpus';
+import { afterAll, describe, expect, it } from 'vitest';
 import { MissingFixCmdError, createDeskCheckManager } from './desk-checks';
+import { createGitManager } from './git';
+
+const run = promisify(execFile);
+const roots: string[] = [];
+
+afterAll(async () => {
+  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
+});
 
 async function tmpRoot(cmd: string, fixCmd?: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'papercamp-desk-checks-'));
@@ -11,6 +22,23 @@ async function tmpRoot(cmd: string, fixCmd?: string): Promise<string> {
     join(root, 'papercamp', 'config.json'),
     JSON.stringify({ desk: { checks: [{ name: 'test', cmd, fixCmd }] } }),
   );
+  return root;
+}
+
+async function makeGitRoot(lintCmd?: string): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'papercamp-desk-checks-git-'));
+  roots.push(root);
+  await mkdir(join(root, 'papercamp'), { recursive: true });
+  if (lintCmd) {
+    await writeFile(
+      join(root, 'papercamp', 'config.json'),
+      JSON.stringify({ desk: { checks: [{ name: 'lint', cmd: lintCmd }] } }),
+    );
+  }
+  await run('git', ['init', '-q'], { cwd: root });
+  await run('git', ['config', 'user.email', 'test@example.com'], { cwd: root });
+  await run('git', ['config', 'user.name', 'Test'], { cwd: root });
+  await run('git', ['commit', '-q', '--allow-empty', '-m', 'init'], { cwd: root });
   return root;
 }
 
@@ -98,5 +126,52 @@ describe('runFix', () => {
     const { runFix } = createDeskCheckManager(root);
 
     await expect(runFix('ghost')).rejects.toThrow(/ghost/);
+  });
+});
+
+describe('getCachedOrRunChecks', () => {
+  it("reuses every check's own last result once each was produced on the current tree", async () => {
+    const root = await makeGitRoot('false');
+    const git = createGitManager(root);
+    const getFingerprint = async () => ({
+      headSha: await git.getHeadSha(),
+      treeHash: await git.getTreeHash(),
+    });
+    const { getCachedOrRunChecks, getState } = createDeskCheckManager(root, getFingerprint);
+    const { headSha, treeHash } = await getFingerprint();
+
+    getState().runtimes.set('lint', { status: 'fail', lastRun: '', output: '', headSha, treeHash });
+    getState().docs = {
+      fingerprint: await corpusFingerprint(join(root, 'papercamp', 'ideas')),
+      passed: true,
+      output: '',
+    };
+
+    // Every result is already on this tree, so none of them re-run — lint's cmd
+    // ('false') would flip the outcome to failing if it did.
+    await expect(getCachedOrRunChecks()).resolves.toEqual([{ name: 'lint', output: '' }]);
+  });
+
+  it('runs only the checks missing a same-tree result', async () => {
+    const root = await makeGitRoot('true');
+    const git = createGitManager(root);
+    const getFingerprint = async () => ({
+      headSha: await git.getHeadSha(),
+      treeHash: await git.getTreeHash(),
+    });
+    const { getCachedOrRunChecks, getState } = createDeskCheckManager(root, getFingerprint);
+    const { headSha } = await getFingerprint();
+
+    getState().docs = {
+      fingerprint: await corpusFingerprint(join(root, 'papercamp', 'ideas')),
+      passed: true,
+      output: '',
+    };
+    // lint has no cached result yet, so it's the only check this call runs for real.
+
+    await expect(getCachedOrRunChecks()).resolves.toEqual([]);
+    expect(getState().runtimes.get('lint')).toEqual(
+      expect.objectContaining({ status: 'pass', headSha }),
+    );
   });
 });

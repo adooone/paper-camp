@@ -3,6 +3,7 @@ import { clearCiCache } from '@/core/ci';
 import {
   clearPrCache,
   entitiesWithNewChangesRequested,
+  getPrMapFetchedAt,
   peekCachedPrs,
   resolvePrsByEntity,
 } from '@/core/git-pr';
@@ -12,13 +13,13 @@ import { sendJson } from '../http';
 import { appendNotification } from '../notification-log';
 import type { Route, RouteContext } from './types';
 
-export function statusRoutes({ root, activity, status }: RouteContext): Route[] {
+export function statusRoutes({ root, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
       path: '/api/status',
       handle: async (_req, res) => {
-        sendJson(res, 200, await status.getStatus());
+        sendJson(res, 200, { prFetchedAt: await getPrMapFetchedAt(root) });
       },
     },
 

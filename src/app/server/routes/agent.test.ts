@@ -172,7 +172,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
 
     expect(status()).toBe(200);
@@ -204,7 +204,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     const { res } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn(async () => []) } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn(async () => []) } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
 
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
@@ -225,7 +225,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
-      status: {} as unknown as RouteContext['status'],
+      checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
 
     expect(status()).toBe(200);
@@ -247,7 +247,7 @@ describe('POST /api/agent/feedback-message reply notification', () => {
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply } as unknown as RouteContext['agent'],
-      status: {} as unknown as RouteContext['status'],
+      checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
 
     expect(status()).toBe(200);
@@ -297,7 +297,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
 
@@ -328,7 +328,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {} as unknown as RouteContext['status'],
+      checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'Just an aside.' })), res);
 
@@ -356,7 +356,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
         resumeQuestionParkedTasks,
         startRunAllPhases,
       } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
 
@@ -381,9 +381,9 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {
+      checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
-      } as unknown as RouteContext['status'],
+      } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
 
@@ -413,9 +413,9 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {
+      checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
-      } as unknown as RouteContext['status'],
+      } as unknown as RouteContext['checks'],
       git: fakeGit({ getFeatureBranchPlanId: vi.fn(() => 'IDEA-1') }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
 
@@ -446,9 +446,9 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {
+      checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
-      } as unknown as RouteContext['status'],
+      } as unknown as RouteContext['checks'],
       git: fakeGit({ commit }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
 
@@ -477,9 +477,9 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {
+      checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
-      } as unknown as RouteContext['status'],
+      } as unknown as RouteContext['checks'],
       git: fakeGit({ commit }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'This regressed.' })), res);
 
@@ -510,7 +510,7 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
-      status: {} as unknown as RouteContext['status'],
+      checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'Just an aside.' })), res);
 
@@ -531,7 +531,7 @@ describe('POST /api/agent/launch-run-all', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch-run-all', {
       agent: { startRunAllPhases } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit({ findStaleBaseRef }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2' })), res);
 
@@ -551,7 +551,7 @@ describe('POST /api/agent/launch-run-all', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch-run-all', {
       agent: { startRunAllPhases } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit({ findStaleBaseRef }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2' })), res);
 
@@ -567,7 +567,7 @@ describe('POST /api/agent/launch-run-all', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch-run-all', {
       agent: { startRunAllPhases } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit({ findStaleBaseRef: vi.fn(async () => null) }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-4' })), res);
 
@@ -583,7 +583,7 @@ describe('POST /api/agent/launch-run-all', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch-run-all', {
       agent: { startRunAllPhases } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit({ findStaleBaseRef: vi.fn(async () => null) }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-5' })), res);
 
@@ -601,7 +601,7 @@ describe('POST /api/agent/launch', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch', {
       agent: { start } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-4', phaseIndex: 0 })), res);
 
     expect(start).not.toHaveBeenCalled();
@@ -616,7 +616,7 @@ describe('POST /api/agent/launch', () => {
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/launch', {
       agent: { start } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait: vi.fn() } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-5', phaseIndex: 0 })), res);
 
     expect(start).toHaveBeenCalledOnce();

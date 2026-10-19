@@ -10,7 +10,6 @@ import type { AgentManagerState } from './src/app/server/agent';
 import type { DeskCheckManagerState } from './src/app/server/desk-checks';
 import type { DeskServiceManagerState } from './src/app/server/desk-services';
 import type { PairingManagerState } from './src/app/server/pairing';
-import type { StatusManagerState } from './src/app/server/status';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
 // watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead,
@@ -23,7 +22,6 @@ const g = globalThis as {
   __paperCampApi?: ApiMiddleware;
   __paperCampShutdownRegistered?: boolean;
   __paperCampAgentState?: AgentManagerState;
-  __paperCampStatusState?: StatusManagerState;
   __paperCampServiceState?: DeskServiceManagerState;
   __paperCampCheckState?: DeskCheckManagerState;
   __paperCampPairingState?: PairingManagerState;
@@ -68,7 +66,6 @@ function papercampApi(): Plugin {
             createApiMiddleware: (
               root: string,
               agentState?: AgentManagerState,
-              statusState?: StatusManagerState,
               serviceState?: DeskServiceManagerState,
               checkState?: DeskCheckManagerState,
               pairingState?: PairingManagerState,
@@ -76,13 +73,11 @@ function papercampApi(): Plugin {
             ) => ApiMiddleware;
           };
           const agentState = g.__paperCampAgentState;
-          const statusState = g.__paperCampStatusState;
           const serviceState = g.__paperCampServiceState;
           const checkState = g.__paperCampCheckState;
           const pairingState = g.__paperCampPairingState;
           const activityState = g.__paperCampActivityState;
           g.__paperCampAgentState = undefined;
-          g.__paperCampStatusState = undefined;
           g.__paperCampServiceState = undefined;
           g.__paperCampCheckState = undefined;
           g.__paperCampPairingState = undefined;
@@ -90,7 +85,6 @@ function papercampApi(): Plugin {
           const api = mod.createApiMiddleware(
             process.cwd(),
             agentState,
-            statusState,
             serviceState,
             checkState,
             pairingState,
@@ -142,9 +136,6 @@ function papercampApi(): Plugin {
         if (mod) server.moduleGraph.invalidateModule(mod);
         if (g.__paperCampApi) {
           g.__paperCampAgentState = g.__paperCampApi.agent.getState();
-          // Without this the in-flight check guard resets on every server edit, and a
-          // fresh lint/test stacks on the ones still running until the box is starved.
-          g.__paperCampStatusState = g.__paperCampApi.getStatusState();
           // Preserve running service child processes and their log buffers across the
           // hot-swap so a server edit doesn't orphan a dev server the user started.
           g.__paperCampServiceState = g.__paperCampApi.getServiceState();

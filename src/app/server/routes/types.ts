@@ -6,7 +6,6 @@ import type { DeskServiceManager } from '../desk-services';
 import type { GitManager } from '../git';
 import type { PairCodeManager } from '../pair-code';
 import type { PairingManager } from '../pairing';
-import type { StatusManager } from '../status';
 
 /** Everything a route module can need — built once per middleware in api.ts. */
 export interface RouteContext {
@@ -14,7 +13,6 @@ export interface RouteContext {
   activity: ActivityManager;
   agent: AgentManager;
   git: GitManager;
-  status: StatusManager;
   services: DeskServiceManager;
   checks: DeskCheckManager;
   pairing: PairingManager;

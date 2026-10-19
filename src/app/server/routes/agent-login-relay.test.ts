@@ -122,7 +122,7 @@ describe('POST /api/agent/login-relay/start resuming parked runs', () => {
     const { res } = fakeRes();
     await route('/api/agent/login-relay/start', {
       agent: { resumeAuthParkedTasks } as unknown as RouteContext['agent'],
-      status: { runChecksAndWait } as unknown as RouteContext['status'],
+      checks: { runChecksAndWait } as unknown as RouteContext['checks'],
     }).handle(fakeReq(), res);
 
     await waitFor(async () => resumeAuthParkedTasks.mock.calls.length > 0);

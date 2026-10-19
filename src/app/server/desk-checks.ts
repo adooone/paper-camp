@@ -1,8 +1,12 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { deskConfigSchema } from '@/core/parse';
-import type { CheckStatus, DeskCheck, DeskCheckState } from '../../types';
+import { corpusFingerprint, readCorpus } from '@/core/corpus';
+import { deskConfigSchema, findConsistencyIssues } from '@/core/parse';
+import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
+import type { CheckStatus, DeskCheck, DeskCheckState, FailingCheck } from '../../types';
+import { BIOME_FIX_COMMAND } from './biome-fix';
+import { readMaybe } from './helpers';
 
 export interface CheckFingerprint {
   headSha: string | null;
@@ -44,13 +48,34 @@ function run(cmd: string, cwd: string): Promise<{ code: number | null; output: s
   });
 }
 
+export interface DocsCheckRuntime {
+  fingerprint: string;
+  passed: boolean;
+  output: string;
+}
+
 export interface DeskCheckManagerState {
   runtimes: Map<string, CheckRuntime>;
   inFlight: Map<string, Promise<CheckStatus>>;
+  // Docs has no on-demand Stack check to hold a live snapshot, so its cached
+  // result and the corpus fingerprint it was produced on travel together here
+  // (IDEA-255, IDEA-308). The corpus fingerprint — not HEAD — because Docs reads
+  // the working-tree corpus, which can differ from HEAD's.
+  docs: DocsCheckRuntime | null;
 }
 
 export function createEmptyCheckState(): DeskCheckManagerState {
-  return { runtimes: new Map(), inFlight: new Map() };
+  return { runtimes: new Map(), inFlight: new Map(), docs: null };
+}
+
+function repoHasVitest(root: string): boolean {
+  try {
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    return Boolean(deps.vitest);
+  } catch {
+    return false;
+  }
 }
 
 export type DeskCheckManager = ReturnType<typeof createDeskCheckManager>;
@@ -157,10 +182,120 @@ export function createDeskCheckManager(
     });
   }
 
+  async function runManifestCheck(
+    name: string,
+    hasVitest: boolean,
+  ): Promise<{ passed: boolean; output: string }> {
+    if (name === 'test' && !hasVitest) return { passed: true, output: '' };
+    // A run already in flight predates this call — wait it out so the fresh
+    // runCheck below reports on the current code, not a stale join.
+    const stale = inFlight.get(name);
+    if (stale) await stale;
+    const status = await runCheck(name);
+    return { passed: status === 'pass', output: runtimes.get(name)?.output ?? '' };
+  }
+
+  // Mirrors the Stack panel's Docs stamp (IDEA-156): doc findings computed from
+  // the corpus, not a spawned command.
+  async function runDocsCheck(): Promise<DocsCheckRuntime> {
+    const [{ work: entries, fingerprint }, roadmapRaw] = await Promise.all([
+      readCorpus(root, { live: true }),
+      readMaybe(join(root, 'ROADMAP.md')),
+    ]);
+    const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
+    const issues = findConsistencyIssues(entries, subjectVocabulary);
+    return {
+      fingerprint,
+      passed: issues.length === 0,
+      output: issues.map((issue) => issue.message).join('\n'),
+    };
+  }
+
+  async function runDocsCheckAndCache(): Promise<{ passed: boolean; output: string }> {
+    const result = await runDocsCheck();
+    state.docs = result;
+    return result;
+  }
+
+  // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
+  // nits can't hard-fail an autonomous run-all phase; always runs every check.
+  async function runChecksAndWait(): Promise<FailingCheck[]> {
+    await new Promise<void>((resolve, reject) => {
+      const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });
+      fix.once('close', () => resolve());
+      fix.once('error', reject);
+    });
+
+    const names = loadManifestChecks(root).map((c) => c.name);
+    const hasVitest = repoHasVitest(root);
+    const [deskResults, docsResult] = await Promise.all([
+      Promise.all(names.map((name) => runManifestCheck(name, hasVitest))),
+      runDocsCheckAndCache(),
+    ]);
+    const failing: FailingCheck[] = [];
+    names.forEach((name, i) => {
+      if (!deskResults[i].passed) {
+        failing.push({ name: name as FailingCheck['name'], output: deskResults[i].output });
+      }
+    });
+    if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });
+    return failing;
+  }
+
+  // Reuses each check's own last result when it was produced on the current
+  // tree, whether from an earlier sweep or an on-demand Stack click
+  // (IDEA-255, IDEA-308).
+  async function getCachedOrRunChecks(): Promise<FailingCheck[]> {
+    const { headSha, treeHash } = getFingerprint
+      ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
+      : EMPTY_FINGERPRINT;
+    const names = loadManifestChecks(root).map((c) => c.name);
+    const hasVitest = repoHasVitest(root);
+
+    const deskFresh = (name: string): boolean => {
+      if (name === 'test' && !hasVitest) return true;
+      const runtime = runtimes.get(name);
+      if (!runtime) return false;
+      return (
+        runtime.headSha === headSha &&
+        runtime.treeHash === treeHash &&
+        (runtime.status === 'pass' || runtime.status === 'fail')
+      );
+    };
+    const corpusFp = await corpusFingerprint(join(root, 'papercamp', 'ideas'));
+    const docsFresh = state.docs?.fingerprint === corpusFp;
+
+    const [deskResults, docsResult] = await Promise.all([
+      Promise.all(
+        names.map((name) => {
+          if (!deskFresh(name)) return runManifestCheck(name, hasVitest);
+          const runtime = runtimes.get(name);
+          return Promise.resolve({
+            passed: runtime?.status !== 'fail',
+            output: runtime?.output ?? '',
+          });
+        }),
+      ),
+      docsFresh
+        ? Promise.resolve({ passed: state.docs?.passed ?? false, output: state.docs?.output ?? '' })
+        : runDocsCheckAndCache(),
+    ]);
+    const failing: FailingCheck[] = [];
+    names.forEach((name, i) => {
+      if (!deskResults[i].passed) {
+        failing.push({ name: name as FailingCheck['name'], output: deskResults[i].output });
+      }
+    });
+    if (!docsResult.passed) failing.push({ name: 'docs', output: docsResult.output });
+    return failing;
+  }
+
   return {
     runCheck,
     runFix,
     getStatus,
+    runChecksAndWait,
+    getCachedOrRunChecks,
     getState: (): DeskCheckManagerState => state,
   };
 }

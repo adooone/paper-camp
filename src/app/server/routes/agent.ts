@@ -77,7 +77,7 @@ export interface FeedbackApplyResult {
  * project chat's "about an existing idea" move (IDEA-251) — both routes to the same
  * entity thread and undo trail. Returns null when planId doesn't resolve to an entity. */
 export async function applyFeedbackMessage(
-  { root, git, status, agent }: Pick<RouteContext, 'root' | 'git' | 'status' | 'agent'>,
+  { root, git, checks, agent }: Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'>,
   planId: string,
   text: string,
   context?: MountContext,
@@ -161,8 +161,8 @@ export async function applyFeedbackMessage(
           body: '',
           phases: spawnFix,
         }),
-        () => status.runChecksAndWait(),
-        () => status.getCachedOrRunChecks(),
+        () => checks.runChecksAndWait(),
+        () => checks.getCachedOrRunChecks(),
       );
     }
 
@@ -191,8 +191,8 @@ export async function applyFeedbackMessage(
       await resolveChatQuestion(root, entity.id);
       await agent.resumeQuestionParkedTasks(
         entity.id,
-        () => status.runChecksAndWait(),
-        () => status.getCachedOrRunChecks(),
+        () => checks.runChecksAndWait(),
+        () => checks.getCachedOrRunChecks(),
       );
     }
 
@@ -221,8 +221,8 @@ export async function applyFeedbackMessage(
       });
       agent.startRunAllPhases(
         reopenedPlan,
-        () => status.runChecksAndWait(),
-        () => status.getCachedOrRunChecks(),
+        () => checks.runChecksAndWait(),
+        () => checks.getCachedOrRunChecks(),
       );
     }
   } catch (err) {
@@ -303,7 +303,7 @@ async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | u
 
 type ActionResult = { ok: true } | { ok: false; error: string; status?: number };
 
-export function agentRoutes({ root, git, status, agent, activity }: RouteContext): Route[] {
+export function agentRoutes({ root, git, checks, agent, activity }: RouteContext): Route[] {
   async function resolvePlan(
     planId: string,
   ): Promise<{ ok: true; plan: PlanEntry } | { ok: false; error: string; status: number }> {
@@ -375,8 +375,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
             clearAgentAuthStatusCache(root);
             agent
               .resumeAuthParkedTasks(
-                () => status.runChecksAndWait(),
-                () => status.getCachedOrRunChecks(),
+                () => checks.runChecksAndWait(),
+                () => checks.getCachedOrRunChecks(),
               )
               .catch((err) => {
                 console.error('Failed to resume auth-parked tasks after sign-in', err);
@@ -441,8 +441,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         return agent.start(
           resolved.plan,
           phaseIndex,
-          () => status.runChecksAndWait(),
-          () => status.getCachedOrRunChecks(),
+          () => checks.runChecksAndWait(),
+          () => checks.getCachedOrRunChecks(),
         );
       },
     ),
@@ -569,8 +569,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         if (waits) return { ok: false, error: waits };
         return agent.startRunAllPhases(
           resolved.plan,
-          () => status.runChecksAndWait(),
-          () => status.getCachedOrRunChecks(),
+          () => checks.runChecksAndWait(),
+          () => checks.getCachedOrRunChecks(),
         );
       },
     ),
@@ -726,8 +726,8 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
               body: issue.reason,
               phases: [{ done: false, text: issue.title, description: issue.reason }],
             }),
-            () => status.runChecksAndWait(),
-            () => status.getCachedOrRunChecks(),
+            () => checks.runChecksAndWait(),
+            () => checks.getCachedOrRunChecks(),
           );
         }
 
@@ -784,7 +784,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         }
 
         const result = await applyFeedbackMessage(
-          { root, git, status, agent },
+          { root, git, checks, agent },
           planId,
           text,
           context,

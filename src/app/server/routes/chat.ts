@@ -10,14 +10,14 @@ import { readBody, sendJson } from '../http';
 import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
 
-type ChatReplyContext = Pick<RouteContext, 'root' | 'agent' | 'git' | 'status' | 'activity'>;
+type ChatReplyContext = Pick<RouteContext, 'root' | 'agent' | 'git' | 'checks' | 'activity'>;
 
 async function appendUserMessage(root: string, text: string): Promise<void> {
   await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text });
 }
 
 async function runChatReply(
-  { root, agent, git, status, activity }: ChatReplyContext,
+  { root, agent, git, checks, activity }: ChatReplyContext,
   thread: ThreadMessage[],
 ): Promise<{ error?: string }> {
   const publishStage = (event: { stage: string } & Record<string, unknown>) =>
@@ -39,7 +39,7 @@ async function runChatReply(
         createIdea: (title, content) => createIdea(root, { title, content }),
         applyToEntity: async (entityId, feedbackText) => {
           const result = await applyFeedbackMessage(
-            { root, git, status, agent },
+            { root, git, checks, agent },
             entityId,
             feedbackText,
           );
@@ -62,7 +62,7 @@ async function runChatReply(
   return { error };
 }
 
-export function chatRoutes({ root, agent, git, status, activity }: RouteContext): Route[] {
+export function chatRoutes({ root, agent, git, checks, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -89,7 +89,7 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
 
         await appendUserMessage(root, text.trim());
         const thread = await readChatFile(root);
-        const { error } = await runChatReply({ root, agent, git, status, activity }, thread);
+        const { error } = await runChatReply({ root, agent, git, checks, activity }, thread);
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
       },
     },
@@ -99,7 +99,7 @@ export function chatRoutes({ root, agent, git, status, activity }: RouteContext)
       path: '/api/chat/retry',
       handle: async (_req, res) => {
         const thread = await readChatFile(root);
-        const { error } = await runChatReply({ root, agent, git, status, activity }, thread);
+        const { error } = await runChatReply({ root, agent, git, checks, activity }, thread);
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
       },
     },

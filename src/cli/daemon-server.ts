@@ -192,7 +192,6 @@ export async function createProjectApi(
     undefined,
     undefined,
     undefined,
-    undefined,
     pairingState,
     undefined,
     onPaired,
