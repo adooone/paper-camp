@@ -1,8 +1,7 @@
-import { join } from 'node:path';
 import type { EntityEntry, PlanEntry, ResolvedNeed } from '../types/index';
+import { readCorpus } from './corpus';
 import { type MachineRegistry, defaultRegistryPath, loadRegistry } from './machine-registry';
 import { isBlockingNeed } from './needs-status';
-import { readEntitiesWithDerivedStatus } from './readers';
 import { isClosedEntity } from './status';
 
 export { isBlockingNeed, hasBlockingNeed } from './needs-status';
@@ -13,6 +12,11 @@ export interface NeedsRef {
   projectSlug?: string;
   id: string;
 }
+
+/** A project root's entries keyed by id, shared across one batch of `needs:`
+ * resolutions (attachResolvedNeeds/computeNeedsBlockedIds) so every ref into the
+ * same root reads it once instead of once per entity. */
+export type EntriesByRoot = Map<string, Map<string, EntityEntry>>;
 
 export function parseNeedsRef(raw: string): NeedsRef {
   const slashIndex = raw.indexOf('/');
@@ -29,17 +33,15 @@ export async function resolveNeedsRefs(
   root: string,
   needs: string[],
   registry?: MachineRegistry,
+  entriesByRoot: EntriesByRoot = new Map(),
 ): Promise<ResolvedNeed[]> {
   if (needs.length === 0) return [];
   const reg = registry ?? (await loadRegistry(defaultRegistryPath()));
-  const entriesByRoot = new Map<string, Map<string, EntityEntry>>();
 
   async function entriesForRoot(projectRoot: string): Promise<Map<string, EntityEntry>> {
     const cached = entriesByRoot.get(projectRoot);
     if (cached) return cached;
-    const { entries } = await readEntitiesWithDerivedStatus(
-      join(projectRoot, 'papercamp', 'ideas'),
-    );
+    const { entries } = await readCorpus(projectRoot);
     const byId = new Map(entries.map((entry) => [entry.id, entry]));
     entriesByRoot.set(projectRoot, byId);
     return byId;
@@ -75,14 +77,21 @@ export async function resolveNeedsRefs(
 
 /** Attaches `resolvedNeeds` to every plan that carries a `needs:` list, sharing one
  * registry load and one set of per-project entity reads across the whole batch —
- * called once per corpus read (see `cachedWorkEntries`), not per plan. */
-export async function attachResolvedNeeds(root: string, plans: PlanEntry[]): Promise<PlanEntry[]> {
+ * called once per corpus read (see `readCorpus`), not per plan. */
+export async function attachResolvedNeeds(
+  root: string,
+  plans: PlanEntry[],
+  entriesByRoot: EntriesByRoot = new Map(),
+): Promise<PlanEntry[]> {
   if (plans.every((plan) => plan.needs.length === 0)) return plans;
   const registry = await loadRegistry(defaultRegistryPath());
   return Promise.all(
     plans.map(async (plan) => {
       if (plan.needs.length === 0) return plan;
-      return { ...plan, resolvedNeeds: await resolveNeedsRefs(root, plan.needs, registry) };
+      return {
+        ...plan,
+        resolvedNeeds: await resolveNeedsRefs(root, plan.needs, registry, entriesByRoot),
+      };
     }),
   );
 }
@@ -93,13 +102,14 @@ export async function attachResolvedNeeds(root: string, plans: PlanEntry[]): Pro
 export async function computeNeedsBlockedIds(
   root: string,
   entries: { id: string; needs: string[] }[],
+  entriesByRoot: EntriesByRoot = new Map(),
 ): Promise<Set<string>> {
   const withNeeds = entries.filter((e) => e.needs.length > 0);
   if (withNeeds.length === 0) return new Set();
   const registry = await loadRegistry(defaultRegistryPath());
   const blocked = new Set<string>();
   for (const entry of withNeeds) {
-    const resolved = await resolveNeedsRefs(root, entry.needs, registry);
+    const resolved = await resolveNeedsRefs(root, entry.needs, registry, entriesByRoot);
     if (resolved.some(isBlockingNeed)) blocked.add(entry.id);
   }
   return blocked;

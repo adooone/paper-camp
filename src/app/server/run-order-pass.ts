@@ -1,8 +1,8 @@
+import { readCorpus } from '@/core/corpus';
 import { computeNeedsBlockedIds } from '@/core/needs';
-import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
-import { campFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from './helpers';
+import { readRunOrderFile, withRunOrderLock, writeRunOrderFile } from './helpers';
 
 function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): string[] {
   const changed = new Set<string>();
@@ -23,10 +23,8 @@ function changedIds(before: RunOrderFileEntry[], after: RunOrderFileEntry[]): st
  * invariant already holding and no-ops.
  */
 export async function runRunOrderPass(root: string): Promise<string[]> {
-  const ideasDir = campFile(root, 'ideas');
-  const { entries } = await readEntities(ideasDir);
   // File-watcher-triggered, not a human ask: serve cache/disk only, never a live `gh` call.
-  const { entries: work } = await readWorkEntries(ideasDir, Number.POSITIVE_INFINITY);
+  const { entries, work } = await readCorpus(root);
   const blockedIds = await computeNeedsBlockedIds(root, entries);
   const classified = classifyRunOrderEntries(
     entries.map((e) => ({ ...e, blockedByNeeds: blockedIds.has(e.id) })),

@@ -1,16 +1,16 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { readCorpus } from '@/core/corpus';
 import { getPrMapFetchedAt } from '@/core/git-pr';
 import { findConsistencyIssues } from '@/core/parse';
-import { readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { FailingCheck } from '../../types';
 import { BIOME_FIX_COMMAND } from './biome-fix';
 import type { DeskCheckManager } from './desk-checks';
 import { loadManifestChecks } from './desk-checks';
 import type { GitManager } from './git';
-import { campFile, readMaybe } from './helpers';
+import { readMaybe } from './helpers';
 
 export interface StatusPayload {
   prFetchedAt: number | null;
@@ -65,8 +65,8 @@ export function createStatusManager(
   // Mirrors the Stack panel's Docs stamp (IDEA-156): doc findings computed from
   // the corpus, not a spawned command.
   async function runDocsCheck(): Promise<{ passed: boolean; output: string }> {
-    const [{ entries }, roadmapRaw] = await Promise.all([
-      readWorkEntries(campFile(root, 'ideas')),
+    const [{ work: entries }, roadmapRaw] = await Promise.all([
+      readCorpus(root, { live: true }),
       readMaybe(join(root, 'ROADMAP.md')),
     ]);
     const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];

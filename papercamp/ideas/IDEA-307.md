@@ -96,10 +96,11 @@ client updates an open idea view without a reload, and `mcp/tools.test.ts`
 runs against a real `http.Server` built from `createApiMiddleware`.
 
 ### Phases
-- [ ] `readCorpus` snapshot with a per-root cache
+- [x] `readCorpus` snapshot with a per-root cache
       One cached snapshot keyed on fingerprint and PR `fetchedAt`; main
       activity cached by branch sha; needs resolved from the snapshot;
       `corpus-cache.ts` folded in; all call sites moved; tests.
+      run: 19m32s · 318 in · 110.4k out · sonnet-5 · sess:a5382435-6b21-4793-8d3f-42a1764a385c
 - [ ] `updateEntity`, `appendThread` and `createIdea`
       The three write primitives with the closed-entity guard and archive
       handling; hooks, agent.ts and routes call them; tests.

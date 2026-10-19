@@ -8,11 +8,12 @@ import {
   buildPrReviewPrompt,
 } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
+import { readCorpus } from '@/core/corpus';
 import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { checkNeedsForRun } from '@/core/needs';
-import { entityToPlan, readEntities, readEntitiesWithDerivedStatus } from '@/core/readers';
+import { entityToPlan, readEntities } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import {
   agentThreadMessage,
@@ -701,7 +702,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         }
 
         const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntitiesWithDerivedStatus(ideasDir);
+        const { entries } = await readCorpus(root, { live: true });
         const parent = issue.entityId ? entries.find((e) => e.id === issue.entityId) : undefined;
 
         // An open parent keeps its inline Fixes list; only a closed/archived parent,

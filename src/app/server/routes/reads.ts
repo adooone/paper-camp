@@ -1,7 +1,7 @@
 import { join } from 'node:path';
+import { readCorpus } from '@/core/corpus';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { describeFindings, runDoctor } from '@/core/doctor';
-import { attachResolvedNeeds } from '@/core/needs';
 import { buildNightReportGroups, readNightFindings } from '@/core/night-suggestions';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
@@ -11,28 +11,15 @@ import {
   parseSuggestions,
   readTaskLog,
 } from '@/core/parse';
-import { findArchivableIdeas, readNoteEntries, readWorkEntries } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
+import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
 import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
-import { cached, corpusFingerprint } from '../corpus-cache';
 import { campFile, readMaybe } from '../helpers';
 import { readNotifications } from '../notification-log';
 import { listConfigFiles } from './system';
 import type { ReadRoute } from './types';
-
-/** Cached readWorkEntries — shared by /api/plans and /api/consistency, one root per key. */
-const cachedWorkEntries = (root: string) =>
-  cached(
-    `work:${root}`,
-    async () => {
-      const { entries, warnings, resolved } = await readWorkEntries(campFile(root, 'ideas'));
-      return { entries: await attachResolvedNeeds(root, entries), warnings, resolved };
-    },
-    (result) => result.resolved,
-    () => corpusFingerprint(campFile(root, 'ideas')),
-  );
 
 export const readRoutes: ReadRoute[] = [
   {
@@ -51,8 +38,8 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/plans',
     handler: async (root) => {
-      const { entries, warnings } = await cachedWorkEntries(root);
-      return { entries, warnings };
+      const { work, warnings } = await readCorpus(root, { live: true });
+      return { entries: work, warnings };
     },
   },
   {
@@ -79,24 +66,19 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/ideas',
-    handler: async (root) =>
-      cached(
-        `notes:${root}`,
-        () => readNoteEntries(campFile(root, 'ideas')),
-        () => true,
-        () => corpusFingerprint(campFile(root, 'ideas')),
-      ),
+    handler: async (root) => {
+      const { notes, warnings } = await readCorpus(root, { live: true });
+      return { entries: notes, warnings };
+    },
   },
   {
     path: '/api/archivable-ideas',
     handler: async (root) => {
-      const { entries } = await cached(
-        `archivable:${root}`,
-        () => findArchivableIdeas(campFile(root, 'ideas')),
-        (result) => result.resolved,
-        () => corpusFingerprint(campFile(root, 'ideas')),
-      );
-      return entries;
+      const { entries, prs } = await readCorpus(root, { live: true });
+      return entries.flatMap((e) => {
+        const pr = prs?.get(e.id);
+        return pr && isArchivable(e, pr) ? [{ id: e.id, title: e.title, pr }] : [];
+      });
     },
   },
   {
@@ -116,12 +98,12 @@ export const readRoutes: ReadRoute[] = [
   {
     path: '/api/consistency',
     handler: async (root) => {
-      const [plansResult, roadmapRaw] = await Promise.all([
-        cachedWorkEntries(root),
+      const [{ work }, roadmapRaw] = await Promise.all([
+        readCorpus(root, { live: true }),
         readMaybe(join(root, 'ROADMAP.md')),
       ]);
       const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
-      return findConsistencyIssues(plansResult.entries, subjectVocabulary);
+      return findConsistencyIssues(work, subjectVocabulary);
     },
   },
   {
@@ -180,11 +162,11 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => {
       const raw = await readMaybe(join(root, 'ROADMAP.md'));
       if (!raw) return null;
-      const [{ entries }, changelog] = await Promise.all([
-        cachedWorkEntries(root),
+      const [{ work }, changelog] = await Promise.all([
+        readCorpus(root, { live: true }),
         readMaybe(join(root, 'CHANGELOG.md')),
       ]);
-      return resolveRoadmap(parseRoadmap(raw), entries, changelog);
+      return resolveRoadmap(parseRoadmap(raw), work, changelog);
     },
   },
   {

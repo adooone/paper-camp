@@ -1,10 +1,10 @@
 import type { ServerResponse } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const invalidateCorpusCache = vi.fn();
+const invalidateCorpus = vi.fn();
 const runRunOrderPass = vi.fn();
 
-vi.mock('./corpus-cache', () => ({ invalidateCorpusCache }));
+vi.mock('@/core/corpus', () => ({ invalidateCorpus }));
 vi.mock('./run-order-pass', () => ({ runRunOrderPass }));
 
 const { createActivityManager, createEmptyActivityState } = await import('./activity');
@@ -94,7 +94,7 @@ describe('createActivityManager', () => {
   describe('notifyChanged', () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      invalidateCorpusCache.mockReset();
+      invalidateCorpus.mockReset();
       runRunOrderPass.mockReset().mockResolvedValue([]);
     });
     afterEach(() => vi.useRealTimers());
@@ -105,7 +105,7 @@ describe('createActivityManager', () => {
       activity.subscribe(a.res);
 
       activity.notifyChanged();
-      expect(invalidateCorpusCache).toHaveBeenCalledWith('/tmp/papercamp-activity-test');
+      expect(invalidateCorpus).toHaveBeenCalledWith('/tmp/papercamp-activity-test');
       expect(a.writes).toHaveLength(1); // only the hello
 
       vi.advanceTimersByTime(100);

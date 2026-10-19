@@ -1,7 +1,7 @@
 import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
 import { campFile, fileExists } from '../app/server/helpers';
-import { readWorkEntries } from '../core/readers';
+import { readCorpus } from '../core/corpus';
 import type { PlanEntry } from '../types/index';
 
 function renderPlanLine(plan: PlanEntry): string {
@@ -21,12 +21,11 @@ function renderPlanLine(plan: PlanEntry): string {
 export async function buildSessionFocus(root: string): Promise<string | null> {
   if (!(await fileExists(campFile(root, 'ideas')))) return null;
 
-  const { entries } = await readWorkEntries(campFile(root, 'ideas'));
+  const { work } = await readCorpus(root, { live: true });
   const git = createGitManager(root);
   const branchPlanId = git.getFeatureBranchPlanId();
   const plan =
-    (branchPlanId ? entries.find((p) => p.id === branchPlanId) : undefined) ??
-    findFocusPlan(entries);
+    (branchPlanId ? work.find((p) => p.id === branchPlanId) : undefined) ?? findFocusPlan(work);
 
   const sections: string[] = ['## Paper Camp focus'];
   sections.push(plan ? renderPlanLine(plan) : '**Active plan:** none in progress');

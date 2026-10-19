@@ -1,7 +1,8 @@
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { readCorpus } from '@/core/corpus';
 import { computeNeedsBlockedIds } from '@/core/needs';
-import { readEntities, readWorkEntries } from '@/core/readers';
+import { readEntities } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { archiveEntityFile, todayDateString, unarchiveEntityFile } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
@@ -195,7 +196,7 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
         ) {
           const moved =
             typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
-          const { entries: work } = await readWorkEntries(ideasDir);
+          const { work } = await readCorpus(root, { live: true });
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
           const blockedIds = await computeNeedsBlockedIds(root, nextEntries);
           const classified = classifyRunOrderEntries(

@@ -10,9 +10,10 @@ import {
   readMaybe,
   writeEntityFile,
 } from '../app/server/helpers';
+import { readCorpus } from '../core/corpus';
 import { resolveNeedsRefs } from '../core/needs';
 import { parseEntityFile, parseSuggestions } from '../core/parse';
-import { entityToPlan, readEntities, readWorkEntries } from '../core/readers';
+import { entityToPlan, readEntities } from '../core/readers';
 import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
 import {
   agentThreadMessage,
@@ -32,8 +33,9 @@ function json(data: Record<string, unknown>) {
   };
 }
 
-function fetchWorkEntries(root: string) {
-  return readWorkEntries(campFile(root, 'ideas'));
+async function fetchWorkEntries(root: string) {
+  const { work, warnings, resolved } = await readCorpus(root, { live: true });
+  return { entries: work, warnings, resolved };
 }
 
 // Wraps the same `src/core` readers/parsers as the dashboard's `/api/*` routes

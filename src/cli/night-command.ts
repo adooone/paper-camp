@@ -3,6 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { appendNotification } from '../app/server/notification-log';
 import { logTaskCompletion, logTaskStart } from '../app/server/task-log';
+import { readCorpus } from '../core/corpus';
 import {
   daemonStatePath,
   fetchMachineNightGate,
@@ -28,7 +29,6 @@ import {
   readNightFindings,
 } from '../core/night-suggestions';
 import { readTaskLog } from '../core/parse';
-import { readEntitiesWithDerivedStatus } from '../core/readers';
 import { todayDateString } from '../core/serialize';
 import {
   type ChunkHealth,
@@ -255,7 +255,7 @@ async function logNightReviewPasses(root: string, result: NightChunkPassResult):
 }
 
 async function readOpenIdeaCandidates(root: string): Promise<{ title: string; body: string }[]> {
-  const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
+  const { entries } = await readCorpus(root, { live: true });
   return entries
     .filter((idea) => idea.status !== 'done' && idea.status !== 'dropped')
     .map((idea) => ({ title: idea.title, body: idea.body }));

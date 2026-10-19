@@ -2,7 +2,6 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { appendChatMessage, formatChatFile, parseChatFile } from '@/core/chat-file';
 import { assertCorpusWritable } from '@/core/corpus-format';
-import { readEntitiesWithDerivedStatus } from '@/core/readers';
 import {
   type RunOrderFileEntry,
   formatRunOrderFile,

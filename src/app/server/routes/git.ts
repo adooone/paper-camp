@@ -1,8 +1,9 @@
 import { findFocusPlan } from '@/app/features/plans/helpers';
 import { readCommitConvention } from '@/core/commit-convention';
+import { readCorpus } from '@/core/corpus';
 import { readBranches, readFirstParentLog } from '@/core/git-log';
 import { squashMergePr } from '@/core/git-pr';
-import { entityToPlan, readEntities, readWorkEntries } from '@/core/readers';
+import { entityToPlan, readEntities } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
 import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
@@ -102,8 +103,8 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 400, { error: 'planId is required' });
             return;
           }
-          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
-          const plan = entries.find((e) => e.id === planId);
+          const { work } = await readCorpus(root, { live: true });
+          const plan = work.find((e) => e.id === planId);
           if (!plan) {
             sendJson(res, 404, { error: 'entity not found' });
             return;
@@ -428,8 +429,8 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           const diffText = await git.diff(files);
-          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
-          const activePlan = findFocusPlan(entries);
+          const { work } = await readCorpus(root, { live: true });
+          const activePlan = findFocusPlan(work);
           const suggestion = await suggestCommitMessage(
             diffText,
             activePlan?.id,

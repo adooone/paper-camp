@@ -1,5 +1,5 @@
 import type { ServerResponse } from 'node:http';
-import { invalidateCorpusCache } from './corpus-cache';
+import { invalidateCorpus } from '@/core/corpus';
 import { runRunOrderPass } from './run-order-pass';
 
 // Consumers route on `payload.type`; a bare `changed` message is the generic
@@ -88,7 +88,7 @@ export function createActivityManager(
     // Called by every write path in place of a papercamp/ watcher — the daemon
     // knows its own writes, so it invalidates and re-broadcasts right there.
     notifyChanged() {
-      invalidateCorpusCache(root);
+      invalidateCorpus(root);
       scheduleBroadcast();
       scheduleRunPass();
     },

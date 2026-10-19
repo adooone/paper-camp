@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
+import { readCorpus } from '@/core/corpus';
 import { hasBlockingNeed } from '@/core/needs';
-import { readEntities, readWorkEntries } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
 import { agentThreadMessage } from '@/core/serialize';
@@ -164,8 +164,7 @@ export async function applyPrioritiseVerdict(
   verdict: PrioritiseVerdict,
 ): Promise<ApplyPrioritiseResult> {
   const ideasDir = campFile(root, 'ideas');
-  const { entries } = await readEntities(ideasDir);
-  const { entries: work } = await readWorkEntries(ideasDir);
+  const { entries, work } = await readCorpus(root, { live: true });
   const classified = classifyRunOrderEntries(entries, work);
   const byId = new Map(classified.map((e) => [e.id, e]));
 

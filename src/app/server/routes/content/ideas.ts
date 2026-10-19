@@ -1,9 +1,9 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
-import { attachResolvedNeeds } from '@/core/needs';
+import { readCorpus } from '@/core/corpus';
 import { removeNightFindingLine } from '@/core/night-suggestions';
-import { readEntities, readWorkEntries } from '@/core/readers';
+import { readEntities } from '@/core/readers';
 import {
   addRoadmapCandidate,
   addRoadmapItem,
@@ -599,10 +599,9 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       path: '/api/ideas/prioritise',
       handle: async (_req, res) => {
         try {
-          const { entries } = await readWorkEntries(campFile(root, 'ideas'));
-          const withNeeds = await attachResolvedNeeds(root, entries);
+          const { work } = await readCorpus(root, { live: true });
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
-          const verdict = await getPrioritiseVerdict(withNeeds, roadmapText, agent.runPrioritise);
+          const verdict = await getPrioritiseVerdict(work, roadmapText, agent.runPrioritise);
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
           if (moved.length > 0 || annotated.length > 0) activity.notifyChanged();
           sendJson(res, 200, {

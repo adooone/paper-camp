@@ -10,15 +10,11 @@ import {
   buildReconcilePrompt,
 } from '@/app/features/plans/prompts';
 import { writeCapacity } from '@/core/capacity';
+import { readCorpus } from '@/core/corpus';
 import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
-import {
-  entityToIdea,
-  entityToPlan,
-  readEntities,
-  readEntitiesWithDerivedStatus,
-} from '@/core/readers';
+import { entityToIdea, entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import {
@@ -1309,7 +1305,7 @@ export function createAgentManager(
 
     (async () => {
       try {
-        const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
+        const { entries } = await readCorpus(root, { live: true });
         const candidates = entries
           .filter((e) => e.kind !== 'note' && e.status !== 'done' && e.status !== 'dropped')
           .map((e) => entityToPlan(e));
@@ -1440,7 +1436,7 @@ export function createAgentManager(
 
     (async () => {
       try {
-        const { entries } = await readEntitiesWithDerivedStatus(join(root, 'papercamp', 'ideas'));
+        const { entries } = await readCorpus(root, { live: true });
         const allPlans = entries.map((e) => entityToPlan(e));
         const isDraftEligible = (e: EntityEntry) =>
           e.kind !== 'note' && e.phases.length === 0 && e.status === 'idea';

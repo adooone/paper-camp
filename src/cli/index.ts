@@ -9,6 +9,7 @@ import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
 import { entityFileInput, writeEntityFile } from '../app/server/helpers';
+import { readCorpus } from '../core/corpus';
 import { bumpCorpusFormat } from '../core/corpus-format';
 import {
   collectDoctorContext,
@@ -35,7 +36,7 @@ import {
   scanForProjects,
 } from '../core/machine-registry';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
-import { entityToPlan, readEntitiesWithDerivedStatus } from '../core/readers';
+import { entityToPlan } from '../core/readers';
 import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
 import {
   AlreadyInitializedError,
@@ -622,8 +623,7 @@ program
 
 export async function runAudit(root: string): Promise<boolean> {
   const ideasDir = resolve(root, 'papercamp', 'ideas');
-
-  const { entries: allEntities, warnings } = await readEntitiesWithDerivedStatus(ideasDir);
+  const { entries: allEntities, warnings } = await readCorpus(root, { live: true });
 
   for (const warning of warnings) {
     console.warn(`  warning: ${warning.title}: ${warning.message}`);

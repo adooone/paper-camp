@@ -39,8 +39,7 @@ function isCorpusOnly(files: string[]): boolean {
   return files.length > 0 && files.every((f) => f.startsWith('papercamp/'));
 }
 
-export async function resolveIdsWithMainActivity(root: string): Promise<Set<string>> {
-  const branch = await resolveDefaultBranch(root);
+async function computeIdsWithMainActivity(root: string, branch: string): Promise<Set<string>> {
   const output = await runGit(root, ['log', '--format=%x02%B%x00', '--name-only', branch]);
   const ids = new Set<string>();
   for (const commit of output.split('\x02')) {
@@ -55,6 +54,30 @@ export async function resolveIdsWithMainActivity(root: string): Promise<Set<stri
     if (id) ids.add(id);
   }
   return ids;
+}
+
+interface MainActivityCacheEntry {
+  sha: string;
+  promise: Promise<Set<string>>;
+}
+
+const mainActivityCache = new Map<string, MainActivityCacheEntry>();
+
+/** Cached per root by the default branch's current sha — a `git log` over the whole
+ * history is expensive to redo on every corpus read when main hasn't moved. */
+export async function resolveIdsWithMainActivity(root: string): Promise<Set<string>> {
+  const branch = await resolveDefaultBranch(root);
+  const sha = (await runGit(root, ['rev-parse', branch])).trim();
+
+  const hit = mainActivityCache.get(root);
+  if (hit && hit.sha === sha) return hit.promise;
+
+  const promise = computeIdsWithMainActivity(root, branch).catch((err) => {
+    if (mainActivityCache.get(root)?.sha === sha) mainActivityCache.delete(root);
+    throw err;
+  });
+  mainActivityCache.set(root, { sha, promise });
+  return promise;
 }
 
 export interface GitLogCommit {
