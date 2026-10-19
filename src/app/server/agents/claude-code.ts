@@ -130,6 +130,10 @@ function extractRateLimit(json: Record<string, unknown>): RateLimitSnapshot | nu
   };
 }
 
+const MCP_CONFIG = JSON.stringify({
+  mcpServers: { 'paper-camp': { command: 'paper-camp', args: ['mcp'] } },
+});
+
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   const args = [
     '-p',
@@ -140,7 +144,10 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
     '--permission-mode',
     'auto',
     // Headless jobs must be terminal-only: --strict-mcp-config drops ambient MCP
-    // servers (browser/computer-use) and --disallowedTools blocks web tools, so a phase can't "visually check" the app.
+    // servers (browser/computer-use) except the one named in --mcp-config, so a
+    // phase gets the paper-camp server but can't "visually check" the app.
+    '--mcp-config',
+    MCP_CONFIG,
     '--strict-mcp-config',
     '--disallowedTools',
     'WebFetch',

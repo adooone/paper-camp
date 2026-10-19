@@ -60,9 +60,10 @@ MCP servers, a fresh `paper-camp init` in a scratch repo produces both config
 files, and `paper-camp doctor` is green on this repo.
 
 ### Phases
-- [ ] Pass the MCP server to headless claude-code runs
+- [x] Pass the MCP server to headless claude-code runs
       `buildArgs` appends `--mcp-config` with the inline JSON and keeps
       `--strict-mcp-config`; `claude-code.test.ts` asserts the exact args.
+      run: 52s · 22 in · 2.3k out · sonnet-5 · sess:0e49ae85-99f2-4b7f-b319-006b47b83c98
 - [ ] Scaffold `.mcp.json` and `opencode.json` from init
       `runInit` and `--settings` write or merge the `paper-camp` entry in both
       files, idempotently; scaffold tests for create and merge.

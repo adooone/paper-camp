@@ -2,6 +2,27 @@ import { describe, expect, it } from 'vitest';
 import { buildArgs, parseLine } from './claude-code';
 
 describe('claude-code buildArgs', () => {
+  it('passes --mcp-config with the paper-camp server and keeps --strict-mcp-config', () => {
+    const args = buildArgs('do the thing');
+    expect(args).toEqual([
+      '-p',
+      'do the thing',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--permission-mode',
+      'auto',
+      '--mcp-config',
+      JSON.stringify({
+        mcpServers: { 'paper-camp': { command: 'paper-camp', args: ['mcp'] } },
+      }),
+      '--strict-mcp-config',
+      '--disallowedTools',
+      'WebFetch',
+      'WebSearch',
+    ]);
+  });
+
   it('omits --resume when no session id is given', () => {
     expect(buildArgs('do the thing')).not.toContain('--resume');
   });
