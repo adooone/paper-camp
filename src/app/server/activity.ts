@@ -21,7 +21,8 @@ export function createActivityManager(
   state: ActivityManagerState = createEmptyActivityState(),
 ) {
   const { clients } = state;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let runPassTimer: ReturnType<typeof setTimeout> | null = null;
+  let broadcastTimer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
 
@@ -44,6 +45,14 @@ export function createActivityManager(
     });
   }
 
+  function scheduleBroadcast() {
+    if (broadcastTimer) clearTimeout(broadcastTimer);
+    broadcastTimer = setTimeout(() => {
+      broadcastTimer = null;
+      broadcast();
+    }, 100);
+  }
+
   // Serializes passes: an event arriving while one is in flight queues a rerun
   // instead of starting a second read/write cycle against a stale snapshot.
   function runPass() {
@@ -52,12 +61,11 @@ export function createActivityManager(
       return;
     }
     inFlight = runRunOrderPass(root)
-      .then(() => {
-        broadcast();
+      .then((changed) => {
+        if (changed.length > 0) broadcast();
       })
       .catch((err) => {
         console.error('run-order pass failed:', err);
-        rerunQueued = true;
       })
       .finally(() => {
         inFlight = null;
@@ -69,9 +77,9 @@ export function createActivityManager(
   }
 
   function scheduleRunPass() {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      timer = null;
+    if (runPassTimer) clearTimeout(runPassTimer);
+    runPassTimer = setTimeout(() => {
+      runPassTimer = null;
       runPass();
     }, 300);
   }
@@ -80,7 +88,8 @@ export function createActivityManager(
     // Called by every write path in place of a papercamp/ watcher — the daemon
     // knows its own writes, so it invalidates and re-broadcasts right there.
     notifyChanged() {
-      invalidateCorpusCache();
+      invalidateCorpusCache(root);
+      scheduleBroadcast();
       scheduleRunPass();
     },
     publish(payload: { type: string } & Record<string, unknown>) {

@@ -1,6 +1,13 @@
 import type { ServerResponse } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createActivityManager, createEmptyActivityState } from './activity';
+
+const invalidateCorpusCache = vi.fn();
+const runRunOrderPass = vi.fn();
+
+vi.mock('./corpus-cache', () => ({ invalidateCorpusCache }));
+vi.mock('./run-order-pass', () => ({ runRunOrderPass }));
+
+const { createActivityManager, createEmptyActivityState } = await import('./activity');
 
 function fakeClient(): { res: ServerResponse; writes: string[]; close: () => void } {
   const writes: string[] = [];
@@ -81,6 +88,72 @@ describe('createActivityManager', () => {
       a.close();
       vi.advanceTimersByTime(25_000);
       expect(a.writes).toHaveLength(3);
+    });
+  });
+
+  describe('notifyChanged', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      invalidateCorpusCache.mockReset();
+      runRunOrderPass.mockReset().mockResolvedValue([]);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('invalidates this root’s cache immediately and broadcasts after a 100ms debounce', () => {
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged();
+      expect(invalidateCorpusCache).toHaveBeenCalledWith('/tmp/papercamp-activity-test');
+      expect(a.writes).toHaveLength(1); // only the hello
+
+      vi.advanceTimersByTime(100);
+      expect(a.writes).toHaveLength(2);
+      expect(a.writes.at(-1)).toContain('"message":"changed"');
+    });
+
+    it('broadcasts a second tick only once the run-order pass actually changed the list', async () => {
+      runRunOrderPass.mockResolvedValue(['IDEA-1']);
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged();
+      await vi.advanceTimersByTimeAsync(100); // debounced broadcast
+      await vi.advanceTimersByTimeAsync(300); // run-order pass fires
+      expect(a.writes).toHaveLength(3); // hello + debounced broadcast + pass broadcast
+    });
+
+    it('does not broadcast again when the run-order pass found nothing to change', async () => {
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged();
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(a.writes).toHaveLength(2); // hello + debounced broadcast only
+    });
+
+    it('logs a failed pass once and does not reschedule itself', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      runRunOrderPass.mockRejectedValue(new Error('boom'));
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged();
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(consoleError).toHaveBeenCalledTimes(1);
+
+      consoleError.mockClear();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(consoleError).not.toHaveBeenCalled();
+      expect(runRunOrderPass).toHaveBeenCalledTimes(1);
+
+      consoleError.mockRestore();
     });
   });
 });

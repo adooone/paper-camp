@@ -72,6 +72,11 @@ export async function cached<T>(
   return entry.promise as Promise<T>;
 }
 
-export function invalidateCorpusCache(): void {
-  cache.clear();
+// Keys are `${kind}:${root}` — clearing only this root's entries lets a project
+// reflow without evicting every other open project's cache.
+export function invalidateCorpusCache(root: string): void {
+  const suffix = `:${root}`;
+  for (const key of cache.keys()) {
+    if (key.endsWith(suffix)) cache.delete(key);
+  }
 }

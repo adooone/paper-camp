@@ -105,9 +105,10 @@ branch.
       25 s `: ping`, cleared on close; hello carries `changed`;
       `activity-stream.test.ts` covers the resync.
       run: 1m40s · 40 in · 8k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
-- [ ] Broadcast before the run-order pass
+- [x] Broadcast before the run-order pass
       Immediate debounced `changed`, per-root cache invalidation, a second
       tick only when `run-order.md` changed, no self-rescheduling on failure.
+      run: 1m53s · 42 in · 10k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
 - [ ] Every writer signals
       Git routes, `/api/refresh` and the background fetch call
       `notifyChanged`; route tests assert the broadcast.

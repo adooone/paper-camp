@@ -13,15 +13,26 @@ describe('corpus-cache', () => {
     expect(calls).toBe(1);
   });
 
-  it('reloads after invalidateCorpusCache clears the cache', async () => {
+  it('reloads after invalidateCorpusCache clears that root’s keys', async () => {
     let calls = 0;
     const load = async () => {
       calls++;
       return calls;
     };
-    expect(await cached('k2', load)).toBe(1);
-    invalidateCorpusCache();
-    expect(await cached('k2', load)).toBe(2);
+    expect(await cached('k2:/tmp/root-a', load)).toBe(1);
+    invalidateCorpusCache('/tmp/root-a');
+    expect(await cached('k2:/tmp/root-a', load)).toBe(2);
+  });
+
+  it('leaves another root’s keys cached', async () => {
+    let calls = 0;
+    const load = async () => {
+      calls++;
+      return calls;
+    };
+    expect(await cached('k2:/tmp/root-b', load)).toBe(1);
+    invalidateCorpusCache('/tmp/some-other-root');
+    expect(await cached('k2:/tmp/root-b', load)).toBe(1);
   });
 
   it('does not cache a failed load, so the next call retries', async () => {
@@ -64,16 +75,15 @@ describe('corpus-cache', () => {
 
 describe('corpus-cache fingerprint', () => {
   it('reloads when the fingerprint changes between reads, and not otherwise', async () => {
-    invalidateCorpusCache();
     let stamp = 'a';
     let calls = 0;
     const load = async () => ++calls;
     const fingerprint = async () => stamp;
-    expect(await cached('fp', load, () => true, fingerprint)).toBe(1);
-    expect(await cached('fp', load, () => true, fingerprint)).toBe(1);
+    expect(await cached('fp:/tmp/root-fp', load, () => true, fingerprint)).toBe(1);
+    expect(await cached('fp:/tmp/root-fp', load, () => true, fingerprint)).toBe(1);
     stamp = 'b';
-    expect(await cached('fp', load, () => true, fingerprint)).toBe(2);
-    expect(await cached('fp', load, () => true, fingerprint)).toBe(2);
+    expect(await cached('fp:/tmp/root-fp', load, () => true, fingerprint)).toBe(2);
+    expect(await cached('fp:/tmp/root-fp', load, () => true, fingerprint)).toBe(2);
   });
 
   it('fingerprints the ideas files, their archive and run-order.md', async () => {

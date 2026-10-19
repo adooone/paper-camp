@@ -33,7 +33,7 @@ export function statusRoutes({ root, activity, status }: RouteContext): Route[] 
         clearCiCache();
         // The corpus cache bakes PR state into each entry and is only invalidated by
         // the file watcher, so a PR appearing on GitHub alone wouldn't refresh it.
-        invalidateCorpusCache();
+        invalidateCorpusCache(root);
         // clearPrCache already zeroed the persisted fetchedAt, so this fetches live
         // regardless of TTL, re-persisting on success and keeping the old map on failure.
         const fresh = await resolvePrsByEntity(root);
