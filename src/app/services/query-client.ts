@@ -3,6 +3,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { createStore, del, get, set } from 'idb-keyval';
+import { useAppStore } from '../stores/app-store';
 import { subscribeToActivityStream } from './activity-stream';
 import { getRuntimeConnection } from './runtime-connection';
 import { CLIENT_VERSION } from './version';
@@ -195,8 +196,14 @@ export function refreshCi(): Promise<void> {
 
 // The default ('') connection survives a runtime switch on its own (see
 // reconnectCurrentRuntime); called once from main.tsx, not at module scope, so importing this module in a test never opens a real EventSource.
-export function subscribeChatToActivityStream(): () => void {
+export function subscribeProjectToActivityStream(): () => void {
   return subscribeToActivityStream((payload) => {
-    if (payload.message === 'changed') refreshChat();
+    if (payload.message !== 'changed') return;
+    const { runtimeUrl } = getRuntimeConnection();
+    queryClient.invalidateQueries({
+      queryKey: [PROJECT_QUERY_PREFIX, runtimeUrl],
+      refetchType: 'all',
+    });
+    useAppStore.getState().refreshProjectState();
   });
 }

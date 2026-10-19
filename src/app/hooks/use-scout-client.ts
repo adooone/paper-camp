@@ -1,5 +1,4 @@
 import { type OpenQuestionGroup, collectOpenQuestions } from '@/app/features/plans/helpers';
-import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchPlans } from '@/app/services/content';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -23,19 +22,6 @@ export function useScoutClient(): ScoutClientState {
 
   useEffect(() => {
     load();
-  }, [load]);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.message !== 'changed') return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(load, 250);
-    });
-    return () => {
-      if (timer) clearTimeout(timer);
-      unsubscribe();
-    };
   }, [load]);
 
   const openQuestionCount = openQuestions.reduce((sum, group) => sum + group.questions.length, 0);

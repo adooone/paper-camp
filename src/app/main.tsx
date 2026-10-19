@@ -20,7 +20,7 @@ import { listProjects, projectEntryId } from './services/project-registry';
 import {
   persistOptions,
   queryClient,
-  subscribeChatToActivityStream,
+  subscribeProjectToActivityStream,
 } from './services/query-client';
 import { getRuntimeConnection } from './services/runtime-connection';
 import { fetchMachineProjects } from './services/system';
@@ -41,7 +41,7 @@ async function pairIfNeeded(): Promise<void> {
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
 
-subscribeChatToActivityStream();
+subscribeProjectToActivityStream();
 
 // A machine link opens that machine's project list — unless this browser
 // already opened one there, or the machine has only one, then it opens directly.

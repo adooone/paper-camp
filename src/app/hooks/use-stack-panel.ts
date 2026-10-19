@@ -1,5 +1,5 @@
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
-import { refreshNightReport, refreshPlans, refreshSuggestions } from '@/app/services/query-client';
+import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { type RefObject, useEffect, useRef } from 'react';
 
@@ -60,50 +60,15 @@ export function useStackPanel(
   }, []);
 
   useEffect(() => {
-    // One timer per event type: an agent streaming a line per log row must not keep
-    // pushing a pending check refresh out of reach.
-    const timers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
-    const schedule = (key: string, run: () => void, ms: number) => {
-      if (timers[key]) clearTimeout(timers[key]);
-      timers[key] = setTimeout(run, ms);
-    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const unsubscribe = subscribeToActivityStream((payload) => {
       // Agent progress, including the one-shot commit-suggest run.
-      if (payload.type === 'agent') {
-        schedule('agent', () => useAppStore.getState().loadAgentStatus(), 120);
-        return;
-      }
-      // A file actually changed on disk: the only tick broad enough to reload everything.
-      // Debounced so an agent writing several files in succession doesn't stampede all six loaders.
-      if (payload.message !== 'changed') return;
-      schedule(
-        'activity',
-        () => {
-          const {
-            loadStatus,
-            loadConsistency,
-            loadDoctor,
-            loadGitStatus,
-            loadAgentStatus,
-            loadArchivableIdeas,
-            loadTaskLog,
-          } = useAppStore.getState();
-          refreshPlans();
-          refreshSuggestions();
-          refreshNightReport();
-          loadStatus();
-          loadConsistency();
-          loadDoctor();
-          loadGitStatus();
-          loadAgentStatus();
-          loadArchivableIdeas();
-          loadTaskLog();
-        },
-        250,
-      );
+      if (payload.type !== 'agent') return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => useAppStore.getState().loadAgentStatus(), 120);
     });
     return () => {
-      for (const timer of Object.values(timers)) if (timer) clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       unsubscribe();
     };
   }, []);

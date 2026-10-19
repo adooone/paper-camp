@@ -2,7 +2,7 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - server
@@ -113,6 +113,7 @@ branch.
       Git routes, `/api/refresh` and the background fetch call
       `notifyChanged`; route tests assert the broadcast.
       run: 6m36s · 154 in · 28.1k out · sonnet-5 · sess:32415fb6-0a8c-4988-91b5-2a37918713e4
-- [ ] One subscriber on the client
+- [x] One subscriber on the client
       `subscribeProjectToActivityStream` and `refreshProjectState`; the
       per-hook `changed` branches removed; hook tests updated.
+      run: 5m58s · 150 in · 23.7k out · sonnet-5 · sess:c8ebf1c4-cc36-4d25-bc37-68cf4e5cd0d5

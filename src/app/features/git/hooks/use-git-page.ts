@@ -1,5 +1,4 @@
 import { useGitCommitForm } from '@/app/features/git/hooks/use-git-commit-form';
-import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useAppStore } from '@/app/stores/app-store';
 import { useEffect, useMemo, useRef } from 'react';
 
@@ -31,19 +30,9 @@ export const useGitPage = () => {
   }, [loadDiffFiles, loadGitLog]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.message !== 'changed') return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(loadDiffFiles, 250);
-    });
     const onFocus = () => loadDiffFiles();
     window.addEventListener('focus', onFocus);
-    return () => {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener('focus', onFocus);
-      unsubscribe();
-    };
+    return () => window.removeEventListener('focus', onFocus);
   }, [loadDiffFiles]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: files is the trigger to rebuild the observer, not a value read in the body.

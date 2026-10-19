@@ -13,7 +13,6 @@ import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { useMediaQuery } from './use-media-query';
-import { useNotificationPush } from './use-notification-push';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
@@ -162,8 +161,6 @@ export function useAppShell(): AppShellState {
   const openedOnRoot = useRef(pathname === '/');
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
-
-  useNotificationPush();
 
   useEffect(() => {
     checkRuntimeReachable();

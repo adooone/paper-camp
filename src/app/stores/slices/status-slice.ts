@@ -43,6 +43,8 @@ export type StatusSlice = {
   status: StatusState | null;
   loadStatus: () => Promise<void>;
   refreshAll: () => Promise<{ ok: boolean; error?: string }>;
+  // The loaders a `changed` tick must re-run that aren't queries invalidated separately.
+  refreshProjectState: () => void;
   refreshing: boolean;
   quickCommit: () => Promise<{ ok: boolean; title?: string; error?: string; warning?: string }>;
   // Shared by the status bar and the Stack panel so the two commit flows can't race.
@@ -98,6 +100,15 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
       } finally {
         set({ refreshing: false });
       }
+    },
+    refreshProjectState: () => {
+      get().loadStatus();
+      get().loadConsistency();
+      get().loadDoctor();
+      get().loadGitStatus();
+      get().loadAgentStatus();
+      get().loadArchivableIdeas();
+      get().loadTaskLog();
     },
     setCommitInFlight: (inFlight) => set({ commitInFlight: inFlight }),
 
