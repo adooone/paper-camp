@@ -2,14 +2,16 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: review
+status: in-progress
 created: 2026-10-19
+updated: 2026-10-19
 tags:
   - server
   - app
   - refresh
   - sse
 subject: Infrastructure
+order: 1
 ---
 
 The dashboard learns about a change through one SSE stream,
@@ -117,3 +119,11 @@ branch.
       `subscribeProjectToActivityStream` and `refreshProjectState`; the
       per-hook `changed` branches removed; hook tests updated.
       run: 5m58s · 150 in · 23.7k out · sonnet-5 · sess:c8ebf1c4-cc36-4d25-bc37-68cf4e5cd0d5
+
+### Fixes
+- [ ] Auto-scroll and a thinking indicator in chat
+      The chat view doesn't scroll to the latest message when a new one arrives, and there's no visual indicator while Scout is composing a reply. Auto-scroll the thread on new messages and show a working/typing indicator until the reply streams in.
+
+### Thread
+- [x] 2026-10-19 [chat] When I sent a message here view is not scrolled to the latest point audomatically, and I still dont see any visual status of you thinking or writting the answer. Although we did some work to improve this chat
+- [x] 2026-10-19 [chat] [agent] Added that as a fix here — auto-scroll to the latest message and a visible thinking/writing indicator while Scout is working on a reply. (reopened this idea to re-run)
