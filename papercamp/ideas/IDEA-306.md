@@ -119,6 +119,8 @@ branch.
       `subscribeProjectToActivityStream` and `refreshProjectState`; the
       per-hook `changed` branches removed; hook tests updated.
       run: 5m58s · 150 in · 23.7k out · sonnet-5 · sess:c8ebf1c4-cc36-4d25-bc37-68cf4e5cd0d5
+- [ ] Chat renders inline, not as an agent-stack run
+      Sending a message in this chat currently triggers an agent-stack run instead of streaming the reply directly in the chat thread. Fix the chat path so replies display here without going through the Stack panel, and fix the occasional doubled rendering of the user's own message.
 
 ### Fixes
 - [ ] Auto-scroll and a thinking indicator in chat
@@ -127,3 +129,5 @@ branch.
 ### Thread
 - [x] 2026-10-19 [chat] When I sent a message here view is not scrolled to the latest point audomatically, and I still dont see any visual status of you thinking or writting the answer. Although we did some work to improve this chat
 - [x] 2026-10-19 [chat] [agent] Added that as a fix here — auto-scroll to the latest message and a visible thinking/writing indicator while Scout is working on a reply. (reopened this idea to re-run)
+- [x] 2026-10-19 [chat] Also I see my message is doubled sometimes, and I dont want to have agent run for chat. It should ne displayed directly here, not in the agent stack.
+- [x] 2026-10-19 [chat] [agent] Added both as fixes here — auto-scroll the thread to the latest message, show a thinking/writing indicator while I'm composing a reply, fix the duplicated-message display, and make chat render inline here instead of spawning an agent-stack run.
