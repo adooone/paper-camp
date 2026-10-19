@@ -143,9 +143,8 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
     '--verbose',
     '--permission-mode',
     'auto',
-    // Headless jobs must be terminal-only: --strict-mcp-config drops ambient MCP
-    // servers (browser/computer-use) except the one named in --mcp-config, so a
-    // phase gets the paper-camp server but can't "visually check" the app.
+    // --strict-mcp-config drops ambient MCP servers (browser/computer-use),
+    // keeping only the paper-camp server named in --mcp-config.
     '--mcp-config',
     MCP_CONFIG,
     '--strict-mcp-config',
