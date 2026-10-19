@@ -3,25 +3,12 @@ import { join } from 'node:path';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { GitManager } from '../app/server/git';
-import {
-  campFile,
-  createIdeaEntity as createIdeaEntityFile,
-  entityFileInput,
-  readMaybe,
-  writeEntityFile,
-} from '../app/server/helpers';
-import { readCorpus } from '../core/corpus';
+import { campFile, readMaybe } from '../app/server/helpers';
+import { CorpusError, appendThread, createIdea, readCorpus, updateEntity } from '../core/corpus';
 import { resolveNeedsRefs } from '../core/needs';
-import { parseEntityFile, parseSuggestions } from '../core/parse';
-import { entityToPlan, readEntities } from '../core/readers';
+import { parseSuggestions } from '../core/parse';
 import { linkRoadmapItem, parseRoadmap, removeRoadmapItem } from '../core/roadmap';
-import {
-  agentThreadMessage,
-  archiveEntityFile,
-  removeSuggestionLine,
-  todayDateString,
-} from '../core/serialize';
-import { isClosedEntity } from '../core/status';
+import { agentThreadMessage, removeSuggestionLine } from '../core/serialize';
 import { promoteThreadMessage } from '../core/thread';
 import { PLAN_KINDS, PLAN_STATUSES, type ThreadMessage } from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
@@ -98,14 +85,6 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
   const guardedWrite = <T>(_targetPlanId: string | undefined, fn: () => Promise<T>): Promise<T> =>
     runExclusive(fn);
 
-  const createIdeaEntity = (input: {
-    title: string;
-    content?: string;
-    type?: string;
-    subject?: string;
-    needs?: string[];
-  }): Promise<string> => createIdeaEntityFile(root, input);
-
   server.registerTool(
     'add_idea',
     {
@@ -126,7 +105,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     ({ title, content, needs }) =>
       guardedWrite(undefined, async () => {
         if (!title.trim()) throw new Error('title is required');
-        const id = await createIdeaEntity({ title, content, needs });
+        const id = await createIdea(root, { title, content, needs });
         const unresolvedNeeds = (await resolveNeedsRefs(root, needs ?? []))
           .filter((r) => !r.found)
           .map((r) => r.raw);
@@ -154,7 +133,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     ({ title, content, kind }) =>
       guardedWrite(undefined, async () => {
         if (!title.trim()) throw new Error('title is required');
-        const id = await createIdeaEntity({ title, content, type: kind ?? 'feat' });
+        const id = await createIdea(root, { title, content, type: kind ?? 'feat' });
         return json({ ok: true, id });
       }),
   );
@@ -175,56 +154,24 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     },
     ({ id, phaseIndex, done, status }) =>
       guardedWrite(id, async () => {
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const target = entries.find((e) => e.id === id && e.kind !== 'note');
-        if (!target) throw new Error(`plan "${id}" not found`);
-
-        const targetFile = join(ideasDir, `${target.id}.md`);
-        const raw = await readMaybe(targetFile);
-        if (!raw) throw new Error('entity file not found');
-
-        const parsed = parseEntityFile(raw);
-        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-        const entry = parsed.entries[0];
-
-        if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
-          throw new Error(
-            `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
-          );
+        try {
+          await updateEntity(root, id, (entry) => {
+            if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
+              throw new Error(
+                `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
+              );
+            }
+            return {
+              phases: entry.phases.map((phase, i) =>
+                i === phaseIndex ? { ...phase, done } : phase,
+              ),
+              ...(status !== undefined && { status }),
+            };
+          });
+        } catch (error) {
+          if (error instanceof CorpusError) throw new Error(error.message);
+          throw error;
         }
-
-        // A done/archived entity's status only ever moves between the closed statuses —
-        // new work spawns its own linked fix entity instead of reopening this one (IDEA-187).
-        if (
-          isClosedEntity(entry) &&
-          status !== undefined &&
-          status !== 'done' &&
-          status !== 'dropped'
-        ) {
-          throw new Error(
-            'a done/archived entity is read-only — new work spawns its own fix entity',
-          );
-        }
-
-        const phases = entry.phases.map((phase, i) =>
-          i === phaseIndex ? { ...phase, done } : phase,
-        );
-        const updatedEntry = {
-          ...entry,
-          phases,
-          ...(status !== undefined && { status }),
-          updated: todayDateString(),
-        };
-
-        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry));
-
-        // `done` is derived from a merged PR and needs no archiving; `dropped` has no
-        // such signal, so it's the one status that still archives on write.
-        if (status === 'dropped') {
-          await archiveEntityFile(root, target.id);
-        }
-
         return json({ ok: true });
       }),
   );
@@ -252,31 +199,19 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     },
     ({ id, title, content, tags, type, needs }) =>
       guardedWrite(id, async () => {
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const target = entries.find((e) => e.id === id && e.kind !== 'note');
-        if (!target) throw new Error(`entity "${id}" not found`);
-
-        const targetFile = join(ideasDir, `${target.id}.md`);
-        const raw = await readMaybe(targetFile);
-        if (!raw) throw new Error('entity file not found');
-
-        const parsed = parseEntityFile(raw);
-        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-        const entry = parsed.entries[0];
-
-        const overrides: Partial<ReturnType<typeof entityFileInput>> = {};
-        if (title !== undefined) {
-          if (!title.trim()) throw new Error('title cannot be empty');
-          overrides.title = title.trim();
+        if (title !== undefined && !title.trim()) throw new Error('title cannot be empty');
+        try {
+          await updateEntity(root, id, () => ({
+            ...(title !== undefined && { title: title.trim() }),
+            ...(content !== undefined && { body: content.trim() }),
+            ...(tags !== undefined && { tags }),
+            ...(type !== undefined && { type }),
+            ...(needs !== undefined && { needs }),
+          }));
+        } catch (error) {
+          if (error instanceof CorpusError) throw new Error(error.message);
+          throw error;
         }
-        if (content !== undefined) overrides.body = content.trim();
-        if (tags !== undefined) overrides.tags = tags;
-        if (type !== undefined) overrides.type = type;
-        if (needs !== undefined) overrides.needs = needs;
-
-        const updatedEntry = { ...entry, updated: todayDateString() };
-        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry, overrides));
 
         const unresolvedNeeds = needs
           ? (await resolveNeedsRefs(root, needs)).filter((r) => !r.found).map((r) => r.raw)
@@ -293,28 +228,14 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     text: string,
   ): Promise<void> {
     if (!text.trim()) throw new Error('text is required');
-    const ideasDir = campFile(root, 'ideas');
-    const { entries } = await readEntities(ideasDir);
-    const target = entries.find((e) => e.id === id);
-    if (!target) throw new Error(`entity "${id}" not found`);
-
-    const targetFile = join(ideasDir, `${target.id}.md`);
-    const raw = await readMaybe(targetFile);
-    if (!raw) throw new Error('entity file not found');
-
-    const parsed = parseEntityFile(raw);
-    if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-    const entry = parsed.entries[0];
-
     const message = agentThreadMessage(text.trim(), kind);
     if (NOTE_STATE_KINDS.has(kind) && message.state === undefined) message.state = 'open';
-    const thread = [...(entry.thread ?? []), message];
-
-    await writeEntityFile(
-      root,
-      targetFile,
-      entityFileInput({ ...entry, thread, updated: todayDateString() }),
-    );
+    try {
+      await appendThread(root, id, message);
+    } catch (error) {
+      if (error instanceof CorpusError) throw new Error(error.message);
+      throw error;
+    }
   }
 
   function registerAppendTool(
@@ -389,7 +310,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
           (s) => s.title === title.trim() && (date === undefined || s.date === date),
         );
         if (!suggestion) throw new Error(`suggestion "${title}" not found`);
-        const id = await createIdeaEntity({
+        const id = await createIdea(root, {
           title: suggestion.title,
           content: suggestion.description,
         });
@@ -426,7 +347,7 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
         if (!item || (candidateName !== undefined && !item.candidates.includes(candidateName))) {
           throw new Error('roadmap item or candidate not found');
         }
-        const id = await createIdeaEntity({
+        const id = await createIdea(root, {
           title: candidateName ?? item.name,
           subject: subject?.trim() || (candidateName ? item.name : undefined),
           content: candidateName
@@ -461,34 +382,22 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     },
     ({ id, index, target, note }) =>
       guardedWrite(id, async () => {
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const targetEntity = entries.find((e) => e.id === id);
-        if (!targetEntity) throw new Error(`entity "${id}" not found`);
-
-        const targetFile = join(ideasDir, `${targetEntity.id}.md`);
-        const raw = await readMaybe(targetFile);
-        if (!raw) throw new Error('entity file not found');
-
-        const parsed = parseEntityFile(raw);
-        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-        const entry = parsed.entries[0];
-
-        const thread = entry.thread ?? [];
-        if (index < 0 || index >= thread.length) {
-          throw new Error(
-            `thread index ${index} out of range (thread has ${thread.length} messages)`,
-          );
+        try {
+          await updateEntity(root, id, (entry) => {
+            const thread = entry.thread ?? [];
+            if (index < 0 || index >= thread.length) {
+              throw new Error(
+                `thread index ${index} out of range (thread has ${thread.length} messages)`,
+              );
+            }
+            return {
+              thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
+            };
+          });
+        } catch (error) {
+          if (error instanceof CorpusError) throw new Error(error.message);
+          throw error;
         }
-
-        await writeEntityFile(
-          root,
-          targetFile,
-          entityFileInput(entry, {
-            thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
-            updated: todayDateString(),
-          }),
-        );
         return json({ ok: true });
       }),
   );
@@ -505,25 +414,15 @@ export function registerWriteTools(server: McpServer, root: string, git: GitMana
     },
     ({ id }) =>
       guardedWrite(id, async () => {
-        const ideasDir = campFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
-        const target = entries.find((e) => e.id === id && !e.archived);
-        if (!target) throw new Error(`entity "${id}" not found`);
-
-        const targetFile = join(ideasDir, `${target.id}.md`);
-        const raw = await readMaybe(targetFile);
-        if (!raw) throw new Error('entity file not found');
-
-        const parsed = parseEntityFile(raw);
-        if (parsed.entries.length === 0) throw new Error('failed to parse entity file');
-        const entry = parsed.entries[0];
-
-        await writeEntityFile(
-          root,
-          targetFile,
-          entityFileInput(entry, { status: 'dropped', updated: todayDateString() }),
-        );
-        await archiveEntityFile(root, target.id);
+        try {
+          await updateEntity(root, id, (entry) => {
+            if (entry.archived) throw new Error(`entity "${id}" not found`);
+            return { status: 'dropped' };
+          });
+        } catch (error) {
+          if (error instanceof CorpusError) throw new Error(error.message);
+          throw error;
+        }
         return json({ ok: true });
       }),
   );

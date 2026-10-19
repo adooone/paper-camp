@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import {
   buildFixReviewPrompt,
@@ -8,19 +8,14 @@ import {
   buildPrReviewPrompt,
 } from '@/app/features/plans/prompts';
 import { fetchCiReleaseState } from '@/core/ci';
-import { readCorpus } from '@/core/corpus';
+import { createIdea, readCorpus, resolveEntityFilePath, updateEntity } from '@/core/corpus';
 import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { checkNeedsForRun } from '@/core/needs';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
-import {
-  agentThreadMessage,
-  assignEntityId,
-  formatEntityFile,
-  todayDateString,
-} from '@/core/serialize';
+import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
 import type {
@@ -47,28 +42,13 @@ import {
   replyToFeedback,
   summarizeFeedback,
 } from '../feedback-reply';
-import {
-  campFile,
-  checkStaleBaseForRunAll,
-  entityFileInput,
-  fileExists,
-  resolveChatQuestion,
-  writeEntityFile,
-} from '../helpers';
+import { campFile, checkStaleBaseForRunAll, resolveChatQuestion } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
 import { readReviewedShas } from '../pr-review-state';
 import { loadManifestCi } from './ci';
 import type { Route, RouteContext } from './types';
-
-async function resolveEntityFilePath(root: string, entityId: string): Promise<string | null> {
-  const primary = join(campFile(root, 'ideas'), `${entityId}.md`);
-  if (await fileExists(primary)) return primary;
-  const archived = join(campFile(root, 'ideas'), 'archive', `${entityId}.md`);
-  if (await fileExists(archived)) return archived;
-  return null;
-}
 
 // Shared by every feedback-thread route (message, undo, promote, summarize): finds
 // the plan-kind entity a planId names, plus the file it currently lives at.
@@ -115,11 +95,7 @@ export async function applyFeedbackMessage(
 
   // Written before the agent runs so the user's message survives a slow or
   // failed run — the reply below is a second, best-effort append on top.
-  await writeEntityFile(
-    root,
-    targetFile,
-    entityFileInput(entity, { thread: threadWithUser, updated: todayDateString() }),
-  );
+  await updateEntity(root, entity.id, () => ({ thread: threadWithUser }));
 
   let error: string | undefined;
   let undo: { commitSha: string } | undefined;
@@ -156,13 +132,24 @@ export async function applyFeedbackMessage(
     // its own linked IDEA-N fix entity instead of reopening the idea (IDEA-187).
     let spawnedId: string | undefined;
     if (spawnFix?.length) {
-      const configPath = join(root, 'papercamp', 'config.json');
-      spawnedId = await assignEntityId(configPath);
-      if (spawnedId) {
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-        const fixPath = join(ideasDir, `${spawnedId}.md`);
-        const spawnedEntity: EntityEntry = {
+      spawnedId = await createIdea(root, {
+        title: spawnFix[0].text,
+        kind: 'fix',
+        idea: entity.id,
+        phases: spawnFix,
+      });
+      const fixPath = join(campFile(root, 'ideas'), `${spawnedId}.md`);
+      await git.commit(
+        [relative(root, fixPath)],
+        `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
+        `Refs: ${spawnedId}`,
+        { noVerify: true },
+      );
+      undo = { commitSha: await git.getHeadSha() };
+      replyText = `${replyText} (spawned ${spawnedId} to track this)`;
+
+      agent.startRunAllPhases(
+        entityToPlan({
           id: spawnedId,
           title: spawnFix[0].text,
           type: 'fix',
@@ -173,23 +160,10 @@ export async function applyFeedbackMessage(
           needs: [],
           body: '',
           phases: spawnFix,
-        };
-        await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
-        await git.commit(
-          [relative(root, fixPath)],
-          `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
-          `Refs: ${spawnedId}`,
-          { noVerify: true },
-        );
-        undo = { commitSha: await git.getHeadSha() };
-        replyText = `${replyText} (spawned ${spawnedId} to track this)`;
-
-        agent.startRunAllPhases(
-          entityToPlan(spawnedEntity),
-          () => status.runChecksAndWait(),
-          () => status.getCachedOrRunChecks(),
-        );
-      }
+        }),
+        () => status.runChecksAndWait(),
+        () => status.getCachedOrRunChecks(),
+      );
     }
 
     // An undone Fix added to a plan under review is new work: reopen it so
@@ -198,16 +172,11 @@ export async function applyFeedbackMessage(
     if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
     const thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
-    await writeEntityFile(
-      root,
-      targetFile,
-      entityFileInput(entity, {
-        thread,
-        updated: todayDateString(),
-        ...overrides,
-        ...(reopen ? { status: 'in-progress' } : {}),
-      }),
-    );
+    await updateEntity(root, entity.id, () => ({
+      thread,
+      ...overrides,
+      ...(reopen ? { status: 'in-progress' } : {}),
+    }));
     void appendNotification(root, {
       id: randomUUID(),
       kind: 'reply',
@@ -710,15 +679,12 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         if (parent && !isClosedEntity(parent)) {
           const targetFile =
             (await resolveEntityFilePath(root, parent.id)) ?? join(ideasDir, `${parent.id}.md`);
-          const fixes: PhaseItem[] = [
-            ...(parent.fixes ?? []),
-            { done: false, text: issue.title, description: issue.reason, source: 'issue' },
-          ];
-          await writeEntityFile(
-            root,
-            targetFile,
-            entityFileInput(parent, { fixes, updated: todayDateString() }),
-          );
+          await updateEntity(root, parent.id, (entry) => ({
+            fixes: [
+              ...(entry.fixes ?? []),
+              { done: false, text: issue.title, description: issue.reason, source: 'issue' },
+            ],
+          }));
           await git.commit(
             [relative(root, targetFile)],
             `fix(ideas): add issue to ${parent.id}'s fixes`,
@@ -730,26 +696,14 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           return;
         }
 
-        const configPath = join(root, 'papercamp', 'config.json');
-        const spawnedId = await assignEntityId(configPath);
-        if (!spawnedId) {
-          sendJson(res, 500, { error: 'Could not mint a new id' });
-          return;
-        }
-        await mkdir(ideasDir, { recursive: true });
-        const fixPath = join(ideasDir, `${spawnedId}.md`);
-        const spawnedEntity: EntityEntry = {
-          id: spawnedId,
+        const spawnedId = await createIdea(root, {
           title: issue.title,
-          ...(parent ? { type: 'fix' as const, kind: 'fix' as const, idea: parent.id } : {}),
+          ...(parent ? { kind: 'fix' as const, type: 'fix' as const, idea: parent.id } : {}),
           issueSource: issue.id,
-          created: todayDateString(),
-          tags: [],
-          needs: [],
-          body: issue.reason,
+          content: issue.reason,
           phases: parent ? [{ done: false, text: issue.title, description: issue.reason }] : [],
-        };
-        await writeFile(fixPath, `${formatEntityFile(spawnedEntity)}\n`, 'utf-8');
+        });
+        const fixPath = join(ideasDir, `${spawnedId}.md`);
         await git.commit(
           [relative(root, fixPath)],
           `fix(ideas): spawn ${spawnedId} from issue ${issue.id}`,
@@ -759,7 +713,19 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
 
         if (parent) {
           agent.startRunAllPhases(
-            entityToPlan(spawnedEntity),
+            entityToPlan({
+              id: spawnedId,
+              title: issue.title,
+              type: 'fix',
+              kind: 'fix',
+              idea: parent.id,
+              issueSource: issue.id,
+              created: todayDateString(),
+              tags: [],
+              needs: [],
+              body: issue.reason,
+              phases: [{ done: false, text: issue.title, description: issue.reason }],
+            }),
             () => status.runChecksAndWait(),
             () => status.getCachedOrRunChecks(),
           );
@@ -902,21 +868,15 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const { entity, targetFile } = resolved;
-        const thread = entity.thread ?? [];
+        const thread = resolved.entity.thread ?? [];
         if (thread[index]?.kind !== 'chat') {
           sendJson(res, 404, { error: 'no chat message at that index' });
           return;
         }
 
-        await writeEntityFile(
-          root,
-          targetFile,
-          entityFileInput(entity, {
-            thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
-            updated: todayDateString(),
-          }),
-        );
+        await updateEntity(root, planId, () => ({
+          thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
+        }));
         activity.notifyChanged();
         sendJson(res, 200, { ok: true });
       },
@@ -940,7 +900,7 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const { entity, targetFile } = resolved;
+        const { entity } = resolved;
         const messages = chatSinceLastLog(entity.thread);
         if (messages.length === 0) {
           sendJson(res, 200, { ok: true, skipped: true });
@@ -950,12 +910,9 @@ export function agentRoutes({ root, git, status, agent, activity }: RouteContext
         try {
           const plan = entityToPlan(entity);
           const summary = await summarizeFeedback(plan, messages, agent.runFeedbackReply);
-          const thread = [...(entity.thread ?? []), agentThreadMessage(summary)];
-          await writeEntityFile(
-            root,
-            targetFile,
-            entityFileInput(entity, { thread, updated: todayDateString() }),
-          );
+          await updateEntity(root, planId, (current) => ({
+            thread: [...(current.thread ?? []), agentThreadMessage(summary)],
+          }));
           activity.notifyChanged();
           sendJson(res, 200, { ok: true, summary });
         } catch (err) {

@@ -1,113 +1,45 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { appendChatMessage, formatChatFile, parseChatFile } from '@/core/chat-file';
-import { assertCorpusWritable } from '@/core/corpus-format';
+import {
+  CorpusError,
+  type CreateIdeaInput,
+  type EntityFileInput,
+  appendThread,
+  campFile,
+  createIdea,
+  entityFileInput,
+  fileExists,
+  readMaybe,
+  resolveEntityFilePath,
+  updateEntity,
+  writeEntityFile,
+} from '@/core/corpus';
 import {
   type RunOrderFileEntry,
   formatRunOrderFile,
   parseRunOrderFile,
 } from '@/core/run-order-file';
-import { assignEntityId, formatEntityFile, todayDateString } from '@/core/serialize';
-import type { BranchHygieneStatus, EntityEntry, StaleBaseRef, ThreadMessage } from '@/types/index';
+import type { BranchHygieneStatus, StaleBaseRef, ThreadMessage } from '@/types/index';
 
-export async function readMaybe(path: string): Promise<string> {
-  try {
-    return await readFile(path, 'utf-8');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return '';
-    throw error;
-  }
-}
-
-export async function fileExists(path: string): Promise<boolean> {
-  try {
-    await stat(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export const campFile = (root: string, name: string) => join(root, 'papercamp', name);
+export {
+  appendThread,
+  campFile,
+  type CreateIdeaInput,
+  CorpusError,
+  createIdea,
+  type EntityFileInput,
+  entityFileInput,
+  fileExists,
+  readMaybe,
+  resolveEntityFilePath,
+  updateEntity,
+  writeEntityFile,
+};
 
 // Dotfile dir for machine-generated task output, distinct from the human/agent-authored corpus.
 export const taskLogFile = (root: string, taskId: string) =>
   join(root, 'papercamp', '.task-logs', `${taskId}.log`);
-
-export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
-
-// Carries every field of the parsed entry so a partial update can't silently
-// drop the type, agent override, or tags; `overrides` applies on top.
-export function entityFileInput(
-  entry: EntityEntry,
-  overrides: Partial<EntityFileInput> = {},
-): EntityFileInput {
-  return {
-    id: entry.id,
-    title: entry.title,
-    type: entry.type,
-    kind: entry.kind,
-    status: entry.status,
-    idea: entry.idea,
-    agent: entry.agent,
-    created: entry.created,
-    updated: entry.updated,
-    audited: entry.audited,
-    auditedHash: entry.auditedHash,
-    released: entry.released,
-    tags: entry.tags,
-    needs: entry.needs,
-    subject: entry.subject,
-    order: entry.storedOrder ?? entry.order,
-    issueSource: entry.issueSource,
-    body: entry.body,
-    phases: entry.phases,
-    fixes: entry.fixes,
-    thread: entry.thread,
-    unknownFrontmatter: entry.unknownFrontmatter,
-    ...overrides,
-  };
-}
-
-export async function writeEntityFile(
-  root: string,
-  path: string,
-  input: EntityFileInput,
-): Promise<void> {
-  await assertCorpusWritable(campFile(root, 'config.json'));
-  await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
-}
-
-// Shared by the /api/ideas route, the MCP `add_idea`/`draft_plan` tools, and the
-// project chat's "describe new work" move (IDEA-251) — one place assembles idea files.
-export async function createIdeaEntity(
-  root: string,
-  input: {
-    title: string;
-    content?: string;
-    type?: string;
-    subject?: string;
-    needs?: string[];
-  },
-): Promise<string> {
-  const configPath = campFile(root, 'config.json');
-  const id = await assignEntityId(configPath);
-  if (!id) throw new Error('could not assign entity ID');
-  const ideasDir = campFile(root, 'ideas');
-  await mkdir(ideasDir, { recursive: true });
-  const content = formatEntityFile({
-    id,
-    title: input.title.trim(),
-    type: input.type,
-    status: 'idea',
-    created: todayDateString(),
-    subject: input.subject,
-    needs: input.needs,
-    body: input.content?.trim(),
-  });
-  await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
-  return id;
-}
 
 export const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');
 

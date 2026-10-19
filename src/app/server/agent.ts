@@ -47,14 +47,7 @@ import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { discoverDeskConfig } from './desk-discovery';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
-import {
-  appendToChatFile,
-  campFile,
-  entityFileInput,
-  fileExists,
-  readMaybe,
-  writeEntityFile,
-} from './helpers';
+import { CorpusError, appendToChatFile, campFile, readMaybe, updateEntity } from './helpers';
 import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
@@ -509,27 +502,22 @@ export function createAgentManager(
   ): Promise<void> {
     task.errorKind = 'question';
     if (!planId) return;
-    const ideasDir = campFile(root, 'ideas');
-    const { entries } = await readEntities(ideasDir);
-    const entry = entries.find((e) => e.id === planId && e.kind !== 'note');
-    if (!entry) return;
-    const primaryFile = join(ideasDir, `${planId}.md`);
-    const file = (await fileExists(primaryFile))
-      ? primaryFile
-      : join(ideasDir, 'archive', `${planId}.md`);
-    if (!(await fileExists(file))) return;
-    const needsInput = entry.status !== 'done' && entry.status !== 'dropped';
-    await writeEntityFile(
-      root,
-      file,
-      entityFileInput(entry, {
-        thread: [
-          ...(entry.thread ?? []),
-          agentThreadMessage(message, 'question', undefined, decision),
-        ],
-        ...(needsInput ? { status: 'in-progress' } : {}),
-      }),
-    );
+    try {
+      await updateEntity(root, planId, (entry) => {
+        if (entry.kind === 'note') throw new CorpusError('not a work entity', 404);
+        const needsInput = entry.status !== 'done' && entry.status !== 'dropped';
+        return {
+          thread: [
+            ...(entry.thread ?? []),
+            agentThreadMessage(message, 'question', undefined, decision),
+          ],
+          ...(needsInput ? { status: 'in-progress' } : {}),
+        };
+      });
+    } catch (error) {
+      if (error instanceof CorpusError) return;
+      throw error;
+    }
     await appendToChatFile(
       root,
       agentThreadMessage(message, 'question', planId, decision, nowMinuteString()),

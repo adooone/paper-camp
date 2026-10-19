@@ -1,11 +1,9 @@
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { readCorpus } from '@/core/corpus';
+import { CorpusError, type EntityFileInput, readCorpus, updateEntity } from '@/core/corpus';
 import { computeNeedsBlockedIds } from '@/core/needs';
 import { readEntities } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
-import { archiveEntityFile, todayDateString, unarchiveEntityFile } from '@/core/serialize';
-import { isClosedEntity } from '@/core/status';
 import { replaceThreadKinds } from '@/core/thread';
 import {
   AGENT_IDS,
@@ -18,12 +16,9 @@ import {
 } from '@/types/index';
 import {
   campFile,
-  entityFileInput,
   fileExists,
-  readMaybe,
   readRunOrderFile,
   withRunOrderLock,
-  writeEntityFile,
   writeRunOrderFile,
 } from '../../helpers';
 import { readBody, requestUrl, sendJson } from '../../http';
@@ -106,36 +101,6 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           return;
         }
 
-        // A done/archived entity's own file is read-only (IDEA-187) — new phases or
-        // fixes spawn their own linked fix entity instead of landing here.
-        if (isClosedEntity(target)) {
-          const addsPhases = (updates.phases?.length ?? 0) > target.phases.length;
-          const addsFixes = (updates.fixes?.length ?? 0) > (target.fixes?.length ?? 0);
-          const reopensStatus =
-            updates.status !== undefined &&
-            updates.status !== null &&
-            updates.status !== 'done' &&
-            updates.status !== 'dropped';
-          if (addsPhases || addsFixes || reopensStatus || updates.body !== undefined) {
-            sendJson(res, 409, {
-              error: 'a done/archived entity is read-only — new work spawns its own fix entity',
-            });
-            return;
-          }
-        }
-
-        // target may be archived (done/dropped); resolve either location or
-        // reopening an archived entity 404s.
-        const primaryFile = join(ideasDir, `${target.id}.md`);
-        const targetFile = (await fileExists(primaryFile))
-          ? primaryFile
-          : join(ideasDir, 'archive', `${target.id}.md`);
-        const raw = await readMaybe(targetFile);
-        if (!raw) {
-          sendJson(res, 404, { error: 'entity file not found' });
-          return;
-        }
-
         // Run order lives in papercamp/run-order.md, not frontmatter (IDEA-98); notes
         // aren't part of that list, so their `order` still writes straight to frontmatter.
         let thread = target.thread;
@@ -150,8 +115,7 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           );
         }
 
-        const updatedEntry: EntityEntry = {
-          ...target,
+        const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => ({
           ...(updates.body !== undefined && { body: updates.body }),
           ...(updates.status !== undefined && { status: updates.status ?? undefined }),
           ...(updates.phases !== undefined && { phases: updates.phases }),
@@ -163,10 +127,9 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
             target.kind === 'note'
               ? updates.order !== undefined
                 ? (updates.order ?? undefined)
-                : target.order
+                : (entry.storedOrder ?? entry.order)
               : undefined,
-          updated: todayDateString(),
-        };
+        });
 
         // Closing (done/dropped) is intentionally NOT branch-guarded: it isn't starting
         // new work, and approval typically happens after the branch is already merged.
@@ -174,19 +137,26 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
         if (updates.status === 'in-progress') {
           for (const other of entries) {
             if (other.id !== target.id && other.kind !== 'note' && other.status === 'in-progress') {
-              const otherFile = join(ideasDir, `${other.id}.md`);
-              if (await fileExists(otherFile)) {
-                await writeEntityFile(
-                  root,
-                  otherFile,
-                  entityFileInput(other, { status: 'planned', updated: todayDateString() }),
-                );
+              try {
+                await updateEntity(root, other.id, () => ({ status: 'planned' }));
+              } catch (error) {
+                if (!(error instanceof CorpusError)) throw error;
               }
             }
           }
         }
 
-        await writeEntityFile(root, targetFile, entityFileInput(updatedEntry));
+        // A done/archived entity's own file is read-only (IDEA-187) — new phases or
+        // fixes spawn their own linked fix entity instead of landing here.
+        try {
+          await updateEntity(root, target.id, buildOverrides);
+        } catch (error) {
+          if (error instanceof CorpusError) {
+            sendJson(res, error.status, { error: error.message });
+            return;
+          }
+          throw error;
+        }
 
         // A status/order write can break the run-order invariant (contiguous 1..N over
         // planned/in-progress/review); reflow using DERIVED status, since overrides can lag.
@@ -197,6 +167,7 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
           const moved =
             typeof updates.order === 'number' ? { id: target.id, order: updates.order } : undefined;
           const { work } = await readCorpus(root, { live: true });
+          const updatedEntry = { ...target, ...buildOverrides(target) } as EntityEntry;
           const nextEntries = entries.map((e) => (e.id === target.id ? updatedEntry : e));
           const blockedIds = await computeNeedsBlockedIds(root, nextEntries);
           const classified = classifyRunOrderEntries(
@@ -211,18 +182,6 @@ export function planRoutes({ root, git, activity }: RouteContext): Route[] {
             const list = await readRunOrderFile(root);
             await writeRunOrderFile(root, normalizeRunOrder(list, classified, moved));
           });
-        }
-
-        // `dropped` has no merged-PR signal, so it archives on write; so does a note's
-        // `done`, since a note never has a PR and only a person closes it.
-        const closesNote = target.kind === 'note' && updates.status === 'done';
-        if ((updates.status === 'dropped' || closesNote) && !target.archived) {
-          await archiveEntityFile(root, target.id);
-        }
-        // A file in archive/ derives `done` whatever its frontmatter says, so a reopen
-        // must move it back out or the cleared status changes nothing.
-        if (updates.status === null && target.archived) {
-          await unarchiveEntityFile(root, target.id);
         }
 
         activity.notifyChanged();

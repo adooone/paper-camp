@@ -1,7 +1,7 @@
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
-import { readCorpus } from '@/core/corpus';
+import { createIdea, readCorpus, updateEntity } from '@/core/corpus';
 import { removeNightFindingLine } from '@/core/night-suggestions';
 import { readEntities } from '@/core/readers';
 import {
@@ -15,14 +15,14 @@ import {
   updateRoadmapItem,
 } from '@/core/roadmap';
 import {
-  assignEntityId,
+  archiveEntityFile,
   assignTicketId,
   formatEntityFile,
   removeSuggestionLine,
   todayDateString,
 } from '@/core/serialize';
 import type { NightSuggestionEntry, RoadmapItem, SuggestionEntry } from '@/types/index';
-import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from '../../helpers';
+import { campFile, readMaybe } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
@@ -57,24 +57,13 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'title is required' });
           return;
         }
-        const configPath = join(root, 'papercamp', 'config.json');
-        const newId = await assignEntityId(configPath);
-        if (!newId) {
-          sendJson(res, 500, { error: 'could not assign entity ID' });
-          return;
-        }
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
         const isNote = kind === 'note';
-        const entityContent = formatEntityFile({
-          id: newId,
-          title: title.trim(),
+        const newId = await createIdea(root, {
+          title,
+          content,
           kind: isNote ? 'note' : kind === 'board' ? 'board' : undefined,
           status: isNote ? 'open' : 'idea',
-          created: todayDateString(),
-          body: content?.trim(),
         });
-        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
       },
@@ -133,22 +122,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'suggestion not found' });
           return;
         }
-        const configPath = join(root, 'papercamp', 'config.json');
-        const newId = await assignEntityId(configPath);
-        if (!newId) {
-          sendJson(res, 500, { error: 'could not assign entity ID' });
-          return;
-        }
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-        const entityContent = formatEntityFile({
-          id: newId,
+        const newId = await createIdea(root, {
           title: suggestion.title,
-          status: 'idea',
-          created: todayDateString(),
-          body: suggestion.description,
+          content: suggestion.description,
         });
-        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(suggestionsPath, updated, 'utf-8');
         activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
@@ -187,26 +164,14 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'roadmap item or candidate not found' });
           return;
         }
-        const configPath = join(root, 'papercamp', 'config.json');
-        const newId = await assignEntityId(configPath);
-        if (!newId) {
-          sendJson(res, 500, { error: 'could not assign entity ID' });
-          return;
-        }
         const resolvedSubject = subject?.trim() || item.name;
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-        const entityContent = formatEntityFile({
-          id: newId,
+        const newId = await createIdea(root, {
           title: candidateName ?? item.name,
-          status: 'idea',
-          created: todayDateString(),
           subject: resolvedSubject,
-          body: candidateName
+          content: candidateName
             ? `From the roadmap: ${horizonTitle} — ${item.name}.`
             : `${item.description}\n\nFrom the roadmap: ${horizonTitle}.`,
         });
-        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         const withoutCandidate = candidateName
           ? removeRoadmapItem(raw, horizonTitle, item.name, candidateName)
           : raw;
@@ -359,16 +324,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         // subject is free text, not a foreign key, so nothing else keeps it in sync.
         let renamedSubjects = 0;
         if (renamed) {
-          const ideasDir = campFile(root, 'ideas');
-          const { entries } = await readEntities(ideasDir);
+          const { entries } = await readEntities(campFile(root, 'ideas'));
           const affected = entries.filter((entry) => entry.subject === itemName);
           for (const entry of affected) {
-            const dir = entry.archived ? join(ideasDir, 'archive') : ideasDir;
-            await writeEntityFile(
-              root,
-              join(dir, `${entry.id}.md`),
-              entityFileInput(entry, { subject: currentItemName }),
-            );
+            await updateEntity(root, entry.id, () => ({ subject: currentItemName }));
           }
           renamedSubjects = affected.length;
         }
@@ -485,22 +444,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'finding not found' });
           return;
         }
-        const configPath = join(root, 'papercamp', 'config.json');
-        const newId = await assignEntityId(configPath);
-        if (!newId) {
-          sendJson(res, 500, { error: 'could not assign entity ID' });
-          return;
-        }
-        const ideasDir = campFile(root, 'ideas');
-        await mkdir(ideasDir, { recursive: true });
-        const entityContent = formatEntityFile({
-          id: newId,
+        const newId = await createIdea(root, {
           title: nightFindingTitle(finding),
-          status: 'idea',
-          created: todayDateString(),
-          body: nightFindingBody(finding),
+          content: nightFindingBody(finding),
         });
-        await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
         await writeFile(suggestionsPath, updated, 'utf-8');
         activity.notifyChanged();
         sendJson(res, 201, { ok: true, id: newId });
@@ -532,8 +479,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       },
     },
 
-    // The click that promotes to `done` IS the archive decision, so the frontmatter
-    // change is written straight to the archive destination instead of a write-then-move.
+    // The click that promotes to `done` IS the archive decision.
     {
       method: 'POST',
       path: '/api/ideas/archive',
@@ -544,22 +490,14 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'ids is required' });
           return;
         }
-        const ideasDir = campFile(root, 'ideas');
-        const archiveDir = join(ideasDir, 'archive');
-        const { entries } = await readEntities(ideasDir);
-        await mkdir(archiveDir, { recursive: true });
+        const { entries } = await readEntities(campFile(root, 'ideas'));
 
         const archived: string[] = [];
         for (const id of ids) {
           const target = entries.find((e) => e.id === id && e.kind !== 'note' && !e.archived);
-          const sourcePath = join(ideasDir, `${id}.md`);
-          if (!target || !(await fileExists(sourcePath))) continue;
-          await writeEntityFile(
-            root,
-            join(archiveDir, `${id}.md`),
-            entityFileInput(target, { status: 'done', updated: todayDateString() }),
-          );
-          await unlink(sourcePath);
+          if (!target) continue;
+          await updateEntity(root, id, () => ({ status: 'done' }));
+          await archiveEntityFile(root, id);
           archived.push(id);
         }
 

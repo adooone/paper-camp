@@ -101,9 +101,10 @@ runs against a real `http.Server` built from `createApiMiddleware`.
       activity cached by branch sha; needs resolved from the snapshot;
       `corpus-cache.ts` folded in; all call sites moved; tests.
       run: 19m32s · 318 in · 110.4k out · sonnet-5 · sess:a5382435-6b21-4793-8d3f-42a1764a385c
-- [ ] `updateEntity`, `appendThread` and `createIdea`
+- [x] `updateEntity`, `appendThread` and `createIdea`
       The three write primitives with the closed-entity guard and archive
       handling; hooks, agent.ts and routes call them; tests.
+      run: 18m42s · 302 in · 114.3k out · sonnet-5 · sess:595fed08-40b3-4a28-b717-12daa2e77c9b
 - [ ] Id-keyed entity routes
       `routes/content/entities.ts` replaces the title-keyed plans routes;
       `plans-api.ts` and its callers move; route tests.

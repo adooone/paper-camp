@@ -1,17 +1,11 @@
+import { campFile, createIdea } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { readTaskLog } from '@/core/parse';
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
-import {
-  appendToChatFile,
-  campFile,
-  clearChatFile,
-  createIdeaEntity,
-  readChatFile,
-  readMaybe,
-} from '../helpers';
+import { appendToChatFile, clearChatFile, readChatFile, readMaybe } from '../helpers';
 import { readBody, sendJson } from '../http';
 import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
@@ -42,7 +36,7 @@ async function runChatReply(
       { entities: entries, taskLog, agentStatus: agent.getStatus() },
       {
         runPrompt: agent.runChatReply,
-        createIdea: (title, content) => createIdeaEntity(root, { title, content }),
+        createIdea: (title, content) => createIdea(root, { title, content }),
         applyToEntity: async (entityId, feedbackText) => {
           const result = await applyFeedbackMessage(
             { root, git, status, agent },

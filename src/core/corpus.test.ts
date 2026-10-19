@@ -3,7 +3,15 @@ import { chmodSync, mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { corpusFingerprint, invalidateCorpus, readCorpus } from './corpus';
+import {
+  CorpusError,
+  appendThread,
+  corpusFingerprint,
+  createIdea,
+  invalidateCorpus,
+  readCorpus,
+  updateEntity,
+} from './corpus';
 import { clearPrCache } from './git-pr/pr';
 import { readEntities } from './readers';
 import { formatEntityFile } from './serialize/entity-file';
@@ -460,5 +468,240 @@ describe('readCorpus — caching', () => {
     const second = await readCorpus(root, { live: true });
     expect(second.entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-2']);
     expect(first.entries.map((e) => e.id)).toEqual(['IDEA-1']);
+  });
+});
+
+function writeConfig(root: string, nextIdeaId = 2): void {
+  writeFileSync(
+    join(root, 'papercamp', 'config.json'),
+    `${JSON.stringify({ nextId: { idea: nextIdeaId } }, null, 2)}\n`,
+  );
+}
+
+describe('updateEntity', () => {
+  it('mutates fields, stamps updated, and invalidates the cached snapshot', async () => {
+    installGh([]);
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'A',
+      type: 'feat',
+      status: 'planned',
+      created: '2026-07-01',
+      body: 'x',
+    });
+    await readCorpus(root, { live: true });
+
+    const entry = await updateEntity(root, 'IDEA-1', () => ({ title: 'Renamed' }));
+    expect(entry.title).toBe('Renamed');
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const onDisk = entries.find((e) => e.id === 'IDEA-1');
+    expect(onDisk?.title).toBe('Renamed');
+    expect(onDisk?.updated).toBeTruthy();
+  });
+
+  it('resolves an archived entity and writes it back in place', async () => {
+    const root = tmpRoot();
+    write(
+      root,
+      {
+        id: 'IDEA-1',
+        title: 'Archived',
+        type: 'fix',
+        status: 'done',
+        created: '2026-06-01',
+        body: 'x',
+      },
+      true,
+    );
+
+    await updateEntity(root, 'IDEA-1', () => ({ subject: 'area' }));
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const onDisk = entries.find((e) => e.id === 'IDEA-1');
+    expect(onDisk?.archived).toBe(true);
+    expect(onDisk?.subject).toBe('area');
+  });
+
+  it('skips the write entirely when mutate returns undefined', async () => {
+    const root = tmpRoot();
+    write(root, { id: 'IDEA-1', title: 'A', type: 'feat', created: '2026-07-01', body: 'x' });
+    const before = readEntities(ideasDirOf(root));
+
+    const entry = await updateEntity(root, 'IDEA-1', () => undefined);
+    expect(entry.title).toBe('A');
+    const { entries } = await readEntities(ideasDirOf(root));
+    expect((await before).entries[0].updated).toBe(entries[0].updated);
+  });
+
+  it('throws a 404 CorpusError for an id that does not resolve to a file', async () => {
+    const root = tmpRoot();
+    await expect(updateEntity(root, 'IDEA-99', () => ({ title: 'x' }))).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+
+  it('refuses a phase-add, fix-add, body edit, or status reopen on a done/archived entity', async () => {
+    const root = tmpRoot();
+    write(
+      root,
+      {
+        id: 'IDEA-1',
+        title: 'Done',
+        type: 'feat',
+        status: 'done',
+        created: '2026-06-01',
+        body: 'x',
+        phases: [{ text: 'One', done: true }],
+      },
+      true,
+    );
+
+    await expect(
+      updateEntity(root, 'IDEA-1', (entry) => ({
+        phases: [...entry.phases, { text: 'Two', done: false }],
+      })),
+    ).rejects.toThrow(CorpusError);
+    await expect(
+      updateEntity(root, 'IDEA-1', (entry) => ({
+        fixes: [...(entry.fixes ?? []), { text: 'Fix', done: false }],
+      })),
+    ).rejects.toThrow(CorpusError);
+    await expect(updateEntity(root, 'IDEA-1', () => ({ body: 'new body' }))).rejects.toThrow(
+      CorpusError,
+    );
+    await expect(updateEntity(root, 'IDEA-1', () => ({ status: 'in-progress' }))).rejects.toThrow(
+      CorpusError,
+    );
+  });
+
+  it('still allows status/thread/subject edits on a done/archived entity', async () => {
+    const root = tmpRoot();
+    write(
+      root,
+      {
+        id: 'IDEA-1',
+        title: 'Done',
+        type: 'feat',
+        status: 'done',
+        created: '2026-06-01',
+        body: 'x',
+      },
+      true,
+    );
+
+    const entry = await updateEntity(root, 'IDEA-1', () => ({ subject: 'area' }));
+    expect(entry.subject).toBe('area');
+  });
+
+  it('archives a non-archived entity whose status moves to dropped', async () => {
+    const root = tmpRoot();
+    write(root, {
+      id: 'IDEA-1',
+      title: 'A',
+      type: 'feat',
+      status: 'in-progress',
+      created: '2026-07-01',
+      body: 'x',
+    });
+
+    await updateEntity(root, 'IDEA-1', () => ({ status: 'dropped' }));
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const onDisk = entries.find((e) => e.id === 'IDEA-1');
+    expect(onDisk?.archived).toBe(true);
+    expect(onDisk?.status).toBe('dropped');
+  });
+
+  it('unarchives an archived entity whose status override is cleared', async () => {
+    const root = tmpRoot();
+    write(
+      root,
+      {
+        id: 'IDEA-1',
+        title: 'A',
+        type: 'feat',
+        status: 'dropped',
+        created: '2026-07-01',
+        body: 'x',
+      },
+      true,
+    );
+
+    await updateEntity(root, 'IDEA-1', () => ({ status: undefined }));
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const onDisk = entries.find((e) => e.id === 'IDEA-1');
+    expect(onDisk?.archived).toBe(false);
+    expect(onDisk?.status).toBeUndefined();
+  });
+});
+
+describe('appendThread', () => {
+  it('appends a message to the entity thread', async () => {
+    const root = tmpRoot();
+    write(root, { id: 'IDEA-1', title: 'A', type: 'feat', created: '2026-07-01', body: 'x' });
+
+    await appendThread(root, 'IDEA-1', { kind: 'log', date: '2026-07-02', text: 'did a thing' });
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    expect(entries[0].thread).toEqual([{ kind: 'log', date: '2026-07-02', text: 'did a thing' }]);
+  });
+
+  it('still appends to a done/archived entity, unlike a phase or body edit', async () => {
+    const root = tmpRoot();
+    write(
+      root,
+      {
+        id: 'IDEA-1',
+        title: 'Done',
+        type: 'feat',
+        status: 'done',
+        created: '2026-06-01',
+        body: 'x',
+      },
+      true,
+    );
+
+    await appendThread(root, 'IDEA-1', { kind: 'note', text: 'late note', state: 'open' });
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    expect(entries[0].thread).toHaveLength(1);
+  });
+});
+
+describe('createIdea', () => {
+  it('mints a plain idea with status: idea by default', async () => {
+    const root = tmpRoot();
+    writeConfig(root);
+
+    const id = await createIdea(root, { title: 'New idea', content: 'Body text' });
+    expect(id).toBe('IDEA-2');
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const created = entries.find((e) => e.id === id);
+    expect(created?.title).toBe('New idea');
+    expect(created?.status).toBe('idea');
+    expect(created?.body).toBe('Body text');
+  });
+
+  it('mints a linked fix without defaulting its status', async () => {
+    const root = tmpRoot();
+    writeConfig(root);
+
+    const id = await createIdea(root, {
+      title: 'Follow-up fix',
+      kind: 'fix',
+      idea: 'IDEA-1',
+      phases: [{ text: 'Do it', done: false }],
+    });
+
+    const { entries } = await readEntities(ideasDirOf(root));
+    const created = entries.find((e) => e.id === id);
+    expect(created?.kind).toBe('fix');
+    expect(created?.idea).toBe('IDEA-1');
+    expect(created?.status).toBeUndefined();
+    expect(created?.phases).toHaveLength(1);
   });
 });

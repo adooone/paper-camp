@@ -1,13 +1,11 @@
-import { join } from 'node:path';
 import { resolvePrimaryScope } from '@/core/git-pr';
-import { parseEntityFile } from '@/core/parse';
 import { mergeRun } from '@/core/phase-run';
 import { computePlanContentHash } from '@/core/serialize';
 import { todayDateString } from '@/core/serialize';
 import type { CheckName, GitStatusEntry, PhaseItem, PlanEntry, RunUsage } from '@/types/index';
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
-import { campFile, entityFileInput, fileExists, readMaybe, writeEntityFile } from './helpers';
+import { CorpusError, updateEntity } from './helpers';
 
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
   return resolvePrimaryScope(plan.tags, 'plans');
@@ -15,29 +13,18 @@ function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
 
 // Kept out of api.ts so the middleware only wires managers together.
 export function createAgentHooks(root: string, git: GitManager) {
+  // Batch audit can touch archived (done/dropped) entities too — updateEntity
+  // resolves either location, so those get stamped instead of re-audited every run.
   async function stampAuditDate(planId: string): Promise<void> {
-    const ideasDir = campFile(root, 'ideas');
-    // Batch audit can touch archived (done/dropped) entities too — resolve the
-    // actual file so those get stamped instead of re-audited every run.
-    const directFile = join(ideasDir, `${planId}.md`);
-    const archivedFile = join(ideasDir, 'archive', `${planId}.md`);
-    const planFile = (await fileExists(directFile))
-      ? directFile
-      : (await fileExists(archivedFile))
-        ? archivedFile
-        : null;
-    if (!planFile) return;
-    const raw = await readMaybe(planFile);
-    if (!raw) return;
-    const parsed = parseEntityFile(raw);
-    if (parsed.entries.length === 0) return;
-    const entry = parsed.entries[0];
-    const auditedHash = computePlanContentHash({ body: entry.body, phases: entry.phases });
-    await writeEntityFile(
-      root,
-      planFile,
-      entityFileInput(entry, { audited: todayDateString(), auditedHash }),
-    );
+    try {
+      await updateEntity(root, planId, (entry) => ({
+        audited: todayDateString(),
+        auditedHash: computePlanContentHash({ body: entry.body, phases: entry.phases }),
+      }));
+    } catch (error) {
+      if (error instanceof CorpusError) return;
+      throw error;
+    }
   }
 
   async function annotatePhaseRun(
@@ -45,17 +32,24 @@ export function createAgentHooks(root: string, git: GitManager) {
     phaseIndex: number,
     run: { usage: RunUsage; kind: 'phase' | 'fix'; sessionId?: string },
   ): Promise<void> {
-    const planFile = join(campFile(root, 'ideas'), `${planId}.md`);
-    const raw = await readMaybe(planFile);
-    if (!raw) return;
-    const parsed = parseEntityFile(raw);
-    if (parsed.entries.length === 0) return;
-    const entry = parsed.entries[0];
-    const list = run.kind === 'fix' ? entry.fixes : entry.phases;
-    const target = list?.[phaseIndex];
-    if (!target) return;
-    target.run = mergeRun(target.run, run.usage, run.sessionId);
-    await writeEntityFile(root, planFile, entityFileInput(entry));
+    const key = run.kind === 'fix' ? 'fixes' : 'phases';
+    try {
+      await updateEntity(root, planId, (entry) => {
+        const list = entry[key];
+        const target = list?.[phaseIndex];
+        if (!target) return undefined;
+        return {
+          [key]: list.map((item, i) =>
+            i === phaseIndex
+              ? { ...item, run: mergeRun(item.run, run.usage, run.sessionId) }
+              : item,
+          ),
+        };
+      });
+    } catch (error) {
+      if (error instanceof CorpusError) return;
+      throw error;
+    }
   }
 
   function snapshotWorkingTree(): Promise<GitStatusEntry[]> {
@@ -105,26 +99,26 @@ export function createAgentHooks(root: string, git: GitManager) {
 
   async function setRunReview(plan: PlanEntry): Promise<void> {
     if (!plan.id) return;
-    const ideasDir = campFile(root, 'ideas');
-    const planFile = join(ideasDir, `${plan.id}.md`);
-    const raw = await readMaybe(planFile);
-    if (!raw) return;
-    const parsed = parseEntityFile(raw);
-    if (parsed.entries.length === 0) return;
-    const entry = parsed.entries[0];
-    if (entry.status === 'review' || entry.status === 'done' || entry.status === 'dropped') return;
-    await writeEntityFile(
-      root,
-      planFile,
-      entityFileInput(entry, {
-        status: 'review',
-        updated: todayDateString(),
-      }),
-    );
+    let wasAlreadyClosed = false;
+    let entryType: string | undefined;
+    try {
+      const entry = await updateEntity(root, plan.id, (entry) => {
+        if (entry.status === 'review' || entry.status === 'done' || entry.status === 'dropped') {
+          wasAlreadyClosed = true;
+          return undefined;
+        }
+        return { status: 'review' };
+      });
+      entryType = entry.type;
+    } catch (error) {
+      if (error instanceof CorpusError) return;
+      throw error;
+    }
+    if (wasAlreadyClosed) return;
     const area = resolveCommitScope(plan);
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await git.stageAll();
-    await git.commit([], `${entry.type ?? 'feat'}(${area}): mark ${plan.id} review`, refs, {
+    await git.commit([], `${entryType ?? 'feat'}(${area}): mark ${plan.id} review`, refs, {
       noVerify: true,
     });
   }
