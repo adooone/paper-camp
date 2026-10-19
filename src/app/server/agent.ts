@@ -464,6 +464,11 @@ export function createAgentManager(
   const state: AgentManagerState = passedState ?? createEmptyAgentState();
   const { tasks } = state;
 
+  // getPrioritiseVerdict's retry calls runPrioritise a second time with the same
+  // logical click — this binds that second call back to the first one's task
+  // instead of registering an unrelated one (IDEA-312).
+  let prioritiseTask: AgentTask | undefined;
+
   let interruptedOnBoot = 0;
   if (isColdStart) {
     void reconcileInterruptedTasks(root, new Date().toISOString()).then((entries) => {
@@ -2073,6 +2078,7 @@ export function createAgentManager(
       | 'chat'
       | 'desk-discovery',
     planTitle: string,
+    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void },
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
@@ -2100,7 +2106,11 @@ export function createAgentManager(
         cwd: root,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      const task = registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
+      const task = opts?.task
+        ? Object.assign(opts.task, { proc })
+        : registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
+      if (opts?.task) void setStatus(task, 'running');
+      opts?.onTask?.(task);
 
       let settled = false;
       // A settling callback that ends in error awaits setStatus so task.errorKind is
@@ -2183,8 +2193,18 @@ export function createAgentManager(
     return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
   }
 
-  function runPrioritise(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue');
+  function runPrioritise(prompt: string, retryReason?: string): Promise<string> {
+    if (retryReason !== undefined && prioritiseTask) {
+      const task = prioritiseTask;
+      prioritiseTask = undefined;
+      pushLine(task, `[retry] ${retryReason}`);
+      return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue', { task });
+    }
+    return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue', {
+      onTask: (task) => {
+        prioritiseTask = task;
+      },
+    });
   }
 
   function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {

@@ -74,7 +74,7 @@ function validatePrioritiseVerdict(
 export async function getPrioritiseVerdict(
   worklist: PlanEntry[],
   roadmapText: string,
-  runPrompt: (prompt: string) => Promise<string>,
+  runPrompt: (prompt: string, retryReason?: string) => Promise<string>,
 ): Promise<PrioritiseVerdict> {
   const activeIds = worklist
     .filter(
@@ -89,8 +89,12 @@ export async function getPrioritiseVerdict(
     throw new Error('No planned/in-progress/review ideas to prioritise');
   }
 
-  const attempt = async (prompt: string, strictWhy: boolean): Promise<PrioritiseVerdict> => {
-    const output = await runPrompt(prompt);
+  const attempt = async (
+    prompt: string,
+    strictWhy: boolean,
+    retryReason?: string,
+  ): Promise<PrioritiseVerdict> => {
+    const output = await runPrompt(prompt, retryReason);
 
     let resultText = output;
     try {
@@ -108,8 +112,9 @@ export async function getPrioritiseVerdict(
   try {
     return await attempt(prompt, true);
   } catch (err) {
-    const retryPrompt = `${prompt}\n\nYour previous response was invalid: ${(err as Error).message}\n\nRespond again with ONLY the corrected JSON object, following the rules exactly.`;
-    return await attempt(retryPrompt, false);
+    const message = (err as Error).message;
+    const retryPrompt = `${prompt}\n\nYour previous response was invalid: ${message}\n\nRespond again with ONLY the corrected JSON object, following the rules exactly.`;
+    return await attempt(retryPrompt, false, message);
   }
 }
 

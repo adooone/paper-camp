@@ -1,11 +1,65 @@
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearPrCache } from '../../core/git-pr/pr';
 import { formatEntityFile } from '../../core/serialize/entity-file';
 import type { PlanEntry } from '../../types/index';
+import { createAgentManager } from './agent';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from './prioritise';
+
+vi.mock('./local-adapters', () => ({
+  claudeAuthStatus: vi.fn(() => Promise.resolve(null)),
+}));
+
+// A command whose argv is whatever hardcoded flags agent.ts's runReadOnlyPrompt
+// builds ('-p --output-format json') — this script ignores them entirely and
+// answers from PRIORITISE_RESPONSES/PRIORITISE_COUNTER_FILE instead, so a test
+// can script a different reply per call without the child process sharing any
+// JS state with the test. Read lazily (the getter runs well after module eval,
+// once a test is actually driving the manager) so it isn't in the TDZ of the
+// vi.mock factory, which vitest hoists above this file's own declarations.
+let readOnlyAgentPath: string | undefined;
+function fakeReadOnlyAgentPath(): string {
+  if (readOnlyAgentPath) return readOnlyAgentPath;
+  const dir = mkdtempSync(join(tmpdir(), 'papercamp-prioritise-agent-'));
+  const path = join(dir, 'fake-agent.js');
+  writeFileSync(
+    path,
+    [
+      '#!/usr/bin/env node',
+      'const fs = require("fs");',
+      'const responses = JSON.parse(process.env.PRIORITISE_RESPONSES || "[]");',
+      'const counterFile = process.env.PRIORITISE_COUNTER_FILE;',
+      'let n = 0;',
+      'try { n = parseInt(fs.readFileSync(counterFile, "utf8"), 10); } catch {}',
+      'fs.writeFileSync(counterFile, String(n + 1));',
+      'const resp = responses[n] || { stdout: "" };',
+      'process.stdout.write(resp.stdout || "");',
+      'if (resp.stderr) process.stderr.write(resp.stderr);',
+      'process.exit(resp.exit || 0);',
+      '',
+    ].join('\n'),
+  );
+  chmodSync(path, 0o755);
+  readOnlyAgentPath = path;
+  return path;
+}
+
+vi.mock('./agents', () => {
+  const adapter = {
+    get command() {
+      return fakeReadOnlyAgentPath();
+    },
+    buildArgs: () => [],
+    parseLine: (line: string) => ({ text: line.trim() }),
+    options: {},
+  };
+  return {
+    AGENTS: { 'claude-code': adapter, opencode: adapter },
+    resolveAgent: () => ({ id: 'claude-code', adapter }),
+  };
+});
 
 const originalPath = process.env.PATH;
 
@@ -85,8 +139,10 @@ describe('getPrioritiseVerdict', () => {
   it('retries once with the validation failure fed back, then gives up', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const prompts: string[] = [];
-    const runPrompt = async (prompt: string) => {
+    const retryReasons: (string | undefined)[] = [];
+    const runPrompt = async (prompt: string, retryReason?: string) => {
       prompts.push(prompt);
+      retryReasons.push(retryReason);
       return '{not json}';
     };
 
@@ -96,6 +152,10 @@ describe('getPrioritiseVerdict', () => {
     expect(prompts).toHaveLength(2);
     expect(prompts[1]).toContain('Your previous response was invalid');
     expect(prompts[1]).toContain('was not valid JSON');
+    // The retryReason is how the caller (agent.runPrioritise) knows to bind the
+    // second attempt to the first one's task instead of opening a new one.
+    expect(retryReasons[0]).toBeUndefined();
+    expect(retryReasons[1]).toContain('was not valid JSON');
   });
 
   it('accepts a corrected verdict on the retry', async () => {
@@ -209,6 +269,39 @@ describe('getPrioritiseVerdict', () => {
 
     const verdict = await getPrioritiseVerdict(worklist, '', runPrompt);
     expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['blocks first', 'second'] });
+  });
+});
+
+describe('agent.runPrioritise through getPrioritiseVerdict (IDEA-312)', () => {
+  beforeEach(() => {
+    const counterFile = join(mkdtempSync(join(tmpdir(), 'papercamp-prioritise-counter-')), 'n');
+    process.env.PRIORITISE_COUNTER_FILE = counterFile;
+  });
+
+  afterEach(() => {
+    process.env.PRIORITISE_COUNTER_FILE = '';
+    process.env.PRIORITISE_RESPONSES = '';
+  });
+
+  it('binds the retry to the first attempt task instead of opening a second one', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const secondVerdict = JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    process.env.PRIORITISE_RESPONSES = JSON.stringify([
+      { stdout: '{not json}' },
+      { stdout: secondVerdict },
+    ]);
+    const root = tmpRoot();
+    const manager = createAgentManager(root);
+
+    const verdict = await getPrioritiseVerdict(worklist, '', manager.runPrioritise);
+
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    const tasks = manager.getStatus().filter((t) => t.taskKind === 'prioritise');
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe('done');
+    const lines = tasks[0].lines.join('\n');
+    expect(lines).toContain('[retry] Agent verdict was not valid JSON');
+    expect(lines).toContain(secondVerdict);
   });
 });
 
