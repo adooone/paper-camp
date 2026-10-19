@@ -2,9 +2,9 @@
 id: IDEA-299
 title: Keep each project's data across switches
 type: feat
-status: review
+status: done
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-19
 tags:
   - app
   - multi-project

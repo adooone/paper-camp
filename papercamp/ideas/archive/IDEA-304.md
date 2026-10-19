@@ -2,8 +2,9 @@
 id: IDEA-304
 title: CI as one line per workflow
 type: feat
-status: review
+status: done
 created: 2026-10-18
+updated: 2026-10-18
 tags:
   - app
   - server

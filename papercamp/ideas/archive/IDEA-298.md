@@ -2,8 +2,9 @@
 id: IDEA-298
 title: Stream other projects' rows as they load
 type: feat
-status: review
+status: done
 created: 2026-10-15
+updated: 2026-10-19
 tags:
   - app
   - multi-project

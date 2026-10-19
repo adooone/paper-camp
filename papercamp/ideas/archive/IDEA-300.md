@@ -2,8 +2,9 @@
 id: IDEA-300
 title: Switch projects without a reload
 type: feat
-status: review
+status: done
 created: 2026-10-15
+updated: 2026-10-19
 tags:
   - app
   - multi-project
