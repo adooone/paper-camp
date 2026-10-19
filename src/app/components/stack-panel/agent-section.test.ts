@@ -1,6 +1,7 @@
+import type { ScopeRow } from '@/app/features/scope';
 import type { AgentTaskState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
-import { taskCardTitle, taskKindLabel, taskSubtitle } from './agent-section';
+import { foreignProject, taskCardTitle, taskKindLabel, taskSubtitle } from './agent-section';
 
 const task = (overrides: Partial<AgentTaskState> = {}): AgentTaskState => ({
   id: 't1',
@@ -12,6 +13,20 @@ const task = (overrides: Partial<AgentTaskState> = {}): AgentTaskState => ({
   lines: [],
   ...overrides,
 });
+
+const scopeRow = (overrides: Partial<ScopeRow> = {}): ScopeRow =>
+  ({
+    key: 'host/slug',
+    runtimeUrl: 'https://example.test',
+    slug: 'slug',
+    name: 'Project',
+    isCurrent: false,
+    checked: true,
+    count: null,
+    countLoading: false,
+    machineUrl: 'https://example.test',
+    ...overrides,
+  }) as ScopeRow;
 
 describe('taskKindLabel', () => {
   it('numbers the phase from the zero-based phaseIndex', () => {
@@ -83,5 +98,20 @@ describe('taskCardTitle', () => {
     expect(
       taskCardTitle(task({ taskKind: 'commit-suggest', planTitle: 'Suggest commit message' })),
     ).toBe('Commit');
+  });
+});
+
+describe('foreignProject', () => {
+  it('is undefined with no project', () => {
+    expect(foreignProject(undefined)).toBeUndefined();
+  });
+
+  it('is undefined for the current project', () => {
+    expect(foreignProject(scopeRow({ isCurrent: true }))).toBeUndefined();
+  });
+
+  it('passes through a project that is not the current one', () => {
+    const row = scopeRow({ isCurrent: false });
+    expect(foreignProject(row)).toBe(row);
   });
 });

@@ -2,7 +2,7 @@
 id: IDEA-311
 title: Interrupted notices that clear
 type: fix
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - app
@@ -42,6 +42,7 @@ dismiss marks the Inbox item read.
       derives both sets from the plans and notifications queries;
       `run-rows.test.ts` covers closed, read and open cases.
       run: 3m29s · 88 in · 12.9k out · sonnet-5 · sess:a324914f-b21e-4636-bf73-ee3cc0e0833d
-- [ ] Dismiss on the card
+- [x] Dismiss on the card
       Close button calling `markRead`; foreign notifications in
       `useScopeRuns`; `agent-section.test.ts` updated.
+      run: 5m12s · 92 in · 20.6k out · sonnet-5 · sess:a324914f-b21e-4636-bf73-ee3cc0e0833d

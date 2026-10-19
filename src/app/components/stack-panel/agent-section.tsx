@@ -1,6 +1,6 @@
 import { useScopeRuns } from '@/app/features/activity/hooks';
 import { type ScopeRow, useScope } from '@/app/features/scope';
-import { useNotifications, usePlans } from '@/app/hooks';
+import { markRead, useNotifications, usePlans } from '@/app/hooks';
 import { fetchPlansAt } from '@/app/services/content/plans-api';
 import { plansQueryKey } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
@@ -10,6 +10,7 @@ import {
   AGENT_LABELS,
   type AgentTaskState,
   type AgentTaskStatus,
+  type Notification,
   type StoredNotification,
   type TaskKind,
   type TaskLogEntry,
@@ -43,6 +44,17 @@ const ProjectTab = ({ project }: { project: ScopeRow }) => (
 const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 // Reserved so the Desk section below holds still as tasks start, finish, and clear.
 const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
+
+export const foreignProject = (project?: ScopeRow): ScopeRow | undefined =>
+  project && !project.isCurrent ? project : undefined;
+
+const isStoredNotification = (n: Notification): n is StoredNotification => n.kind !== 'question';
+
+const readNotificationIds = (list: Notification[]): string[] =>
+  list
+    .filter(isStoredNotification)
+    .filter((n) => n.read)
+    .map((n) => n.id);
 
 export const taskKindLabel = (task: AgentTaskState): string => {
   switch (task.taskKind) {
@@ -138,7 +150,7 @@ const AgentTaskCard = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const foreign = project && !project.isCurrent ? project : undefined;
+  const foreign = foreignProject(project);
   const openTaskPage = () =>
     foreign
       ? onOpenCrossProject(foreign, `/activity/${logRowIdForTask(task)}`)
@@ -235,17 +247,34 @@ const InterruptedNoticeCard = ({
   entry,
   project,
   onOpenCrossProject,
+  onDismiss,
 }: {
   entry: TaskLogEntry;
   project?: ScopeRow;
   onOpenCrossProject: (project: ScopeRow, path: string) => void;
+  onDismiss: (entry: TaskLogEntry, project?: ScopeRow) => Promise<void>;
 }) => {
   const navigate = useNavigate();
-  const foreign = project && !project.isCurrent ? project : undefined;
+  const { toast } = useToast();
+  const foreign = foreignProject(project);
   const openEntry = () =>
     foreign
       ? onOpenCrossProject(foreign, `/activity/task:${entry.id}`)
       : navigate({ to: '/activity/$entryId', params: { entryId: `task:${entry.id}` } });
+
+  const handleDismiss = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await onDismiss(entry, project);
+    } catch (err) {
+      toast({
+        title: 'Failed to dismiss notice',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    }
+  };
+
   return (
     <div className="relative">
       {project && <ProjectTab project={project} />}
@@ -256,10 +285,20 @@ const InterruptedNoticeCard = ({
         onClick={openEntry}
         ariaLabel={entry.planId ?? entry.planTitle}
       >
-        <div className="flex h-full min-w-0 flex-col justify-center gap-1">
-          <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
-            {entry.planId ?? entry.planTitle}
-          </span>
+        <div className="flex h-full min-w-0 flex-col justify-between gap-1">
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <span className="min-w-0 truncate font-handwritten text-sm leading-tight text-desk-chalk">
+              {entry.planId ?? entry.planTitle}
+            </span>
+            <IconButton
+              icon={<CloseIcon size={20} />}
+              variant="ghost"
+              size="tiny"
+              surface="chalkboard"
+              label="Dismiss"
+              onClick={handleDismiss}
+            />
+          </div>
           <Tooltip content="Click to open the run and retry it." surface="chalkboard">
             <Stamp
               surface="chalkboard"
@@ -297,7 +336,7 @@ export const AgentSection = () => {
   const currentScopeRow = allScopeRows.find((r) => r.isCurrent);
   const multiProject = checkedScopeRows.length > 1;
   const otherScopeProjects = multiProject ? checkedScopeRows.filter((r) => !r.isCurrent) : [];
-  const foreignRuns = useScopeRuns(otherScopeProjects);
+  const { runs: foreignRuns, markRead: markForeignRead } = useScopeRuns(otherScopeProjects);
 
   const { plans } = usePlans();
   const { notifications } = useNotifications();
@@ -313,11 +352,12 @@ export const AgentSection = () => {
       .map((plan) => plan.id)
       .filter((id): id is string => id !== undefined),
   );
-  const readIds = new Set(
-    (notifications ?? [])
-      .filter((n): n is StoredNotification => n.kind !== 'question' && n.read)
-      .map((n) => n.id),
-  );
+  const readIds = new Set([
+    ...readNotificationIds(notifications ?? []),
+    ...foreignRuns.flatMap(({ notifications: foreignNotifications }) =>
+      readNotificationIds(foreignNotifications),
+    ),
+  ]);
 
   const ownTask = multiProject ? currentScopeRow : undefined;
   const allTasks: ScopedTask[] = [
@@ -340,6 +380,15 @@ export const AgentSection = () => {
       })),
     ),
   ];
+
+  const handleDismissNotice = async (entry: TaskLogEntry, project?: ScopeRow) => {
+    const foreign = foreignProject(project);
+    if (foreign) {
+      await markForeignRead(foreign, entry.id);
+    } else {
+      await markRead(entry.id);
+    }
+  };
 
   return (
     <div className="flex min-h-0 flex-none flex-col p-[var(--pc-stack-pad)]">
@@ -383,6 +432,7 @@ export const AgentSection = () => {
             entry={entry}
             project={project}
             onOpenCrossProject={scope.openRow}
+            onDismiss={handleDismissNotice}
           />
         ))}
       </div>
