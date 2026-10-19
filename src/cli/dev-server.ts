@@ -55,6 +55,7 @@ export async function startDevServer({
     undefined,
     undefined,
     pairingState,
+    undefined,
     () => persistPairingState(),
   );
 

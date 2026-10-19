@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { deskConfigSchema } from '@/core/parse';
 import type * as Pty from 'node-pty';
@@ -57,11 +56,10 @@ function emptyRuntime(): RunningService {
 
 export interface DeskServiceManagerState {
   runtimes: Map<string, RunningService>;
-  clients: Set<ServerResponse>;
 }
 
 export function createEmptyServiceState(): DeskServiceManagerState {
-  return { runtimes: new Map(), clients: new Set() };
+  return { runtimes: new Map() };
 }
 
 export type DeskServiceManager = ReturnType<typeof createDeskServiceManager>;
@@ -83,9 +81,10 @@ function loadManifestServices(root: string): DeskService[] {
 
 export function createDeskServiceManager(
   root: string,
+  publish?: (payload: { type: string } & Record<string, unknown>) => void,
   state: DeskServiceManagerState = createEmptyServiceState(),
 ) {
-  const { runtimes, clients } = state;
+  const { runtimes } = state;
 
   function runtimeFor(name: string): RunningService {
     let runtime = runtimes.get(name);
@@ -97,14 +96,11 @@ export function createDeskServiceManager(
   }
 
   function broadcast(name: string) {
-    const data = `data: ${JSON.stringify({ message: `service: ${name}`, timestamp: new Date().toISOString(), type: 'service' })}\n\n`;
-    for (const client of clients) {
-      try {
-        client.write(data);
-      } catch {
-        clients.delete(client);
-      }
-    }
+    publish?.({
+      message: `service: ${name}`,
+      timestamp: new Date().toISOString(),
+      type: 'service',
+    });
   }
 
   function trimLog(runtime: RunningService) {
@@ -309,9 +305,5 @@ export function createDeskServiceManager(
     getLog,
     killAll,
     getState: (): DeskServiceManagerState => state,
-    subscribe(res: ServerResponse) {
-      clients.add(res);
-      res.on('close', () => clients.delete(res));
-    },
   };
 }

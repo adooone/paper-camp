@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
 import { PAIRING_TOKEN_HEADER } from '@/types/index';
-import { createActivityManager } from './activity';
+import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
 import {
@@ -31,6 +31,7 @@ export interface ApiMiddleware {
   getServiceState: () => DeskServiceManagerState;
   getCheckState: () => DeskCheckManagerState;
   getPairingState: () => PairingManagerState;
+  getActivityState: () => ActivityManagerState;
   getLastRequestAt: () => number | null;
 }
 
@@ -176,17 +177,20 @@ export function createApiMiddleware(
   serviceState?: DeskServiceManagerState,
   checkState?: DeskCheckManagerState,
   pairingState?: PairingManagerState,
+  activityState?: ActivityManagerState,
   onPaired?: (origin: string) => void,
   isMachineBusy?: () => boolean,
   pairCode?: PairCodeManager,
 ): ApiMiddleware {
   const git = createGitManager(root);
-  const services = createDeskServiceManager(root, serviceState);
-  const checks = createDeskCheckManager(root, () => git.getHeadSha(), checkState);
+  const activity = createActivityManager(root, activityState);
+  const publish = (payload: { type: string } & Record<string, unknown>) =>
+    activity.publish(payload);
+  const services = createDeskServiceManager(root, publish, serviceState);
+  const checks = createDeskCheckManager(root, () => git.getHeadSha(), publish, checkState);
   const status = createStatusManager(root, checks, git, statusState);
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
-  const activity = createActivityManager(root);
   const agent = createAgentManager(
     root,
     hooks.stampAuditDate,
@@ -199,6 +203,7 @@ export function createApiMiddleware(
     () => activity.notifyChanged(),
     agentState,
     isMachineBusy,
+    publish,
   );
 
   const routes = buildRoutes({
@@ -271,6 +276,7 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).getServiceState = services.getState;
   (handler as ApiMiddleware).getCheckState = checks.getState;
   (handler as ApiMiddleware).getPairingState = pairing.getState;
+  (handler as ApiMiddleware).getActivityState = activity.getState;
   (handler as ApiMiddleware).getLastRequestAt = () => lastRequestAt;
   return handler as ApiMiddleware;
 }

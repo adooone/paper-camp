@@ -276,7 +276,12 @@ describe('POST /api/chat', () => {
     const { res } = fakeRes();
     await route(root, 'POST', {
       ...agentCtx(runChatReply),
-      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+      activity: {
+        notifyChanged: () => {},
+        publish,
+        getState: () => ({ clients: new Set() }),
+        subscribe: () => {},
+      },
     }).handle(fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })), res);
 
     expect(publish.mock.calls.map((call) => call[0])).toEqual([
@@ -320,7 +325,12 @@ describe('POST /api/chat', () => {
         runFeedbackReply,
         getStatus: () => [],
       } as unknown as RouteContext['agent'],
-      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+      activity: {
+        notifyChanged: () => {},
+        publish,
+        getState: () => ({ clients: new Set() }),
+        subscribe: () => {},
+      },
     }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
 
     expect(publish.mock.calls.map((call) => call[0])).toEqual([
@@ -341,7 +351,12 @@ describe('POST /api/chat', () => {
     const { res } = fakeRes();
     await route(root, 'POST', {
       ...agentCtx(runChatReply),
-      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+      activity: {
+        notifyChanged: () => {},
+        publish,
+        getState: () => ({ clients: new Set() }),
+        subscribe: () => {},
+      },
     }).handle(fakeReq(JSON.stringify({ text: 'What is running?' })), res);
 
     expect(publish.mock.calls.map((call) => call[0])).toEqual([
@@ -362,7 +377,12 @@ describe('POST /api/chat', () => {
     const { res } = fakeRes();
     await route(root, 'POST', {
       ...agentCtx(runChatReply),
-      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+      activity: {
+        notifyChanged: () => {},
+        publish,
+        getState: () => ({ clients: new Set() }),
+        subscribe: () => {},
+      },
     }).handle(fakeReq(JSON.stringify({ text: 'Hello?' })), res);
 
     expect(publish.mock.calls.map((call) => call[0])).toEqual([
@@ -422,7 +442,12 @@ describe('POST /api/chat/retry', () => {
     const { res } = fakeRes();
     await routeAt(root, '/api/chat/retry', 'POST', {
       ...agentCtx(runChatReply),
-      activity: { notifyChanged: () => {}, publish, subscribe: () => {} },
+      activity: {
+        notifyChanged: () => {},
+        publish,
+        getState: () => ({ clients: new Set() }),
+        subscribe: () => {},
+      },
     }).handle(fakeReq(), res);
 
     expect(publish.mock.calls.map((call) => call[0])).toEqual([

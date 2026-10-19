@@ -96,10 +96,11 @@ Ideas list in another tab, and the stack panel's effect contains no `changed`
 branch.
 
 ### Phases
-- [ ] One client set shared across the hot-swap
+- [x] One client set shared across the hot-swap
       `ActivityManagerState`, the Vite global and `getActivityState`; services,
       checks and the agent manager publish through the activity manager; the
       stream route subscribes once. Tests for the swap and the fan-out.
+      run: 7m49s · 172 in · 30.3k out · sonnet-5 · sess:a447bf15-941a-43e0-91ad-f037555d7a65
 - [ ] Heartbeat and hello-as-changed
       25 s `: ping`, cleared on close; hello carries `changed`;
       `activity-stream.test.ts` covers the resync.

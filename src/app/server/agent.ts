@@ -2,7 +2,6 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
-import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import {
@@ -422,7 +421,6 @@ function noProgressWarning(task: AgentTask): string {
 function createEmptyAgentState(): AgentManagerState {
   return {
     tasks: new Map(),
-    clients: new Set(),
     lastLaunchedId: undefined,
     lastExclusiveLaunchedId: undefined,
     pendingFixReviewResult: null,
@@ -455,14 +453,15 @@ export function createAgentManager(
   onCorpusChanged?: () => void,
   passedState?: AgentManagerState,
   isMachineBusy?: () => boolean,
+  publish?: (payload: { type: string } & Record<string, unknown>) => void,
 ) {
   // No state handed in means a fresh process or (under the daemon) this project's
   // first mount since it stopped — a started-but-unfinished entry is one it lost.
   const isColdStart = passedState === undefined;
   // Shared with a hot-reloaded replacement instance via `state`, so in-flight
-  // listeners and the new instance's getStatus()/subscribe() stay in sync.
+  // listeners and the new instance's getStatus() stay in sync.
   const state: AgentManagerState = passedState ?? createEmptyAgentState();
-  const { tasks, clients } = state;
+  const { tasks } = state;
 
   let interruptedOnBoot = 0;
   if (isColdStart) {
@@ -570,14 +569,7 @@ export function createAgentManager(
   }
 
   function broadcast(message: string, taskId?: string) {
-    const data = `data: ${JSON.stringify({ message, timestamp: new Date().toISOString(), type: 'agent', taskId })}\n\n`;
-    for (const client of clients) {
-      try {
-        client.write(data);
-      } catch {
-        clients.delete(client);
-      }
-    }
+    publish?.({ message, timestamp: new Date().toISOString(), type: 'agent', taskId });
   }
 
   function pushLine(task: AgentTask, text: string) {
@@ -2354,10 +2346,6 @@ export function createAgentManager(
     // Handed to a hot-reloaded replacement instance so both share this exact
     // state object instead of drifting apart after the swap.
     getState: () => state,
-    subscribe(res: ServerResponse) {
-      clients.add(res);
-      res.on('close', () => clients.delete(res));
-    },
     // Kills every task's process, not just the most-recently-launched one, since
     // several can be running concurrently under the write-set gate.
     killCurrent(): Promise<void> {
@@ -2395,7 +2383,6 @@ export interface AgentManagerState {
   // Outlives task replacement: a human can launch another run before pushing,
   // and the verdict must still be there to settle threads once the fix is pushed.
   pendingFixReviewResult: FixReviewResult | null;
-  clients: Set<ServerResponse>;
 }
 
 export interface AgentManager {
@@ -2446,6 +2433,5 @@ export interface AgentManager {
   consumeReconcileQueue: () => void;
   getInterruptedOnBoot: () => number;
   getState: () => AgentManagerState;
-  subscribe: (res: ServerResponse) => void;
   killCurrent: () => Promise<void>;
 }

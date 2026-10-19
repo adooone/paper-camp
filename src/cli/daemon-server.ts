@@ -200,6 +200,7 @@ export async function createProjectApi(
     undefined,
     undefined,
     pairingState,
+    undefined,
     onPaired,
     checkMachineBusy,
     pairCodeManager,

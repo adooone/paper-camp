@@ -6,8 +6,19 @@ import { runRunOrderPass } from './run-order-pass';
 // "something on disk moved, reload broadly" signal.
 export type ActivityManager = ReturnType<typeof createActivityManager>;
 
-export function createActivityManager(root: string) {
-  const clients = new Set<ServerResponse>();
+export interface ActivityManagerState {
+  clients: Set<ServerResponse>;
+}
+
+export function createEmptyActivityState(): ActivityManagerState {
+  return { clients: new Set() };
+}
+
+export function createActivityManager(
+  root: string,
+  state: ActivityManagerState = createEmptyActivityState(),
+) {
+  const { clients } = state;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
@@ -73,6 +84,9 @@ export function createActivityManager(root: string) {
     publish(payload: { type: string } & Record<string, unknown>) {
       writeToClients(payload);
     },
+    // Handed to a hot-reloaded replacement instance so both share this exact
+    // clients set instead of the new instance starting deaf.
+    getState: (): ActivityManagerState => state,
     subscribe(res: ServerResponse) {
       clients.add(res);
       const connected = JSON.stringify({

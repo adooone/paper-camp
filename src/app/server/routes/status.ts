@@ -13,14 +13,7 @@ import { sendJson } from '../http';
 import { appendNotification } from '../notification-log';
 import type { Route, RouteContext } from './types';
 
-export function statusRoutes({
-  root,
-  activity,
-  agent,
-  status,
-  services,
-  checks,
-}: RouteContext): Route[] {
+export function statusRoutes({ root, activity, status }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
@@ -74,9 +67,6 @@ export function statusRoutes({
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
         activity.subscribe(res);
-        agent.subscribe(res);
-        services.subscribe(res);
-        checks.subscribe(res);
       },
     },
   ];

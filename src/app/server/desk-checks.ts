@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import type { ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { deskConfigSchema } from '@/core/parse';
 import type { CheckStatus, DeskCheck, DeskCheckState } from '../../types';
@@ -40,11 +39,10 @@ function run(cmd: string, cwd: string): Promise<{ code: number | null; output: s
 export interface DeskCheckManagerState {
   runtimes: Map<string, CheckRuntime>;
   inFlight: Map<string, Promise<CheckStatus>>;
-  clients: Set<ServerResponse>;
 }
 
 export function createEmptyCheckState(): DeskCheckManagerState {
-  return { runtimes: new Map(), inFlight: new Map(), clients: new Set() };
+  return { runtimes: new Map(), inFlight: new Map() };
 }
 
 export type DeskCheckManager = ReturnType<typeof createDeskCheckManager>;
@@ -67,9 +65,10 @@ export function loadManifestChecks(root: string): DeskCheck[] {
 export function createDeskCheckManager(
   root: string,
   getHeadSha?: () => Promise<string>,
+  publish?: (payload: { type: string } & Record<string, unknown>) => void,
   state: DeskCheckManagerState = createEmptyCheckState(),
 ) {
-  const { runtimes, inFlight, clients } = state;
+  const { runtimes, inFlight } = state;
 
   function runtimeFor(name: string): CheckRuntime {
     let runtime = runtimes.get(name);
@@ -81,14 +80,7 @@ export function createDeskCheckManager(
   }
 
   function broadcast(name: string) {
-    const data = `data: ${JSON.stringify({ message: `check: ${name}`, timestamp: new Date().toISOString(), type: 'check' })}\n\n`;
-    for (const client of clients) {
-      try {
-        client.write(data);
-      } catch {
-        clients.delete(client);
-      }
-    }
+    publish?.({ message: `check: ${name}`, timestamp: new Date().toISOString(), type: 'check' });
   }
 
   function setResult(name: string, status: CheckStatus, output: string, headSha: string | null) {
@@ -151,9 +143,5 @@ export function createDeskCheckManager(
     runFix,
     getStatus,
     getState: (): DeskCheckManagerState => state,
-    subscribe(res: ServerResponse) {
-      clients.add(res);
-      res.on('close', () => clients.delete(res));
-    },
   };
 }
