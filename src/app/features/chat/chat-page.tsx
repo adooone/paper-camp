@@ -48,8 +48,14 @@ export const ChatPage = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nearBottomRef = useRef(true);
   const hasScrolledInitially = useRef(false);
-  const messageCountRef = useRef(messages.length);
+  const itemCountRef = useRef(0);
   const [newMessagesPending, setNewMessagesPending] = useState(false);
+
+  const itemCount =
+    messages.length +
+    (pending ? 1 : 0) +
+    (sending && chatStage ? 1 : 0) +
+    (showFailureLine ? 1 : 0);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
@@ -71,18 +77,18 @@ export const ChatPage = () => {
     if (loading) return;
     if (!hasScrolledInitially.current) {
       hasScrolledInitially.current = true;
-      messageCountRef.current = messages.length;
+      itemCountRef.current = itemCount;
       scrollToBottom();
       return;
     }
-    if (messages.length === messageCountRef.current) return;
-    messageCountRef.current = messages.length;
+    if (itemCount === itemCountRef.current) return;
+    itemCountRef.current = itemCount;
     if (nearBottomRef.current) {
       scrollToBottom();
     } else {
       setNewMessagesPending(true);
     }
-  }, [loading, messages.length, scrollToBottom]);
+  }, [loading, itemCount, scrollToBottom]);
 
   const fillComposer = (text: string) => {
     setInput(text);

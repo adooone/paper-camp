@@ -2,7 +2,7 @@ import type { ActivityMessage } from '@/app/services/activity-stream';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useEffect, useState } from 'react';
 
-export type ChatStage = 'reading' | 'deciding' | 'filing' | 'posting' | 'answering';
+export type ChatStage = 'starting' | 'reading' | 'deciding' | 'filing' | 'posting' | 'answering';
 
 const CHAT_STAGES = new Set<string>([
   'reading',
@@ -56,6 +56,7 @@ export interface ChatStageInfo {
 }
 
 const STAGE_LINES: Record<ChatStage, (info: ChatStageInfo) => string> = {
+  starting: () => 'Thinking…',
   reading: (info) => `Reading ${info.ideas ?? 0} ideas…`,
   deciding: () => 'Deciding…',
   filing: () => 'Filing an idea…',
@@ -88,6 +89,7 @@ export function useChatStage(active: boolean): ChatStageInfo | null {
       setState(null);
       return;
     }
+    setState({ stage: 'starting', startedAt: Date.now() });
     return subscribeToActivityStream((payload) => {
       if (!isChatStagePayload(payload)) return;
       setState((current) => reduceChatStage(current, payload, Date.now()));

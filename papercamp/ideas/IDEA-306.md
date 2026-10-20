@@ -124,8 +124,9 @@ branch.
       run: 6m56s · 120 in · 23.8k out · sonnet-5 · sess:5cf1edc4-6eda-4d87-8ba3-dd362ca36245
 
 ### Fixes
-- [ ] Auto-scroll and a thinking indicator in chat
+- [x] Auto-scroll and a thinking indicator in chat
       The chat view doesn't scroll to the latest message when a new one arrives, and there's no visual indicator while Scout is composing a reply. Auto-scroll the thread on new messages and show a working/typing indicator until the reply streams in.
+      run: 2m43s · 44 in · 8k out · sonnet-5 · sess:32fa7491-e924-4539-8a95-5eac569ba27d
 
 ### Thread
 - [x] 2026-10-19 [chat] When I sent a message here view is not scrolled to the latest point audomatically, and I still dont see any visual status of you thinking or writting the answer. Although we did some work to improve this chat
