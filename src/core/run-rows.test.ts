@@ -189,6 +189,16 @@ describe('buildLogRows', () => {
     expect(rows).toEqual([]);
   });
 
+  it('excludes a chat reply from the live set — it renders inline in the chat thread', () => {
+    const rows = buildLogRows([], [], [runningTask({ taskKind: 'chat' })], []);
+    expect(rows).toEqual([]);
+  });
+
+  it('excludes a chat reply row — stale entries from before chat went unlogged', () => {
+    const rows = buildLogRows([taskLogEntry({ taskKind: 'chat' })], [], [], []);
+    expect(rows).toEqual([]);
+  });
+
   it('reads a task row cost straight off its usage', () => {
     const rows = buildLogRows(
       [

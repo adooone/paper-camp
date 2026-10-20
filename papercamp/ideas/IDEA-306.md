@@ -2,7 +2,7 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: in-progress
+status: review
 created: 2026-10-19
 updated: 2026-10-20
 tags:
@@ -127,12 +127,15 @@ branch.
 - [x] Auto-scroll and a thinking indicator in chat
       The chat view doesn't scroll to the latest message when a new one arrives, and there's no visual indicator while Scout is composing a reply. Auto-scroll the thread on new messages and show a working/typing indicator until the reply streams in.
       run: 2m43s · 44 in · 8k out · sonnet-5 · sess:32fa7491-e924-4539-8a95-5eac569ba27d
-- [ ] Enter key sends chat message
+- [x] Enter key sends chat message
       In the chat input, pressing Enter submits the message instead of requiring a click on the send button.
-- [ ] Use paper-ui spinner for thinking indicator
+      run: 9m30s · 102 in · 18.8k out · sonnet-5 · sess:a6e52f0f-92e3-4d7b-8bfc-87a40836042f
+- [x] Use paper-ui spinner for thinking indicator
       Replace the current thinking/writing indicator with paper-ui's spinner component instead of a custom one.
-- [ ] Remove leftover agent card for chat in Activity
+      run: 3m3s · 22 in · 3.2k out · sonnet-5 · sess:a6e52f0f-92e3-4d7b-8bfc-87a40836042f
+- [x] Remove leftover agent card for chat in Activity
       Chat messages still produce an agent-stack-style card in Activity even though chat now renders inline; find and remove that remaining activity entry for chat.
+      run: 7m28s · 72 in · 9.6k out · sonnet-5 · sess:a6e52f0f-92e3-4d7b-8bfc-87a40836042f
 
 ### Thread
 - [x] 2026-10-19 [chat] When I sent a message here view is not scrolled to the latest point audomatically, and I still dont see any visual status of you thinking or writting the answer. Although we did some work to improve this chat

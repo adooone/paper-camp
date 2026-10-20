@@ -183,7 +183,7 @@ export function buildLogRows(
   notifications: Notification[],
 ): LogRow[] {
   const running = agentStatus
-    .filter((task) => RUNNING_STATUSES.includes(task.status))
+    .filter((task) => task.taskKind !== 'chat' && RUNNING_STATUSES.includes(task.status))
     .map(runningRow)
     .sort(byNewest);
 
@@ -196,7 +196,9 @@ export function buildLogRows(
     .map(questionRow);
 
   const settled = [
-    ...taskLog.map((entry) => taskRow(entry, unreadIds)),
+    ...taskLog
+      .filter((entry) => entry.taskKind !== 'chat')
+      .map((entry) => taskRow(entry, unreadIds)),
     ...issues.filter((issue) => issue.sourceKind !== 'agent-run').map(issueRow),
     ...replies,
     ...questions,

@@ -1,13 +1,8 @@
-import { Avatar, Card } from '@dendelion/folk-ui';
+import { Avatar, Card, Spinner } from '@dendelion/folk-ui';
 import type { ChatStageInfo } from '../hooks/use-chat-stage';
 import { chatStageLine, showsSlowCliHint } from '../hooks/use-chat-stage';
 
 const metaLineClass = 'flex items-center gap-2 text-sm font-semibold opacity-[0.45]';
-const DOT_DELAY_CLASSES = [
-  '[animation-delay:0ms]',
-  '[animation-delay:150ms]',
-  '[animation-delay:300ms]',
-];
 
 export const ChatStageBubble = ({ stage }: { stage: ChatStageInfo }) => (
   <div className="flex flex-col gap-1 items-start mb-3">
@@ -20,14 +15,7 @@ export const ChatStageBubble = ({ stage }: { stage: ChatStageInfo }) => (
         <Card size="small" surface="paper" texture="kraft" shade>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                {DOT_DELAY_CLASSES.map((delayClass) => (
-                  <span
-                    key={delayClass}
-                    className={`h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-desk-chalk motion-reduce:animate-none ${delayClass}`}
-                  />
-                ))}
-              </div>
+              <Spinner size="small" label={chatStageLine(stage)} />
               <span>{chatStageLine(stage)}</span>
             </div>
             {showsSlowCliHint(stage) && (

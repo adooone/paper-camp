@@ -1,6 +1,8 @@
+import { isSendKey } from '@/app/features/chat/helpers';
 import { splitQuestionText } from '@/core/decision-text';
 import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
 import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/folk-ui';
+import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
 
 interface QuestionCardProps {
@@ -56,6 +58,12 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
 
   const sendReply = () => runSendReply(reply, onAnswer, { setSending, setChosen, setReply });
 
+  const handleReplyKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!isSendKey(e)) return;
+    e.preventDefault();
+    if (!busy && !sending && reply.trim()) sendReply();
+  };
+
   return (
     <Card size="small" surface="paper" texture="kraft" shade accent accentColor="rose">
       {phaseLine && <p className="text-sm m-0 mb-1 opacity-[0.55]">{phaseLine}</p>}
@@ -101,6 +109,7 @@ export const QuestionCard = ({ message, onAnswer, busy }: QuestionCardProps) => 
           <Textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
+            onKeyDown={handleReplyKeyDown}
             aria-label="Answer in your own words"
             placeholder="Or answer in your own words…"
             rows={2}
