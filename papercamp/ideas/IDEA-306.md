@@ -2,7 +2,7 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: in-progress
+status: review
 created: 2026-10-19
 updated: 2026-10-19
 tags:
@@ -119,8 +119,9 @@ branch.
       `subscribeProjectToActivityStream` and `refreshProjectState`; the
       per-hook `changed` branches removed; hook tests updated.
       run: 5m58s · 150 in · 23.7k out · sonnet-5 · sess:c8ebf1c4-cc36-4d25-bc37-68cf4e5cd0d5
-- [ ] Chat renders inline, not as an agent-stack run
+- [x] Chat renders inline, not as an agent-stack run
       Sending a message in this chat currently triggers an agent-stack run instead of streaming the reply directly in the chat thread. Fix the chat path so replies display here without going through the Stack panel, and fix the occasional doubled rendering of the user's own message.
+      run: 6m56s · 120 in · 23.8k out · sonnet-5 · sess:5cf1edc4-6eda-4d87-8ba3-dd362ca36245
 
 ### Fixes
 - [ ] Auto-scroll and a thinking indicator in chat

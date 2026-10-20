@@ -67,7 +67,7 @@ interface CompletedTask {
 
 // Read-only helper runs (commit-message suggestion, capture-time overlap check) produce no
 // lasting artifact — recording them would just dirty the tracked tasks.log on every use.
-export const UNLOGGED_TASK_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check']);
+export const UNLOGGED_TASK_KINDS = new Set<TaskKind>(['commit-suggest', 'overlap-check', 'chat']);
 
 interface StartingTask {
   id: string;

@@ -1616,6 +1616,22 @@ describe('runReadOnlyPrompt output (IDEA-312)', () => {
   });
 });
 
+describe('runChatReply (IDEA-306)', () => {
+  it('runs the prompt but stays out of getStatus(), so a chat reply never flashes as a Stack panel run', async () => {
+    agentScript.readOnlyCommand = readOnlyCommand;
+    process.env.READONLY_STDOUT = 'hi there';
+    process.env.READONLY_STDERR = '';
+    process.env.READONLY_EXIT = '0';
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    const manager = createAgentManager(root);
+
+    const result = await manager.runChatReply('prompt');
+
+    expect(result).toBe('hi there');
+    expect(manager.getStatus()).toEqual([]);
+  });
+});
+
 describe('task log', () => {
   it('appends a done entry with kind, plan, agent, and start/end to papercamp/tasks.log', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);

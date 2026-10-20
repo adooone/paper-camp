@@ -2217,29 +2217,32 @@ export function createAgentManager(
   }
 
   function getStatus(): AgentTaskState[] {
-    return [...tasks.values()].reverse().map((task) => ({
-      id: task.id,
-      status: task.status,
-      taskKind: task.taskKind,
-      planTitle: task.planTitle,
-      startedAt: task.startedAt,
-      planId: task.planId,
-      phaseIndex: task.phaseIndex,
-      ...(task.fixAttempt !== undefined
-        ? { fixAttempt: task.fixAttempt, fixAttemptCap: task.fixAttemptCap }
-        : {}),
-      ideaId: task.ideaId,
-      agentId: task.agentId,
-      lines: [...task.lines],
-      ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
-      ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
-      ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
-      ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
-      ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
-      ...(task.errorKind ? { errorKind: task.errorKind } : {}),
-      ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
-      ...(task.issueId ? { issueId: task.issueId } : {}),
-    }));
+    return [...tasks.values()]
+      .reverse()
+      .filter((task) => task.taskKind !== 'chat')
+      .map((task) => ({
+        id: task.id,
+        status: task.status,
+        taskKind: task.taskKind,
+        planTitle: task.planTitle,
+        startedAt: task.startedAt,
+        planId: task.planId,
+        phaseIndex: task.phaseIndex,
+        ...(task.fixAttempt !== undefined
+          ? { fixAttempt: task.fixAttempt, fixAttemptCap: task.fixAttemptCap }
+          : {}),
+        ideaId: task.ideaId,
+        agentId: task.agentId,
+        lines: [...task.lines],
+        ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
+        ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
+        ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
+        ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
+        ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
+        ...(task.errorKind ? { errorKind: task.errorKind } : {}),
+        ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
+        ...(task.issueId ? { issueId: task.issueId } : {}),
+      }));
   }
 
   function hasActiveTask(): boolean {

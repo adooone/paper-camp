@@ -19,9 +19,13 @@ async function postAndReload(
   loadChat: () => Promise<void>,
   toast: ReturnType<typeof useToast>['toast'],
   onThrowFailure?: () => void,
+  onPosted?: () => void,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const { error } = await post();
+    // Clears the optimistic bubble before the reload lands, so the fetched
+    // thread never renders the same message alongside it.
+    onPosted?.();
     await loadChat();
     return { ok: !error, error };
   } catch (err) {
@@ -43,6 +47,7 @@ export async function sendChatText(
     loadChat: () => Promise<void>;
     toast: ReturnType<typeof useToast>['toast'];
     setInput: (updater: (current: string) => string) => void;
+    onPosted?: () => void;
   },
 ): Promise<{ ok: boolean; error?: string }> {
   return postAndReload(
@@ -52,6 +57,7 @@ export async function sendChatText(
     () => {
       if (restoreOnFailure) deps.setInput((current) => current || text);
     },
+    deps.onPosted,
   );
 }
 
@@ -112,6 +118,7 @@ export function useChatThread() {
         loadChat: loadChatFor(target, refetchForeign),
         toast,
         setInput,
+        onPosted: () => setPending(null),
       });
       setRetryError(result.error ?? null);
       return result.ok;

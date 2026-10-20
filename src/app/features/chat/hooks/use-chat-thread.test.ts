@@ -65,6 +65,31 @@ describe('sendChatText', () => {
     await sendChatText('hi', { restoreOnFailure: true }, d);
     expect(settled).toBe(true);
   });
+
+  it('calls onPosted once the message is posted but before loadChat resolves, so the optimistic bubble clears before the real message would render twice', async () => {
+    const order: string[] = [];
+    const d = deps({
+      postChatMessage: vi.fn(async () => {
+        order.push('posted');
+        return {};
+      }),
+      loadChat: vi.fn(async () => {
+        order.push('loaded');
+      }),
+      onPosted: vi.fn(() => order.push('onPosted')),
+    });
+    await sendChatText('hi', { restoreOnFailure: true }, d);
+    expect(order).toEqual(['posted', 'onPosted', 'loaded']);
+  });
+
+  it('does not call onPosted when posting throws', async () => {
+    const d = deps({
+      postChatMessage: vi.fn().mockRejectedValue(new Error('offline')),
+      onPosted: vi.fn(),
+    });
+    await sendChatText('hi', { restoreOnFailure: true }, d);
+    expect(d.onPosted).not.toHaveBeenCalled();
+  });
 });
 
 describe('retryChatReply', () => {
