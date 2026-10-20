@@ -2,9 +2,9 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: review
+status: in-progress
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-20
 tags:
   - server
   - app
@@ -127,9 +127,17 @@ branch.
 - [x] Auto-scroll and a thinking indicator in chat
       The chat view doesn't scroll to the latest message when a new one arrives, and there's no visual indicator while Scout is composing a reply. Auto-scroll the thread on new messages and show a working/typing indicator until the reply streams in.
       run: 2m43s · 44 in · 8k out · sonnet-5 · sess:32fa7491-e924-4539-8a95-5eac569ba27d
+- [ ] Enter key sends chat message
+      In the chat input, pressing Enter submits the message instead of requiring a click on the send button.
+- [ ] Use paper-ui spinner for thinking indicator
+      Replace the current thinking/writing indicator with paper-ui's spinner component instead of a custom one.
+- [ ] Remove leftover agent card for chat in Activity
+      Chat messages still produce an agent-stack-style card in Activity even though chat now renders inline; find and remove that remaining activity entry for chat.
 
 ### Thread
 - [x] 2026-10-19 [chat] When I sent a message here view is not scrolled to the latest point audomatically, and I still dont see any visual status of you thinking or writting the answer. Although we did some work to improve this chat
 - [x] 2026-10-19 [chat] [agent] Added that as a fix here — auto-scroll to the latest message and a visible thinking/writing indicator while Scout is working on a reply. (reopened this idea to re-run)
 - [x] 2026-10-19 [chat] Also I see my message is doubled sometimes, and I dont want to have agent run for chat. It should ne displayed directly here, not in the agent stack.
 - [x] 2026-10-19 [chat] [agent] Added both as fixes here — auto-scroll the thread to the latest message, show a thinking/writing indicator while I'm composing a reply, fix the duplicated-message display, and make chat render inline here instead of spawning an agent-stack run.
+- [x] 2026-10-20 [chat] another fix need - when I am in chat I want to be able to send message with enter on keyboard. And loading state for thinking agent should use spinners from paper-ui. Also I still see the agent card in activity for chat
+- [x] 2026-10-20 [chat] [agent] Added all three here as fixes — Enter-to-send in the chat input, swap the thinking/writing indicator to paper-ui's spinner, and remove the lingering agent card from Activity for chat messages. (reopened this idea to re-run)
