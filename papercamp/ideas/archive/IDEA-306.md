@@ -2,9 +2,9 @@
 id: IDEA-306
 title: Changed ticks that always arrive
 type: fix
-status: review
+status: done
 created: 2026-10-19
-updated: 2026-10-20
+updated: 2026-10-21
 tags:
   - server
   - app

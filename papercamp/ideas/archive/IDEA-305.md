@@ -2,8 +2,9 @@
 id: IDEA-305
 title: MCP in every agent run
 type: fix
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-21
 tags:
   - server
   - agents

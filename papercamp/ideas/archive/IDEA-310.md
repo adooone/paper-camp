@@ -2,8 +2,9 @@
 id: IDEA-310
 title: Capacity card with a weekly bar
 type: feat
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-21
 tags:
   - app
   - stack-panel

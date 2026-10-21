@@ -2,8 +2,9 @@
 id: IDEA-307
 title: One corpus service
 type: refactor
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-21
 tags:
   - core
   - server

@@ -2,8 +2,9 @@
 id: IDEA-312
 title: One visible prioritise run
 type: fix
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-21
 tags:
   - server
   - agents

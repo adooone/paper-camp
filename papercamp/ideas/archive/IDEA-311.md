@@ -2,8 +2,9 @@
 id: IDEA-311
 title: Interrupted notices that clear
 type: fix
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-21
 tags:
   - app
   - stack-panel

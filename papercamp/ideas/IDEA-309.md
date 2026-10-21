@@ -83,3 +83,6 @@ answers 404.
 - [ ] One config reader and route hygiene
       `readProjectConfig` in core; `readJson` with 400; read routes as
       method-matched `GET` routes; tests.
+
+### Thread
+- [x] 2026-10-21 [log] [agent] Run order: A large standalone refactor of orchestrator/routes that doesn't depend on the others but should land before further corpus/capacity work touches the same api.ts/agent manager surface it is simplifying.
