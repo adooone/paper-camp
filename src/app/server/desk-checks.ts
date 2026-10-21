@@ -238,6 +238,13 @@ export function createDeskCheckManager(
       if (name === 'test' && !hasVitest) return true;
       const runtime = runtimes.get(name);
       if (!runtime) return false;
+      if (
+        headSha === null ||
+        treeHash === null ||
+        runtime.headSha === null ||
+        runtime.treeHash === null
+      )
+        return false;
       return (
         runtime.headSha === headSha &&
         runtime.treeHash === treeHash &&

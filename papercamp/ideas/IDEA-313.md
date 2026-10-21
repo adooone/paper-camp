@@ -93,10 +93,11 @@ the fetch failure, and a service started during unmount is dead afterwards.
 Any change to what the checks run or how stamps render. The Services page.
 
 ### Phases
-- [ ] Hash worktree content and reject null fingerprints
+- [x] Hash worktree content and reject null fingerprints
       `getTreeHash` adds `hash-object --stdin-paths` over changed and
       untracked paths; `null` fingerprints are never fresh; desk-checks test
       edits a real file twice.
+      run: 4m27s · 62 in · 15.4k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
 - [ ] Honest check routes
       `/run` and `/fix` answer 404 only for unknown checks and 500 with the
       message otherwise; a rejected run promise lands as that check's fail.

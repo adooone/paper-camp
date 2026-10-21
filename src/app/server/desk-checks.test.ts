@@ -130,26 +130,38 @@ describe('runFix', () => {
 });
 
 describe('getCachedOrRunChecks', () => {
-  it("reuses every check's own last result once each was produced on the current tree", async () => {
-    const root = await makeGitRoot('false');
+  it("reuses a check's own last result once it was produced on the current tree, but reruns after a second edit to the same file", async () => {
+    const countFile = join(tmpdir(), `papercamp-desk-checks-count-${Date.now()}.txt`);
+    const root = await makeGitRoot(`echo run >> ${countFile}`);
+    await writeFile(join(root, 'tracked.txt'), 'one\n');
+    await run('git', ['add', 'tracked.txt'], { cwd: root });
+    await run('git', ['commit', '-q', '-m', 'add tracked'], { cwd: root });
     const git = createGitManager(root);
     const getFingerprint = async () => ({
       headSha: await git.getHeadSha(),
       treeHash: await git.getTreeHash(),
     });
     const { getCachedOrRunChecks, getState } = createDeskCheckManager(root, getFingerprint);
-    const { headSha, treeHash } = await getFingerprint();
-
-    getState().runtimes.set('lint', { status: 'fail', lastRun: '', output: '', headSha, treeHash });
     getState().docs = {
       fingerprint: await corpusFingerprint(join(root, 'papercamp', 'ideas')),
       passed: true,
       output: '',
     };
 
-    // Every result is already on this tree, so none of them re-run — lint's cmd
-    // ('false') would flip the outcome to failing if it did.
-    await expect(getCachedOrRunChecks()).resolves.toEqual([{ name: 'lint', output: '' }]);
+    await writeFile(join(root, 'tracked.txt'), 'one\ntwo\n');
+    await getCachedOrRunChecks();
+    const runsAfterFirstEdit = (await readFile(countFile, 'utf-8')).trim().split('\n').length;
+
+    // Same edit count as before but reused from cache, not re-run.
+    await getCachedOrRunChecks();
+    const runsAfterReuse = (await readFile(countFile, 'utf-8')).trim().split('\n').length;
+    expect(runsAfterReuse).toBe(runsAfterFirstEdit);
+
+    // A second edit to the already-modified file must still invalidate the stamp.
+    await writeFile(join(root, 'tracked.txt'), 'one\ntwo\nthree\n');
+    await getCachedOrRunChecks();
+    const runsAfterSecondEdit = (await readFile(countFile, 'utf-8')).trim().split('\n').length;
+    expect(runsAfterSecondEdit).toBeGreaterThan(runsAfterReuse);
   });
 
   it('runs only the checks missing a same-tree result', async () => {

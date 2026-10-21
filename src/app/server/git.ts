@@ -150,13 +150,13 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
 
   const GIT_TIMEOUT_MS = 30_000;
 
-  function runGit(args: string[]): Promise<string> {
+  function runGit(args: string[], stdin?: string): Promise<string> {
     return new Promise((resolve, reject) => {
       // quotepath=off: non-ASCII paths stay raw UTF-8 instead of octal-escaped,
       // which would otherwise garble every downstream pathspec.
       const proc = spawn('git', ['-c', 'core.quotepath=off', ...args], {
         cwd: root,
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: [stdin === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
         // A read command (status, log) would otherwise take an opportunistic lock on
         // the index to refresh its stat cache, racing a concurrent `git add`/`commit`.
         env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' },
@@ -189,6 +189,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
         clearTimeout(timer);
         reject(err);
       });
+      if (stdin !== undefined) proc.stdin?.end(stdin);
     });
   }
 
@@ -727,9 +728,17 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return (await runGit(['rev-parse', 'HEAD'])).trim();
   }
 
+  // The porcelain line alone only carries HEAD/index blob ids, never worktree
+  // content — hashing it misses a second edit to an already-modified file.
   async function getTreeHash(): Promise<string> {
-    const output = await runGit(['status', '--porcelain=v2']);
-    return createHash('sha1').update(output).digest('hex');
+    // --untracked-files=all so a brand-new directory lists its files, not just
+    // the directory itself — hash-object can't hash a directory.
+    const output = await runGit(['status', '--porcelain=v2', '--untracked-files=all']);
+    const { entries } = parsePorcelainV2Branch(output);
+    const paths = entries.filter((entry) => !entry.status.includes('D')).map((entry) => entry.path);
+    const content =
+      paths.length > 0 ? await runGit(['hash-object', '--stdin-paths'], paths.join('\n')) : '';
+    return createHash('sha1').update(output).update(content).digest('hex');
   }
 
   async function getLastCommitFor(file: string): Promise<string> {
