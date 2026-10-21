@@ -102,8 +102,9 @@ Any change to what the checks run or how stamps render. The Services page.
       `/run` and `/fix` answer 404 only for unknown checks and 500 with the
       message otherwise; a rejected run promise lands as that check's fail.
       run: 3m51s · 40 in · 17.8k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
-- [ ] Recheck clears the auth cache
+- [x] Recheck clears the auth cache
       `?recheck=1` clears `cachedClaudeAuthStatus` too; route test.
+      run: 1m24s · 38 in · 4.5k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
 - [ ] Hygiene from the snapshot and one rev-list
       `getBranchHygieneStatus(snapshot)` with `mainRef()` cached per manager,
       merged and stale from one `rev-list --left-right --count`, no-upstream

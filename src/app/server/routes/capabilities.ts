@@ -1,5 +1,6 @@
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import {
+  clearAgentAuthStatusCache,
   clearCapabilitiesCache,
   probeCapabilities,
   probeConnections,
@@ -25,7 +26,10 @@ export function capabilitiesRoutes({ root }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/connections',
       handle: async (req, res) => {
-        if (requestUrl(req).searchParams.has('recheck')) clearCapabilitiesCache(root);
+        if (requestUrl(req).searchParams.has('recheck')) {
+          clearCapabilitiesCache(root);
+          clearAgentAuthStatusCache(root);
+        }
         sendJson(res, 200, { connections: await probeConnections(root) });
       },
     },
