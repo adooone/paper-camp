@@ -98,9 +98,10 @@ Any change to what the checks run or how stamps render. The Services page.
       untracked paths; `null` fingerprints are never fresh; desk-checks test
       edits a real file twice.
       run: 4m27s · 62 in · 15.4k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
-- [ ] Honest check routes
+- [x] Honest check routes
       `/run` and `/fix` answer 404 only for unknown checks and 500 with the
       message otherwise; a rejected run promise lands as that check's fail.
+      run: 3m51s · 40 in · 17.8k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
 - [ ] Recheck clears the auth cache
       `?recheck=1` clears `cachedClaudeAuthStatus` too; route test.
 - [ ] Hygiene from the snapshot and one rev-list

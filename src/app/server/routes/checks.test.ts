@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { DeskCheckState } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
-import { MissingFixCmdError } from '../desk-checks';
+import { MissingFixCmdError, UnknownCheckError } from '../desk-checks';
 import { checkRoutes } from './checks';
 import type { RouteContext } from './types';
 
@@ -77,7 +77,7 @@ describe('POST /api/checks/run', () => {
   });
 
   it('runs a named check and returns 202', async () => {
-    const runCheck = vi.fn();
+    const runCheck = vi.fn(() => Promise.resolve('pass' as const));
     const { res, status } = fakeRes();
     await route('/api/checks/run', 'POST', { runCheck }).handle(
       fakeReq('/api/checks/run?name=types'),
@@ -89,7 +89,7 @@ describe('POST /api/checks/run', () => {
 
   it('reports an unknown check as 404', async () => {
     const runCheck = vi.fn(() => {
-      throw new Error('No check named "ghost" in the desk manifest');
+      throw new UnknownCheckError('No check named "ghost" in the desk manifest');
     });
     const { res, status, json } = fakeRes();
     await route('/api/checks/run', 'POST', { runCheck }).handle(
@@ -98,6 +98,29 @@ describe('POST /api/checks/run', () => {
     );
     expect(status()).toBe(404);
     expect((json() as { error: string }).error).toMatch(/ghost/);
+  });
+
+  it('reports a thrown non-unknown-check error as 500', async () => {
+    const runCheck = vi.fn(() => {
+      throw new Error('desk manifest is unreadable');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/run', 'POST', { runCheck }).handle(
+      fakeReq('/api/checks/run?name=types'),
+      res,
+    );
+    expect(status()).toBe(500);
+    expect((json() as { error: string }).error).toMatch(/desk manifest is unreadable/);
+  });
+
+  it('still returns 202 when the run promise later rejects, without crashing', async () => {
+    const runCheck = vi.fn(() => Promise.reject(new Error('spawn failed')));
+    const { res, status } = fakeRes();
+    await route('/api/checks/run', 'POST', { runCheck }).handle(
+      fakeReq('/api/checks/run?name=types'),
+      res,
+    );
+    expect(status()).toBe(202);
   });
 });
 
@@ -148,7 +171,7 @@ describe('POST /api/checks/fix', () => {
 
   it('reports an unknown check as 404', async () => {
     const runFix = vi.fn(() => {
-      throw new Error('No check named "ghost" in the desk manifest');
+      throw new UnknownCheckError('No check named "ghost" in the desk manifest');
     });
     const { res, status, json } = fakeRes();
     await route('/api/checks/fix', 'POST', { runFix }).handle(
@@ -157,5 +180,18 @@ describe('POST /api/checks/fix', () => {
     );
     expect(status()).toBe(404);
     expect((json() as { error: string }).error).toMatch(/ghost/);
+  });
+
+  it('reports a thrown non-unknown-check error as 500', async () => {
+    const runFix = vi.fn(() => {
+      throw new Error('fix command crashed');
+    });
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/fix', 'POST', { runFix }).handle(
+      fakeReq('/api/checks/fix', JSON.stringify({ name: 'types' })),
+      res,
+    );
+    expect(status()).toBe(500);
+    expect((json() as { error: string }).error).toMatch(/fix command crashed/);
   });
 });

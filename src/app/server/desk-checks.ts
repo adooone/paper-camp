@@ -31,6 +31,7 @@ function emptyRuntime(): CheckRuntime {
 }
 
 export class MissingFixCmdError extends Error {}
+export class UnknownCheckError extends Error {}
 
 function run(cmd: string, cwd: string): Promise<{ code: number | null; output: string }> {
   return new Promise((resolve) => {
@@ -122,7 +123,7 @@ export function createDeskCheckManager(
     if (alreadyRunning) return alreadyRunning;
 
     const check = (loadDeskConfig(root).checks ?? []).find((c) => c.name === name);
-    if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
+    if (!check) throw new UnknownCheckError(`No check named "${name}" in the desk manifest`);
 
     const promise = (async () => {
       // Captured before the command starts, so a commit landing mid-run can't stamp this
@@ -131,11 +132,17 @@ export function createDeskCheckManager(
         ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
         : EMPTY_FINGERPRINT;
       setResult(name, 'running', '', fingerprint);
-      const { code, output } = await run(check.cmd, root);
-      inFlight.delete(name);
-      const status = code === 0 ? 'pass' : 'fail';
-      setResult(name, status, output, fingerprint);
-      return status;
+      try {
+        const { code, output } = await run(check.cmd, root);
+        inFlight.delete(name);
+        const status = code === 0 ? 'pass' : 'fail';
+        setResult(name, status, output, fingerprint);
+        return status;
+      } catch (err) {
+        inFlight.delete(name);
+        setResult(name, 'fail', (err as Error).message, fingerprint);
+        throw err;
+      }
     })();
     inFlight.set(name, promise);
     return promise;
@@ -143,7 +150,7 @@ export function createDeskCheckManager(
 
   async function runFix(name: string): Promise<DeskCheckState> {
     const check = (loadDeskConfig(root).checks ?? []).find((c) => c.name === name);
-    if (!check) throw new Error(`No check named "${name}" in the desk manifest`);
+    if (!check) throw new UnknownCheckError(`No check named "${name}" in the desk manifest`);
     if (!check.fixCmd) throw new MissingFixCmdError(`Check "${name}" has no fix command`);
 
     await run(check.fixCmd, root);
