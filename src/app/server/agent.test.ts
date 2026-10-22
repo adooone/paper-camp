@@ -1088,6 +1088,27 @@ Plan body.
 
     expect(currentStatus(manager)?.lines.join('\n')).toContain('no progress for 30min');
   });
+
+  it('killCurrent escalates a stuck task through SIGTERM to SIGKILL', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = HANGS_IGNORING_SIGTERM;
+    const manager = createAgentManager(root);
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      await waitForStatus(manager, (status) => status === 'running');
+      while (!currentStatus(manager)?.lines.some((line) => line.includes('[phase 1/2]'))) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      const killed = manager.killCurrent();
+      await vi.advanceTimersByTimeAsync(5000);
+      await killed;
+      expect(await waitForStatus(manager, settled)).toBe('error');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('commitPhase scoping (IDEA-190)', () => {

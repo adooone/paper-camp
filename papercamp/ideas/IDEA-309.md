@@ -79,9 +79,10 @@ answers 404.
       callers moved; optional `proc`; `buildReadOnlyArgs` on each adapter;
       tests.
       run: 26m37s · 336 in · 83.1k out · sonnet-5 · sess:87b92f74-a046-4b9a-b82d-c6c221c2d7d3
-- [ ] Idle timeout and one escalation
+- [x] Idle timeout and one escalation
       `runProcessWithTimeout` on `lastStreamAt` with the wall-clock cap;
       `killCurrent` through `killWithEscalation`; tests.
+      run: 12m14s · 136 in · 31k out · sonnet-5 · sess:549a891e-b445-41ff-be31-d2474f39238c
 - [ ] One config reader and route hygiene
       `readProjectConfig` in core; `readJson` with 400; read routes as
       method-matched `GET` routes; tests.

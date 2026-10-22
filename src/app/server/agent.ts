@@ -58,7 +58,8 @@ import {
 } from './task-log';
 
 const MAX_LINES = 50;
-const PHASE_TIMEOUT_MS = 30 * 60 * 1000;
+const PHASE_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const PHASE_WALL_CLOCK_CAP_MS = 2 * 60 * 60 * 1000;
 const FIX_ATTEMPT_CAP = 2;
 // Past this, a resumed session's context is bloated enough that starting fresh
 // beats carrying it forward (IDEA-255).
@@ -891,7 +892,12 @@ export function createAgentManager(
       stderr += d.toString();
     });
 
-    return runProcessWithTimeout(proc, PHASE_TIMEOUT_MS).then((result) => ({
+    return runProcessWithTimeout(
+      proc,
+      PHASE_IDLE_TIMEOUT_MS,
+      PHASE_WALL_CLOCK_CAP_MS,
+      () => task.lastStreamAt ?? Date.now(),
+    ).then((result) => ({
       ...result,
       stdout,
       stderr,
@@ -1358,7 +1364,7 @@ export function createAgentManager(
             failed++;
             pushLine(
               task,
-              `[timeout] ${entity.id} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`,
+              `[timeout] ${entity.id} — no progress for ${PHASE_IDLE_TIMEOUT_MS / 60000}min`,
             );
             continue;
           }
@@ -1657,10 +1663,10 @@ export function createAgentManager(
 
       if (timedOut) {
         failed++;
-        task.errorReason = `${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`;
+        task.errorReason = `${kind} ${i + 1} — no progress for ${PHASE_IDLE_TIMEOUT_MS / 60000}min`;
         pushLine(
           task,
-          `[timeout] ${kind} ${i + 1} — no progress for ${PHASE_TIMEOUT_MS / 60000}min, stopping`,
+          `[timeout] ${kind} ${i + 1} — no progress for ${PHASE_IDLE_TIMEOUT_MS / 60000}min, stopping`,
         );
         break;
       }
@@ -2192,23 +2198,16 @@ export function createAgentManager(
         .map((task) => task.proc)
         .filter((proc): proc is ChildProcess => proc !== undefined && stillRunning(proc));
       if (procs.length === 0) return Promise.resolve();
-      for (const proc of procs) proc.kill('SIGTERM');
       return new Promise((resolve) => {
         let remaining = procs.length;
         const onExit = () => {
           remaining--;
-          if (remaining <= 0) {
-            clearTimeout(timer);
-            resolve();
-          }
+          if (remaining <= 0) resolve();
         };
-        for (const proc of procs) proc.once('exit', onExit);
-        const timer = setTimeout(() => {
-          for (const proc of procs) {
-            if (stillRunning(proc)) proc.kill('SIGKILL');
-          }
-          resolve();
-        }, 2000);
+        for (const proc of procs) {
+          proc.once('exit', onExit);
+          killWithEscalation(proc);
+        }
       });
     },
   };
