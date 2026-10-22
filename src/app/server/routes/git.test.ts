@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { createGitManager } from '../git';
+import { FetchFailedError, createGitManager } from '../git';
 import { gitRoutes } from './git';
 import type { RouteContext } from './types';
 
@@ -227,6 +227,22 @@ describe('GET /api/git/log', () => {
     expect(status()).toBe(200);
     const body = json() as { commits: { subject: string }[] };
     expect(body.commits.map((c) => c.subject)).toEqual(['commit 1', 'commit 0']);
+  });
+});
+
+describe('POST /api/git/pull', () => {
+  it('answers 502 when the fetch fails instead of a generic 409', async () => {
+    const root = initGitRepo(1);
+    const { res, status, json } = fakeRes();
+    const git = {
+      ...createGitManager(root),
+      runGitPull: vi.fn().mockRejectedValue(new FetchFailedError('fatal: unable to access origin')),
+    } as unknown as RouteContext['git'];
+
+    await route(root, '/api/git/pull', { git }).handle(fakeReq('/api/git/pull'), res);
+
+    expect(status()).toBe(502);
+    expect(json()).toMatchObject({ error: 'fatal: unable to access origin' });
   });
 });
 

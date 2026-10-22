@@ -7,6 +7,7 @@ import { entityToPlan, readEntities } from '@/core/readers';
 import type { GitSyncFailure } from '@/types/index';
 import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
+import { FetchFailedError } from '../git';
 import { campFile } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -320,6 +321,10 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
           activity.notifyChanged();
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
+          if (error instanceof FetchFailedError) {
+            sendJson(res, 502, { error: error.message });
+            return;
+          }
           sendJson(res, 409, { error: (error as Error).message });
         }
       },

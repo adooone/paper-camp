@@ -111,9 +111,10 @@ Any change to what the checks run or how stamps render. The Services page.
       merged and stale from one `rev-list --left-right --count`, no-upstream
       ahead/behind from the same call; a test counts `runGit` calls.
       run: 14m32s · 96 in · 71.6k out · sonnet-5 · sess:3ca964df-a9b7-420b-9e99-07ffa697e4bf
-- [ ] Pull that fails loudly and a commit under the index lock
+- [x] Pull that fails loudly and a commit under the index lock
       `strictFetch` on `fixDivergence` for `runGitPull` with a 502 on
       failure; `git commit` inside `withIndex`.
+      run: 5m41s · 106 in · 17.2k out · sonnet-5 · sess:fdfbd2dc-8a18-4399-982c-e5c17f06d882
 - [ ] Services die on unmount while starting
       `starting` promise awaited by `killAll`; test with a slow stubbed
       import.

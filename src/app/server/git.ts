@@ -36,6 +36,10 @@ export class DirtyWorkingTreeError extends Error {
   }
 }
 
+// Thrown by fixDivergence under strictFetch so a caller can tell a network failure
+// (worth a 502) apart from a reconcile failure that reconciled against stale refs.
+export class FetchFailedError extends Error {}
+
 export interface ReturnToMainResult {
   branch: string;
   remoteDeleted: boolean;
@@ -220,6 +224,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     options?: { noVerify?: boolean },
   ): Promise<void> {
     let renameSources = new Map<string, string>();
+    let toAdd: string[] = [];
     if (files.length > 0) {
       const statusEntries = await runGitStatus();
       const statusByPath = new Map(statusEntries.map((e) => [e.path, e.status]));
@@ -230,13 +235,10 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
       );
       // A fully-staged file has nothing left for `git add` to match; passing it
       // anyway makes git fail with "did not match any files".
-      const toAdd = files.filter((f) => {
+      toAdd = files.filter((f) => {
         const status = statusByPath.get(f);
         return status === undefined || status[1] !== ' ';
       });
-      if (toAdd.length > 0) {
-        await withIndex(() => runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]));
-      }
     }
     const args = ['commit'];
     // Machine-generated commit messages are valid-by-construction and must never
@@ -253,7 +255,14 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
       });
       args.push('--', ...pathspecs.map(toLiteralPathspec));
     }
-    await runGit(args);
+    // Add and commit share one withIndex call: a concurrent stagePath between them
+    // would otherwise hit index.lock, or commit a different index than was just staged.
+    await withIndex(async () => {
+      if (toAdd.length > 0) {
+        await runGit(['add', '--', ...toAdd.map(toLiteralPathspec)]);
+      }
+      await runGit(args);
+    });
   }
 
   // Scoped to papercamp/ only — unrelated dirty state outside the corpus is left
@@ -960,8 +969,12 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
   // onto the remote so a diverged branch is repaired instead of failing loudly.
-  async function fixDivergence(): Promise<GitSyncResult> {
-    await runGit(['fetch', '--prune']).catch(() => {});
+  async function fixDivergence(strictFetch = false): Promise<GitSyncResult> {
+    try {
+      await runGit(['fetch', '--prune']);
+    } catch (err) {
+      if (strictFetch) throw new FetchFailedError((err as Error).message);
+    }
     const branch = getCurrentBranch();
     try {
       const hasUpstream = await runGit([
@@ -997,7 +1010,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // Same operation as fixDivergence, for the plain-pull caller that wants a throw
   // on failure instead of a GitSyncResult to hand to the recovery agent.
   async function runGitPull(): Promise<void> {
-    const result = await fixDivergence();
+    const result = await fixDivergence(true);
     if (!result.ok) throw new Error(result.message);
   }
 

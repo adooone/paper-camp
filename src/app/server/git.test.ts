@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlanEntry } from '../../types';
-import { createGitManager } from './git';
+import { FetchFailedError, createGitManager } from './git';
 
 // Every test works against a real throwaway git repo: createGitManager shells out to
 // the git binary, and the bugs this file guards against (a fresh feature branch
@@ -767,6 +767,57 @@ describe('fixDivergence', () => {
     expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
     expect(await readFile(join(root, 'feature.txt'), 'utf-8')).toBe('feature work\n');
   });
+
+  it('swallows a failed fetch by default, reconciling against whatever refs are already known', async () => {
+    git(root, 'remote', 'add', 'origin', 'file:///nonexistent-papercamp-origin');
+    // A fresh manager: the shared one's mainRef() cache may already be resolved to
+    // origin/main from an earlier test in this file, which this unfetched remote can't satisfy.
+    const freshManager = gitManager(root);
+
+    const result = await freshManager.fixDivergence();
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('throws a FetchFailedError instead of swallowing the failure when strictFetch is set', async () => {
+    git(root, 'remote', 'add', 'origin', 'file:///nonexistent-papercamp-origin');
+    const freshManager = gitManager(root);
+
+    await expect(freshManager.fixDivergence(true)).rejects.toThrow(FetchFailedError);
+  });
+});
+
+describe('runGitPull', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
+  it('pulls a behind branch up to date', async () => {
+    await addOrigin(root);
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+
+    await manager.runGitPull();
+
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+  });
+
+  it('reports a failed fetch instead of reconciling against stale refs', async () => {
+    git(root, 'remote', 'add', 'origin', 'file:///nonexistent-papercamp-origin');
+
+    await expect(manager.runGitPull()).rejects.toThrow(FetchFailedError);
+  });
 });
 
 describe('getStatusSnapshot', () => {
@@ -1345,6 +1396,18 @@ describe('commit', () => {
     const entries = await manager.getStatus();
     expect(entries).toContainEqual(expect.objectContaining({ path: 'ab.txt', status: ' M' }));
     expect(entries).toHaveLength(1);
+  });
+
+  it('does not race a concurrent stagePath for the index lock', async () => {
+    await writeFile(join(root, 'a.txt'), 'a1\n');
+    await writeFile(join(root, 'b.txt'), 'b1\n');
+
+    await Promise.all([manager.commit(['a.txt'], 'add a'), manager.stagePath('b.txt')]);
+
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('add a');
+    expect(await manager.getStatus()).toContainEqual(
+      expect.objectContaining({ path: 'b.txt', status: 'A ' }),
+    );
   });
 });
 
