@@ -36,6 +36,7 @@ interface RunningService {
   log: string[];
   partial: string;
   healthTimer: ReturnType<typeof setInterval> | null;
+  starting: Promise<void> | null;
 }
 
 function emptyRuntime(): RunningService {
@@ -49,6 +50,7 @@ function emptyRuntime(): RunningService {
     log: [],
     partial: '',
     healthTimer: null,
+    starting: null,
   };
 }
 
@@ -153,65 +155,74 @@ export function createDeskServiceManager(
     runtime.log.push(startedMarker());
     trimLog(runtime);
 
-    let pty: typeof import('node-pty');
-    try {
-      pty = await import('node-pty');
-    } catch (err) {
-      runtime.status = 'crashed';
-      runtime.log.push(`Cannot start service — node-pty unavailable: ${(err as Error).message}`);
-      broadcast(name);
-      return;
-    }
-
-    let proc: Pty.IPty;
-    try {
-      proc = pty.spawn('sh', ['-c', service.cmd], {
-        name: 'xterm-color',
-        cols: 200,
-        rows: 40,
-        cwd: root,
-        env: process.env as Record<string, string>,
-      });
-    } catch (err) {
-      runtime.status = 'crashed';
-      runtime.log.push(`Failed to spawn service: ${(err as Error).message}`);
-      broadcast(name);
-      return;
-    }
-
-    runtime.proc = proc;
-    runtime.pid = proc.pid;
-    runtime.status = 'running';
-    runtime.startedAt = new Date().toISOString();
-    broadcast(name);
-
-    proc.onData((chunk) => appendLog(runtime, chunk));
-    proc.onExit(({ exitCode }) => {
-      stopHealthPolling(runtime);
-      if (runtime.partial) {
-        runtime.log.push(runtime.partial);
-        runtime.partial = '';
+    const starting = (async () => {
+      let pty: typeof import('node-pty');
+      try {
+        pty = await import('node-pty');
+      } catch (err) {
+        runtime.status = 'crashed';
+        runtime.log.push(`Cannot start service — node-pty unavailable: ${(err as Error).message}`);
+        broadcast(name);
+        return;
       }
-      runtime.proc = null;
-      runtime.pid = null;
-      runtime.startedAt = null;
-      runtime.exitCode = exitCode;
-      runtime.health = 'unknown';
-      const wasStopping = runtime.status === 'stopping';
-      runtime.status = wasStopping || exitCode === 0 ? 'stopped' : 'crashed';
-      if (!wasStopping && runtime.status === 'crashed') {
-        void appendNotification(root, {
-          id: randomUUID(),
-          kind: 'service-stopped',
-          entityId: name,
-          entityTitle: name,
-          text: `"${name}" stopped unexpectedly (exit ${exitCode})`,
+
+      let proc: Pty.IPty;
+      try {
+        proc = pty.spawn('sh', ['-c', service.cmd], {
+          name: 'xterm-color',
+          cols: 200,
+          rows: 40,
+          cwd: root,
+          env: process.env as Record<string, string>,
         });
+      } catch (err) {
+        runtime.status = 'crashed';
+        runtime.log.push(`Failed to spawn service: ${(err as Error).message}`);
+        broadcast(name);
+        return;
       }
-      broadcast(name);
-    });
 
-    startHealthPolling(name, service, runtime);
+      runtime.proc = proc;
+      runtime.pid = proc.pid;
+      runtime.status = 'running';
+      runtime.startedAt = new Date().toISOString();
+      broadcast(name);
+
+      proc.onData((chunk) => appendLog(runtime, chunk));
+      proc.onExit(({ exitCode }) => {
+        stopHealthPolling(runtime);
+        if (runtime.partial) {
+          runtime.log.push(runtime.partial);
+          runtime.partial = '';
+        }
+        runtime.proc = null;
+        runtime.pid = null;
+        runtime.startedAt = null;
+        runtime.exitCode = exitCode;
+        runtime.health = 'unknown';
+        const wasStopping = runtime.status === 'stopping';
+        runtime.status = wasStopping || exitCode === 0 ? 'stopped' : 'crashed';
+        if (!wasStopping && runtime.status === 'crashed') {
+          void appendNotification(root, {
+            id: randomUUID(),
+            kind: 'service-stopped',
+            entityId: name,
+            entityTitle: name,
+            text: `"${name}" stopped unexpectedly (exit ${exitCode})`,
+          });
+        }
+        broadcast(name);
+      });
+
+      startHealthPolling(name, service, runtime);
+    })();
+
+    runtime.starting = starting;
+    try {
+      await starting;
+    } finally {
+      runtime.starting = null;
+    }
   }
 
   function stop(name: string): void {
@@ -269,11 +280,14 @@ export function createDeskServiceManager(
   }
 
   async function killAll(): Promise<void> {
-    for (const runtime of runtimes.values()) {
-      if (runtime.proc) runtime.status = 'stopping';
-      stopHealthPolling(runtime);
-      runtime.proc?.kill();
-    }
+    await Promise.all(
+      [...runtimes.values()].map(async (runtime) => {
+        if (runtime.starting) await runtime.starting.catch(() => {});
+        if (runtime.proc) runtime.status = 'stopping';
+        stopHealthPolling(runtime);
+        runtime.proc?.kill();
+      }),
+    );
   }
 
   return {

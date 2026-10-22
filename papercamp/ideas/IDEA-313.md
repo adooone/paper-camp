@@ -2,7 +2,7 @@
 id: IDEA-313
 title: Checks and git that keep their promises
 type: fix
-status: in-progress
+status: review
 idea: IDEA-308
 created: 2026-10-21
 tags:
@@ -115,9 +115,10 @@ Any change to what the checks run or how stamps render. The Services page.
       `strictFetch` on `fixDivergence` for `runGitPull` with a 502 on
       failure; `git commit` inside `withIndex`.
       run: 5m41s · 106 in · 17.2k out · sonnet-5 · sess:fdfbd2dc-8a18-4399-982c-e5c17f06d882
-- [ ] Services die on unmount while starting
+- [x] Services die on unmount while starting
       `starting` promise awaited by `killAll`; test with a slow stubbed
       import.
+      run: 7m58s · 102 in · 28.9k out · sonnet-5 · sess:fdfbd2dc-8a18-4399-982c-e5c17f06d882
 
 ### Thread
 - [x] 2026-10-21 [log] [agent] Run order: Fixes correctness-critical git/checks/services regressions (stale fingerprints, swallowed fetch failures, index races) that other work would otherwise build atop or re-break, and is independent of the other three.

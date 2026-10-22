@@ -48,7 +48,7 @@ vi.mock('node-pty', () => ({
 
 const roots: string[] = [];
 
-function makeManager() {
+function makeRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'papercamp-desk-services-'));
   mkdirSync(join(root, 'papercamp'));
   writeFileSync(
@@ -56,7 +56,11 @@ function makeManager() {
     JSON.stringify({ desk: { services: [{ name: 'app', cmd: 'noop' }] } }),
   );
   roots.push(root);
-  return createDeskServiceManager(root);
+  return root;
+}
+
+function makeManager() {
+  return createDeskServiceManager(makeRoot());
 }
 
 async function stateOf(manager: ReturnType<typeof createDeskServiceManager>) {
@@ -187,5 +191,40 @@ describe('createDeskServiceManager', () => {
     expect(lines).toHaveLength(500);
     expect(lines[0]).toBe('line 100');
     expect(lines.at(-1)).toBe('line 599');
+  });
+
+  it('kills a service whose node-pty import was still in flight when unmounted', async () => {
+    let releaseImport: () => void = () => {};
+    let importStarted: () => void = () => {};
+    const importStartedPromise = new Promise<void>((resolve) => {
+      importStarted = resolve;
+    });
+    vi.resetModules();
+    vi.doMock('node-pty', async () => {
+      importStarted();
+      await new Promise<void>((resolve) => {
+        releaseImport = resolve;
+      });
+      return {
+        spawn: () => {
+          const proc = new FakePty();
+          ptys.push(proc);
+          return proc;
+        },
+      };
+    });
+
+    const { createDeskServiceManager: createWithSlowPty } = await import('./desk-services');
+    const manager = createWithSlowPty(makeRoot());
+
+    const starting = manager.start('app');
+    const killing = manager.killAll();
+    await importStartedPromise;
+    releaseImport();
+    await starting;
+    await killing;
+
+    expect(ptys).toHaveLength(1);
+    expect(ptys[0].killSignals).toHaveLength(1);
   });
 });
