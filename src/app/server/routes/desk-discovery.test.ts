@@ -41,7 +41,9 @@ describe('POST /api/desk/discover', () => {
       checks: [{ name: 'Tests', cmd: 'vitest run' }],
       ci: { repo: 'acme/widgets' },
     };
-    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify(proposal));
+    const runReadOnlyPrompt = vi.fn(
+      async (_taskKind: string, _prompt: string, _planTitle: string) => JSON.stringify(proposal),
+    );
     const { res, status, json } = fakeRes();
     await route('/tmp', {
       agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],

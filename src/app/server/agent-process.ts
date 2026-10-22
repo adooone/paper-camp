@@ -11,10 +11,8 @@ export function killWithEscalation(proc: ChildProcess, graceMs = 5000): void {
 
 const STALL_CHECK_INTERVAL_MS = 1000;
 
-// A stalled or clarifying-question hang becomes a timeout failure rather than
-// blocking the caller indefinitely. Idle time resets on every streamed line, so a
-// long but active phase survives; the wall-clock cap catches a phase that streams
-// forever without ever finishing.
+// A stalled or clarifying-question hang becomes a timeout rather than blocking forever.
+// Idle time resets per streamed line, so an active phase survives; wall-clock catches one that never finishes.
 export function runProcessWithTimeout(
   proc: ChildProcess,
   idleMs: number,

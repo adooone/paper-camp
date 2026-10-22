@@ -202,10 +202,12 @@ describe('POST /api/chat', () => {
       'utf-8',
     );
 
-    const runChatReply = vi.fn(async () =>
+    const runChatReply = vi.fn(async (_prompt: string) =>
       JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
     );
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+    const runFeedbackReply = vi.fn(async (_prompt: string) =>
+      JSON.stringify({ reply: 'Noted, thanks.' }),
+    );
 
     const { res, status, json } = fakeRes();
     await route(root, 'POST', {
@@ -315,10 +317,12 @@ describe('POST /api/chat', () => {
       ].join('\n'),
       'utf-8',
     );
-    const runChatReply = vi.fn(async () =>
+    const runChatReply = vi.fn(async (_prompt: string) =>
       JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
     );
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+    const runFeedbackReply = vi.fn(async (_prompt: string) =>
+      JSON.stringify({ reply: 'Noted, thanks.' }),
+    );
     const publish = vi.fn();
 
     const { res } = fakeRes();

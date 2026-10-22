@@ -935,11 +935,8 @@ export function createAgentManager(
     return null;
   }
 
-  // Synchronous, no `await` between the admit() check and registering the task,
-  // so two colliding launches can't both pass the gate. Covers every one-shot,
-  // fire-and-forget agent run (audit, reconcile, draft, extend, suggest, fix-review,
-  // pr-review, sync, resolve-conflict, issue-fix, install-toolbar); callers pass
-  // whichever `scope` fields that task kind tracks progress with.
+  // Synchronous, no `await` between the admit() check and registering the task, so two
+  // colliding launches can't both pass the gate. Covers every one-shot, fire-and-forget agent run.
   function launch(
     taskKind: TaskKind,
     identity: {
@@ -1886,9 +1883,8 @@ export function createAgentManager(
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
-  // The one-shot, stdin-piped primitive behind every read-only agent call
-  // (commit messages, idea overlap, prioritise, feedback/chat replies, desk
-  // discovery) — never writes to the corpus, so it skips admit()'s write-set gate.
+  // The one-shot, stdin-piped primitive behind every read-only agent call — never writes
+  // to the corpus, so it skips admit()'s write-set gate.
   function runReadOnlyPrompt(
     taskKind: ReadOnlyTaskKind,
     prompt: string,
