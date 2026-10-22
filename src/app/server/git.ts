@@ -50,6 +50,7 @@ export interface StatusSnapshot {
   branch: string;
   ahead: number;
   behind: number;
+  hasUpstream: boolean;
   entries: GitStatusEntry[];
 }
 
@@ -106,6 +107,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     let branch = '';
     let ahead = 0;
     let behind = 0;
+    let hasUpstream = false;
     const entries: GitStatusEntry[] = [];
     for (const line of output.split('\n')) {
       if (!line) continue;
@@ -114,6 +116,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
         continue;
       }
       if (line.startsWith('# branch.ab ')) {
+        hasUpstream = true;
         const match = /\+(\d+) -(\d+)/.exec(line);
         if (match) {
           ahead = Number.parseInt(match[1], 10);
@@ -145,7 +148,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
         entries.push({ path: line.slice(2), status: '??', staged: false });
       }
     }
-    return { branch, ahead, behind, entries };
+    return { branch, ahead, behind, hasUpstream, entries };
   }
 
   const GIT_TIMEOUT_MS = 30_000;
@@ -379,11 +382,17 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   // Local main only advances on checkout+pull, so a GitHub-side merge never shows
-  // up there — compare against origin/main when it exists.
-  async function mainRef(): Promise<string> {
-    return runGit(['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'])
-      .then(() => 'origin/main')
-      .catch(() => 'main');
+  // up there — compare against origin/main when it exists. Resolved once and cached
+  // for the manager's lifetime: whether a repo has an origin remote doesn't change
+  // during a running process, so re-checking on every call would be a wasted spawn.
+  let mainRefPromise: Promise<string> | undefined;
+  function mainRef(): Promise<string> {
+    if (!mainRefPromise) {
+      mainRefPromise = runGit(['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main'])
+        .then(() => 'origin/main')
+        .catch(() => 'main');
+    }
+    return mainRefPromise;
   }
 
   async function originMainSha(): Promise<string | null> {
@@ -457,58 +466,60 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return { ready: missing.length === 0, missing };
   }
 
-  async function isMergedIntoMain(): Promise<boolean> {
-    const currentBranch = getCurrentBranch();
-    if (currentBranch === 'main' || currentBranch === 'master') return false;
-
-    try {
-      const mergedBranches = await runGit(['branch', '--merged', await mainRef()]);
-      return mergedBranches.split('\n').some((line) => {
-        const branch = line.trim().replace(/^\*\s+/, '');
-        return branch === currentBranch;
-      });
-    } catch {
-      return false;
-    }
+  // `git rev-list --left-right --count <ref>...HEAD`: left is <ref>'s commits HEAD
+  // lacks (how far behind), right is HEAD's commits <ref> lacks (how far ahead) —
+  // one spawn answers both ahead and behind against the same ref.
+  async function divergenceAgainst(ref: string): Promise<{ ahead: number; behind: number }> {
+    const output = await runGit(['rev-list', '--left-right', '--count', `${ref}...HEAD`]);
+    const [behind, ahead] = output
+      .trim()
+      .split(/\s+/)
+      .map((n) => Number.parseInt(n, 10) || 0);
+    return { ahead, behind };
   }
 
-  // Squash-merge drops the branch's commits from `main`, so ancestry-based
-  // `isMergedIntoMain` can't see it — the PR's own state is the only signal left.
-  async function isBranchMerged(): Promise<boolean> {
+  // Squash-merge drops the branch's commits from `main`, so an ancestry check can't
+  // see it — the PR's own state is the only signal left.
+  async function isBranchMerged(aheadCount: number): Promise<boolean> {
     const entityId = getFeatureBranchPlanId();
-    if (!entityId) return isMergedIntoMain();
+    if (!entityId) return aheadCount === 0;
     const prs = await resolvePrsByEntity(root);
-    if (prs === undefined) return isMergedIntoMain();
+    if (prs === undefined) return aheadCount === 0;
     return prs.get(entityId)?.state === 'merged';
   }
 
-  async function getBranchHygieneStatus(): Promise<BranchHygieneStatus> {
+  async function getBranchHygieneStatus(
+    snapshot: StatusSnapshot,
+  ): Promise<{ status: BranchHygieneStatus; ahead: number; behind: number }> {
     refreshOriginMainQuietly();
-    const currentBranch = getCurrentBranch();
-    const status = await runGitStatus();
-    const isDirty = status.length > 0;
+    const currentBranch = snapshot.branch;
+    const isDirty = snapshot.entries.length > 0;
 
     if (currentBranch === 'main' || currentBranch === 'master') {
-      return isDirty ? 'dirty' : 'clean-on-main';
+      return {
+        status: isDirty ? 'dirty' : 'clean-on-main',
+        ahead: snapshot.ahead,
+        behind: snapshot.behind,
+      };
     }
 
+    const main = await mainRef();
+    const { ahead, behind } = await divergenceAgainst(main);
+
     // "Stale" requires both merged AND main having advanced past it, not just merged.
-    if (await isBranchMerged()) {
-      // A fresh branch cut from a stale local main is an ancestor of origin/main
-      // with zero commits of its own — "not started", never "merged".
-      const [head, mainTip] = await Promise.all([
-        runGit(['rev-parse', 'HEAD']).catch(() => ''),
-        runGit(['rev-parse', 'main']).catch(() => ''),
-      ]);
-      if (head && head.trim() !== mainTip.trim()) {
-        const behind = await runGit(['rev-list', '--count', `HEAD..${await mainRef()}`])
-          .then((n) => Number.parseInt(n.trim(), 10) || 0)
-          .catch(() => 0);
-        if (behind > 0) return 'stale-merged';
+    if (behind > 0 && (await isBranchMerged(ahead))) {
+      // A fresh branch cut from a stale local `main` looks identical against
+      // origin/main (behind by whatever main gained, ahead by nothing) even though
+      // it never diverged — only genuine divergence from the local ref is staleness.
+      const neverDiverged =
+        main !== 'main' &&
+        (await divergenceAgainst('main').then((d) => d.ahead === 0 && d.behind === 0));
+      if (!neverDiverged) {
+        return { status: 'stale-merged', ahead, behind };
       }
     }
 
-    return isDirty ? 'dirty' : 'fine';
+    return { status: isDirty ? 'dirty' : 'fine', ahead, behind };
   }
 
   function getFeatureBranchPlanId(): string | null {

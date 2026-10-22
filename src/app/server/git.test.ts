@@ -131,35 +131,41 @@ describe('staging', () => {
 describe('getBranchHygieneStatus', () => {
   let root: string;
   let initialSha: string;
+  // A fresh manager per test: mainRef() is cached for the manager's lifetime, so a
+  // shared instance would leak one test's origin-remote presence into the next.
   let manager: ReturnType<typeof gitManager>;
 
   beforeAll(async () => {
     root = await initRepo();
     initialSha = git(root, 'rev-parse', 'HEAD');
-    manager = gitManager(root);
   });
 
   beforeEach(() => {
     resetRepo(root, initialSha);
+    manager = gitManager(root);
   });
+
+  async function hygieneStatus() {
+    return (await manager.getBranchHygieneStatus(await manager.getStatusSnapshot())).status;
+  }
 
   it('reports a fresh feature branch at main tip as fine, not stale', async () => {
     // Regression: `git branch --merged main` lists a branch whose tip equals main's,
     // so without the behind-count guard a just-created branch looked "stale-merged".
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
-    expect(await manager.getBranchHygieneStatus()).toBe('fine');
+    expect(await hygieneStatus()).toBe('fine');
   });
 
   it('reports a fresh feature branch with uncommitted work as dirty, not stale', async () => {
     git(root, 'checkout', '-b', 'feat/feat-1-new-work');
     await writeFile(join(root, 'wip.txt'), 'work in progress\n');
-    expect(await manager.getBranchHygieneStatus()).toBe('dirty');
+    expect(await hygieneStatus()).toBe('dirty');
   });
 
   it('reports a branch with unmerged local commits as fine', async () => {
     git(root, 'checkout', '-b', 'feat/feat-2-active');
     await commitFile(root, 'feature.txt', 'new feature\n', 'add feature');
-    expect(await manager.getBranchHygieneStatus()).toBe('fine');
+    expect(await hygieneStatus()).toBe('fine');
   });
 
   it('reports stale-merged after a no-ff merge into main (PR-style merge)', async () => {
@@ -168,7 +174,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'checkout', 'main');
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-3-done');
     git(root, 'checkout', 'feat/feat-3-done');
-    expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
+    expect(await hygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged after a ff merge once main advances past the branch', async () => {
@@ -178,7 +184,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'merge', '--ff-only', 'feat/feat-4-done');
     await commitFile(root, 'later.txt', 'later\n', 'later work on main');
     git(root, 'checkout', 'feat/feat-4-done');
-    expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
+    expect(await hygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged even when the working tree is dirty', async () => {
@@ -188,7 +194,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-5-done');
     git(root, 'checkout', 'feat/feat-5-done');
     await writeFile(join(root, 'stray.txt'), 'stray\n');
-    expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
+    expect(await hygieneStatus()).toBe('stale-merged');
   });
 
   it('reports stale-merged via origin/main when the local main ref is stale', async () => {
@@ -202,7 +208,7 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', 'feat/feat-6-done');
-    expect(await manager.getBranchHygieneStatus()).toBe('stale-merged');
+    expect(await hygieneStatus()).toBe('stale-merged');
   });
 
   it('reports fine for a fresh branch cut from a stale local main', async () => {
@@ -214,22 +220,23 @@ describe('getBranchHygieneStatus', () => {
     git(root, 'push', 'origin', 'main');
     git(root, 'reset', '--hard', 'HEAD~1');
     git(root, 'checkout', '-b', 'feat/feat-9-fresh');
-    expect(await manager.getBranchHygieneStatus()).toBe('fine');
+    expect(await hygieneStatus()).toBe('fine');
   });
 
   it('reports clean-on-main on a clean main checkout', async () => {
-    expect(await manager.getBranchHygieneStatus()).toBe('clean-on-main');
+    expect(await hygieneStatus()).toBe('clean-on-main');
   });
 
   it('reports dirty on main with uncommitted changes', async () => {
     await writeFile(join(root, 'README.md'), 'changed\n');
-    expect(await manager.getBranchHygieneStatus()).toBe('dirty');
+    expect(await hygieneStatus()).toBe('dirty');
   });
 
   it('treats master like main', async () => {
     const masterRoot = await initRepo('master');
     const masterManager = gitManager(masterRoot);
-    expect(await masterManager.getBranchHygieneStatus()).toBe('clean-on-main');
+    const snapshot = await masterManager.getStatusSnapshot();
+    expect((await masterManager.getBranchHygieneStatus(snapshot)).status).toBe('clean-on-main');
   });
 });
 
@@ -240,7 +247,8 @@ describe('onRemoteChanged', () => {
     const onRemoteChanged = vi.fn();
     const manager = gitManager(root, onRemoteChanged);
 
-    await manager.getBranchHygieneStatus(); // triggers the throttled background fetch
+    // triggers the throttled background fetch
+    await manager.getBranchHygieneStatus(await manager.getStatusSnapshot());
 
     expect(onRemoteChanged).not.toHaveBeenCalled();
   });
@@ -259,7 +267,8 @@ describe('onRemoteChanged', () => {
 
     const onRemoteChanged = vi.fn();
     const manager = gitManager(root, onRemoteChanged);
-    await manager.getBranchHygieneStatus(); // throttled fetch is fire-and-forget
+    // throttled fetch is fire-and-forget
+    await manager.getBranchHygieneStatus(await manager.getStatusSnapshot());
     for (let i = 0; i < 50 && onRemoteChanged.mock.calls.length === 0; i++) {
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
@@ -1057,16 +1066,18 @@ describe('checkoutBranch', () => {
 describe('verifyDirectCompletion', () => {
   let root: string;
   let initialSha: string;
+  // A fresh manager per test: mainRef() is cached for the manager's lifetime, so a
+  // shared instance would leak one test's origin-remote presence into the next.
   let manager: ReturnType<typeof gitManager>;
 
   beforeAll(async () => {
     root = await initRepo();
     initialSha = git(root, 'rev-parse', 'HEAD');
-    manager = gitManager(root);
   });
 
   beforeEach(() => {
     resetRepo(root, initialSha);
+    manager = gitManager(root);
   });
 
   it('is ready when the tree is clean and a commit names the id', async () => {

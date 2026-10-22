@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -7,6 +7,14 @@ import { afterAll, describe, expect, it, vi } from 'vitest';
 import { createGitManager } from '../git';
 import { gitRoutes } from './git';
 import type { RouteContext } from './types';
+
+// `spawn` wrapped in a vi.fn so a test can count real git invocations — a bare
+// vi.spyOn can't redefine this module's export.
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return { ...actual, spawn: vi.fn(actual.spawn) };
+});
+const spawnMock = vi.mocked(spawn);
 
 const roots: string[] = [];
 
@@ -126,7 +134,69 @@ describe('GET /api/git/status', () => {
     const body = json() as { stashPending: boolean };
     expect(body.stashPending).toBe(true);
   });
+
+  it('reports ahead for a branch with no upstream instead of 0', async () => {
+    const root = initGitRepo(1);
+    git(root, 'checkout', '-b', 'feat/feat-1-no-upstream');
+    for (let i = 0; i < 2; i++) {
+      writeFileSync(join(root, `own-${i}.txt`), `${i}\n`);
+      git(root, 'add', '.');
+      git(root, 'commit', '-m', `chore: own commit ${i}`);
+    }
+    const { res, json } = fakeRes();
+    await route(root, '/api/git/status').handle(fakeReq('/api/git/status'), res);
+    const body = json() as { ahead: number; behind: number; branchHygiene: string };
+    expect(body.ahead).toBe(2);
+    expect(body.behind).toBe(0);
+    expect(body.branchHygiene).toBe('fine');
+  });
+
+  it('spawns at most four git processes on a feature branch', async () => {
+    const root = initGitRepo(1);
+    git(root, 'checkout', '-b', 'feat/feat-1-work');
+    writeFileSync(join(root, 'feature.txt'), 'x\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'feat: own work');
+    const manager = createGitManager(root);
+    // Prime and let the throttled background origin/main refresh settle before
+    // measuring — a fresh manager's first poll fires it (and resolves mainRef
+    // cold), but a steady-state poll (the common case — SSE-driven, frequent)
+    // hits neither again within the 60s throttle window.
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      res(),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    spawnMock.mockClear();
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      res(),
+    );
+    expect(spawnMock.mock.calls.length).toBeLessThanOrEqual(4);
+  });
+
+  it('spawns at most three git processes on main', async () => {
+    const root = initGitRepo(1);
+    const manager = createGitManager(root);
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      res(),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    spawnMock.mockClear();
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      res(),
+    );
+    expect(spawnMock.mock.calls.length).toBeLessThanOrEqual(3);
+  });
 });
+
+function res(): ServerResponse {
+  return fakeRes().res;
+}
 
 describe('GET /api/git/log', () => {
   it('returns the first-parent log with no skip param', async () => {

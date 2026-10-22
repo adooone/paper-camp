@@ -40,18 +40,19 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       method: 'GET',
       path: '/api/git/status',
       handle: async (_req, res) => {
-        const [{ branch, ahead, behind, entries }, stashes] = await Promise.all([
-          git.getStatusSnapshot(),
-          git.getStashes(),
-        ]);
-        const branchHygiene = await git.getBranchHygieneStatus();
+        const [snapshot, stashes] = await Promise.all([git.getStatusSnapshot(), git.getStashes()]);
+        const hygiene = await git.getBranchHygieneStatus(snapshot);
+        // No `# branch.ab` header means no upstream; fall back to the same
+        // mainRef()-based divergence `getBranchHygieneStatus` already computed.
+        const ahead = snapshot.hasUpstream ? snapshot.ahead : hygiene.ahead;
+        const behind = snapshot.hasUpstream ? snapshot.behind : hygiene.behind;
         sendJson(res, 200, {
-          branch,
-          entries,
+          branch: snapshot.branch,
+          entries: snapshot.entries,
           ahead,
           behind,
           diverged: ahead > 0 && behind > 0,
-          branchHygiene,
+          branchHygiene: hygiene.status,
           stashPending: stashes.some((stash) => stash.own),
           stashes,
         });

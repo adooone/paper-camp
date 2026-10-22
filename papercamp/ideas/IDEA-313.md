@@ -106,10 +106,11 @@ Any change to what the checks run or how stamps render. The Services page.
 - [x] Recheck clears the auth cache
       `?recheck=1` clears `cachedClaudeAuthStatus` too; route test.
       run: 1m24s · 38 in · 4.5k out · sonnet-5 · sess:9c0d1db0-746e-4b51-baeb-0919d916bc0b
-- [ ] Hygiene from the snapshot and one rev-list
+- [x] Hygiene from the snapshot and one rev-list
       `getBranchHygieneStatus(snapshot)` with `mainRef()` cached per manager,
       merged and stale from one `rev-list --left-right --count`, no-upstream
       ahead/behind from the same call; a test counts `runGit` calls.
+      run: 14m32s · 96 in · 71.6k out · sonnet-5 · sess:3ca964df-a9b7-420b-9e99-07ffa697e4bf
 - [ ] Pull that fails loudly and a commit under the index lock
       `strictFetch` on `fixDivergence` for `runGitPull` with a 502 on
       failure; `git commit` inside `withIndex`.
