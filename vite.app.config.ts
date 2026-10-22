@@ -65,11 +65,13 @@ function papercampApi(): Plugin {
           const mod = (await server.ssrLoadModule('/src/app/server/api.ts')) as {
             createApiMiddleware: (
               root: string,
-              agentState?: AgentManagerState,
-              serviceState?: DeskServiceManagerState,
-              checkState?: DeskCheckManagerState,
-              pairingState?: PairingManagerState,
-              activityState?: ActivityManagerState,
+              options?: {
+                agentState?: AgentManagerState;
+                serviceState?: DeskServiceManagerState;
+                checkState?: DeskCheckManagerState;
+                pairingState?: PairingManagerState;
+                activityState?: ActivityManagerState;
+              },
             ) => ApiMiddleware;
           };
           const agentState = g.__paperCampAgentState;
@@ -82,14 +84,13 @@ function papercampApi(): Plugin {
           g.__paperCampCheckState = undefined;
           g.__paperCampPairingState = undefined;
           g.__paperCampActivityState = undefined;
-          const api = mod.createApiMiddleware(
-            process.cwd(),
+          const api = mod.createApiMiddleware(process.cwd(), {
             agentState,
             serviceState,
             checkState,
             pairingState,
             activityState,
-          );
+          });
           g.__paperCampApi = api;
           if (reloadFailed) {
             reloadFailed = false;

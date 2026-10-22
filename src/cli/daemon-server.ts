@@ -187,17 +187,12 @@ export async function createProjectApi(
   checkMachineBusy: () => boolean,
   pairCodeManager: PairCodeManager,
 ): Promise<ApiMiddleware> {
-  return createApiMiddleware(
-    project.path,
-    undefined,
-    undefined,
-    undefined,
+  return createApiMiddleware(project.path, {
     pairingState,
-    undefined,
     onPaired,
-    checkMachineBusy,
-    pairCodeManager,
-  );
+    isMachineBusy: checkMachineBusy,
+    pairCode: pairCodeManager,
+  });
 }
 
 export type MountResult =

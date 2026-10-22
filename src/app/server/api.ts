@@ -168,17 +168,31 @@ export function handlePreflight(req: IncomingMessage, res: ServerResponse): void
   res.end();
 }
 
+export interface ApiMiddlewareOptions {
+  agentState?: AgentManagerState;
+  serviceState?: DeskServiceManagerState;
+  checkState?: DeskCheckManagerState;
+  pairingState?: PairingManagerState;
+  activityState?: ActivityManagerState;
+  onPaired?: (origin: string) => void;
+  isMachineBusy?: () => boolean;
+  pairCode?: PairCodeManager;
+}
+
 export function createApiMiddleware(
   root: string,
-  agentState?: AgentManagerState,
-  serviceState?: DeskServiceManagerState,
-  checkState?: DeskCheckManagerState,
-  pairingState?: PairingManagerState,
-  activityState?: ActivityManagerState,
-  onPaired?: (origin: string) => void,
-  isMachineBusy?: () => boolean,
-  pairCode?: PairCodeManager,
+  options: ApiMiddlewareOptions = {},
 ): ApiMiddleware {
+  const {
+    agentState,
+    serviceState,
+    checkState,
+    pairingState,
+    activityState,
+    onPaired,
+    isMachineBusy,
+    pairCode,
+  } = options;
   const activity = createActivityManager(root, activityState);
   const git = createGitManager(root, () => activity.notifyChanged());
   const publish = (payload: { type: string } & Record<string, unknown>) =>
@@ -192,20 +206,12 @@ export function createApiMiddleware(
   );
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
-  const agent = createAgentManager(
-    root,
-    hooks.stampAuditDate,
-    hooks.commitPhase,
-    hooks.setRunReview,
-    hooks.commitCorpus,
-    hooks.annotateFixRun,
-    hooks.commitVerifyFix,
-    hooks.snapshotWorkingTree,
-    () => activity.notifyChanged(),
-    agentState,
+  const agent = createAgentManager(root, hooks, {
+    onCorpusChanged: () => activity.notifyChanged(),
+    state: agentState,
     isMachineBusy,
     publish,
-  );
+  });
 
   const routes = buildRoutes({
     root,

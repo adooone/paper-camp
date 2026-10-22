@@ -69,10 +69,11 @@ streams a line every minute survives past 30 minutes, and `POST /api/plans`
 answers 404.
 
 ### Phases
-- [ ] Options objects for the middleware and the manager
+- [x] Options objects for the middleware and the manager
       `createApiMiddleware(root, options)` and `createAgentManager(root,
       hooks, options)`; `api.ts`, `dev-server.ts`, `daemon-server.ts` and
       `vite.app.config.ts` updated; tests.
+      run: 8m10s · 164 in · 25.6k out · sonnet-5 · sess:bc8c8ede-2542-41f8-8575-cf49590b86e6
 - [ ] Three primitives replace the wrappers
       `launch`, `runBatch` and `runReadOnlyPrompt` exposed; wrappers removed;
       callers moved; optional `proc`; `buildReadOnlyArgs` on each adapter;

@@ -48,15 +48,10 @@ export async function startDevServer({
       console.error('papercamp: could not persist pairing state:', error);
     });
 
-  const apiMiddleware = createApiMiddleware(
-    root,
-    undefined,
-    undefined,
-    undefined,
+  const apiMiddleware = createApiMiddleware(root, {
     pairingState,
-    undefined,
-    () => persistPairingState(),
-  );
+    onPaired: () => persistPairingState(),
+  });
 
   if (minted) await persistPairingState();
 

@@ -43,6 +43,7 @@ import {
   type ThreadMessageOption,
   coerceAgentConfig,
 } from '@/types/index';
+import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { discoverDeskConfig } from './desk-discovery';
@@ -417,34 +418,30 @@ function createEmptyAgentState(): AgentManagerState {
   };
 }
 
+export type AgentManagerHooks = ReturnType<typeof createAgentHooks>;
+
+export interface AgentManagerOptions {
+  onCorpusChanged?: () => void;
+  isMachineBusy?: () => boolean;
+  state?: AgentManagerState;
+  publish?: (payload: { type: string } & Record<string, unknown>) => void;
+}
+
 export function createAgentManager(
   root: string,
-  onAuditComplete?: (planId: string) => Promise<void>,
-  onPhaseCommit?: (
-    plan: PlanEntry,
-    phase: PhaseItem,
-    phaseIndex: number,
-    startSnapshot: GitStatusEntry[],
-    run?: { usage: RunUsage; kind: 'phase' | 'fix'; sessionId?: string },
-  ) => Promise<void>,
-  onRunComplete?: (plan: PlanEntry) => Promise<void>,
-  onRunStart?: (plan: PlanEntry) => Promise<void>,
-  onFixRun?: (
-    planId: string,
-    fixIndex: number,
-    run: { usage: RunUsage; kind: 'fix'; sessionId?: string },
-  ) => Promise<void>,
-  onVerifyFixCommit?: (
-    plan: PlanEntry,
-    checkNames: CheckName[],
-    startSnapshot: GitStatusEntry[],
-  ) => Promise<void>,
-  snapshotWorkingTree?: () => Promise<GitStatusEntry[]>,
-  onCorpusChanged?: () => void,
-  passedState?: AgentManagerState,
-  isMachineBusy?: () => boolean,
-  publish?: (payload: { type: string } & Record<string, unknown>) => void,
+  hooks: Partial<AgentManagerHooks> = {},
+  options: AgentManagerOptions = {},
 ) {
+  const {
+    stampAuditDate: onAuditComplete,
+    commitPhase: onPhaseCommit,
+    setRunReview: onRunComplete,
+    commitCorpus: onRunStart,
+    annotateFixRun: onFixRun,
+    commitVerifyFix: onVerifyFixCommit,
+    snapshotWorkingTree,
+  } = hooks;
+  const { onCorpusChanged, state: passedState, isMachineBusy, publish } = options;
   // No state handed in means a fresh process or (under the daemon) this project's
   // first mount since it stopped — a started-but-unfinished entry is one it lost.
   const isColdStart = passedState === undefined;

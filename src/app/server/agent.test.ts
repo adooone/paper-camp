@@ -351,14 +351,12 @@ describe('startRunAllPhases', () => {
     const commits: number[] = [];
     const onRunComplete = vi.fn(async () => {});
     const runProjectChecks = vi.fn(async () => []);
-    const manager = createAgentManager(
-      root,
-      undefined,
-      async (_plan, _phase, phaseIndex) => {
+    const manager = createAgentManager(root, {
+      commitPhase: async (_plan, _phase, phaseIndex) => {
         commits.push(phaseIndex);
       },
-      onRunComplete,
-    );
+      setRunReview: onRunComplete,
+    });
 
     const result = manager.startRunAllPhases(plan, runProjectChecks);
     expect(result).toEqual({ ok: true });
@@ -386,15 +384,12 @@ describe('startRunAllPhases', () => {
     const onRunStart = vi.fn(async () => {
       order.push('onRunStart');
     });
-    const manager = createAgentManager(
-      root,
-      undefined,
-      async () => {
+    const manager = createAgentManager(root, {
+      commitPhase: async () => {
         order.push('commitPhase');
       },
-      undefined,
-      onRunStart,
-    );
+      commitCorpus: onRunStart,
+    });
 
     expect(manager.startRunAllPhases(plan, runProjectChecks)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
@@ -412,8 +407,10 @@ describe('startRunAllPhases', () => {
       return ['-e', agentScript.current];
     };
     const commits: number[] = [];
-    const manager = createAgentManager(root, undefined, async (_p, _ph, i) => {
-      commits.push(i);
+    const manager = createAgentManager(root, {
+      commitPhase: async (_p, _ph, i) => {
+        commits.push(i);
+      },
     });
 
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
@@ -497,7 +494,10 @@ describe('startRunAllPhases', () => {
     };
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('done');
@@ -514,7 +514,7 @@ describe('startRunAllPhases', () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.current = 'process.exit(3)';
     const onPhaseCommit = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit);
+    const manager = createAgentManager(root, { commitPhase: onPhaseCommit });
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -527,7 +527,10 @@ describe('startRunAllPhases', () => {
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
@@ -554,7 +557,10 @@ describe('startRunAllPhases', () => {
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
@@ -576,7 +582,10 @@ describe('startRunAllPhases', () => {
     agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -603,7 +612,10 @@ process.exit(1)
 `;
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -634,7 +646,10 @@ process.exit(1)
         : ['-e', FLIP_NEXT_CHECKBOX];
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     let calls = 0;
     manager.startRunAllPhases(plan, async () => {
@@ -664,7 +679,10 @@ process.exit(1)
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+    const manager = createAgentManager(root, {
+      commitPhase: onPhaseCommit,
+      setRunReview: onRunComplete,
+    });
 
     // 'test' is red from the baseline call onward, every call — a pre-existing
     // failure this run never introduced, so it must never trigger a fix pass.
@@ -703,7 +721,7 @@ Plan body.
     const { root, plan } = await makeRoot(PLAN_WITH_MANUAL);
     agentScript.current = FLIP_NEXT_CHECKBOX;
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+    const manager = createAgentManager(root, { setRunReview: onRunComplete });
 
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
@@ -773,7 +791,7 @@ Plan body.
   it('winds down as done when stopped mid-run, without finishing the run', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+    const manager = createAgentManager(root, { setRunReview: onRunComplete });
 
     manager.startRunAllPhases(plan);
     expect(manager.stop()).toEqual({ ok: true });
@@ -789,14 +807,12 @@ Plan body.
     agentScript.current = waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX);
     const commits: number[] = [];
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(
-      root,
-      undefined,
-      async (_plan, _phase, phaseIndex) => {
+    const manager = createAgentManager(root, {
+      commitPhase: async (_plan, _phase, phaseIndex) => {
         commits.push(phaseIndex);
       },
-      onRunComplete,
-    );
+      setRunReview: onRunComplete,
+    });
 
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
     const runAllId = manager.getStatus().find((t) => t.taskKind === 'run-all')?.id;
@@ -851,14 +867,12 @@ Plan body.
       agentScript.current = FLIP_NEXT_CHECKBOX;
       const commits: string[] = [];
       const onRunComplete = vi.fn(async () => {});
-      const manager = createAgentManager(
-        root,
-        undefined,
-        async (_plan, item) => {
+      const manager = createAgentManager(root, {
+        commitPhase: async (_plan, item) => {
           commits.push(item.text);
         },
-        onRunComplete,
-      );
+        setRunReview: onRunComplete,
+      });
 
       expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
       expect(await waitForStatus(manager, settled)).toBe('done');
@@ -877,14 +891,11 @@ Plan body.
       const git = createGitManager(root);
       const hooks = createAgentHooks(root, git);
       const onRunComplete = vi.fn(async () => {});
-      const manager = createAgentManager(
-        root,
-        undefined,
-        hooks.commitPhase,
-        onRunComplete,
-        undefined,
-        hooks.annotateFixRun,
-      );
+      const manager = createAgentManager(root, {
+        commitPhase: hooks.commitPhase,
+        setRunReview: onRunComplete,
+        annotateFixRun: hooks.annotateFixRun,
+      });
 
       expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
       expect(await waitForStatus(manager, settled)).toBe('done');
@@ -907,7 +918,10 @@ Plan body.
       agentScript.current = 'process.exit(3)'; // phase agent errors
       const onPhaseCommit = vi.fn(async () => {});
       const onRunComplete = vi.fn(async () => {});
-      const manager = createAgentManager(root, undefined, onPhaseCommit, onRunComplete);
+      const manager = createAgentManager(root, {
+        commitPhase: onPhaseCommit,
+        setRunReview: onRunComplete,
+      });
 
       manager.startRunAllPhases(plan);
       expect(await waitForStatus(manager, settled)).toBe('error');
@@ -929,7 +943,7 @@ Plan body.
       );
       agentScript.current = FLIP_NEXT_CHECKBOX;
       const onRunComplete = vi.fn(async () => {});
-      const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+      const manager = createAgentManager(root, { setRunReview: onRunComplete });
 
       expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
       expect(await waitForStatus(manager, settled)).toBe('done');
@@ -945,7 +959,7 @@ Plan body.
         return ['-e', agentScript.current];
       };
       const onRunComplete = vi.fn(async () => {});
-      const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+      const manager = createAgentManager(root, { setRunReview: onRunComplete });
 
       manager.startRunAllPhases(plan);
       expect(await waitForStatus(manager, settled)).toBe('done');
@@ -1022,16 +1036,10 @@ fs.writeFileSync('touched.ts', 'export const touched = true;\\n');
     agentScript.current = FLIP_AND_TOUCH_SRC;
     const git = createGitManager(root);
     const hooks = createAgentHooks(root, git);
-    const manager = createAgentManager(
-      root,
-      undefined,
-      hooks.commitPhase,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      hooks.snapshotWorkingTree,
-    );
+    const manager = createAgentManager(root, {
+      commitPhase: hooks.commitPhase,
+      snapshotWorkingTree: hooks.snapshotWorkingTree,
+    });
 
     expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
@@ -1145,19 +1153,7 @@ describe('machine-wide busy gate', () => {
 
   it('rejects a launch when another project is running on the same machine, even with no local collision', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    const manager = createAgentManager(
-      root,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      () => true,
-    );
+    const manager = createAgentManager(root, undefined, { isMachineBusy: () => true });
 
     expect(manager.start(plan, 0)).toEqual({
       ok: false,
@@ -1238,15 +1234,7 @@ describe('start (single phase)', () => {
         ? ['-e', 'process.exit(0)']
         : ['-e', FLIP_NEXT_CHECKBOX];
     const onVerifyFixCommit = vi.fn(async () => {});
-    const manager = createAgentManager(
-      root,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      onVerifyFixCommit,
-    );
+    const manager = createAgentManager(root, { commitVerifyFix: onVerifyFixCommit });
 
     let calls = 0;
     const runProjectChecks = vi.fn(async () => {
@@ -1429,7 +1417,7 @@ describe('resumeAuthParkedTasks', () => {
     agentScript.current = 'process.exit(1)';
     authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const onRunComplete = vi.fn(async () => {});
-    const manager = createAgentManager(root, undefined, undefined, onRunComplete);
+    const manager = createAgentManager(root, { setRunReview: onRunComplete });
 
     manager.startRunAllPhases(plan);
     expect(await waitForStatus(manager, settled)).toBe('error');
@@ -1832,18 +1820,9 @@ describe('boot reconciliation', () => {
 
     // Simulates a server-code hot-reload: a second manager built against the same
     // state object, as vite.app.config.ts's watcher does across a server edit.
-    const secondManager = createAgentManager(
-      root,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      firstManager.getState(),
-    );
+    const secondManager = createAgentManager(root, undefined, {
+      state: firstManager.getState(),
+    });
     expect(secondManager.getInterruptedOnBoot()).toBe(0);
 
     await releaseSignal(signalPath);
