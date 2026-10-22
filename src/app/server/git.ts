@@ -390,10 +390,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return result.stdout.toString().trim();
   }
 
-  // Local main only advances on checkout+pull, so a GitHub-side merge never shows
-  // up there — compare against origin/main when it exists. Resolved once and cached
-  // for the manager's lifetime: whether a repo has an origin remote doesn't change
-  // during a running process, so re-checking on every call would be a wasted spawn.
+  // Local main only advances on checkout+pull, so compare against origin/main when it
+  // exists. Cached for the manager's lifetime since remote presence never changes.
   let mainRefPromise: Promise<string> | undefined;
   function mainRef(): Promise<string> {
     if (!mainRefPromise) {
@@ -475,9 +473,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return { ready: missing.length === 0, missing };
   }
 
-  // `git rev-list --left-right --count <ref>...HEAD`: left is <ref>'s commits HEAD
-  // lacks (how far behind), right is HEAD's commits <ref> lacks (how far ahead) —
-  // one spawn answers both ahead and behind against the same ref.
+  // `git rev-list --left-right --count <ref>...HEAD`: left is behind, right is ahead —
+  // one spawn answers both against the same ref.
   async function divergenceAgainst(ref: string): Promise<{ ahead: number; behind: number }> {
     const output = await runGit(['rev-list', '--left-right', '--count', `${ref}...HEAD`]);
     const [behind, ahead] = output
@@ -517,9 +514,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
 
     // "Stale" requires both merged AND main having advanced past it, not just merged.
     if (behind > 0 && (await isBranchMerged(ahead))) {
-      // A fresh branch cut from a stale local `main` looks identical against
-      // origin/main (behind by whatever main gained, ahead by nothing) even though
-      // it never diverged — only genuine divergence from the local ref is staleness.
+      // A fresh branch cut from a stale local `main` looks identical against origin/main
+      // even though it never diverged — only divergence from the local ref is staleness.
       const neverDiverged =
         main !== 'main' &&
         (await divergenceAgainst('main').then((d) => d.ahead === 0 && d.behind === 0));
