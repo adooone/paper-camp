@@ -14,7 +14,7 @@ import {
 import { computeNightHealthMap, selectNightChunks } from '@/core/night-health';
 import { isNightPassRunning, markNightPass } from '@/core/night-shift';
 import { resetsAtMs } from '@/core/rate-limit';
-import { readBody, sendJson } from '../http';
+import { readJson, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 async function findOwnSlug(root: string): Promise<string | null> {
@@ -42,7 +42,7 @@ export function nightRoutes({ root }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/night/toggle',
       handle: async (req, res) => {
-        const { enabled } = JSON.parse(await readBody(req)) as { enabled?: boolean };
+        const { enabled } = (await readJson<{ enabled?: boolean }>(req)) ?? {};
         const mySlug = await findOwnSlug(root);
         if (!mySlug) {
           sendJson(res, 400, {
@@ -65,7 +65,7 @@ export function nightRoutes({ root }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/night/pause',
       handle: async (req, res) => {
-        const { paused } = JSON.parse(await readBody(req)) as { paused?: boolean };
+        const { paused } = (await readJson<{ paused?: boolean }>(req)) ?? {};
         const mySlug = await findOwnSlug(root);
         const registryPath = defaultRegistryPath();
         const registry = await loadRegistry(registryPath);

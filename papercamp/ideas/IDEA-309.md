@@ -2,7 +2,7 @@
 id: IDEA-309
 title: Smaller orchestrator and routes
 type: refactor
-status: planned
+status: review
 created: 2026-10-19
 tags:
   - server
@@ -83,9 +83,10 @@ answers 404.
       `runProcessWithTimeout` on `lastStreamAt` with the wall-clock cap;
       `killCurrent` through `killWithEscalation`; tests.
       run: 12m14s · 136 in · 31k out · sonnet-5 · sess:549a891e-b445-41ff-be31-d2474f39238c
-- [ ] One config reader and route hygiene
+- [x] One config reader and route hygiene
       `readProjectConfig` in core; `readJson` with 400; read routes as
       method-matched `GET` routes; tests.
+      run: 22m48s · 472 in · 85.9k out · sonnet-5 · sess:549a891e-b445-41ff-be31-d2474f39238c
 
 ### Thread
 - [x] 2026-10-21 [log] [agent] Run order: A large standalone refactor of orchestrator/routes that doesn't depend on the others but should land before further corpus/capacity work touches the same api.ts/agent manager surface it is simplifying.

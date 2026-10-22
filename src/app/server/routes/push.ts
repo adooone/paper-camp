@@ -11,7 +11,7 @@ import {
   withPushStoreLock,
 } from '@/core/push-store';
 import { defaultVapidKeysPath, loadOrMintVapidKeys } from '@/core/vapid-keys';
-import { readBody, sendJson } from '../http';
+import { readJson, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function pushRoutes({ root }: RouteContext): Route[] {
@@ -42,13 +42,7 @@ export function pushRoutes({ root }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/push/subscribe',
       handle: async (req, res) => {
-        let body: unknown;
-        try {
-          body = JSON.parse(await readBody(req));
-        } catch {
-          sendJson(res, 400, { error: 'invalid JSON body' });
-          return;
-        }
+        const body = await readJson(req);
         const parsed = pushSubscribeBodySchema.safeParse(body);
         if (!parsed.success) {
           sendJson(res, 400, { error: parsed.error.message });
@@ -67,13 +61,7 @@ export function pushRoutes({ root }: RouteContext): Route[] {
       method: 'DELETE',
       path: '/api/push/subscribe',
       handle: async (req, res) => {
-        let body: unknown;
-        try {
-          body = JSON.parse(await readBody(req));
-        } catch {
-          sendJson(res, 400, { error: 'invalid JSON body' });
-          return;
-        }
+        const body = await readJson(req);
         const parsed = pushUnsubscribeBodySchema.safeParse(body);
         if (!parsed.success) {
           sendJson(res, 400, { error: parsed.error.message });

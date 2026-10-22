@@ -5,23 +5,20 @@ import { describeFindings, runDoctor } from '@/core/doctor';
 import { buildNightReportGroups, readNightFindings } from '@/core/night-suggestions';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
-import {
-  deskConfigSchema,
-  findConsistencyIssues,
-  parseSuggestions,
-  readTaskLog,
-} from '@/core/parse';
+import { findConsistencyIssues, parseSuggestions, readTaskLog } from '@/core/parse';
+import { readProjectConfig } from '@/core/project-config';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
 import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
-import { DEFAULT_AGENTS, type ProjectStats, coerceAgentConfig } from '@/types/index';
 import { campFile, readMaybe } from '../helpers';
+import { sendJson } from '../http';
 import { readNotifications } from '../notification-log';
-import { listConfigFiles } from './system';
-import type { ReadRoute } from './types';
+import type { Route, RouteContext } from './types';
 
-export const readRoutes: ReadRoute[] = [
+/** `GET` routes that only ever read project state — every handler answers the same
+ *  way, so they're declared as `(root) => data` and wrapped into `Route`s once. */
+const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
   {
     path: '/api/package-name',
     handler: async (root) => {
@@ -112,49 +109,19 @@ export const readRoutes: ReadRoute[] = [
   },
   {
     path: '/api/stats',
-    handler: async (root): Promise<ProjectStats> => computeProjectStats(root),
+    handler: async (root) => computeProjectStats(root),
   },
   {
     path: '/api/config',
     handler: async (root) => {
-      const raw = await readMaybe(join(root, 'papercamp', 'config.json'));
-      if (!raw) return null;
-      const config = JSON.parse(raw);
-      // Coerce legacy bare-string defaultAgents into { agent, model?, effort? } —
-      // old config.json files predate FEAT-26 and would otherwise crash the page.
-      if (config?.defaultAgents) {
-        config.defaultAgents = {
-          phase: coerceAgentConfig(config.defaultAgents.phase),
-          planDraft: coerceAgentConfig(config.defaultAgents.planDraft),
-          ideaExtend: coerceAgentConfig(config.defaultAgents.ideaExtend),
-          commitSuggest: coerceAgentConfig(config.defaultAgents.commitSuggest),
-          // Older configs predate this bucket — default it to sonnet/medium rather
-          // than the bare-claude-code fallback coerceAgentConfig(undefined) gives.
-          feedback: config.defaultAgents.feedback
-            ? coerceAgentConfig(config.defaultAgents.feedback)
-            : DEFAULT_AGENTS.feedback,
-          codeReview: config.defaultAgents.codeReview
-            ? coerceAgentConfig(config.defaultAgents.codeReview)
-            : DEFAULT_AGENTS.codeReview,
-          deskDiscovery: config.defaultAgents.deskDiscovery
-            ? coerceAgentConfig(config.defaultAgents.deskDiscovery)
-            : DEFAULT_AGENTS.deskDiscovery,
-          nightShift: config.defaultAgents.nightShift
-            ? coerceAgentConfig(config.defaultAgents.nightShift)
-            : DEFAULT_AGENTS.nightShift,
-        };
-      }
-      // A malformed desk manifest (IDEA-119) is dropped rather than crashing the page,
-      // matching the defensive coercion above for legacy configs.
-      if (config?.desk !== undefined) {
-        const desk = deskConfigSchema.safeParse(config.desk);
-        config.desk = desk.success ? desk.data : undefined;
-      }
-      // subjects is regenerated from ROADMAP.md on every read rather than trusted from
-      // disk — the roadmap is the only writable source of the vocabulary (IDEA-95).
-      const roadmapRaw = await readMaybe(join(root, 'ROADMAP.md'));
-      config.subjects = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
-      return config;
+      const config = readProjectConfig(root);
+      if (!config.raw) return null;
+      return {
+        ...config.raw,
+        defaultAgents: config.defaultAgents,
+        desk: config.desk,
+        subjects: config.subjects,
+      };
     },
   },
   {
@@ -182,10 +149,6 @@ export const readRoutes: ReadRoute[] = [
     },
   },
   {
-    path: '/api/configs',
-    handler: async (root) => listConfigFiles(root),
-  },
-  {
     path: '/api/releases',
     handler: async (root) => {
       const changelog = await readMaybe(join(root, 'CHANGELOG.md'));
@@ -197,3 +160,13 @@ export const readRoutes: ReadRoute[] = [
     handler: async (root) => detectToolbarHostState(root),
   },
 ];
+
+export function readRoutes({ root }: RouteContext): Route[] {
+  return READS.map(({ path, handler }) => ({
+    method: 'GET' as const,
+    path,
+    handle: async (_req, res) => {
+      sendJson(res, 200, await handler(root));
+    },
+  }));
+}

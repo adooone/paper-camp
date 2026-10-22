@@ -16,7 +16,7 @@ import {
   coerceAgentConfig,
 } from '@/types/index';
 import { readMaybe } from '../../helpers';
-import { readBody, requestUrl, sendJson } from '../../http';
+import { readJson, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -54,21 +54,21 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'config not found' });
           return;
         }
-        const body = await readBody(req);
-        const bodyParsed = JSON.parse(body) as {
-          port?: number;
-          projectName?: string;
-          defaultAgent?: AgentId;
-          defaultAgents?: Record<string, unknown>;
-          subjects?: unknown;
-          setupDismissed?: boolean;
-          integration?: {
-            toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
-          };
-          desk?: unknown;
-          night?: unknown;
-          notifications?: unknown;
-        };
+        const bodyParsed =
+          (await readJson<{
+            port?: number;
+            projectName?: string;
+            defaultAgent?: AgentId;
+            defaultAgents?: Record<string, unknown>;
+            subjects?: unknown;
+            setupDismissed?: boolean;
+            integration?: {
+              toolbar?: { enabled?: unknown; segments?: unknown; allowProduction?: unknown };
+            };
+            desk?: unknown;
+            night?: unknown;
+            notifications?: unknown;
+          }>(req)) ?? {};
         const {
           port,
           projectName,

@@ -11,6 +11,7 @@ import { nightRoutes } from './night';
 import { notificationRoutes } from './notifications';
 import { pairingRoutes } from './pairing';
 import { pushRoutes } from './push';
+import { readRoutes } from './reads';
 import { releaseNotesRoutes } from './release-notes';
 import { serviceRoutes } from './services';
 import { statusRoutes } from './status';
@@ -20,7 +21,6 @@ import { taskRoutes } from './tasks';
 import { trailRoutes } from './trail';
 import type { Route, RouteContext } from './types';
 
-export { readRoutes } from './reads';
 export type { Route, RouteContext } from './types';
 
 export function buildRoutes(ctx: RouteContext): Route[] {
@@ -49,5 +49,6 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...pairingRoutes(ctx),
     ...nightRoutes(ctx),
     ...pushRoutes(ctx),
+    ...readRoutes(ctx),
   ];
 }

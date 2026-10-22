@@ -15,10 +15,10 @@ import {
   createDeskServiceManager,
 } from './desk-services';
 import { createGitManager } from './git';
-import { sendJson } from './http';
+import { HttpError, sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
-import { buildRoutes, readRoutes } from './routes/index';
+import { buildRoutes } from './routes/index';
 
 export interface ApiMiddleware {
   (req: IncomingMessage, res: ServerResponse, next: () => void): Promise<void>;
@@ -253,24 +253,18 @@ export function createApiMiddleware(
     }
 
     const route = routes.find((r) => r.method === req.method && r.path === pathname);
-    if (route) {
-      try {
-        await route.handle(req, res);
-      } catch (error) {
-        sendJson(res, 500, { error: (error as Error).message });
-      }
-      return;
-    }
-
-    const read = readRoutes.find((r) => r.path === pathname);
-    if (!read) {
+    if (!route) {
       next();
       return;
     }
     try {
-      sendJson(res, 200, await read.handler(root));
+      await route.handle(req, res);
     } catch (error) {
-      sendJson(res, 500, { error: (error as Error).message });
+      if (error instanceof HttpError) {
+        sendJson(res, error.status, { error: error.message });
+      } else {
+        sendJson(res, 500, { error: (error as Error).message });
+      }
     }
   };
 

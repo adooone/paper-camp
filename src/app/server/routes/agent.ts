@@ -15,6 +15,7 @@ import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { checkNeedsForRun } from '@/core/needs';
 import { parseSuggestions } from '@/core/parse';
+import { readProjectConfig } from '@/core/project-config';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
@@ -31,7 +32,6 @@ import type {
   PrReviewStatus,
   ThreadMessage,
 } from '@/types/index';
-import { readDefaultAgentIds } from '../agent';
 import { resolveAgent } from '../agents';
 import {
   clearAgentAuthStatusCache,
@@ -45,7 +45,7 @@ import {
   summarizeFeedback,
 } from '../feedback-reply';
 import { campFile, checkStaleBaseForRunAll, readMaybe, resolveChatQuestion } from '../helpers';
-import { readBody, requestUrl, sendJson } from '../http';
+import { readJson, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
 import { readReviewedShas } from '../pr-review-state';
@@ -328,7 +328,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
 
   function planActionRoute<TBody>(
     path: string,
-    parse: (raw: string) => TBody | null,
+    parse: (raw: unknown) => TBody | null,
     invalidError: string,
     run: (body: TBody) => Promise<ActionResult> | ActionResult,
   ): Route {
@@ -336,7 +336,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path,
       handle: async (req, res) => {
-        const raw = await readBody(req);
+        const raw = await readJson(req);
         const body = parse(raw);
         if (body === null) {
           sendJson(res, 400, { error: invalidError });
@@ -366,7 +366,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       path: '/api/agent/auth-status',
       handle: async (req, res) => {
         if (requestUrl(req).searchParams.has('recheck')) clearAgentAuthStatusCache(root);
-        const defaultAgents = readDefaultAgentIds(root);
+        const defaultAgents = readProjectConfig(root).defaultAgents;
         const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
         sendJson(res, 200, await probeAgentAuthStatus(id, root));
       },
@@ -416,8 +416,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/login-relay/code',
       handle: async (req, res) => {
-        const raw = await readBody(req);
-        const { code } = JSON.parse(raw) as { code?: string };
+        const { code } = (await readJson<{ code?: string }>(req)) ?? {};
         if (!code?.trim()) {
           sendJson(res, 400, { error: 'code is required' });
           return;
@@ -435,7 +434,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch',
       (raw) => {
-        const { planId, phaseIndex } = JSON.parse(raw) as { planId?: string; phaseIndex?: number };
+        const { planId, phaseIndex } = (raw ?? {}) as { planId?: string; phaseIndex?: number };
         if (!planId || typeof phaseIndex !== 'number') return null;
         return { planId, phaseIndex };
       },
@@ -457,7 +456,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-audit',
       (raw) => {
-        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
+        const { planId, prompt } = (raw ?? {}) as { planId?: string; prompt?: string };
         if (!planId || !prompt) return null;
         return { planId, prompt };
       },
@@ -480,7 +479,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-reconcile',
       (raw) => {
-        const { planId, prompt } = JSON.parse(raw) as { planId?: string; prompt?: string };
+        const { planId, prompt } = (raw ?? {}) as { planId?: string; prompt?: string };
         if (!planId || !prompt) return null;
         return { planId, prompt };
       },
@@ -513,7 +512,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-draft',
       (raw) => {
-        const { ideaId, prompt } = JSON.parse(raw) as { ideaId?: string; prompt?: string };
+        const { ideaId, prompt } = (raw ?? {}) as { ideaId?: string; prompt?: string };
         if (!ideaId || !prompt) return null;
         return { ideaId, prompt };
       },
@@ -536,7 +535,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-extend',
       (raw) => {
-        const { ideaId, prompt } = JSON.parse(raw) as { ideaId?: string; prompt?: string };
+        const { ideaId, prompt } = (raw ?? {}) as { ideaId?: string; prompt?: string };
         if (!ideaId || !prompt) return null;
         return { ideaId, prompt };
       },
@@ -559,7 +558,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-suggest',
       (raw) => {
-        const { prompt } = JSON.parse(raw) as { prompt?: string };
+        const { prompt } = (raw ?? {}) as { prompt?: string };
         return prompt ? { prompt } : null;
       },
       'prompt is required',
@@ -584,7 +583,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-draft-all',
       (raw) => {
-        const { ids } = JSON.parse(raw) as { ids?: unknown };
+        const { ids } = (raw ?? {}) as { ids?: unknown };
         if (
           !Array.isArray(ids) ||
           ids.length === 0 ||
@@ -601,7 +600,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-run-all',
       (raw) => {
-        const { planId } = JSON.parse(raw) as { planId?: string };
+        const { planId } = (raw ?? {}) as { planId?: string };
         return planId ? { planId } : null;
       },
       'planId is required',
@@ -623,7 +622,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-fix-review',
       (raw) => {
-        const { planId } = JSON.parse(raw) as { planId?: string };
+        const { planId } = (raw ?? {}) as { planId?: string };
         return planId ? { planId } : null;
       },
       'planId is required',
@@ -653,7 +652,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/launch-pr-review',
       (raw) => {
-        const { planId } = JSON.parse(raw) as { planId?: string };
+        const { planId } = (raw ?? {}) as { planId?: string };
         return planId ? { planId } : null;
       },
       'planId is required',
@@ -682,7 +681,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
     planActionRoute(
       '/api/agent/issue-fix',
       (raw) => {
-        const { issueId, title, reason, output } = JSON.parse(raw) as {
+        const { issueId, title, reason, output } = (raw ?? {}) as {
           issueId?: string;
           title?: string;
           reason?: string;
@@ -721,8 +720,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/promote-issue',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { issue } = JSON.parse(reqBody) as { issue?: Issue };
+        const { issue } = (await readJson<{ issue?: Issue }>(req)) ?? {};
         if (!issue?.id || !issue.title || !issue.reason) {
           sendJson(res, 400, { error: 'issue is required' });
           return;
@@ -830,12 +828,12 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/feedback-message',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, text, context } = JSON.parse(reqBody) as {
-          planId?: string;
-          text?: string;
-          context?: MountContext;
-        };
+        const { planId, text, context } =
+          (await readJson<{
+            planId?: string;
+            text?: string;
+            context?: MountContext;
+          }>(req)) ?? {};
         if (!planId || !text?.trim()) {
           sendJson(res, 400, { error: 'planId and text are required' });
           return;
@@ -865,11 +863,11 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/feedback-undo',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, commitSha } = JSON.parse(reqBody) as {
-          planId?: string;
-          commitSha?: string;
-        };
+        const { planId, commitSha } =
+          (await readJson<{
+            planId?: string;
+            commitSha?: string;
+          }>(req)) ?? {};
         if (!planId || !commitSha) {
           sendJson(res, 400, { error: 'planId and commitSha are required' });
           return;
@@ -909,13 +907,13 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/feedback-promote',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId, index, target, note } = JSON.parse(reqBody) as {
-          planId?: string;
-          index?: number;
-          target?: 'decision' | 'log';
-          note?: string;
-        };
+        const { planId, index, target, note } =
+          (await readJson<{
+            planId?: string;
+            index?: number;
+            target?: 'decision' | 'log';
+            note?: string;
+          }>(req)) ?? {};
         if (!planId || typeof index !== 'number' || (target !== 'decision' && target !== 'log')) {
           sendJson(res, 400, { error: 'planId, index, and a decision/log target are required' });
           return;
@@ -946,8 +944,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/feedback-summarize',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { planId } = JSON.parse(reqBody) as { planId?: string };
+        const { planId } = (await readJson<{ planId?: string }>(req)) ?? {};
         if (!planId) {
           sendJson(res, 400, { error: 'planId is required' });
           return;
@@ -1002,8 +999,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'POST',
       path: '/api/agent/stop',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { taskId } = reqBody ? (JSON.parse(reqBody) as { taskId?: string }) : {};
+        const { taskId } = (await readJson<{ taskId?: string }>(req)) ?? {};
         const result = agent.stop(taskId);
         if (!result.ok) {
           sendJson(res, 409, { error: result.error });

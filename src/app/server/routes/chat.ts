@@ -6,7 +6,7 @@ import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
 import { appendToChatFile, clearChatFile, readChatFile, readMaybe } from '../helpers';
-import { readBody, sendJson } from '../http';
+import { readJson, sendJson } from '../http';
 import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
 
@@ -80,8 +80,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       method: 'POST',
       path: '/api/chat',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { text } = JSON.parse(reqBody) as { text?: string };
+        const { text } = (await readJson<{ text?: string }>(req)) ?? {};
         if (!text?.trim()) {
           sendJson(res, 400, { error: 'text is required' });
           return;

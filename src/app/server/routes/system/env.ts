@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { applyEnvEntries, parseEnv } from '@/core/env';
 import type { EnvEntry } from '@/types/index';
 import { fileExists, readMaybe } from '../../helpers';
-import { readBody, sendJson } from '../../http';
+import { readJson, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
 export function envRoutes({ root }: RouteContext): Route[] {
@@ -35,12 +35,12 @@ export function envRoutes({ root }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/env',
       handle: async (req, res) => {
-        const body = await readBody(req);
         // `keep` marks a key left untouched: since GET never sends secret values, the
         // server backfills the existing value instead of blanking it.
-        const { entries } = JSON.parse(body) as {
-          entries?: (EnvEntry & { keep?: boolean })[];
-        };
+        const { entries } =
+          (await readJson<{
+            entries?: (EnvEntry & { keep?: boolean })[];
+          }>(req)) ?? {};
         if (!Array.isArray(entries)) {
           sendJson(res, 400, { error: 'entries is required' });
           return;

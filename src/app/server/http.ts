@@ -35,6 +35,30 @@ export async function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
+// Thrown instead of a plain Error so a route's dispatcher can answer with the right
+// status code instead of always falling back to 500.
+export class HttpError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** Parses the request body as JSON, or `undefined` for an empty body (callers that
+ *  require a body still reject that themselves). A non-empty, malformed body throws
+ *  `HttpError` so the dispatcher answers 400 instead of a parse-error 500. */
+export async function readJson<T = unknown>(req: IncomingMessage): Promise<T | undefined> {
+  const raw = await readBody(req);
+  if (!raw) return undefined;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new HttpError(400, 'Malformed JSON body');
+  }
+}
+
 /** Parsed request URL for query-param access — the host part only anchors parsing. */
 export function requestUrl(req: IncomingMessage): URL {
   return new URL(req.url ?? '', `http://${req.headers.host ?? 'localhost'}`);

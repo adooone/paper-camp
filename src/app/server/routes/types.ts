@@ -21,16 +21,10 @@ export interface RouteContext {
   pairCode?: PairCodeManager;
 }
 
-/** Exact method + pathname match. An error thrown from handle becomes a 500 JSON reply. */
+/** Exact method + pathname match. An error thrown from handle becomes a 500 JSON
+ *  reply, unless it's an `HttpError` (../http.ts), which answers with its status. */
 export interface Route {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   path: string;
   handle: (req: IncomingMessage, res: ServerResponse) => Promise<void> | void;
-}
-
-// Matched by pathname alone, whatever the method, after every Route — legacy
-// behavior the dashboard relies on; new endpoints should be Routes.
-export interface ReadRoute {
-  path: string;
-  handler: (root: string) => Promise<unknown>;
 }

@@ -269,6 +269,66 @@ describe('createApiMiddleware getLastRequestAt', () => {
   });
 });
 
+describe('createApiMiddleware route dispatch', () => {
+  function fakeBodyReq(method: string, url: string, body: string): IncomingMessage {
+    const listeners: Record<string, (chunk?: string) => void> = {};
+    const req = {
+      method,
+      url,
+      headers: { host: 'localhost:3333' },
+      on(event: string, cb: (chunk?: string) => void) {
+        listeners[event] = cb;
+        return req;
+      },
+    } as unknown as IncomingMessage;
+    queueMicrotask(() => {
+      listeners.data?.(body);
+      listeners.end?.();
+    });
+    return req;
+  }
+
+  function fakeJsonRes(): { res: ServerResponse; status: () => number; json: () => unknown } {
+    let statusCode = 0;
+    let body = '';
+    const res = {
+      setHeader: () => {},
+      end: (chunk?: string) => {
+        body = chunk ?? '';
+      },
+      set statusCode(code: number) {
+        statusCode = code;
+      },
+      get statusCode() {
+        return statusCode;
+      },
+    } as unknown as ServerResponse;
+    return { res, status: () => statusCode, json: () => JSON.parse(body) };
+  }
+
+  it('falls through to next() for a method no route registers, instead of the legacy any-method match', async () => {
+    const middleware = createApiMiddleware('/tmp/paper-camp-api-test-fake-root');
+    const { res } = fakeJsonRes();
+    let calledNext = false;
+    await middleware(fakeBodyReq('POST', '/api/plans', ''), res, () => {
+      calledNext = true;
+    });
+    expect(calledNext).toBe(true);
+  });
+
+  it('answers 400 for a malformed JSON body instead of a parse-error 500', async () => {
+    const middleware = createApiMiddleware('/tmp/paper-camp-api-test-fake-root');
+    const { res, status, json } = fakeJsonRes();
+    await middleware(
+      fakeBodyReq('POST', '/api/notifications/mark-read', '{not json'),
+      res,
+      () => {},
+    );
+    expect(status()).toBe(400);
+    expect(json()).toMatchObject({ error: 'Malformed JSON body' });
+  });
+});
+
 describe('handlePreflight', () => {
   it('answers a plain CORS preflight with allowed methods and headers', () => {
     const { res, headers, status } = fakeRes();

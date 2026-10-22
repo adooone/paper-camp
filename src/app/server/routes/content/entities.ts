@@ -23,7 +23,7 @@ import {
   type ThreadMessage,
 } from '@/types/index';
 import { campFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from '../../helpers';
-import { readBody, requestUrl, sendJson } from '../../http';
+import { readJson, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
 const NOTE_STATE_KINDS = new Set<ThreadMessage['kind']>(['note', 'decision', 'question']);
@@ -34,8 +34,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/entities',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const input = JSON.parse(reqBody) as Partial<CreateIdeaInput>;
+        const input = (await readJson<Partial<CreateIdeaInput>>(req)) ?? {};
         if (!input.title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
           return;
@@ -64,23 +63,23 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'id is required' });
           return;
         }
-        const reqBody = await readBody(req);
-        const updates = JSON.parse(reqBody) as {
-          title?: string;
-          body?: string;
-          tags?: string[];
-          type?: EntityType;
-          needs?: string[];
-          phases?: PhaseItem[];
-          fixes?: PhaseItem[];
-          /** `null` clears the stored override (e.g. reopening a dropped plan). */
-          status?: PlanStatus | null;
-          log?: LogEntry[];
-          thread?: ThreadMessage[];
-          agent?: AgentId | null;
-          subject?: string | null;
-          order?: number | null;
-        };
+        const updates =
+          (await readJson<{
+            title?: string;
+            body?: string;
+            tags?: string[];
+            type?: EntityType;
+            needs?: string[];
+            phases?: PhaseItem[];
+            fixes?: PhaseItem[];
+            /** `null` clears the stored override (e.g. reopening a dropped plan). */
+            status?: PlanStatus | null;
+            log?: LogEntry[];
+            thread?: ThreadMessage[];
+            agent?: AgentId | null;
+            subject?: string | null;
+            order?: number | null;
+          }>(req)) ?? {};
         if (updates.agent && !AGENT_IDS.includes(updates.agent)) {
           sendJson(res, 400, { error: 'agent must be a known agent id' });
           return;
@@ -203,11 +202,8 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'id is required' });
           return;
         }
-        const reqBody = await readBody(req);
-        const { kind, text } = JSON.parse(reqBody) as {
-          kind?: ThreadMessage['kind'];
-          text?: string;
-        };
+        const { kind, text } =
+          (await readJson<{ kind?: ThreadMessage['kind']; text?: string }>(req)) ?? {};
         if (!kind || !text?.trim()) {
           sendJson(res, 400, { error: 'kind and text are required' });
           return;
@@ -237,12 +233,12 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'id is required' });
           return;
         }
-        const reqBody = await readBody(req);
-        const { index, target, note } = JSON.parse(reqBody) as {
-          index?: number;
-          target?: 'decision' | 'log';
-          note?: string;
-        };
+        const { index, target, note } =
+          (await readJson<{
+            index?: number;
+            target?: 'decision' | 'log';
+            note?: string;
+          }>(req)) ?? {};
         if (typeof index !== 'number' || (target !== 'decision' && target !== 'log')) {
           sendJson(res, 400, { error: 'index and a decision/log target are required' });
           return;

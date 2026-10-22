@@ -1,5 +1,5 @@
 import { MissingFixCmdError, UnknownCheckError } from '../desk-checks';
-import { readBody, requestUrl, sendJson } from '../http';
+import { readJson, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function checkRoutes({ checks }: RouteContext): Route[] {
@@ -43,7 +43,7 @@ export function checkRoutes({ checks }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/checks/fix',
       handle: async (req, res) => {
-        const { name } = JSON.parse(await readBody(req)) as { name?: string };
+        const { name } = (await readJson<{ name?: string }>(req)) ?? {};
         if (!name) {
           sendJson(res, 400, { error: 'name is required' });
           return;

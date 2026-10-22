@@ -1,5 +1,5 @@
 import { hostedClientUrl } from '@/core/hosted-client';
-import { readBody, sendJson } from '../http';
+import { readJson, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 export function pairingRoutes({ pairing, pairCode }: RouteContext): Route[] {
@@ -20,8 +20,7 @@ export function pairingRoutes({ pairing, pairCode }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'Origin header is required to pair' });
           return;
         }
-        const body = await readBody(req);
-        const { token, code } = JSON.parse(body || '{}') as { token?: string; code?: string };
+        const { token, code } = (await readJson<{ token?: string; code?: string }>(req)) ?? {};
         // A pairing code (IDEA-292) stands in for the long token the caller doesn't
         // have yet — redeeming it pairs the same way, then hands the token back.
         if (code !== undefined) {

@@ -1,7 +1,22 @@
-import type { ServerResponse } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it, vi } from 'vitest';
-import { sendJson } from './http';
+import { HttpError, readJson, sendJson } from './http';
+
+function fakeReq(body: string): IncomingMessage {
+  const listeners: Record<string, (chunk?: string) => void> = {};
+  const req = {
+    on(event: string, cb: (chunk?: string) => void) {
+      listeners[event] = cb;
+      return req;
+    },
+  } as unknown as IncomingMessage;
+  queueMicrotask(() => {
+    listeners.data?.(body);
+    listeners.end?.();
+  });
+  return req;
+}
 
 function mockResponse(acceptEncoding: string | undefined) {
   const headers: Record<string, string> = {};
@@ -44,5 +59,21 @@ describe('sendJson', () => {
     expect(headers.Vary).toBe('Accept-Encoding');
     const sent = end.mock.calls[0][0] as Buffer;
     expect(gunzipSync(sent).toString()).toBe(body);
+  });
+});
+
+describe('readJson', () => {
+  it('parses a JSON body', async () => {
+    await expect(readJson(fakeReq(JSON.stringify({ a: 1 })))).resolves.toEqual({ a: 1 });
+  });
+
+  it('resolves undefined for an empty body', async () => {
+    await expect(readJson(fakeReq(''))).resolves.toBeUndefined();
+  });
+
+  it('throws an HttpError(400) for a malformed, non-empty body', async () => {
+    const error = await readJson(fakeReq('{not json')).catch((e) => e);
+    expect(error).toBeInstanceOf(HttpError);
+    expect((error as HttpError).status).toBe(400);
   });
 });

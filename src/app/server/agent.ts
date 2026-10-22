@@ -1,6 +1,5 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -13,32 +12,29 @@ import { writeCapacity } from '@/core/capacity';
 import { readCorpus } from '@/core/corpus';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
+import { readProjectConfig } from '@/core/project-config';
 import { entityToIdea, entityToPlan, readEntities } from '@/core/readers';
 import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
-import {
-  type AgentId,
-  type AgentTaskState,
-  type AgentTaskStatus,
-  type CheckName,
-  DEFAULT_AGENTS,
-  type DefaultAgentsMap,
-  type EntityEntry,
-  type FailingCheck,
-  type FixReviewResult,
-  type GitStatusEntry,
-  type PaperCampConfig,
-  type PhaseItem,
-  type PhaseMilestone,
-  type PhaseRunRecord,
-  type PlanEntry,
-  type RateLimitSnapshot,
-  type ReconcileQueueItem,
-  type ReviewThread,
-  type RunUsage,
-  type TaskKind,
-  type ThreadMessageOption,
-  coerceAgentConfig,
+import type {
+  AgentId,
+  AgentTaskState,
+  AgentTaskStatus,
+  CheckName,
+  EntityEntry,
+  FailingCheck,
+  FixReviewResult,
+  GitStatusEntry,
+  PhaseItem,
+  PhaseMilestone,
+  PhaseRunRecord,
+  PlanEntry,
+  RateLimitSnapshot,
+  ReconcileQueueItem,
+  ReviewThread,
+  RunUsage,
+  TaskKind,
+  ThreadMessageOption,
 } from '@/types/index';
 import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
@@ -233,50 +229,6 @@ export interface AgentTask {
   phaseRuns?: PhaseRunRecord[];
   // issue-fix only: the Issue.id (IDEA-192) this run was launched to fix.
   issueId?: string;
-}
-
-export function readDefaultAgentIds(root: string): DefaultAgentsMap {
-  try {
-    const raw = readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8');
-    const config = JSON.parse(raw) as Record<string, unknown> & { defaultAgent?: AgentId };
-    const rawAgents = config.defaultAgents as Record<string, unknown> | undefined;
-    if (rawAgents) {
-      return {
-        phase: coerceAgentConfig(rawAgents.phase),
-        planDraft: coerceAgentConfig(rawAgents.planDraft),
-        ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
-        commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
-        feedback: rawAgents.feedback
-          ? coerceAgentConfig(rawAgents.feedback)
-          : DEFAULT_AGENTS.feedback,
-        codeReview: rawAgents.codeReview
-          ? coerceAgentConfig(rawAgents.codeReview)
-          : DEFAULT_AGENTS.codeReview,
-        deskDiscovery: rawAgents.deskDiscovery
-          ? coerceAgentConfig(rawAgents.deskDiscovery)
-          : DEFAULT_AGENTS.deskDiscovery,
-        nightShift: rawAgents.nightShift
-          ? coerceAgentConfig(rawAgents.nightShift)
-          : DEFAULT_AGENTS.nightShift,
-      };
-    }
-    if (config.defaultAgent) {
-      const id = config.defaultAgent;
-      return {
-        phase: { agent: id },
-        planDraft: { agent: id },
-        ideaExtend: { agent: id },
-        commitSuggest: { agent: id },
-        feedback: { agent: id },
-        codeReview: { agent: id },
-        deskDiscovery: { agent: id },
-        nightShift: { agent: id },
-      };
-    }
-    return DEFAULT_AGENTS;
-  } catch {
-    return DEFAULT_AGENTS;
-  }
 }
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -1015,7 +967,7 @@ export function createAgentManager(
   ): Result {
     const blocked = admit(taskKind, identity.planId ?? scope.ideaId);
     if (blocked) return blocked;
-    const defaultAgents = readDefaultAgentIds(root);
+    const defaultAgents = readProjectConfig(root).defaultAgents;
     const {
       id: agentId,
       adapter,
@@ -1063,7 +1015,7 @@ export function createAgentManager(
     const task = startOrchestrated('phase', plan, phaseIndex);
     const { adapter, model, effort } = resolveAgent({
       agentId: plan.agent,
-      defaultAgents: readDefaultAgentIds(root),
+      defaultAgents: readProjectConfig(root).defaultAgents,
       taskKind: 'phase',
     });
 
@@ -1141,7 +1093,7 @@ export function createAgentManager(
   ): AgentTask {
     const { id: agentId, adapter } = resolveAgent({
       agentId: plan.agent,
-      defaultAgents: readDefaultAgentIds(root),
+      defaultAgents: readProjectConfig(root).defaultAgents,
       taskKind,
     });
     return registerAndStart(
@@ -1291,7 +1243,7 @@ export function createAgentManager(
     const blocked = admit(kind);
     if (blocked) return blocked;
     const hooks = BATCH_HOOKS[kind];
-    const defaultAgents = readDefaultAgentIds(root);
+    const defaultAgents = readProjectConfig(root).defaultAgents;
     // Each entity re-resolves its own agent below, so a per-entity override is honored.
     const { id: agentId, adapter } = resolveAgent({
       defaultAgents,
@@ -1761,7 +1713,7 @@ export function createAgentManager(
     const task = startOrchestrated('run-all', plan);
     const { adapter, model, effort } = resolveAgent({
       agentId: plan.agent,
-      defaultAgents: readDefaultAgentIds(root),
+      defaultAgents: readProjectConfig(root).defaultAgents,
       taskKind: 'run-all',
     });
 
@@ -1946,7 +1898,7 @@ export function createAgentManager(
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
     }
-    const defaultAgents = readDefaultAgentIds(root);
+    const defaultAgents = readProjectConfig(root).defaultAgents;
     const {
       id: agentId,
       adapter,

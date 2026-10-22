@@ -9,7 +9,7 @@ import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
 import { FetchFailedError } from '../git';
 import { campFile } from '../helpers';
-import { readBody, requestUrl, sendJson } from '../http';
+import { readJson, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
 // A genuine content conflict needs domain judgement, so it's never auto-escalated —
@@ -69,8 +69,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/branch',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { planId } = JSON.parse(body) as { planId?: string };
+          const { planId } = (await readJson<{ planId?: string }>(req)) ?? {};
           if (!planId) {
             sendJson(res, 400, { error: 'planId is required' });
             return;
@@ -97,8 +96,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/complete-idea',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { planId } = JSON.parse(body) as { planId?: string };
+          const { planId } = (await readJson<{ planId?: string }>(req)) ?? {};
           if (!planId) {
             sendJson(res, 400, { error: 'planId is required' });
             return;
@@ -155,8 +153,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/verify-direct-completion',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { planId } = JSON.parse(body) as { planId?: string };
+          const { planId } = (await readJson<{ planId?: string }>(req)) ?? {};
           if (!planId) {
             sendJson(res, 400, { error: 'planId is required' });
             return;
@@ -188,12 +185,12 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/commit',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { files, title, message } = JSON.parse(body) as {
-            files: string[];
-            title: string;
-            message?: string;
-          };
+          const { files, title, message } =
+            (await readJson<{
+              files?: string[];
+              title?: string;
+              message?: string;
+            }>(req)) ?? {};
           if (!title?.trim()) {
             sendJson(res, 400, { error: 'title is required' });
             return;
@@ -212,8 +209,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/stage',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { path } = JSON.parse(body) as { path?: string };
+          const { path } = (await readJson<{ path?: string }>(req)) ?? {};
           if (!path) {
             sendJson(res, 400, { error: 'path is required' });
             return;
@@ -260,8 +256,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/unstage',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { path } = JSON.parse(body) as { path?: string };
+          const { path } = (await readJson<{ path?: string }>(req)) ?? {};
           if (!path) {
             sendJson(res, 400, { error: 'path is required' });
             return;
@@ -300,8 +295,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/resolve-conflict',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { prompt } = JSON.parse(body) as { prompt?: string };
+          const { prompt } = (await readJson<{ prompt?: string }>(req)) ?? {};
           if (!prompt) {
             sendJson(res, 400, { error: 'prompt is required' });
             return;
@@ -365,8 +359,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/checkout',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { branch } = JSON.parse(body) as { branch?: string };
+          const { branch } = (await readJson<{ branch?: string }>(req)) ?? {};
           if (!branch) {
             sendJson(res, 400, { error: 'branch is required' });
             return;
@@ -430,8 +423,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       path: '/api/git/suggest-commit-message',
       handle: async (req, res) => {
         try {
-          const body = await readBody(req);
-          const { files } = JSON.parse(body) as { files?: string[] };
+          const { files } = (await readJson<{ files?: string[] }>(req)) ?? {};
           if (!files?.length) {
             sendJson(res, 400, { error: 'files is required' });
             return;

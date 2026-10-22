@@ -24,7 +24,7 @@ import {
 import type { NightSuggestionEntry, RoadmapItem, SuggestionEntry } from '@/types/index';
 import type { AgentTask } from '../../agent';
 import { campFile, readMaybe } from '../../helpers';
-import { readBody, sendJson } from '../../http';
+import { readJson, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
 import type { Route, RouteContext } from '../types';
@@ -67,12 +67,12 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/ideas',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { title, content, kind } = JSON.parse(reqBody) as {
-          title?: string;
-          content?: string;
-          kind?: 'idea' | 'note' | 'board';
-        };
+        const { title, content, kind } =
+          (await readJson<{
+            title?: string;
+            content?: string;
+            kind?: 'idea' | 'note' | 'board';
+          }>(req)) ?? {};
         if (!title?.trim()) {
           sendJson(res, 400, { error: 'title is required' });
           return;
@@ -95,8 +95,8 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/tickets',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { boardId, title } = JSON.parse(reqBody) as { boardId?: string; title?: string };
+        const { boardId, title } =
+          (await readJson<{ boardId?: string; title?: string }>(req)) ?? {};
         if (!boardId || !title?.trim()) {
           sendJson(res, 400, { error: 'boardId and title are required' });
           return;
@@ -129,8 +129,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/suggestions/promote',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { suggestion } = JSON.parse(reqBody) as { suggestion?: SuggestionEntry };
+        const { suggestion } = (await readJson<{ suggestion?: SuggestionEntry }>(req)) ?? {};
         if (!suggestion?.title || !suggestion.date) {
           sendJson(res, 400, { error: 'suggestion is required' });
           return;
@@ -158,13 +157,13 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/roadmap/promote',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, item, subject, candidateName } = JSON.parse(reqBody) as {
-          horizonTitle?: string;
-          item?: RoadmapItem;
-          subject?: string;
-          candidateName?: string;
-        };
+        const { horizonTitle, item, subject, candidateName } =
+          (await readJson<{
+            horizonTitle?: string;
+            item?: RoadmapItem;
+            subject?: string;
+            candidateName?: string;
+          }>(req)) ?? {};
         if (!horizonTitle || !item?.name) {
           sendJson(res, 400, { error: 'horizonTitle and item are required' });
           return;
@@ -208,12 +207,12 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/roadmap/items',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, name, description } = JSON.parse(reqBody) as {
-          horizonTitle?: string;
-          name?: string;
-          description?: string;
-        };
+        const { horizonTitle, name, description } =
+          (await readJson<{
+            horizonTitle?: string;
+            name?: string;
+            description?: string;
+          }>(req)) ?? {};
         if (!horizonTitle || !name?.trim()) {
           sendJson(res, 400, { error: 'horizonTitle and name are required' });
           return;
@@ -239,12 +238,12 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/roadmap/candidates',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, itemName, name } = JSON.parse(reqBody) as {
-          horizonTitle?: string;
-          itemName?: string;
-          name?: string;
-        };
+        const { horizonTitle, itemName, name } =
+          (await readJson<{
+            horizonTitle?: string;
+            itemName?: string;
+            name?: string;
+          }>(req)) ?? {};
         if (!horizonTitle || !itemName || !name?.trim()) {
           sendJson(res, 400, { error: 'horizonTitle, itemName and name are required' });
           return;
@@ -271,17 +270,15 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'PATCH',
       path: '/api/roadmap/items',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, itemName, name, description, toHorizon, shipped } = JSON.parse(
-          reqBody,
-        ) as {
-          horizonTitle?: string;
-          itemName?: string;
-          name?: string;
-          description?: string;
-          toHorizon?: string;
-          shipped?: boolean;
-        };
+        const { horizonTitle, itemName, name, description, toHorizon, shipped } =
+          (await readJson<{
+            horizonTitle?: string;
+            itemName?: string;
+            name?: string;
+            description?: string;
+            toHorizon?: string;
+            shipped?: boolean;
+          }>(req)) ?? {};
         if (!horizonTitle || !itemName) {
           sendJson(res, 400, { error: 'horizonTitle and itemName are required' });
           return;
@@ -363,11 +360,8 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'DELETE',
       path: '/api/roadmap/items',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, itemName } = JSON.parse(reqBody) as {
-          horizonTitle?: string;
-          itemName?: string;
-        };
+        const { horizonTitle, itemName } =
+          (await readJson<{ horizonTitle?: string; itemName?: string }>(req)) ?? {};
         if (!horizonTitle || !itemName) {
           sendJson(res, 400, { error: 'horizonTitle and itemName are required' });
           return;
@@ -394,12 +388,12 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'DELETE',
       path: '/api/roadmap/candidates',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { horizonTitle, itemName, candidateName } = JSON.parse(reqBody) as {
-          horizonTitle?: string;
-          itemName?: string;
-          candidateName?: string;
-        };
+        const { horizonTitle, itemName, candidateName } =
+          (await readJson<{
+            horizonTitle?: string;
+            itemName?: string;
+            candidateName?: string;
+          }>(req)) ?? {};
         if (!horizonTitle || !itemName || !candidateName) {
           sendJson(res, 400, { error: 'horizonTitle, itemName and candidateName are required' });
           return;
@@ -426,8 +420,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/suggestions/dismiss',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { suggestion } = JSON.parse(reqBody) as { suggestion?: SuggestionEntry };
+        const { suggestion } = (await readJson<{ suggestion?: SuggestionEntry }>(req)) ?? {};
         if (!suggestion?.title || !suggestion.date) {
           sendJson(res, 400, { error: 'suggestion is required' });
           return;
@@ -451,8 +444,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/night-findings/promote',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { finding } = JSON.parse(reqBody) as { finding?: NightSuggestionEntry };
+        const { finding } = (await readJson<{ finding?: NightSuggestionEntry }>(req)) ?? {};
         if (!finding?.file || !finding.date || !finding.commit) {
           sendJson(res, 400, { error: 'finding is required' });
           return;
@@ -480,8 +472,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/night-findings/dismiss',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { finding } = JSON.parse(reqBody) as { finding?: NightSuggestionEntry };
+        const { finding } = (await readJson<{ finding?: NightSuggestionEntry }>(req)) ?? {};
         if (!finding?.file || !finding.date || !finding.commit) {
           sendJson(res, 400, { error: 'finding is required' });
           return;
@@ -504,8 +495,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/ideas/archive',
       handle: async (req, res) => {
-        const reqBody = await readBody(req);
-        const { ids } = JSON.parse(reqBody) as { ids?: string[] };
+        const { ids } = (await readJson<{ ids?: string[] }>(req)) ?? {};
         if (!ids?.length) {
           sendJson(res, 400, { error: 'ids is required' });
           return;
@@ -533,11 +523,11 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       path: '/api/ideas/check-overlap',
       handle: async (req, res) => {
         try {
-          const reqBody = await readBody(req);
-          const { text, candidates } = JSON.parse(reqBody) as {
-            text?: string;
-            candidates?: SimilarityCandidate[];
-          };
+          const { text, candidates } =
+            (await readJson<{
+              text?: string;
+              candidates?: SimilarityCandidate[];
+            }>(req)) ?? {};
           if (!text?.trim()) {
             sendJson(res, 400, { error: 'text is required' });
             return;
