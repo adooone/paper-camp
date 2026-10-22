@@ -83,7 +83,10 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
 
 function agentCtx(runChatReply: (prompt: string) => Promise<string>): Partial<RouteContext> {
   return {
-    agent: { runChatReply, getStatus: () => [] } as unknown as RouteContext['agent'],
+    agent: {
+      runReadOnlyPrompt: (_taskKind: string, prompt: string) => runChatReply(prompt),
+      getStatus: () => [],
+    } as unknown as RouteContext['agent'],
   };
 }
 
@@ -207,8 +210,8 @@ describe('POST /api/chat', () => {
     const { res, status, json } = fakeRes();
     await route(root, 'POST', {
       agent: {
-        runChatReply,
-        runFeedbackReply,
+        runReadOnlyPrompt: (taskKind: string, prompt: string) =>
+          taskKind === 'chat' ? runChatReply(prompt) : runFeedbackReply(prompt),
         getStatus: () => [],
       } as unknown as RouteContext['agent'],
     }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
@@ -321,8 +324,8 @@ describe('POST /api/chat', () => {
     const { res } = fakeRes();
     await route(root, 'POST', {
       agent: {
-        runChatReply,
-        runFeedbackReply,
+        runReadOnlyPrompt: (taskKind: string, prompt: string) =>
+          taskKind === 'chat' ? runChatReply(prompt) : runFeedbackReply(prompt),
         getStatus: () => [],
       } as unknown as RouteContext['agent'],
       activity: {

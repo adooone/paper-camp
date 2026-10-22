@@ -9,6 +9,13 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   return args;
 }
 
+export function buildReadOnlyArgs(opts?: AgentRunOptions): string[] {
+  const args = ['run', '--format', 'json'];
+  if (opts?.model) args.push('-m', opts.model);
+  if (opts?.effort) args.push('--variant', opts.effort);
+  return args;
+}
+
 const TOOL_LABELS: Record<string, string> = {
   bash: 'Running command',
   read: 'Reading file',

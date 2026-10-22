@@ -11,7 +11,6 @@ import {
 } from '@/app/features/plans/prompts';
 import { writeCapacity } from '@/core/capacity';
 import { readCorpus } from '@/core/corpus';
-import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
 import { entityToIdea, entityToPlan, readEntities } from '@/core/readers';
@@ -24,12 +23,10 @@ import {
   type CheckName,
   DEFAULT_AGENTS,
   type DefaultAgentsMap,
-  type DeskConfig,
   type EntityEntry,
   type FailingCheck,
   type FixReviewResult,
   type GitStatusEntry,
-  type IdeaEntry,
   type PaperCampConfig,
   type PhaseItem,
   type PhaseMilestone,
@@ -46,7 +43,6 @@ import {
 import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
-import { discoverDeskConfig } from './desk-discovery';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import { CorpusError, appendToChatFile, campFile, readMaybe, updateEntity } from './helpers';
 import { claudeAuthStatus } from './local-adapters';
@@ -219,7 +215,9 @@ export interface AgentTask {
   status: AgentTaskStatus;
   agentId: AgentId;
   adapter: AgentAdapter;
-  proc: ChildProcess;
+  /** Unset for an orchestrated task (`start`/`startRunAllPhases`/`runBatch`) between
+   * the agent processes it drives one at a time via `runPhaseProcess`. */
+  proc?: ChildProcess;
   /** Wakes a run waiting on something other than its agent process (the baseline checks). */
   onStop?: () => void;
   lines: string[];
@@ -281,6 +279,16 @@ export function readDefaultAgentIds(root: string): DefaultAgentsMap {
 }
 
 type Result = { ok: true } | { ok: false; error: string };
+
+export type BatchKind = 'batch-reconcile' | 'batch-draft';
+
+export type ReadOnlyTaskKind =
+  | 'commit-suggest'
+  | 'overlap-check'
+  | 'prioritise'
+  | 'feedback'
+  | 'chat'
+  | 'desk-discovery';
 
 export function buildAgentPrompt(
   plan: PlanEntry,
@@ -449,10 +457,6 @@ export function createAgentManager(
   // listeners and the new instance's getStatus() stay in sync.
   const state: AgentManagerState = passedState ?? createEmptyAgentState();
   const { tasks } = state;
-
-  // getPrioritiseVerdict's retry calls runPrioritise again for the same click —
-  // this binds it back to the first call's task instead of a new one (IDEA-312).
-  let prioritiseTask: AgentTask | undefined;
 
   let interruptedOnBoot = 0;
   if (isColdStart) {
@@ -742,10 +746,10 @@ export function createAgentManager(
     }
   }
 
-  function attachReader(task: AgentTask) {
-    if (!task.proc.stdout) return;
+  function attachReader(task: AgentTask, proc: ChildProcess) {
+    if (!proc.stdout) return;
     task.lastStreamAt = Date.now();
-    const rl = createInterface({ input: task.proc.stdout });
+    const rl = createInterface({ input: proc.stdout });
     rl.on('line', (line) => {
       if (isTaskDone(task) || task.finishing || !line.trim()) return;
       task.lastStreamAt = Date.now();
@@ -765,16 +769,16 @@ export function createAgentManager(
     });
 
     let stdout = '';
-    task.proc.stdout.on('data', (d: Buffer) => {
+    proc.stdout.on('data', (d: Buffer) => {
       stdout += d.toString();
     });
 
     let stderr = '';
-    task.proc.stderr?.on('data', (d: Buffer) => {
+    proc.stderr?.on('data', (d: Buffer) => {
       stderr += d.toString();
     });
 
-    task.proc.on('close', (code) => {
+    proc.on('close', (code) => {
       if (isTaskDone(task) || task.finishing) return;
       if (task.status === 'starting' || task.status === 'running') {
         // Plain-text CLI failures (e.g. an auth error) never reach parseLine's JSON
@@ -794,7 +798,7 @@ export function createAgentManager(
       }
     });
 
-    task.proc.on('error', (err) => {
+    proc.on('error', (err) => {
       if (isTaskDone(task) || task.finishing) return;
       pushLine(task, `Failed to spawn agent: ${err.message}`);
       void setStatus(task, 'error');
@@ -974,8 +978,12 @@ export function createAgentManager(
   }
 
   // Synchronous, no `await` between the admit() check and registering the task,
-  // so two colliding launches can't both pass the gate.
+  // so two colliding launches can't both pass the gate. Covers every one-shot,
+  // fire-and-forget agent run (audit, reconcile, draft, extend, suggest, fix-review,
+  // pr-review, sync, resolve-conflict, issue-fix, install-toolbar); callers pass
+  // whichever `scope` fields that task kind tracks progress with.
   function launch(
+    taskKind: TaskKind,
     identity: {
       planTitle: string;
       notificationTitle?: string;
@@ -983,22 +991,23 @@ export function createAgentManager(
       agentOverride?: AgentId;
     },
     prompt: string,
-    scope: Pick<
-      AgentTask,
-      | 'taskKind'
-      | 'phaseIndex'
-      | 'planBaseline'
-      | 'ideaId'
-      | 'ideaLogBaseline'
-      | 'reconcileBaseline'
-      | 'suggestBaseline'
-      | 'fixReviewThreads'
-      | 'prReviewSha'
-      | 'prReviewUrl'
-      | 'issueId'
-    >,
+    scope: Partial<
+      Pick<
+        AgentTask,
+        | 'phaseIndex'
+        | 'planBaseline'
+        | 'ideaId'
+        | 'ideaLogBaseline'
+        | 'reconcileBaseline'
+        | 'suggestBaseline'
+        | 'fixReviewThreads'
+        | 'prReviewSha'
+        | 'prReviewUrl'
+        | 'issueId'
+      >
+    > = {},
   ): Result {
-    const blocked = admit(scope.taskKind, identity.planId ?? scope.ideaId);
+    const blocked = admit(taskKind, identity.planId ?? scope.ideaId);
     if (blocked) return blocked;
     const defaultAgents = readDefaultAgentIds(root);
     const {
@@ -1009,10 +1018,11 @@ export function createAgentManager(
     } = resolveAgent({
       agentId: identity.agentOverride,
       defaultAgents,
-      taskKind: scope.taskKind,
+      taskKind,
     });
     const proc = spawnAgent(adapter, adapter.buildArgs(prompt, { model, effort }));
     const task = newTask({
+      taskKind,
       planTitle: identity.planTitle,
       notificationTitle: identity.notificationTitle,
       planId: identity.planId,
@@ -1022,7 +1032,7 @@ export function createAgentManager(
       ...scope,
     });
     registerAndStart(task);
-    attachReader(task);
+    attachReader(task, proc);
     return { ok: true };
   }
 
@@ -1128,7 +1138,6 @@ export function createAgentManager(
       defaultAgents: readDefaultAgentIds(root),
       taskKind,
     });
-    const stubProc = spawn('sh', ['-c', 'exit 0'], { cwd: root, stdio: 'ignore' });
     return registerAndStart(
       newTask({
         taskKind,
@@ -1137,7 +1146,6 @@ export function createAgentManager(
         ...(phaseIndex !== undefined && { phaseIndex }),
         agentId,
         adapter,
-        proc: stubProc,
       }),
     );
   }
@@ -1160,97 +1168,6 @@ export function createAgentManager(
     return toleratedRed;
   }
 
-  function startForPlan(
-    plan: PlanEntry,
-    prompt: string,
-    taskKind: 'audit' | 'reconcile' = 'audit',
-  ): Result {
-    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
-      taskKind,
-      ...(taskKind === 'reconcile'
-        ? {
-            reconcileBaseline: JSON.stringify({
-              body: plan.body,
-              phases: plan.phases.map((p) => p.text),
-            }),
-          }
-        : { planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 } }),
-    });
-  }
-
-  function startFixReview(plan: PlanEntry, prompt: string, threads: ReviewThread[]): Result {
-    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
-      taskKind: 'fix-review',
-      fixReviewThreads: threads,
-    });
-  }
-
-  // Launched by the "Review PR" action in routes/agent.ts, not by any poll.
-  function startPrReview(plan: PlanEntry, prompt: string, headSha: string, prUrl: string): Result {
-    return launch({ planTitle: plan.title, planId: plan.id, agentOverride: plan.agent }, prompt, {
-      taskKind: 'pr-review',
-      prReviewSha: headSha,
-      prReviewUrl: prUrl,
-    });
-  }
-
-  function startForIdea(idea: IdeaEntry, prompt: string): Result {
-    if (!idea.id) {
-      return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
-    }
-    return launch(
-      { planTitle: `Draft plan for ${idea.id}`, notificationTitle: idea.title },
-      prompt,
-      { taskKind: 'draft', ideaId: idea.id },
-    );
-  }
-
-  function startForIdeaExtend(idea: IdeaEntry, prompt: string): Result {
-    if (!idea.id) {
-      return { ok: false, error: 'Idea has no id to extend' };
-    }
-    return launch({ planTitle: `Extend ${idea.id}`, notificationTitle: idea.title }, prompt, {
-      taskKind: 'extend',
-      ideaId: idea.id,
-      ideaLogBaseline: idea.log?.length ?? 0,
-    });
-  }
-
-  async function startSuggest(prompt: string): Promise<Result> {
-    const blocked = admit('suggest');
-    if (blocked) return blocked;
-    const suggestBaseline = parseSuggestions(
-      await readMaybe(campFile(root, 'suggestions.md')),
-    ).length;
-    return launch({ planTitle: 'Suggest ideas' }, prompt, { taskKind: 'suggest', suggestBaseline });
-  }
-
-  // Automatic escalation from runGitSync's deterministic failure — no confirmation
-  // step, since a blocked sync is exactly the "stuck" outcome this exists to avoid.
-  function startGitSyncRecovery(prompt: string): Result {
-    return launch({ planTitle: 'Recover sync to main' }, prompt, { taskKind: 'sync' });
-  }
-
-  // Unlike startGitSyncRecovery's automatic escalation, a content conflict is only
-  // resolved on explicit human confirmation from the sync-failed toast.
-  function startResolveConflict(prompt: string): Result {
-    return launch({ planTitle: 'Resolve rebase conflict' }, prompt, {
-      taskKind: 'resolve-conflict',
-    });
-  }
-
-  // No planId/ideaId, so this never lands in the Inbox notifications; the Issues
-  // page picks up the result from tasks.log (issueId) instead.
-  function startIssueFix(issueId: string, title: string, prompt: string): Result {
-    return launch({ planTitle: title }, prompt, { taskKind: 'issue-fix', issueId });
-  }
-
-  // Settings > Toolbar's "Install toolbar" action — no plan/idea to scope this to,
-  // same as startIssueFix; the section itself re-reads host-app state once it lands.
-  function startInstallToolbar(prompt: string): Result {
-    return launch({ planTitle: 'Install toolbar' }, prompt, { taskKind: 'install-toolbar' });
-  }
-
   async function findBatchPlanFile(plansDir: string, id: string): Promise<string | null> {
     const direct = join(plansDir, `${id}.md`);
     try {
@@ -1265,157 +1182,123 @@ export function createAgentManager(
     return null;
   }
 
-  function startBatchReconcile(): Result {
-    const blocked = admit('batch-reconcile');
-    if (blocked) return blocked;
-    const defaultAgents = readDefaultAgentIds(root);
-    // Each entity re-resolves its own agent below, so a per-entity override is honored.
-    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'reconcile' });
-
-    // Stub proc — replaced per entity in the loop.
-    const stubProc = spawn('sh', ['-c', 'exit 0'], {
-      cwd: root,
-      stdio: 'ignore',
-    });
-    const task = registerAndStart(
-      newTask({
-        taskKind: 'batch-reconcile',
-        planTitle: 'Batch reconcile',
-        agentId,
-        adapter,
-        proc: stubProc,
-        reconcileResults: [],
-      }),
-    );
-
-    (async () => {
-      try {
-        const { entries } = await readCorpus(root, { live: true });
-        const candidates = entries
-          .filter((e) => e.kind !== 'note' && e.status !== 'done' && e.status !== 'dropped')
-          .map((e) => entityToPlan(e));
-
-        if (candidates.length === 0) {
-          pushLine(task, 'No open ideas or plans to reconcile.');
-          void setStatus(task, 'done');
-          return;
-        }
-
-        pushLine(
-          task,
-          `Reconciling ${candidates.length} entit${candidates.length === 1 ? 'y' : 'ies'}…`,
-        );
-        let reconciled = 0;
-        let skipped = 0;
-        let failed = 0;
-        const total = candidates.length;
-
-        for (const [index, plan] of candidates.entries()) {
-          if (task.status === 'stopping') break;
-          if (!plan.id) {
-            skipped++;
-            continue;
-          }
-
-          const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), plan.id);
-          if (!planFile) {
-            skipped++;
-            continue;
-          }
-
-          const before = { body: plan.body, phases: plan.phases };
-
-          pushLine(task, `[reconcile] ${plan.id} ${plan.title} (${index + 1}/${total})`);
-          const {
-            adapter: entAdapter,
-            model,
-            effort,
-          } = resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'reconcile' });
-          const prompt = buildReconcilePrompt(plan);
-          const {
-            ok: success,
-            timedOut,
-            stderr,
-          } = await runPhaseProcess(task, entAdapter, prompt, model, effort);
-
-          if (timedOut) {
-            failed++;
-            pushLine(task, `[timeout] ${plan.id} — no progress for ${PHASE_TIMEOUT_MS / 60000}min`);
-            continue;
-          }
-
-          if (success) {
-            let changed = false;
-            try {
-              // parseEntityFile, not parsePlanFile: candidates include backlog ideas,
-              // which parsePlanFile's plan-only status schema would reject.
-              const rawAfter = await readFile(planFile, 'utf-8');
-              const parsedAfter = parseEntityFile(rawAfter);
-              const after = parsedAfter.entries[0]
-                ? entityToPlan(parsedAfter.entries[0])
-                : undefined;
-              changed = after
-                ? JSON.stringify({ body: after.body, phases: after.phases.map((p) => p.text) }) !==
-                  JSON.stringify({ body: before.body, phases: before.phases.map((p) => p.text) })
-                : false;
-            } catch {}
-            reconciled++;
-            if (changed) {
-              task.reconcileResults?.push({ planId: plan.id, title: plan.title, before });
-            }
-            pushLine(
-              task,
-              changed ? `[done] ${plan.id} — updated` : `[done] ${plan.id} — no drift found`,
-            );
-          } else {
-            failed++;
-            if (stderr.trim()) pushLine(task, stderr.trim());
-            pushLine(
-              task,
-              task.errorReason
-                ? `[fail] ${plan.id} — ${task.errorReason}`
-                : `[fail] ${plan.id} — agent error`,
-            );
-          }
-        }
-
-        if (task.status === 'stopping') {
-          void setStatus(task, 'done');
-          return;
-        }
-
-        pushLine(
-          task,
-          `Reconcile complete — ${reconciled} reconciled, ${skipped} skipped, ${failed} failed`,
-        );
-        void setStatus(task, failed > 0 ? 'error' : 'done');
-      } catch (err) {
-        pushLine(task, `Batch reconcile failed: ${(err as Error).message}`);
-        void setStatus(task, 'error');
-      }
-    })();
-
-    return { ok: true };
+  interface BatchSnapshot {
+    body: string;
+    phases: PhaseItem[];
   }
 
-  function startBatchDraft(ids: string[]): Result {
-    const blocked = admit('batch-draft');
-    if (blocked) return blocked;
-    const defaultAgents = readDefaultAgentIds(root);
-    const { id: agentId, adapter } = resolveAgent({ defaultAgents, taskKind: 'draft' });
+  interface BatchHooks {
+    entityTaskKind: 'reconcile' | 'draft';
+    planTitle: string;
+    headline: (n: number) => string;
+    noCandidates: string;
+    loadCandidates: (entries: EntityEntry[], ids: string[] | 'all') => EntityEntry[];
+    buildPrompt: (entity: EntityEntry, allPlans: PlanEntry[]) => string;
+    snapshotBefore: (entity: EntityEntry) => BatchSnapshot | undefined;
+    // Runs after a successful agent exit; decides whether it counts as done or
+    // failed, and what the per-item status line says.
+    onSuccess: (
+      task: AgentTask,
+      entity: EntityEntry,
+      before: BatchSnapshot | undefined,
+      planFile: string,
+    ) => Promise<{ counted: boolean; line: string }>;
+    summary: (done: number, skipped: number, failed: number) => string;
+  }
 
-    // Stub proc — replaced per entity in the loop.
-    const stubProc = spawn('sh', ['-c', 'exit 0'], {
-      cwd: root,
-      stdio: 'ignore',
+  const isDraftEligible = (e: EntityEntry) =>
+    e.kind !== 'note' && e.phases.length === 0 && e.status === 'idea';
+
+  const BATCH_HOOKS: Record<BatchKind, BatchHooks> = {
+    'batch-reconcile': {
+      entityTaskKind: 'reconcile',
+      planTitle: 'Batch reconcile',
+      headline: (n) => `Reconciling ${n} entit${n === 1 ? 'y' : 'ies'}…`,
+      noCandidates: 'No open ideas or plans to reconcile.',
+      loadCandidates: (entries) =>
+        entries.filter((e) => e.kind !== 'note' && e.status !== 'done' && e.status !== 'dropped'),
+      buildPrompt: (entity) => buildReconcilePrompt(entityToPlan(entity)),
+      snapshotBefore: (entity) => {
+        const plan = entityToPlan(entity);
+        return { body: plan.body, phases: plan.phases };
+      },
+      onSuccess: async (task, entity, before, planFile) => {
+        let changed = false;
+        try {
+          // parseEntityFile, not parsePlanFile: candidates include backlog ideas,
+          // which parsePlanFile's plan-only status schema would reject.
+          const rawAfter = await readFile(planFile, 'utf-8');
+          const parsedAfter = parseEntityFile(rawAfter);
+          const after = parsedAfter.entries[0] ? entityToPlan(parsedAfter.entries[0]) : undefined;
+          changed =
+            after && before
+              ? JSON.stringify({ body: after.body, phases: after.phases.map((p) => p.text) }) !==
+                JSON.stringify({ body: before.body, phases: before.phases.map((p) => p.text) })
+              : false;
+        } catch {}
+        if (changed && before) {
+          task.reconcileResults?.push({ planId: entity.id, title: entity.title, before });
+        }
+        return {
+          counted: true,
+          line: changed ? `[done] ${entity.id} — updated` : `[done] ${entity.id} — no drift found`,
+        };
+      },
+      summary: (done, skipped, failed) =>
+        `Reconcile complete — ${done} reconciled, ${skipped} skipped, ${failed} failed`,
+    },
+    'batch-draft': {
+      entityTaskKind: 'draft',
+      planTitle: 'Batch draft',
+      headline: (n) => `Drafting ${n} idea${n === 1 ? '' : 's'}…`,
+      noCandidates: 'No ideas selected to draft.',
+      loadCandidates: (entries, ids) =>
+        ids === 'all'
+          ? []
+          : [...new Set(ids)]
+              .map((id) => entries.find((e) => e.id === id))
+              .filter((e): e is EntityEntry => e !== undefined && isDraftEligible(e)),
+      buildPrompt: (entity, allPlans) =>
+        buildPlanDraftPrompt(
+          entityToIdea(entity),
+          allPlans.filter((p) => p.id !== entity.id),
+        ),
+      snapshotBefore: () => undefined,
+      onSuccess: async (_task, entity, _before, planFile) => {
+        let hasPhases = false;
+        try {
+          const rawAfter = await readFile(planFile, 'utf-8');
+          hasPhases = (parseEntityFile(rawAfter).entries[0]?.phases.length ?? 0) > 0;
+        } catch {}
+        return hasPhases
+          ? { counted: true, line: `[done] ${entity.id} — drafted` }
+          : { counted: false, line: `[fail] ${entity.id} — agent exited but added no phases` };
+      },
+      summary: (done, skipped, failed) =>
+        `Draft complete — ${done} drafted, ${skipped} skipped, ${failed} failed`,
+    },
+  };
+
+  // Shared by reconcile-all and draft-all: sweep a list of entities, running one
+  // agent at a time against `task.proc` via runPhaseProcess, scored by `onSuccess`.
+  function runBatch(kind: BatchKind, ids: string[] | 'all'): Result {
+    const blocked = admit(kind);
+    if (blocked) return blocked;
+    const hooks = BATCH_HOOKS[kind];
+    const defaultAgents = readDefaultAgentIds(root);
+    // Each entity re-resolves its own agent below, so a per-entity override is honored.
+    const { id: agentId, adapter } = resolveAgent({
+      defaultAgents,
+      taskKind: hooks.entityTaskKind,
     });
+
     const task = registerAndStart(
       newTask({
-        taskKind: 'batch-draft',
-        planTitle: 'Batch draft',
+        taskKind: kind,
+        planTitle: hooks.planTitle,
         agentId,
         adapter,
-        proc: stubProc,
+        ...(kind === 'batch-reconcile' ? { reconcileResults: [] } : {}),
       }),
     );
 
@@ -1423,20 +1306,16 @@ export function createAgentManager(
       try {
         const { entries } = await readCorpus(root, { live: true });
         const allPlans = entries.map((e) => entityToPlan(e));
-        const isDraftEligible = (e: EntityEntry) =>
-          e.kind !== 'note' && e.phases.length === 0 && e.status === 'idea';
-        const candidates = [...new Set(ids)]
-          .map((id) => entries.find((e) => e.id === id))
-          .filter((e): e is EntityEntry => e !== undefined && isDraftEligible(e));
+        const candidates = hooks.loadCandidates(entries, ids);
 
         if (candidates.length === 0) {
-          pushLine(task, 'No ideas selected to draft.');
+          pushLine(task, hooks.noCandidates);
           void setStatus(task, 'done');
           return;
         }
 
-        pushLine(task, `Drafting ${candidates.length} idea${candidates.length === 1 ? '' : 's'}…`);
-        let drafted = 0;
+        pushLine(task, hooks.headline(candidates.length));
+        let done = 0;
         let skipped = 0;
         let failed = 0;
         const total = candidates.length;
@@ -1448,15 +1327,27 @@ export function createAgentManager(
             continue;
           }
 
-          pushLine(task, `[draft] ${entity.id} ${entity.title} (${index + 1}/${total})`);
+          const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), entity.id);
+          if (!planFile) {
+            skipped++;
+            continue;
+          }
+
+          pushLine(
+            task,
+            `[${hooks.entityTaskKind}] ${entity.id} ${entity.title} (${index + 1}/${total})`,
+          );
           const {
             adapter: entAdapter,
             model,
             effort,
-          } = resolveAgent({ agentId: entity.agent, defaultAgents, taskKind: 'draft' });
-          const idea = entityToIdea(entity);
-          const otherPlans = allPlans.filter((p) => p.id !== entity.id);
-          const prompt = buildPlanDraftPrompt(idea, otherPlans);
+          } = resolveAgent({
+            agentId: entity.agent,
+            defaultAgents,
+            taskKind: hooks.entityTaskKind,
+          });
+          const before = hooks.snapshotBefore(entity);
+          const prompt = hooks.buildPrompt(entity, allPlans);
           const {
             ok: success,
             timedOut,
@@ -1473,21 +1364,10 @@ export function createAgentManager(
           }
 
           if (success) {
-            let hasPhases = false;
-            try {
-              const planFile = await findBatchPlanFile(join(root, 'papercamp', 'ideas'), entity.id);
-              if (planFile) {
-                const rawAfter = await readFile(planFile, 'utf-8');
-                hasPhases = (parseEntityFile(rawAfter).entries[0]?.phases.length ?? 0) > 0;
-              }
-            } catch {}
-            if (hasPhases) {
-              drafted++;
-              pushLine(task, `[done] ${entity.id} — drafted`);
-            } else {
-              failed++;
-              pushLine(task, `[fail] ${entity.id} — agent exited but added no phases`);
-            }
+            const { counted, line } = await hooks.onSuccess(task, entity, before, planFile);
+            if (counted) done++;
+            else failed++;
+            pushLine(task, line);
           } else {
             failed++;
             if (stderr.trim()) pushLine(task, stderr.trim());
@@ -1505,10 +1385,10 @@ export function createAgentManager(
           return;
         }
 
-        pushLine(task, `Draft complete — ${drafted} drafted, ${skipped} skipped, ${failed} failed`);
+        pushLine(task, hooks.summary(done, skipped, failed));
         void setStatus(task, failed > 0 ? 'error' : 'done');
       } catch (err) {
-        pushLine(task, `Batch draft failed: ${(err as Error).message}`);
+        pushLine(task, `${hooks.planTitle} failed: ${(err as Error).message}`);
         void setStatus(task, 'error');
       }
     })();
@@ -2048,17 +1928,14 @@ export function createAgentManager(
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
+  // The one-shot, stdin-piped primitive behind every read-only agent call
+  // (commit messages, idea overlap, prioritise, feedback/chat replies, desk
+  // discovery) — never writes to the corpus, so it skips admit()'s write-set gate.
   function runReadOnlyPrompt(
+    taskKind: ReadOnlyTaskKind,
     prompt: string,
-    taskKind:
-      | 'commit-suggest'
-      | 'overlap-check'
-      | 'prioritise'
-      | 'feedback'
-      | 'chat'
-      | 'desk-discovery',
     planTitle: string,
-    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void },
+    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void; retryReason?: string },
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
@@ -2075,11 +1952,7 @@ export function createAgentManager(
     });
 
     const isClaude = agentId === 'claude-code';
-    // Builds its own args instead of adapter.buildArgs: must never pick up the
-    // shared `--permission-mode auto` flag, since this only reads a prompt on stdin.
-    const args = isClaude ? ['-p', '--output-format', 'json'] : ['run', '--format', 'json'];
-    if (model) args.push(isClaude ? '--model' : '-m', model);
-    if (effort) args.push(isClaude ? '--effort' : '--variant', effort);
+    const args = adapter.buildReadOnlyArgs({ model, effort });
 
     return new Promise((resolve, reject) => {
       const proc = spawn(adapter.command, args, {
@@ -2089,7 +1962,10 @@ export function createAgentManager(
       const task = opts?.task
         ? Object.assign(opts.task, { proc })
         : registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
-      if (opts?.task) void setStatus(task, 'running');
+      if (opts?.task) {
+        if (opts.retryReason !== undefined) pushLine(task, `[retry] ${opts.retryReason}`);
+        void setStatus(task, 'running');
+      }
       opts?.onTask?.(task);
 
       let settled = false;
@@ -2165,42 +2041,6 @@ export function createAgentManager(
     });
   }
 
-  function runCommitSuggest(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'commit-suggest', 'Suggest commit message');
-  }
-
-  function runOverlapCheck(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'overlap-check', 'Check idea overlap');
-  }
-
-  function runPrioritise(prompt: string, retryReason?: string): Promise<string> {
-    if (retryReason !== undefined && prioritiseTask) {
-      const task = prioritiseTask;
-      prioritiseTask = undefined;
-      pushLine(task, `[retry] ${retryReason}`);
-      return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue', { task });
-    }
-    return runReadOnlyPrompt(prompt, 'prioritise', 'Prioritise queue', {
-      onTask: (task) => {
-        prioritiseTask = task;
-      },
-    });
-  }
-
-  function runFeedbackReply(prompt: string, planTitle: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'feedback', planTitle);
-  }
-
-  function runChatReply(prompt: string): Promise<string> {
-    return runReadOnlyPrompt(prompt, 'chat', 'Project chat');
-  }
-
-  function runDeskDiscovery(evidence: ProjectEvidence): Promise<DeskConfig> {
-    return discoverDeskConfig(evidence, (prompt) =>
-      runReadOnlyPrompt(prompt, 'desk-discovery', 'Discover desk config'),
-    );
-  }
-
   function stop(taskId?: string): Result {
     const task = taskId ? tasks.get(taskId) : currentTask();
     if (!task || isTaskDone(task)) {
@@ -2208,7 +2048,7 @@ export function createAgentManager(
     }
     pushLine(task, 'Stop requested — ending after the current step');
     void setStatus(task, 'stopping');
-    killWithEscalation(task.proc);
+    if (task.proc) killWithEscalation(task.proc);
     task.onStop?.();
     return { ok: true };
   }
@@ -2324,30 +2164,15 @@ export function createAgentManager(
   }
 
   return {
+    launch,
     start,
-    startForPlan,
-    startFixReview,
-    startPrReview,
+    startRunAllPhases,
+    runBatch,
+    runReadOnlyPrompt,
     getFixReviewResult,
     consumeFixReviewResult,
-    startForIdea,
-    startForIdeaExtend,
-    startBatchReconcile,
-    startBatchDraft,
-    startRunAllPhases,
     resumeAuthParkedTasks,
     resumeQuestionParkedTasks,
-    startSuggest,
-    startGitSyncRecovery,
-    startResolveConflict,
-    startIssueFix,
-    startInstallToolbar,
-    runCommitSuggest,
-    runOverlapCheck,
-    runPrioritise,
-    runFeedbackReply,
-    runChatReply,
-    runDeskDiscovery,
     stop,
     getStatus,
     hasActiveTask,
@@ -2363,7 +2188,9 @@ export function createAgentManager(
       // `killed` only reflects whether kill() was called, not whether it exited.
       const stillRunning = (proc: ChildProcess) =>
         proc.exitCode === null && proc.signalCode === null;
-      const procs = [...tasks.values()].map((task) => task.proc).filter(stillRunning);
+      const procs = [...tasks.values()]
+        .map((task) => task.proc)
+        .filter((proc): proc is ChildProcess => proc !== undefined && stillRunning(proc));
       if (procs.length === 0) return Promise.resolve();
       for (const proc of procs) proc.kill('SIGTERM');
       return new Promise((resolve) => {
@@ -2397,26 +2224,45 @@ export interface AgentManagerState {
 }
 
 export interface AgentManager {
+  launch: (
+    taskKind: TaskKind,
+    identity: {
+      planTitle: string;
+      notificationTitle?: string;
+      planId?: string;
+      agentOverride?: AgentId;
+    },
+    prompt: string,
+    scope?: Partial<
+      Pick<
+        AgentTask,
+        | 'phaseIndex'
+        | 'planBaseline'
+        | 'ideaId'
+        | 'ideaLogBaseline'
+        | 'reconcileBaseline'
+        | 'suggestBaseline'
+        | 'fixReviewThreads'
+        | 'prReviewSha'
+        | 'prReviewUrl'
+        | 'issueId'
+      >
+    >,
+  ) => Result;
   start: (
     plan: PlanEntry,
     phaseIndex: number,
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
-  startForPlan: (plan: PlanEntry, prompt: string, taskKind?: 'audit' | 'reconcile') => Result;
-  startFixReview: (plan: PlanEntry, prompt: string, threads: ReviewThread[]) => Result;
-  startPrReview: (plan: PlanEntry, prompt: string, headSha: string, prUrl: string) => Result;
   getFixReviewResult: () => FixReviewResult | null;
   consumeFixReviewResult: () => void;
-  startForIdea: (idea: IdeaEntry, prompt: string) => Result;
-  startForIdeaExtend: (idea: IdeaEntry, prompt: string) => Result;
-  startBatchReconcile: () => Result;
-  startBatchDraft: (ids: string[]) => Result;
   startRunAllPhases: (
     plan: PlanEntry,
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
+  runBatch: (kind: BatchKind, ids: string[] | 'all') => Result;
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
@@ -2426,17 +2272,12 @@ export interface AgentManager {
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Promise<{ resumed: boolean }>;
-  startSuggest: (prompt: string) => Promise<Result>;
-  startGitSyncRecovery: (prompt: string) => Result;
-  startResolveConflict: (prompt: string) => Result;
-  startIssueFix: (issueId: string, title: string, prompt: string) => Result;
-  startInstallToolbar: (prompt: string) => Result;
-  runCommitSuggest: (prompt: string) => Promise<string>;
-  runOverlapCheck: (prompt: string) => Promise<string>;
-  runPrioritise: (prompt: string) => Promise<string>;
-  runFeedbackReply: (prompt: string, planTitle: string) => Promise<string>;
-  runChatReply: (prompt: string) => Promise<string>;
-  runDeskDiscovery: (evidence: ProjectEvidence) => Promise<DeskConfig>;
+  runReadOnlyPrompt: (
+    taskKind: ReadOnlyTaskKind,
+    prompt: string,
+    planTitle: string,
+    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void; retryReason?: string },
+  ) => Promise<string>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;

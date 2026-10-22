@@ -14,6 +14,7 @@ import { detectPackageManager } from '@/core/desk-discovery/evidence';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
 import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/git-pr';
 import { checkNeedsForRun } from '@/core/needs';
+import { parseSuggestions } from '@/core/parse';
 import { entityToPlan, readEntities } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
@@ -43,7 +44,7 @@ import {
   replyToFeedback,
   summarizeFeedback,
 } from '../feedback-reply';
-import { campFile, checkStaleBaseForRunAll, resolveChatQuestion } from '../helpers';
+import { campFile, checkStaleBaseForRunAll, readMaybe, resolveChatQuestion } from '../helpers';
 import { readBody, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
@@ -103,7 +104,12 @@ export async function applyFeedbackMessage(
   try {
     const plan = entityToPlan({ ...entity, thread: threadWithUser });
     const otherEntities = entries.filter((e) => e.id !== entity.id);
-    const result = await replyToFeedback(plan, otherEntities, agent.runFeedbackReply, context);
+    const result = await replyToFeedback(
+      plan,
+      otherEntities,
+      (prompt, planTitle) => agent.runReadOnlyPrompt('feedback', prompt, planTitle),
+      context,
+    );
     const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
     const { spawnFix, ...overrides } = editResult;
 
@@ -459,7 +465,15 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       async ({ planId, prompt }) => {
         const resolved = await resolvePlan(planId);
         if (!resolved.ok) return resolved;
-        return agent.startForPlan(resolved.plan, prompt);
+        const { plan } = resolved;
+        return agent.launch(
+          'audit',
+          { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+          prompt,
+          {
+            planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 },
+          },
+        );
       },
     ),
 
@@ -480,7 +494,18 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           const { content, changed } = applyKnownRenames(raw);
           if (changed) await writeFile(filePath, content, 'utf-8');
         }
-        return agent.startForPlan(resolved.plan, prompt, 'reconcile');
+        const { plan } = resolved;
+        return agent.launch(
+          'reconcile',
+          { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+          prompt,
+          {
+            reconcileBaseline: JSON.stringify({
+              body: plan.body,
+              phases: plan.phases.map((p) => p.text),
+            }),
+          },
+        );
       },
     ),
 
@@ -496,7 +521,14 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       async ({ ideaId, prompt }) => {
         const resolved = await resolveIdea(ideaId);
         if (!resolved.ok) return resolved;
-        return agent.startForIdea(resolved.idea, prompt);
+        const { idea } = resolved;
+        if (!idea.id) return { ok: false, error: 'Idea has no id to link a drafted plan back to' };
+        return agent.launch(
+          'draft',
+          { planTitle: `Draft plan for ${idea.id}`, notificationTitle: idea.title },
+          prompt,
+          { ideaId: idea.id },
+        );
       },
     ),
 
@@ -512,7 +544,14 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       async ({ ideaId, prompt }) => {
         const resolved = await resolveIdea(ideaId);
         if (!resolved.ok) return resolved;
-        return agent.startForIdeaExtend(resolved.idea, prompt);
+        const { idea } = resolved;
+        if (!idea.id) return { ok: false, error: 'Idea has no id to extend' };
+        return agent.launch(
+          'extend',
+          { planTitle: `Extend ${idea.id}`, notificationTitle: idea.title },
+          prompt,
+          { ideaId: idea.id, ideaLogBaseline: idea.log?.length ?? 0 },
+        );
       },
     ),
 
@@ -524,7 +563,12 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         return prompt ? { prompt } : null;
       },
       'prompt is required',
-      ({ prompt }) => agent.startSuggest(prompt),
+      async ({ prompt }) => {
+        const suggestBaseline = parseSuggestions(
+          await readMaybe(campFile(root, 'suggestions.md')),
+        ).length;
+        return agent.launch('suggest', { planTitle: 'Suggest ideas' }, prompt, { suggestBaseline });
+      },
     ),
 
     planActionRoute(
@@ -532,7 +576,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       () => ({}),
       '',
       async () => {
-        return agent.startBatchReconcile();
+        return agent.runBatch('batch-reconcile', 'all');
       },
     ),
 
@@ -551,7 +595,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         return { ids };
       },
       'ids is required',
-      ({ ids }) => agent.startBatchDraft(ids),
+      ({ ids }) => agent.runBatch('batch-draft', ids),
     ),
 
     planActionRoute(
@@ -597,7 +641,12 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         const prompt = buildFixReviewPrompt(plan, threads);
         // Same `threads` array the prompt numbered, so the agent's 1-based verdicts
         // map back to the right thread ids.
-        return agent.startFixReview(plan, prompt, threads);
+        return agent.launch(
+          'fix-review',
+          { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+          prompt,
+          { fixReviewThreads: threads },
+        );
       },
     ),
 
@@ -620,7 +669,13 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         const diff = await fetchPrDiff(root, String(pr.number));
         if (!diff) return { ok: false, error: 'Could not fetch the PR diff' };
         const prompt = buildPrReviewPrompt(plan, diff);
-        return agent.startPrReview(plan, prompt, pr.headSha, pr.url);
+        // Launched by the "Review PR" action, not by any poll.
+        return agent.launch(
+          'pr-review',
+          { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+          prompt,
+          { prReviewSha: pr.headSha, prReviewUrl: pr.url },
+        );
       },
     ),
 
@@ -638,7 +693,9 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       'issueId, title, and reason are required',
       async ({ issueId, title, reason, output }) => {
         const prompt = buildIssueFixPrompt({ title, reason, output });
-        return agent.startIssueFix(issueId, title, prompt);
+        // No planId/ideaId, so this never lands in the Inbox notifications; the
+        // Issues page picks up the result from tasks.log (issueId) instead.
+        return agent.launch('issue-fix', { planTitle: title }, prompt, { issueId });
       },
     ),
 
@@ -656,7 +713,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           detectPackageManager(root),
           PAPER_CAMP_VERSION,
         );
-        return agent.startInstallToolbar(prompt);
+        return agent.launch('install-toolbar', { planTitle: 'Install toolbar' }, prompt);
       },
     ),
 
@@ -910,7 +967,9 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
 
         try {
           const plan = entityToPlan(entity);
-          const summary = await summarizeFeedback(plan, messages, agent.runFeedbackReply);
+          const summary = await summarizeFeedback(plan, messages, (prompt, planTitle) =>
+            agent.runReadOnlyPrompt('feedback', prompt, planTitle),
+          );
           await updateEntity(root, planId, (current) => ({
             thread: [...(current.thread ?? []), agentThreadMessage(summary)],
           }));

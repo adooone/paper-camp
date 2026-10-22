@@ -13,6 +13,7 @@ import * as opencode from './opencode';
 export interface AgentAdapter {
   command: string;
   buildArgs: (prompt: string, opts?: AgentRunOptions) => string[];
+  buildReadOnlyArgs: (opts?: AgentRunOptions) => string[];
   parseLine: (line: string) => ParsedAgentLine | null;
   options: AgentOptionsDescriptor;
 }
@@ -23,12 +24,14 @@ export const AGENTS: Record<AgentId, AgentAdapter> = {
   'claude-code': {
     command: 'claude',
     buildArgs: claudeCode.buildArgs,
+    buildReadOnlyArgs: claudeCode.buildReadOnlyArgs,
     parseLine: claudeCode.parseLine,
     options: AGENT_OPTIONS['claude-code'],
   },
   opencode: {
     command: 'opencode',
     buildArgs: opencode.buildArgs,
+    buildReadOnlyArgs: opencode.buildReadOnlyArgs,
     parseLine: opencode.parseLine,
     options: AGENT_OPTIONS.opencode,
   },

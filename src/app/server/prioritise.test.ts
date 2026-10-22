@@ -5,8 +5,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearPrCache } from '../../core/git-pr/pr';
 import { formatEntityFile } from '../../core/serialize/entity-file';
 import type { PlanEntry } from '../../types/index';
+import type { AgentTask } from './agent';
 import { createAgentManager } from './agent';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from './prioritise';
+
+// Mirrors routes/content/ideas.ts's retry adaptor: binds a retry to the first
+// attempt's task instead of opening a second one (IDEA-312).
+function prioritisePrompt(manager: ReturnType<typeof createAgentManager>) {
+  let task: AgentTask | undefined;
+  return (prompt: string, retryReason?: string): Promise<string> => {
+    if (retryReason !== undefined && task) {
+      const reused = task;
+      task = undefined;
+      return manager.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+        task: reused,
+        retryReason,
+      });
+    }
+    return manager.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+      onTask: (t) => {
+        task = t;
+      },
+    });
+  };
+}
 
 vi.mock('./local-adapters', () => ({
   claudeAuthStatus: vi.fn(() => Promise.resolve(null)),
@@ -52,6 +74,7 @@ vi.mock('./agents', () => {
       return fakeReadOnlyAgentPath();
     },
     buildArgs: () => [],
+    buildReadOnlyArgs: () => [],
     parseLine: (line: string) => ({ text: line.trim() }),
     options: {},
   };
@@ -293,7 +316,7 @@ describe('agent.runPrioritise through getPrioritiseVerdict (IDEA-312)', () => {
     const root = tmpRoot();
     const manager = createAgentManager(root);
 
-    const verdict = await getPrioritiseVerdict(worklist, '', manager.runPrioritise);
+    const verdict = await getPrioritiseVerdict(worklist, '', prioritisePrompt(manager));
 
     expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
     const tasks = manager.getStatus().filter((t) => t.taskKind === 'prioritise');

@@ -35,7 +35,7 @@ async function runChatReply(
       thread,
       { entities: entries, taskLog, agentStatus: agent.getStatus() },
       {
-        runPrompt: agent.runChatReply,
+        runPrompt: (prompt) => agent.runReadOnlyPrompt('chat', prompt, 'Project chat'),
         createIdea: (title, content) => createIdea(root, { title, content }),
         applyToEntity: async (entityId, feedbackText) => {
           const result = await applyFeedbackMessage(

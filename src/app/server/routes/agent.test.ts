@@ -159,7 +159,7 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
 describe('POST /api/agent/feedback-message resuming a question-parked run', () => {
   it('resolves the open question and resumes a run parked on it once the reply answers it', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({ reply: 'Go ahead and read it.', answersQuestion: true }),
     );
     const resumeQuestionParkedTasks = vi.fn(
@@ -171,7 +171,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: { runChecksAndWait } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
 
@@ -196,14 +196,14 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
       join(root, 'papercamp', 'chat.md'),
       '### Thread\n- [ ] 2026-08-04 [question] [agent] [[IDEA-1]] which auth flow should this use?\n',
     );
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({ reply: 'Go ahead and read it.', answersQuestion: true }),
     );
     const resumeQuestionParkedTasks = vi.fn(async () => ({ resumed: true }));
 
     const { res } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: { runChecksAndWait: vi.fn(async () => []) } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
 
@@ -215,7 +215,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
 
   it('does not resume anything when the reply does not answer the open question', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
     const resumeQuestionParkedTasks = vi.fn(
       async (_planId: string, _runProjectChecks?: () => Promise<CheckName[]>) => ({
         resumed: false,
@@ -224,7 +224,7 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
 
@@ -242,11 +242,11 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
 describe('POST /api/agent/feedback-message reply notification', () => {
   it('appends an unread reply notification carrying the agent reply text', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify({ reply: 'Noted, thanks.' }));
 
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
 
@@ -283,7 +283,7 @@ describe('POST /api/agent/feedback-message reply notification', () => {
 describe('POST /api/agent/feedback-message auto-launching fixes', () => {
   it('fires the run-all path once a reply records a new open fix on a reviewed plan', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({
         reply: 'Fixed the typo.',
         edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
@@ -296,7 +296,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: { runChecksAndWait } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
@@ -320,14 +320,14 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
   it('does not fire the run-all path when the reply adds no open fix', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Just noting this.' }));
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify({ reply: 'Just noting this.' }));
     const startRunAllPhases = vi.fn(
       (_plan: PlanEntry, _runProjectChecks?: () => Promise<CheckName[]>) => ({ ok: true }) as const,
     );
 
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'Just an aside.' })), res);
@@ -341,7 +341,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
   it('does not re-trigger on a reply that only answers a parked question, even alongside resume', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({ reply: 'Go ahead and read it.', answersQuestion: true }),
     );
     const resumeQuestionParkedTasks = vi.fn(async () => ({ resumed: true }));
@@ -352,7 +352,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
       agent: {
-        runFeedbackReply,
+        runReadOnlyPrompt,
         resumeQuestionParkedTasks,
         startRunAllPhases,
       } as unknown as RouteContext['agent'],
@@ -367,7 +367,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
   it('does not crash and still records the fix when an agent is already busy on the plan', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({
         reply: 'Fixed the typo.',
         edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
@@ -380,7 +380,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
       } as unknown as RouteContext['checks'],
@@ -400,7 +400,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
   // current branch auto-launches like any other.
   it('auto-launches even when another plan owns the current branch', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({
         reply: 'Fixed the typo.',
         edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
@@ -412,7 +412,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
       } as unknown as RouteContext['checks'],
@@ -426,7 +426,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
   it('commits the feedback edit before launching the fixes run', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({
         reply: 'Fixed the typo.',
         edit: { phases: [{ op: 'add', text: 'Fix the typo' }] },
@@ -445,7 +445,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
       } as unknown as RouteContext['checks'],
@@ -463,7 +463,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
 describe('POST /api/agent/feedback-message spawning a fix from a closed idea', () => {
   it('spawns a new linked fix entity instead of reopening a done plan', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () =>
+    const runReadOnlyPrompt = vi.fn(async () =>
       JSON.stringify({
         reply: 'Good catch.',
         edit: { phases: [{ op: 'add', text: 'Fix the regression' }] },
@@ -476,7 +476,7 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
 
     const { res, status, json } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {
         runChecksAndWait: vi.fn(async () => [] as CheckName[]),
       } as unknown as RouteContext['checks'],
@@ -504,12 +504,12 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
 
   it('does not spawn a fix when the reply adds no phase', async () => {
     const root = await makeRoot();
-    const runFeedbackReply = vi.fn(async () => JSON.stringify({ reply: 'Just noting this.' }));
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify({ reply: 'Just noting this.' }));
     const startRunAllPhases = vi.fn(() => ({ ok: true }) as const);
 
     const { res, status } = fakeRes();
     await route(root, '/api/agent/feedback-message', {
-      agent: { runFeedbackReply, startRunAllPhases } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt, startRunAllPhases } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'Just an aside.' })), res);

@@ -22,6 +22,7 @@ import {
   todayDateString,
 } from '@/core/serialize';
 import type { NightSuggestionEntry, RoadmapItem, SuggestionEntry } from '@/types/index';
+import type { AgentTask } from '../../agent';
 import { campFile, readMaybe } from '../../helpers';
 import { readBody, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
@@ -42,6 +43,25 @@ function nightFindingBody(finding: NightSuggestionEntry): string {
 }
 
 export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
+  // getPrioritiseVerdict's retry calls this again for the same click — reusing
+  // the first call's task instead of starting a new one (IDEA-312).
+  let prioritiseTask: AgentTask | undefined;
+  const runPrioritisePrompt = (prompt: string, retryReason?: string): Promise<string> => {
+    if (retryReason !== undefined && prioritiseTask) {
+      const task = prioritiseTask;
+      prioritiseTask = undefined;
+      return agent.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+        task,
+        retryReason,
+      });
+    }
+    return agent.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+      onTask: (task) => {
+        prioritiseTask = task;
+      },
+    });
+  };
+
   return [
     {
       method: 'POST',
@@ -522,7 +542,9 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
             sendJson(res, 400, { error: 'text is required' });
             return;
           }
-          const verdict = await checkIdeaOverlap(text, candidates ?? [], agent.runOverlapCheck);
+          const verdict = await checkIdeaOverlap(text, candidates ?? [], (prompt) =>
+            agent.runReadOnlyPrompt('overlap-check', prompt, 'Check idea overlap'),
+          );
           sendJson(res, 200, verdict);
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -539,7 +561,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         try {
           const { work } = await readCorpus(root, { live: true });
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
-          const verdict = await getPrioritiseVerdict(work, roadmapText, agent.runPrioritise);
+          const verdict = await getPrioritiseVerdict(work, roadmapText, runPrioritisePrompt);
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
           if (moved.length > 0 || annotated.length > 0) activity.notifyChanged();
           sendJson(res, 200, {

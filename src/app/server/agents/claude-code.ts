@@ -158,6 +158,15 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   return args;
 }
 
+// Must never pick up the shared `--permission-mode auto` flag, since a read-only
+// prompt only reads a prompt on stdin.
+export function buildReadOnlyArgs(opts?: AgentRunOptions): string[] {
+  const args = ['-p', '--output-format', 'json'];
+  if (opts?.model) args.push('--model', opts.model);
+  if (opts?.effort) args.push('--effort', opts.effort);
+  return args;
+}
+
 /** Shape confirmed by a live stream-json smoke test (decisions.md), not --help docs.
  *  Unknown subtypes fall through to a generic status line since new ones can appear. */
 export function parseLine(line: string): ParsedAgentLine | null {

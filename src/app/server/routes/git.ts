@@ -25,7 +25,11 @@ function syncFailurePayload(result: GitSyncFailure, agent: AgentManager) {
       conflictPrompt: result.conflictPrompt,
     };
   }
-  const recovery = agent.startGitSyncRecovery(result.recoveryPrompt);
+  const recovery = agent.launch(
+    'sync',
+    { planTitle: 'Recover sync to main' },
+    result.recoveryPrompt,
+  );
   return {
     error: result.message,
     stage: result.stage,
@@ -302,7 +306,11 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 400, { error: 'prompt is required' });
             return;
           }
-          const result = agent.startResolveConflict(prompt);
+          const result = agent.launch(
+            'resolve-conflict',
+            { planTitle: 'Resolve rebase conflict' },
+            prompt,
+          );
           sendJson(res, result.ok ? 200 : 409, result);
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -434,7 +442,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
           const suggestion = await suggestCommitMessage(
             diffText,
             activePlan?.id,
-            agent.runCommitSuggest,
+            (prompt) => agent.runReadOnlyPrompt('commit-suggest', prompt, 'Suggest commit message'),
             await readCommitConvention(root),
           );
           sendJson(res, 200, suggestion);

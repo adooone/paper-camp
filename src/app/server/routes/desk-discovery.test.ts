@@ -41,27 +41,26 @@ describe('POST /api/desk/discover', () => {
       checks: [{ name: 'Tests', cmd: 'vitest run' }],
       ci: { repo: 'acme/widgets' },
     };
-    const runDeskDiscovery = vi.fn(async () => proposal);
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify(proposal));
     const { res, status, json } = fakeRes();
     await route('/tmp', {
-      agent: { runDeskDiscovery } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],
     }).handle(fakeReq(), res);
     expect(status()).toBe(200);
     expect(json()).toEqual({ proposal });
-    expect(runDeskDiscovery).toHaveBeenCalledOnce();
+    expect(runReadOnlyPrompt).toHaveBeenCalledOnce();
+    expect(runReadOnlyPrompt.mock.calls[0]?.[0]).toBe('desk-discovery');
   });
 
   it('returns 400 when the agent errors', async () => {
-    const runDeskDiscovery = vi.fn(async () => {
-      throw new Error('Agent did not return valid JSON for the desk config');
-    });
+    const runReadOnlyPrompt = vi.fn(async () => 'not json');
     const { res, status, json } = fakeRes();
     await route('/tmp', {
-      agent: { runDeskDiscovery } as unknown as RouteContext['agent'],
+      agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],
     }).handle(fakeReq(), res);
     expect(status()).toBe(400);
     expect(json()).toEqual({
-      error: 'Agent did not return valid JSON for the desk config',
+      error: 'Agent did not return a parseable desk config',
     });
   });
 });

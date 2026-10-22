@@ -57,6 +57,10 @@ vi.mock('./agents', () => {
     },
     buildArgs: (prompt: string, opts?: { resume?: string }) =>
       agentScript.buildArgs ? agentScript.buildArgs(prompt, opts) : ['-e', agentScript.current],
+    // runReadOnlyPrompt builds no prompt arg (it pipes the prompt on stdin), so
+    // the fake adapter's read-only args are argv-only — the script itself is
+    // picked by `command` above (agentScript.readOnlyCommand).
+    buildReadOnlyArgs: () => [],
     parseLine: (line: string) => {
       const text = line.trim();
       if (!text) return null;
@@ -233,6 +237,84 @@ writeFileSync(
 chmodSync(readOnlyCommand, 0o755);
 
 type Manager = ReturnType<typeof createAgentManager>;
+
+// Test-only shims for the removed start*/run* wrappers (IDEA-309) — each call
+// through the manager's `launch`/`runReadOnlyPrompt` primitives the exact way
+// its route caller now does, so the tests below keep exercising the same scope.
+function startForPlan(
+  manager: Manager,
+  plan: PlanEntry,
+  prompt: string,
+  taskKind: 'audit' | 'reconcile' = 'audit',
+) {
+  return manager.launch(
+    taskKind,
+    { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+    prompt,
+    taskKind === 'reconcile'
+      ? {
+          reconcileBaseline: JSON.stringify({
+            body: plan.body,
+            phases: plan.phases.map((p) => p.text),
+          }),
+        }
+      : { planBaseline: { phases: plan.phases.length, log: plan.log?.length ?? 0 } },
+  );
+}
+
+function startForIdea(manager: Manager, idea: ReturnType<typeof entityToIdea>, prompt: string) {
+  if (!idea.id)
+    return { ok: false as const, error: 'Idea has no id to link a drafted plan back to' };
+  return manager.launch(
+    'draft',
+    { planTitle: `Draft plan for ${idea.id}`, notificationTitle: idea.title },
+    prompt,
+    { ideaId: idea.id },
+  );
+}
+
+function startForIdeaExtend(
+  manager: Manager,
+  idea: ReturnType<typeof entityToIdea>,
+  prompt: string,
+) {
+  if (!idea.id) return { ok: false as const, error: 'Idea has no id to extend' };
+  return manager.launch(
+    'extend',
+    { planTitle: `Extend ${idea.id}`, notificationTitle: idea.title },
+    prompt,
+    { ideaId: idea.id, ideaLogBaseline: idea.log?.length ?? 0 },
+  );
+}
+
+function startFixReview(
+  manager: Manager,
+  plan: PlanEntry,
+  prompt: string,
+  threads: ReviewThread[],
+) {
+  return manager.launch(
+    'fix-review',
+    { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+    prompt,
+    { fixReviewThreads: threads },
+  );
+}
+
+function startPrReview(
+  manager: Manager,
+  plan: PlanEntry,
+  prompt: string,
+  headSha: string,
+  prUrl: string,
+) {
+  return manager.launch(
+    'pr-review',
+    { planTitle: plan.title, planId: plan.id, agentOverride: plan.agent },
+    prompt,
+    { prReviewSha: headSha, prReviewUrl: prUrl },
+  );
+}
 
 // Most-recently-launched task — mirrors the old single-slot getStatus() shape for
 // tests that only ever have one task in flight at a time.
@@ -822,8 +904,8 @@ Plan body.
     // helpers behind Suggest/Feedback. None of these carry an exclusive
     // write-set, so they must never preempt the run-all's checkpoints.
     const boardPressure = Promise.allSettled([
-      manager.runCommitSuggest('prompt'),
-      manager.runFeedbackReply('prompt', 'Feedback'),
+      manager.runReadOnlyPrompt('commit-suggest', 'prompt', 'Suggest commit message'),
+      manager.runReadOnlyPrompt('feedback', 'prompt', 'Feedback'),
     ]);
 
     // Let every phase (and the board-pressure helpers, which share the same
@@ -1065,12 +1147,12 @@ describe('write-set collision gate', () => {
 
     const manager = createAgentManager(root);
 
-    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(startForPlan(manager, plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
     // Different entity: admitted even though a reconcile is already running (the
     // write-set gate replaces the old blanket isBusy() flag).
-    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(startForPlan(manager, plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
     // Same entity as the now-current task: still rejected.
-    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({
+    expect(startForPlan(manager, plan2, 'prompt', 'reconcile')).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -1091,12 +1173,12 @@ describe('write-set collision gate', () => {
 
     // Two disjoint entity-writers running at once: IDEA-1 (launched first) and
     // IDEA-2 (launched second, now the most-recently-launched task).
-    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
-    expect(manager.startForPlan(plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(startForPlan(manager, plan1, 'prompt', 'reconcile')).toEqual({ ok: true });
+    expect(startForPlan(manager, plan2, 'prompt', 'reconcile')).toEqual({ ok: true });
     // A second IDEA-1 reconcile must still collide with the *older* running task,
     // even though it's no longer the most recently launched one — the gate has to
     // check every running task in the registry, not just the last slot.
-    expect(manager.startForPlan(plan1, 'prompt', 'reconcile')).toEqual({
+    expect(startForPlan(manager, plan1, 'prompt', 'reconcile')).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -1107,7 +1189,7 @@ describe('write-set collision gate', () => {
     const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
-    expect(await manager.startSuggest('prompt')).toEqual({
+    expect(await manager.launch('suggest', { planTitle: 'Suggest ideas' }, 'prompt')).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -1123,7 +1205,9 @@ describe('write-set collision gate', () => {
     // Fire-and-forget: runCommitSuggest registers and starts its task synchronously,
     // before the (broken-on-purpose, since this manager only mocks the phase
     // adapter) child process resolves the promise — swallow the rejection.
-    const pending = manager.runCommitSuggest('prompt').catch(() => undefined);
+    const pending = manager
+      .runReadOnlyPrompt('commit-suggest', 'prompt', 'Suggest commit message')
+      .catch(() => undefined);
     const readOnlyTask = manager.getStatus().find((t) => t.taskKind === 'commit-suggest');
     expect(readOnlyTask?.status).toBe('running');
 
@@ -1167,12 +1251,16 @@ describe('startGitSyncRecovery', () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
 
-    expect(manager.startGitSyncRecovery('resolve the conflict')).toEqual({ ok: true });
+    expect(
+      manager.launch('sync', { planTitle: 'Recover sync to main' }, 'resolve the conflict'),
+    ).toEqual({ ok: true });
     expect(currentStatus(manager)).toMatchObject({ taskKind: 'sync', status: 'running' });
 
     // Exclusive kind: a second sync recovery (or any other exclusive launch)
     // must not run concurrently with the first.
-    expect(manager.startGitSyncRecovery('resolve another conflict')).toEqual({
+    expect(
+      manager.launch('sync', { planTitle: 'Recover sync to main' }, 'resolve another conflict'),
+    ).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -1186,14 +1274,26 @@ describe('startResolveConflict', () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
 
-    expect(manager.startResolveConflict('resolve the rebase conflict')).toEqual({ ok: true });
+    expect(
+      manager.launch(
+        'resolve-conflict',
+        { planTitle: 'Resolve rebase conflict' },
+        'resolve the rebase conflict',
+      ),
+    ).toEqual({ ok: true });
     expect(currentStatus(manager)).toMatchObject({
       taskKind: 'resolve-conflict',
       status: 'running',
     });
 
     // Exclusive kind: a second resolve-conflict launch must not run concurrently.
-    expect(manager.startResolveConflict('resolve another conflict')).toEqual({
+    expect(
+      manager.launch(
+        'resolve-conflict',
+        { planTitle: 'Resolve rebase conflict' },
+        'resolve another conflict',
+      ),
+    ).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -1556,7 +1656,9 @@ describe('runCommitSuggest', () => {
     authStatus.current = { loggedIn: false, authMethod: null, apiProvider: null };
     const manager = createAgentManager(root);
 
-    await expect(manager.runCommitSuggest('prompt')).rejects.toMatchObject({ kind: 'auth' });
+    await expect(
+      manager.runReadOnlyPrompt('commit-suggest', 'prompt', 'Suggest commit message'),
+    ).rejects.toMatchObject({ kind: 'auth' });
   });
 
   it('rejects without a kind for a generic failure', async () => {
@@ -1564,7 +1666,9 @@ describe('runCommitSuggest', () => {
     agentScript.current = 'process.exit(1)';
     const manager = createAgentManager(root);
 
-    const err = (await manager.runCommitSuggest('prompt').catch((e) => e)) as { kind?: string };
+    const err = (await manager
+      .runReadOnlyPrompt('commit-suggest', 'prompt', 'Suggest commit message')
+      .catch((e) => e)) as { kind?: string };
     expect(err).toBeInstanceOf(Error);
     expect(err.kind).toBeUndefined();
   });
@@ -1583,7 +1687,7 @@ describe('runReadOnlyPrompt output (IDEA-312)', () => {
     process.env.READONLY_STDOUT = 'order: IDEA-1, IDEA-2 — IDEA-2 blocks on nothing';
     const manager = createAgentManager(root);
 
-    const result = await manager.runPrioritise('prompt');
+    const result = await manager.runReadOnlyPrompt('prioritise', 'prompt', 'Prioritise queue');
 
     expect(result).toBe('order: IDEA-1, IDEA-2 — IDEA-2 blocks on nothing');
     expect(currentStatus(manager)?.lines).toContain(
@@ -1597,9 +1701,9 @@ describe('runReadOnlyPrompt output (IDEA-312)', () => {
     process.env.READONLY_EXIT = '1';
     const manager = createAgentManager(root);
 
-    await expect(manager.runPrioritise('prompt')).rejects.toThrow(
-      'Agent verdict was not valid JSON',
-    );
+    await expect(
+      manager.runReadOnlyPrompt('prioritise', 'prompt', 'Prioritise queue'),
+    ).rejects.toThrow('Agent verdict was not valid JSON');
     expect(currentStatus(manager)?.lines.join('\n')).toContain('Agent verdict was not valid JSON');
   });
 });
@@ -1613,7 +1717,7 @@ describe('runChatReply (IDEA-306)', () => {
     const { root } = await makeRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
 
-    const result = await manager.runChatReply('prompt');
+    const result = await manager.runReadOnlyPrompt('chat', 'prompt', 'Project chat');
 
     expect(result).toBe('hi there');
     expect(manager.getStatus()).toEqual([]);
@@ -1897,7 +2001,7 @@ Idea body.
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    manager.startForIdea(idea, 'draft prompt');
+    startForIdea(manager, idea, 'draft prompt');
     expect(await waitForStatus(manager, settled)).toBe('done');
 
     const [entry] = await pollNotifications(root);
@@ -1910,7 +2014,7 @@ Idea body.
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    manager.startForIdeaExtend(idea, 'extend prompt');
+    startForIdeaExtend(manager, idea, 'extend prompt');
     expect(await waitForStatus(manager, settled)).toBe('done');
 
     const [entry] = await pollNotifications(root);
@@ -1951,7 +2055,7 @@ describe('startFixReview', () => {
     agentScript.current = reportScript(VERDICT);
     const manager = createAgentManager(root);
 
-    const result = manager.startFixReview(plan, 'fix these comments', THREADS);
+    const result = startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(result).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
@@ -1976,7 +2080,7 @@ describe('startFixReview', () => {
     ].join('\n');
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
     expect(manager.getFixReviewResult()).toEqual({
@@ -1998,7 +2102,7 @@ describe('startFixReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     // Evaluating every comment and correctly rejecting them all IS the job done.
     expect(currentStatus(manager)?.lines.join('\n')).not.toContain('verify manually');
@@ -2011,7 +2115,7 @@ describe('startFixReview', () => {
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
@@ -2035,7 +2139,7 @@ describe('startFixReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
@@ -2056,7 +2160,7 @@ describe('startFixReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
@@ -2077,7 +2181,7 @@ describe('startFixReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startFixReview(plan, 'fix these comments', THREADS);
+    startFixReview(manager, plan, 'fix these comments', THREADS);
     expect(await waitForStatus(manager, settled)).toBe('done');
     const start = Date.now();
     while (
@@ -2094,7 +2198,7 @@ describe('startFixReview', () => {
     const manager = createAgentManager(root);
 
     expect(manager.start(plan, 0)).toEqual({ ok: true });
-    expect(manager.startFixReview(plan, 'fix these comments', THREADS)).toEqual({
+    expect(startFixReview(manager, plan, 'fix these comments', THREADS)).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -2115,7 +2219,7 @@ describe('startPrReview', () => {
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    expect(manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL)).toEqual({
+    expect(startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL)).toEqual({
       ok: true,
     });
     expect(currentStatus(manager)).toMatchObject({ taskKind: 'pr-review', status: 'running' });
@@ -2132,7 +2236,7 @@ describe('startPrReview', () => {
     agentScript.current = 'process.exit(1)';
     const manager = createAgentManager(root);
 
-    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('error');
 
     const { readReviewedShas } = await import('./pr-review-state');
@@ -2144,7 +2248,7 @@ describe('startPrReview', () => {
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
 
     const { readReviewedShas } = await import('./pr-review-state');
@@ -2162,7 +2266,7 @@ describe('startPrReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('done');
 
     const { readFile } = await import('node:fs/promises');
@@ -2186,7 +2290,7 @@ describe('startPrReview', () => {
     });
     const manager = createAgentManager(root);
 
-    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('error');
     expect(currentStatus(manager)?.lines.join('\n')).toContain('GitHub post failed');
 
@@ -2207,13 +2311,13 @@ describe('startPrReview', () => {
     const { readReviewedShas } = await import('./pr-review-state');
 
     for (let i = 0; i < 2; i++) {
-      manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+      startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
       expect(await waitForStatus(manager, settled)).toBe('error');
       expect(currentStatus(manager)?.lines.join('\n')).not.toContain('Giving up');
       expect(await readReviewedShas(root)).toEqual({});
     }
 
-    manager.startPrReview(plan, 'review this diff', 'sha-abc', PR_URL);
+    startPrReview(manager, plan, 'review this diff', 'sha-abc', PR_URL);
     expect(await waitForStatus(manager, settled)).toBe('error');
     expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'Giving up after 3 consecutive delivery failures',
@@ -2225,10 +2329,10 @@ describe('startPrReview', () => {
     const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
     const manager = createAgentManager(root);
 
-    expect(manager.startPrReview(plan, 'review this diff', 'sha-1', PR_URL)).toEqual({
+    expect(startPrReview(manager, plan, 'review this diff', 'sha-1', PR_URL)).toEqual({
       ok: true,
     });
-    expect(manager.startPrReview(plan, 'review this diff', 'sha-2', PR_URL)).toEqual({
+    expect(startPrReview(manager, plan, 'review this diff', 'sha-2', PR_URL)).toEqual({
       ok: false,
       error: 'An agent task is already running',
     });
@@ -2290,7 +2394,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
     agentScript.current = REWRITE_BODY;
     const manager = createAgentManager(root);
 
-    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(manager.runBatch('batch-reconcile', 'all')).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
 
@@ -2305,7 +2409,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
     agentScript.current = REWRITE_BODY;
     const manager = createAgentManager(root);
 
-    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(manager.runBatch('batch-reconcile', 'all')).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(manager.getReconcileQueue()).toHaveLength(1);
 
@@ -2318,7 +2422,7 @@ fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace('Plan body.', 'Updated pl
     agentScript.current = 'process.exit(0)';
     const manager = createAgentManager(root);
 
-    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(manager.runBatch('batch-reconcile', 'all')).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — no drift found');
     expect(manager.getReconcileQueue()).toEqual([]);
@@ -2343,7 +2447,7 @@ Plan body.
     agentScript.current = REWRITE_BODY;
     const manager = createAgentManager(root);
 
-    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(manager.runBatch('batch-reconcile', 'all')).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).toContain('[done] IDEA-1 — updated');
   });
@@ -2361,7 +2465,7 @@ Plan body.
     const { root } = await makeRoot(DONE);
     const manager = createAgentManager(root);
 
-    expect(manager.startBatchReconcile()).toEqual({ ok: true });
+    expect(manager.runBatch('batch-reconcile', 'all')).toEqual({ ok: true });
     expect(await waitForStatus(manager, settled)).toBe('done');
     expect(currentStatus(manager)?.lines.join('\n')).toContain(
       'No open ideas or plans to reconcile.',
@@ -2373,7 +2477,7 @@ Plan body.
     agentScript.current = REWRITE_BODY;
     const manager = createAgentManager(root);
 
-    manager.startBatchReconcile();
+    manager.runBatch('batch-reconcile', 'all');
     await waitForStatus(manager, settled);
 
     agentScript.current = FLIP_NEXT_CHECKBOX;
