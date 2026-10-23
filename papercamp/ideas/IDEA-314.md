@@ -114,3 +114,4 @@ capacity data.
 - [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
 - [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
 - [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
+- [ ] 2026-10-23 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
