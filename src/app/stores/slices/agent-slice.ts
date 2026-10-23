@@ -27,14 +27,14 @@ import { runDeskCheck } from '../../services/checks-api';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice, withAgentPoll } from './slice-helpers';
 
-export interface ReconcilePreview {
+interface ReconcilePreview {
   planId: string;
   before: { body: string; phases: PlanEntry['phases'] };
 }
 
 // A queued preview carries its own id: two reconciles can run against the same
 // entity, and keying removal on planId alone would dismiss both at once.
-export interface QueuedReconcile extends ReconcilePreview {
+interface QueuedReconcile extends ReconcilePreview {
   previewId: string;
 }
 

@@ -3,15 +3,10 @@ import { join } from 'node:path';
 import { appendChatMessage, formatChatFile, parseChatFile } from '@/core/chat-file';
 import {
   CorpusError,
-  type CreateIdeaInput,
-  type EntityFileInput,
-  appendThread,
   campFile,
-  createIdea,
   entityFileInput,
   fileExists,
   readMaybe,
-  resolveEntityFilePath,
   updateEntity,
   writeEntityFile,
 } from '@/core/corpus';
@@ -23,16 +18,11 @@ import {
 import type { BranchHygieneStatus, StaleBaseRef, ThreadMessage } from '@/types/index';
 
 export {
-  appendThread,
   campFile,
-  type CreateIdeaInput,
   CorpusError,
-  createIdea,
-  type EntityFileInput,
   entityFileInput,
   fileExists,
   readMaybe,
-  resolveEntityFilePath,
   updateEntity,
   writeEntityFile,
 };
@@ -41,7 +31,7 @@ export {
 export const taskLogFile = (root: string, taskId: string) =>
   join(root, 'papercamp', '.task-logs', `${taskId}.log`);
 
-export const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');
+const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');
 
 export async function readRunOrderFile(root: string): Promise<RunOrderFileEntry[]> {
   return parseRunOrderFile(await readMaybe(runOrderFilePath(root)));
@@ -51,7 +41,7 @@ export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[])
   await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
 }
 
-export const chatFilePath = (root: string) => campFile(root, 'chat.md');
+const chatFilePath = (root: string) => campFile(root, 'chat.md');
 
 export async function readChatFile(root: string): Promise<ThreadMessage[]> {
   return parseChatFile(await readMaybe(chatFilePath(root)));
@@ -61,7 +51,7 @@ export async function readChatFile(root: string): Promise<ThreadMessage[]> {
 // parked by a background run can land between a route's read and its write and be lost.
 let chatLock: Promise<unknown> = Promise.resolve();
 
-export function withChatLock<T>(fn: () => Promise<T>): Promise<T> {
+function withChatLock<T>(fn: () => Promise<T>): Promise<T> {
   const result = chatLock.then(fn, fn);
   chatLock = result.then(
     () => undefined,

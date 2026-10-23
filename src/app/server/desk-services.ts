@@ -58,7 +58,7 @@ export interface DeskServiceManagerState {
   runtimes: Map<string, RunningService>;
 }
 
-export function createEmptyServiceState(): DeskServiceManagerState {
+function createEmptyServiceState(): DeskServiceManagerState {
   return { runtimes: new Map() };
 }
 

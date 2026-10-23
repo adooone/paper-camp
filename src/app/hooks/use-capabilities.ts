@@ -19,19 +19,19 @@ export function useCapabilities(): UseCapabilitiesResult {
 }
 
 // Capabilities haven't loaded yet: don't block launches on an unknown state.
-export function hasAnyAgent(capabilities: CapabilityResult[]): boolean {
+function hasAnyAgent(capabilities: CapabilityResult[]): boolean {
   return (
     capabilities.length === 0 ||
     capabilities.some((c) => c.id.startsWith('agent:') && c.status === 'ok')
   );
 }
 
-export function ghOk(capabilities: CapabilityResult[]): boolean {
+function ghOk(capabilities: CapabilityResult[]): boolean {
   const gh = capabilities.find((c) => c.id === 'gh');
   return gh === undefined || gh.status === 'ok';
 }
 
-export function capabilityGapCount(capabilities: CapabilityResult[]): number {
+function capabilityGapCount(capabilities: CapabilityResult[]): number {
   return capabilities.filter((c) => c.status !== 'ok').length;
 }
 

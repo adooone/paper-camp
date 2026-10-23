@@ -7,7 +7,6 @@ import {
   MACHINE_PROJECTS_PATH,
   type MachineNightGateResponse,
   type MachineProjectsResponse,
-  type TailnetPeerRuntime,
 } from '@/types/index';
 import { apiUrl } from '../api-base';
 
@@ -71,19 +70,6 @@ export const fetchConnections = async (recheck = false): Promise<ConnectionResul
     if (!response.ok) return null;
     const body = (await response.json()) as { connections: ConnectionResult[] };
     return body.connections;
-  } catch {
-    return null;
-  }
-};
-
-export const fetchTailnetPeerRuntimes = async (
-  refresh = false,
-): Promise<TailnetPeerRuntime[] | null> => {
-  try {
-    const response = await fetch(apiUrl(`/api/tailnet/peers${refresh ? '?refresh=1' : ''}`));
-    if (!response.ok) return null;
-    const body = (await response.json()) as { peers: TailnetPeerRuntime[] };
-    return body.peers;
   } catch {
     return null;
   }

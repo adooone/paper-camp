@@ -10,9 +10,6 @@ import { run } from './run';
 
 const PROBE_TTL_MS = 60_000;
 
-export type { ProbeResult } from './run';
-export { run } from './run';
-
 type Plugin =
   | { kind: 'external'; def: ExternalServiceDefinition }
   | { kind: 'local'; def: LocalAdapterDefinition };

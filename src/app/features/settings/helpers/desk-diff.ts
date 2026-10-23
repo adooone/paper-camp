@@ -1,16 +1,16 @@
 import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
 
-export type ServiceChange =
+type ServiceChange =
   | { kind: 'added'; service: DeskService }
   | { kind: 'removed'; service: DeskService }
   | { kind: 'changed'; before: DeskService; after: DeskService };
 
-export type CheckChange =
+type CheckChange =
   | { kind: 'added'; check: DeskCheck }
   | { kind: 'removed'; check: DeskCheck }
   | { kind: 'changed'; before: DeskCheck; after: DeskCheck };
 
-export type CiChange =
+type CiChange =
   | { kind: 'added'; ci: DeskCi }
   | { kind: 'removed'; ci: DeskCi }
   | { kind: 'changed'; before: DeskCi; after: DeskCi };

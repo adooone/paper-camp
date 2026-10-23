@@ -33,7 +33,7 @@ const CONFIG_ALLOWLIST = [
   'package.json',
 ];
 
-export async function listConfigFiles(root: string): Promise<{ files: string[] }> {
+async function listConfigFiles(root: string): Promise<{ files: string[] }> {
   const files: string[] = [];
   for (const name of CONFIG_ALLOWLIST) {
     const content = await readMaybe(join(root, name));

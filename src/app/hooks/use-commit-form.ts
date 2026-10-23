@@ -185,4 +185,4 @@ export function useCommitForm(files: CommitFormFile[], options: UseCommitFormOpt
   };
 }
 
-export type CommitFormState = ReturnType<typeof useCommitForm>;
+type CommitFormState = ReturnType<typeof useCommitForm>;

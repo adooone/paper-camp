@@ -3,5 +3,4 @@ export * from './docs-api';
 export * from './entities-api';
 export * from './ideas-api';
 export * from './notifications-api';
-export * from './parked-questions-api';
 export * from './stats-api';

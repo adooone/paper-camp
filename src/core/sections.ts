@@ -292,5 +292,3 @@ export const THREAD_SECTION: SectionDef<ThreadMessage> = {
   parseEntries: parseThreadEntries,
   formatLines: formatThreadLines,
 };
-
-export { SUB_HEADING_RE };

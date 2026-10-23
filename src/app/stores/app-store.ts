@@ -23,8 +23,6 @@ import {
   createTaskLogSlice,
 } from './slices/task-log-slice';
 
-export type { DetailView } from './slices/plans-slice';
-
 type ResetSlice = {
   // Clears everything cached from the previous project on a runtime switch; pages
   // that need it reload on mount, same as they do today.

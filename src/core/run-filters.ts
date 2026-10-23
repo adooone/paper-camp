@@ -75,7 +75,7 @@ const RANGE_WINDOW_MS: Record<Exclude<LogDateRange, 'all'>, number> = {
   '30d': 30 * 24 * 60 * 60 * 1000,
 };
 
-export function rangeCutoffMs(range: LogDateRange, now: number = Date.now()): number {
+function rangeCutoffMs(range: LogDateRange, now: number = Date.now()): number {
   return range === 'all' ? 0 : now - RANGE_WINDOW_MS[range];
 }
 

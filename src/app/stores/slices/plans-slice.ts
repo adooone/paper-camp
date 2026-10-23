@@ -7,7 +7,7 @@ import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { IdeaStatus, PlanStatus } from '@/types/index';
 import type { SetState } from './slice-helpers';
 
-export type DetailView = 'details' | 'feedback';
+type DetailView = 'details' | 'feedback';
 
 const PLAN_FILTERS_KEY = 'plan-filters';
 const DETAIL_VIEW_KEY = 'detail-view';

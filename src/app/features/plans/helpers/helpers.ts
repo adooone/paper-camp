@@ -44,8 +44,7 @@ export const phaseProgress = (plan: PlanEntry) => itemProgress(plan.phases);
 export const phasePercentage = (plan: PlanEntry): number | null => phaseProgress(plan)?.pct ?? null;
 
 // One bar for the whole plan: phases and fixes counted together.
-export const combinedProgress = (plan: PlanEntry) =>
-  itemProgress([...plan.phases, ...(plan.fixes ?? [])]);
+const combinedProgress = (plan: PlanEntry) => itemProgress([...plan.phases, ...(plan.fixes ?? [])]);
 
 export const rollupProgress = (
   plan: PlanEntry,

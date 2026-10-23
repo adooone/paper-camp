@@ -69,19 +69,6 @@ export const fetchNightReport = async () => {
   return res.json() as Promise<{ groups: NightReportGroup[] }>;
 };
 
-// The registry holds runtimes this client is not currently pointed at, so the base
-// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
-export const fetchNightReportAt = async (baseUrl: string): Promise<NightReportGroup[] | null> => {
-  try {
-    const res = await fetch(`${baseUrl}/api/night-findings`);
-    if (!res.ok) return null;
-    const body = (await res.json()) as { groups: NightReportGroup[] };
-    return body.groups;
-  } catch {
-    return null;
-  }
-};
-
 export const promoteNightFinding = async (finding: NightSuggestionEntry) => {
   const res = await fetch(apiUrl('/api/night-findings/promote'), {
     method: 'POST',
@@ -116,18 +103,6 @@ export const fetchRoadmap = async () => {
   const res = await fetch(apiUrl('/api/roadmap'));
   if (!res.ok) throw new Error(`Failed to fetch roadmap: ${res.status}`);
   return res.json() as Promise<ResolvedRoadmap | null>;
-};
-
-// The registry holds runtimes this client is not currently pointed at, so the base
-// URL is explicit rather than taken from `apiUrl` — mirrors `fetchPackageNameAt`.
-export const fetchRoadmapAt = async (baseUrl: string): Promise<ResolvedRoadmap | null> => {
-  try {
-    const res = await fetch(`${baseUrl}/api/roadmap`);
-    if (!res.ok) return null;
-    return (await res.json()) as ResolvedRoadmap | null;
-  } catch {
-    return null;
-  }
 };
 
 export const promoteRoadmapItem = async (

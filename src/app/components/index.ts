@@ -1,11 +1,8 @@
 export { CheckboxFilterRow } from './checkbox-filter-row';
-export { CommitMessageFields } from './git/commit-message-fields';
-export type { CommitMessageFieldsState } from './git/commit-message-fields';
 export { DeliverBar } from './git/deliver-bar';
 export { GitStashSurface } from './git/git-stash-surface';
 export { DoodleIllustration } from './doodle-illustration';
 export { InlineSelect } from './inline-select';
-export { Markdown } from './markdown';
 export { PageToolbar, PageToolbarRow } from './page-toolbar';
 export { HANDWRITTEN_ACTION_CLASS, SidebarAction } from './sidebar-action';
 export { SidebarSection } from './sidebar-section';
@@ -19,5 +16,3 @@ export { RuntimeUnavailable } from './layout/runtime-unavailable';
 export { ServerReloadBanner } from './layout/server-reload-banner';
 export { SidebarShell } from './layout/sidebar-shell';
 export { StatusBar } from './layout/status-bar';
-export { StatusBarCore } from './layout/status-bar-core';
-export type { StatusBarCoreProps } from './layout/status-bar-core';

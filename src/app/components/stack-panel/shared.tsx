@@ -1,8 +1,5 @@
 import { color } from '@dendelion/folk-ui/tokens';
 
-export const sectionLabelClassName =
-  'font-display-luminari text-base font-semibold text-desk-text-muted mb-3';
-
 export const groupLabelClassName =
   'font-handwritten text-sm tracking-wide text-desk-text-muted mb-2';
 

@@ -1,6 +1,6 @@
 export type DiffLineType = 'add' | 'remove' | 'context';
 
-export interface DiffLine {
+interface DiffLine {
   type: DiffLineType;
   text: string;
   oldLine: number | null;

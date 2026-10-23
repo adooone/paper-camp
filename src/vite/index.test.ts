@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveDaemonTarget } from '../core/daemon-target';
 import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID } from '../toolbar/route-attribute';
-import { type PaperCampToolbarOptions, TOOLBAR_OFF_MESSAGE, paperCamp } from './index';
+import paperCamp, { type PaperCampToolbarOptions, TOOLBAR_OFF_MESSAGE } from './index';
 
 vi.mock('../core/daemon-target', () => ({ resolveDaemonTarget: vi.fn() }));
 

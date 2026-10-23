@@ -17,11 +17,11 @@ import type { SimilarityCandidate } from '../helpers';
 // These prompts run headless (`claude -p` / `opencode run`), so they must never ask
 // questions or wait for input; each "done" condition is checked mechanically by agent.ts's didTaskProgress.
 
-export const BREVITY_CONTRACT = `Keep phases short: 3-5 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
+const BREVITY_CONTRACT = `Keep phases short: 3-5 phases, each a one-line imperative title. Add a description only when the phase isn't self-explanatory, and keep it to one sentence. Never restate the idea's body and never summarise the work you did.`;
 
-export const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
+const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (roughly 3-6 words), no em-dash subtitles or trailing clauses — the symptom, mechanism, and detail belong in the body's first paragraph, not the title.`;
 
-export const MANUAL_PHASE_RULE =
+const MANUAL_PHASE_RULE =
   'A phase is a unit an agent runs. Anything needing a browser, a device, a human account, or a judgment call is not a phase an agent can run — put it under a `[manual]` marker (`- [ ] [manual] <title>`) or fold it into the body as acceptance, never as a bare phase.';
 
 // The shape a parked question must take (IDEA-287) — a short question plus pickable

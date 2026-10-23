@@ -29,7 +29,7 @@ export const NavLabel = ({
 
 export const SIDEBAR_WIDTH = 224;
 // Where the Stack stops overlaying and docks beside the page (utilities.css sets its widths).
-export const THREE_COLUMN_BREAKPOINT = 1199;
+const THREE_COLUMN_BREAKPOINT = 1199;
 
 // Keep in sync with the min-[1199px]:pr-[var(--pc-stack-width)] wrapper (Tailwind needs a literal).
 export const LARGE_SCREEN_QUERY = `(min-width: ${THREE_COLUMN_BREAKPOINT}px)`;

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-export interface ProbeResult {
+interface ProbeResult {
   code: number | null;
   stdout: string;
   stderr: string;

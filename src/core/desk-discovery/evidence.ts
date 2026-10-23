@@ -6,18 +6,18 @@ import { runGit } from '../git-log';
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-export interface ProjectScript {
+interface ProjectScript {
   name: string;
   cmd: string;
 }
 
-export interface NonJsManifest {
+interface NonJsManifest {
   kind: 'cargo' | 'python' | 'go' | 'make';
   path: string;
   targets: string[];
 }
 
-export interface CiStep {
+interface CiStep {
   workflow: string;
   job: string;
   step: string;

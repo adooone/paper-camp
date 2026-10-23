@@ -99,7 +99,7 @@ export function logTaskStart(root: string, task: StartingTask): Promise<void> {
   return run;
 }
 
-export const INTERRUPTED_REASON = 'the server stopped while this task was running';
+const INTERRUPTED_REASON = 'the server stopped while this task was running';
 
 // Run once per boot: any entry with a start and no end was still running when
 // the process that owned it died. Returns the pre-update entries to notify on.

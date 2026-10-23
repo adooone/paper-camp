@@ -6,7 +6,7 @@ export const TAILNET_NOT_RUNNING_MESSAGE =
 
 export const TAILNET_HTTPS_CERTS_ADMIN_LINK = 'https://login.tailscale.com/admin/dns';
 
-export const TAILNET_HTTPS_CERTS_MISSING_MESSAGE = `Tailnet HTTPS certificates are not enabled. Enable them once in the Tailscale admin console (${TAILNET_HTTPS_CERTS_ADMIN_LINK}) under DNS → HTTPS Certificates, then rerun with \`--tailnet\`.`;
+const TAILNET_HTTPS_CERTS_MISSING_MESSAGE = `Tailnet HTTPS certificates are not enabled. Enable them once in the Tailscale admin console (${TAILNET_HTTPS_CERTS_ADMIN_LINK}) under DNS → HTTPS Certificates, then rerun with \`--tailnet\`.`;
 
 // `tailscale serve`/`cert` report one of these verbatim, checked against the installed
 // binary — there is no distinct error code to switch on.

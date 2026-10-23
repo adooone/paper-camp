@@ -27,7 +27,7 @@ const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
  * Thrown by assertCleanWorkingTree so a caller can refuse before merging, rather
  * than landing a squash-merge and only then failing to switch to main.
  */
-export class DirtyWorkingTreeError extends Error {
+class DirtyWorkingTreeError extends Error {
   files: string[];
 
   constructor(files: string[]) {
@@ -60,7 +60,7 @@ export interface StatusSnapshot {
 
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
-export class RebaseConflictError extends Error {
+class RebaseConflictError extends Error {
   ref: string;
   conflictedFiles: string[];
   conflictedContent: { path: string; content: string }[];

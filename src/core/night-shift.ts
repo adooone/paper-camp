@@ -1,7 +1,7 @@
 import type { MachineNightGateResponse, NightHealthMap } from '../types/index';
 import { selectNightChunks } from './night-health';
 
-export const NIGHT_TICK_MS = 5 * 60 * 1000;
+const NIGHT_TICK_MS = 5 * 60 * 1000;
 
 // Shared with the Settings *Run a pass now* route, so a pass started by hand and
 // one started by the shift never review the same repo at once.
@@ -16,7 +16,7 @@ export function markNightPass(root: string, running: boolean): void {
   else passesInFlight.delete(root);
 }
 
-export interface NightShiftProject {
+interface NightShiftProject {
   slug: string;
   path: string;
 }

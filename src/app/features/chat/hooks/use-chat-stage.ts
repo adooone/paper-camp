@@ -2,7 +2,7 @@ import type { ActivityMessage } from '@/app/services/activity-stream';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { useEffect, useState } from 'react';
 
-export type ChatStage = 'starting' | 'reading' | 'deciding' | 'filing' | 'posting' | 'answering';
+type ChatStage = 'starting' | 'reading' | 'deciding' | 'filing' | 'posting' | 'answering';
 
 const CHAT_STAGES = new Set<string>([
   'reading',

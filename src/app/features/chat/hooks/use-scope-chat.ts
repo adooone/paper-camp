@@ -4,7 +4,7 @@ import { fetchChatAt } from '@/app/services/content/chat-api';
 import type { ThreadMessage } from '@/types/index';
 import { useEffect, useState } from 'react';
 
-export interface ScopeChatData {
+interface ScopeChatData {
   project: ScopeRow;
   messages: ThreadMessage[];
 }

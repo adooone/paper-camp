@@ -66,7 +66,7 @@ function emptyUsage(): NightPassUsage {
 
 export type SpawnAgentFn = (args: string[], cwd: string) => ChildProcess;
 
-export function spawnClaude(args: string[], cwd: string): ChildProcess {
+function spawnClaude(args: string[], cwd: string): ChildProcess {
   return spawn('claude', args, { cwd, stdio: ['pipe', 'pipe', 'ignore'] });
 }
 

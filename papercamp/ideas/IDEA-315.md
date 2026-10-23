@@ -2,7 +2,7 @@
 id: IDEA-315
 title: Small fixes from the review pass
 type: fix
-status: planned
+status: review
 created: 2026-10-21
 tags:
   - app
@@ -108,9 +108,10 @@ init --settings`, run by hand.
       Diagnose the post-update restart under `asRealCliEntry`, fix code or
       stub, recursive temp-dir cleanup; full `vitest run` green.
       run: 10m59s · 66 in · 18.6k out · sonnet-5 · sess:7be30f81-0d9b-41ce-9a29-4d5502f30faf
-- [ ] knip clean
+- [x] knip clean
       Unused exports and types removed or unexported; `pnpm knip` reports
       nothing.
+      run: 17m46s · 268 in · 50.8k out · sonnet-5 · sess:7be30f81-0d9b-41ce-9a29-4d5502f30faf
 
 ### Thread
 - [x] 2026-10-21 [log] [agent] Run order: Smallest, most isolated set of fixes (ticks, notices, dismiss, knip) with no stated blockers, best left last as mop-up after the larger refactors settle the code it touches.

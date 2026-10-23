@@ -76,4 +76,4 @@ export const useGitPage = () => {
   };
 };
 
-export type GitPageState = ReturnType<typeof useGitPage>;
+type GitPageState = ReturnType<typeof useGitPage>;

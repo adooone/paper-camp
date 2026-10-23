@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { machineConfigDir } from './machine-registry';
 
-export interface WebPushSubscription {
+interface WebPushSubscription {
   endpoint: string;
   keys: { p256dh: string; auth: string };
 }

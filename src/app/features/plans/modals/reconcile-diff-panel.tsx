@@ -17,7 +17,7 @@ interface DiffTextProps {
   tokens: DiffToken[];
 }
 
-export const DiffText = ({ tokens }: DiffTextProps) => (
+const DiffText = ({ tokens }: DiffTextProps) => (
   <>
     {tokens.map((token, i) => {
       if (token.type === 'same') return <span key={`${token.type}-${i}`}>{token.text}</span>;
@@ -38,7 +38,7 @@ export const DiffText = ({ tokens }: DiffTextProps) => (
   </>
 );
 
-export const sectionHeading = (text: string) => (
+const sectionHeading = (text: string) => (
   <h4 className="font-display-luminari text-xs font-semibold mb-2 opacity-[0.65]">{text}</h4>
 );
 

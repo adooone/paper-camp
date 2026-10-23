@@ -167,7 +167,7 @@ export function parseGitLogOutput(
     });
 }
 
-export async function resolveUpstream(root: string): Promise<string | null> {
+async function resolveUpstream(root: string): Promise<string | null> {
   const output = await runGit(root, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
   const trimmed = output.trim();
   return trimmed || null;

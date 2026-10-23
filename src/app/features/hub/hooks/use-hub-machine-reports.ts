@@ -3,7 +3,7 @@ import { fetchMachineProjects, fetchRuntimeVersionAt } from '@/app/services/syst
 import type { MachineProjectSummary } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-export interface MachineReport {
+interface MachineReport {
   reach: MachineReachState;
   runtimeVersion: string | null;
   pendingUpdateVersion: string | null;

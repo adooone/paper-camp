@@ -15,7 +15,7 @@ export interface RunOrderEntry {
   blockedByNeeds?: boolean;
 }
 
-export function isRunOrdered(entry: Pick<RunOrderEntry, 'status' | 'blockedByNeeds'>): boolean {
+function isRunOrdered(entry: Pick<RunOrderEntry, 'status' | 'blockedByNeeds'>): boolean {
   return ORDERED_STATUSES.has(entry.status ?? '') && !entry.blockedByNeeds;
 }
 

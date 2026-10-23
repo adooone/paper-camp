@@ -10,7 +10,7 @@ import { buildLogRows } from '@/core/run-rows';
 import type { LogRow } from '@/types/index';
 import { useEffect, useState } from 'react';
 
-export interface ScopeActivityData {
+interface ScopeActivityData {
   project: ScopeRow;
   rows: LogRow[];
 }

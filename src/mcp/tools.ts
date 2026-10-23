@@ -11,8 +11,7 @@ import {
 } from '../types/index';
 import { idResultSchema, okResultSchema, parseWarningSchema, planEntrySchema } from './schemas';
 
-export const NO_DAEMON_ERROR =
-  'run `paper-camp start` and register this repo with `paper-camp init`';
+const NO_DAEMON_ERROR = 'run `paper-camp start` and register this repo with `paper-camp init`';
 
 function json(data: Record<string, unknown>) {
   return {

@@ -9,7 +9,7 @@ import {
 import type { AgentTaskState, Notification, TaskLogEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
 
-export interface ScopeRunData {
+interface ScopeRunData {
   project: ScopeRow;
   agentStatus: AgentTaskState[];
   taskLog: TaskLogEntry[];

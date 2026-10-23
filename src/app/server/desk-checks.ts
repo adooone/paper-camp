@@ -64,7 +64,7 @@ export interface DeskCheckManagerState {
   docs: DocsCheckRuntime | null;
 }
 
-export function createEmptyCheckState(): DeskCheckManagerState {
+function createEmptyCheckState(): DeskCheckManagerState {
   return { runtimes: new Map(), inFlight: new Map(), docs: null };
 }
 

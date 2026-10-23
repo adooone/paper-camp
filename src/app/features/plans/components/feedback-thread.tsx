@@ -18,7 +18,7 @@ import {
 } from '@dendelion/folk-ui';
 import { colors } from '@dendelion/folk-ui/tokens';
 
-export const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
+const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   review: 'review',
   note: 'note',
   decision: 'decision',

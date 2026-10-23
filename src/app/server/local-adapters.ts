@@ -22,7 +22,7 @@ export interface LocalAdapterDefinition {
 
 // Paper Camp never writes ~/.claude.json — it's only opened once, interactively, by
 // `claude` itself; a missing entry means the trust dialog was never accepted here.
-export async function claudeTrustDialogAccepted(root: string): Promise<boolean> {
+async function claudeTrustDialogAccepted(root: string): Promise<boolean> {
   const raw = await readMaybe(join(homedir(), '.claude.json'));
   if (!raw) return false;
   try {

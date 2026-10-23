@@ -19,8 +19,6 @@ const OSC_ESCAPE_RE = new RegExp(`${ESC}\\][^\\x07${ESC}]*(?:\\x07|${ESC}\\\\)`,
 const URL_RE = /https?:\/\/\S+/;
 const PASTE_CODE_MARKER = 'Paste code here';
 
-export type { LoginRelayPhase, LoginRelayState };
-
 export interface LoginRelayHandle {
   getState: () => LoginRelayState;
   cancel: () => void;

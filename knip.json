@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["src/cli/session-focus.ts", "src/toolbar/index.ts", "api/**/*.ts", "scripts/*.mjs"],
-  "ignore": ["src/core/parse/frontmatter-schemas.ts", "public/sw.js"]
+  "ignore": ["src/core/parse/frontmatter-schemas.ts", "public/sw.js"],
+  "ignoreBinaries": ["claude", "gh", "tailscale", "cloudflared", "start", "stamp-release"]
 }

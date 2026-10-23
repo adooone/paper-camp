@@ -12,12 +12,12 @@ function extractJsonBlock(output: string): string | null {
   return resultText.match(/\{[\s\S]*\}/)?.[0] ?? null;
 }
 
-export type ChatMove =
+type ChatMove =
   | { move: 'add_idea'; title: string; content?: string }
   | { move: 'entity'; entityId: string }
   | { move: 'answer'; reply: string };
 
-export type ChatStageEvent =
+type ChatStageEvent =
   | { stage: 'deciding' }
   | { stage: 'filing' }
   | { stage: 'posting'; entityId: string }
