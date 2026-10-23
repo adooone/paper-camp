@@ -123,6 +123,21 @@ export function invalidateCorpus(root: string): void {
   snapshotCache.delete(root);
 }
 
+// One promise chain per root — a second updateEntity/createIdea call on the same root
+// waits for the first's read-mutate-write to finish, so a hook and a dashboard write
+// landing close together never both read the pre-write file and clobber each other.
+const writeChains = new Map<string, Promise<unknown>>();
+
+function serializeWrite<T>(root: string, run: () => Promise<T>): Promise<T> {
+  const chain = writeChains.get(root) ?? Promise.resolve();
+  const result = chain.then(run);
+  writeChains.set(
+    root,
+    result.catch(() => undefined),
+  );
+  return result;
+}
+
 /** One snapshot of the whole corpus — entries, their plan/idea views, resolved PRs,
  * main-branch activity and the fingerprint they were all read at — cached per root
  * until a file under papercamp/ changes or the PR map refreshes. `live: true` lets
@@ -269,48 +284,50 @@ export async function updateEntity(
   id: string,
   mutate: (entry: EntityEntry) => Partial<EntityFileInput> | undefined,
 ): Promise<EntityEntry> {
-  const filePath = await resolveEntityFilePath(root, id);
-  if (!filePath) throw new CorpusError(`entity "${id}" not found`, 404);
-  const ideasDir = campFile(root, 'ideas');
-  const archived = filePath.startsWith(join(ideasDir, 'archive'));
-  const entry = await readEntityAt(filePath, archived);
+  return serializeWrite(root, async () => {
+    const filePath = await resolveEntityFilePath(root, id);
+    if (!filePath) throw new CorpusError(`entity "${id}" not found`, 404);
+    const ideasDir = campFile(root, 'ideas');
+    const archived = filePath.startsWith(join(ideasDir, 'archive'));
+    const entry = await readEntityAt(filePath, archived);
 
-  const overrides = mutate(entry);
-  if (overrides === undefined) return entry;
+    const overrides = mutate(entry);
+    if (overrides === undefined) return entry;
 
-  if (isClosedEntity(entry)) {
-    const addsPhases = (overrides.phases?.length ?? 0) > entry.phases.length;
-    const addsFixes = (overrides.fixes?.length ?? 0) > (entry.fixes?.length ?? 0);
-    const reopensStatus =
-      Object.hasOwn(overrides, 'status') &&
-      overrides.status !== undefined &&
-      overrides.status !== 'done' &&
-      overrides.status !== 'dropped';
-    const editsBody = Object.hasOwn(overrides, 'body');
-    if (addsPhases || addsFixes || reopensStatus || editsBody) {
-      throw new CorpusError(
-        'a done/archived entity is read-only — new work spawns its own fix entity',
-      );
+    if (isClosedEntity(entry)) {
+      const addsPhases = (overrides.phases?.length ?? 0) > entry.phases.length;
+      const addsFixes = (overrides.fixes?.length ?? 0) > (entry.fixes?.length ?? 0);
+      const reopensStatus =
+        Object.hasOwn(overrides, 'status') &&
+        overrides.status !== undefined &&
+        overrides.status !== 'done' &&
+        overrides.status !== 'dropped';
+      const editsBody = Object.hasOwn(overrides, 'body');
+      if (addsPhases || addsFixes || reopensStatus || editsBody) {
+        throw new CorpusError(
+          'a done/archived entity is read-only — new work spawns its own fix entity',
+        );
+      }
     }
-  }
 
-  const updated = overrides.updated ?? todayDateString();
-  const input = entityFileInput(entry, { ...overrides, updated });
-  await writeEntityFile(root, filePath, input);
+    const updated = overrides.updated ?? todayDateString();
+    const input = entityFileInput(entry, { ...overrides, updated });
+    await writeEntityFile(root, filePath, input);
 
-  const closesNote = entry.kind === 'note' && overrides.status === 'done';
-  if ((overrides.status === 'dropped' || closesNote) && !entry.archived) {
-    await archiveEntityFile(root, id);
-  } else if (
-    Object.hasOwn(overrides, 'status') &&
-    overrides.status === undefined &&
-    entry.archived
-  ) {
-    await unarchiveEntityFile(root, id);
-  }
+    const closesNote = entry.kind === 'note' && overrides.status === 'done';
+    if ((overrides.status === 'dropped' || closesNote) && !entry.archived) {
+      await archiveEntityFile(root, id);
+    } else if (
+      Object.hasOwn(overrides, 'status') &&
+      overrides.status === undefined &&
+      entry.archived
+    ) {
+      await unarchiveEntityFile(root, id);
+    }
 
-  invalidateCorpus(root);
-  return { ...entry, ...input } as EntityEntry;
+    invalidateCorpus(root);
+    return { ...entry, ...input } as EntityEntry;
+  });
 }
 
 /** Appends one thread message to entity `id` — the same closed-entity guard as
@@ -344,27 +361,29 @@ export interface CreateIdeaInput {
  * case the caller decides the initial status (usually left unset for a fix, so
  * derived status takes over once it has phases). */
 export async function createIdea(root: string, input: CreateIdeaInput): Promise<string> {
-  const configPath = campFile(root, 'config.json');
-  await assertCorpusWritable(configPath);
-  const id = await assignEntityId(configPath);
-  if (!id) throw new CorpusError('could not assign entity ID', 500);
-  const ideasDir = campFile(root, 'ideas');
-  await mkdir(ideasDir, { recursive: true });
-  const content = formatEntityFile({
-    id,
-    title: input.title.trim(),
-    kind: input.kind,
-    type: input.type,
-    status: input.status ?? (input.kind === undefined ? 'idea' : undefined),
-    idea: input.idea,
-    issueSource: input.issueSource,
-    created: todayDateString(),
-    subject: input.subject,
-    needs: input.needs,
-    body: input.content?.trim(),
-    phases: input.phases,
+  return serializeWrite(root, async () => {
+    const configPath = campFile(root, 'config.json');
+    await assertCorpusWritable(configPath);
+    const id = await assignEntityId(configPath);
+    if (!id) throw new CorpusError('could not assign entity ID', 500);
+    const ideasDir = campFile(root, 'ideas');
+    await mkdir(ideasDir, { recursive: true });
+    const content = formatEntityFile({
+      id,
+      title: input.title.trim(),
+      kind: input.kind,
+      type: input.type,
+      status: input.status ?? (input.kind === undefined ? 'idea' : undefined),
+      idea: input.idea,
+      issueSource: input.issueSource,
+      created: todayDateString(),
+      subject: input.subject,
+      needs: input.needs,
+      body: input.content?.trim(),
+      phases: input.phases,
+    });
+    await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
+    invalidateCorpus(root);
+    return id;
   });
-  await writeFile(join(ideasDir, `${id}.md`), `${content}\n`, 'utf-8');
-  invalidateCorpus(root);
-  return id;
 }

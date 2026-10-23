@@ -71,6 +71,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
             type?: EntityType;
             needs?: string[];
             phases?: PhaseItem[];
+            phase?: { index: number; done: boolean };
             fixes?: PhaseItem[];
             /** `null` clears the stored override (e.g. reopening a dropped plan). */
             status?: PlanStatus | null;
@@ -110,25 +111,38 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           );
         }
 
-        const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => ({
-          ...(updates.title !== undefined && { title: updates.title.trim() }),
-          ...(updates.body !== undefined && { body: updates.body }),
-          ...(updates.tags !== undefined && { tags: updates.tags }),
-          ...(updates.type !== undefined && { type: updates.type }),
-          ...(updates.needs !== undefined && { needs: updates.needs }),
-          ...(updates.status !== undefined && { status: updates.status ?? undefined }),
-          ...(updates.phases !== undefined && { phases: updates.phases }),
-          ...(updates.fixes !== undefined && { fixes: updates.fixes }),
-          ...(thread !== target.thread && { thread }),
-          ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
-          ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
-          order:
-            target.kind === 'note'
-              ? updates.order !== undefined
-                ? (updates.order ?? undefined)
-                : (entry.storedOrder ?? entry.order)
-              : undefined,
-        });
+        const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => {
+          let phases = updates.phases;
+          if (updates.phase !== undefined) {
+            const { index, done } = updates.phase;
+            if (index < 0 || index >= entry.phases.length) {
+              throw new CorpusError(
+                `phase index ${index} out of range (entity has ${entry.phases.length} phases)`,
+                400,
+              );
+            }
+            phases = entry.phases.map((p, i) => (i === index ? { ...p, done } : p));
+          }
+          return {
+            ...(updates.title !== undefined && { title: updates.title.trim() }),
+            ...(updates.body !== undefined && { body: updates.body }),
+            ...(updates.tags !== undefined && { tags: updates.tags }),
+            ...(updates.type !== undefined && { type: updates.type }),
+            ...(updates.needs !== undefined && { needs: updates.needs }),
+            ...(updates.status !== undefined && { status: updates.status ?? undefined }),
+            ...(phases !== undefined && { phases }),
+            ...(updates.fixes !== undefined && { fixes: updates.fixes }),
+            ...(thread !== target.thread && { thread }),
+            ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
+            ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
+            order:
+              target.kind === 'note'
+                ? updates.order !== undefined
+                  ? (updates.order ?? undefined)
+                  : (entry.storedOrder ?? entry.order)
+                : undefined,
+          };
+        };
 
         // Closing (done/dropped) is intentionally NOT branch-guarded: it isn't starting
         // new work, and approval typically happens after the branch is already merged.

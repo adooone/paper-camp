@@ -210,6 +210,85 @@ describe('PATCH /api/entities', () => {
     );
     expect(status()).toBe(400);
   });
+
+  it('toggles one phase by index via `phase`, leaving the others untouched', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-2.md'),
+      `---
+id: IDEA-2
+title: Active plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+- [ ] Second phase
+`,
+    );
+    const { res, status } = fakeRes();
+    await route(root, 'PATCH', '/api/entities').handle(
+      fakeReq('/api/entities?id=IDEA-2', JSON.stringify({ phase: { index: 1, done: true } })),
+      res,
+    );
+    expect(status()).toBe(200);
+
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
+    expect(planFile).toContain('- [ ] First phase');
+    expect(planFile).toContain('- [x] Second phase');
+  });
+
+  it('400s a `phase` index out of range', async () => {
+    const root = await makeRoot();
+    const { res, status } = fakeRes();
+    await route(root, 'PATCH', '/api/entities').handle(
+      fakeReq('/api/entities?id=IDEA-2', JSON.stringify({ phase: { index: 5, done: true } })),
+      res,
+    );
+    expect(status()).toBe(400);
+  });
+
+  it('lands two concurrent phase toggles on different indexes', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-2.md'),
+      `---
+id: IDEA-2
+title: Active plan
+type: feat
+status: in-progress
+created: 2026-07-01
+---
+Plan body.
+
+### Phases
+- [ ] First phase
+- [ ] Second phase
+`,
+    );
+    const patch = route(root, 'PATCH', '/api/entities');
+    const first = fakeRes();
+    const second = fakeRes();
+    await Promise.all([
+      patch.handle(
+        fakeReq('/api/entities?id=IDEA-2', JSON.stringify({ phase: { index: 0, done: true } })),
+        first.res,
+      ),
+      patch.handle(
+        fakeReq('/api/entities?id=IDEA-2', JSON.stringify({ phase: { index: 1, done: true } })),
+        second.res,
+      ),
+    ]);
+    expect(first.status()).toBe(200);
+    expect(second.status()).toBe(200);
+
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
+    expect(planFile).toContain('- [x] First phase');
+    expect(planFile).toContain('- [x] Second phase');
+  });
 });
 
 describe('PATCH /api/entities on a note', () => {

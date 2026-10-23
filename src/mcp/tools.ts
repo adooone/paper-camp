@@ -171,19 +171,8 @@ export function registerWriteTools(server: McpServer, root: string): void {
     },
     async ({ id, phaseIndex, done, status }) => {
       const client = await daemonClient(root);
-      const { entries } = await client.get<{ entries: PlanEntry[] }>('/api/plans');
-      const entry = entries.find((p) => p.id === id);
-      if (!entry) throw new Error(`entity "${id}" not found`);
-      if (phaseIndex < 0 || phaseIndex >= entry.phases.length) {
-        throw new Error(
-          `phase index ${phaseIndex} out of range (plan has ${entry.phases.length} phases)`,
-        );
-      }
-      const phases = entry.phases.map((phase, i) =>
-        i === phaseIndex ? { ...phase, done } : phase,
-      );
       await client.patch(`/api/entities?id=${encodeURIComponent(id)}`, {
-        phases,
+        phase: { index: phaseIndex, done },
         ...(status !== undefined && { status }),
       });
       return json({ ok: true });

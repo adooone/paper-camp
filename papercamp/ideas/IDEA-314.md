@@ -95,10 +95,11 @@ capacity data.
       `mainSha` in the cache key from the sha `resolveIdsWithMainActivity`
       computes; a test commits between reads.
       run: 1m54s · 40 in · 5k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
-- [ ] Serialise entity writes and send phase ops
+- [x] Serialise entity writes and send phase ops
       Per-root chain for `updateEntity`, `appendThread`, `createIdea`;
       `phase: { index, done }` on `PATCH /api/entities`; `update_phase`
       sends it; concurrent-toggle test.
+      run: 5m58s · 66 in · 14.8k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
 - [ ] MCP errors that name the cause
       Non-JSON bodies throw status and text; `fetch` failures throw
       `NO_DAEMON_ERROR`; tool tests for both.
