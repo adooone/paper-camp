@@ -548,6 +548,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
       method: 'POST',
       path: '/api/ideas/prioritise',
       handle: async (_req, res) => {
+        if (prioritiseTask) {
+          sendJson(res, 409, { error: 'A prioritise run is already in progress' });
+          return;
+        }
         try {
           const { work } = await readCorpus(root, { live: true });
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));

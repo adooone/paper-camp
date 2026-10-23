@@ -6,7 +6,7 @@ export function killWithEscalation(proc: ChildProcess, graceMs = 5000): void {
   if (!proc.killed) proc.kill('SIGTERM');
   setTimeout(() => {
     if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL');
-  }, graceMs);
+  }, graceMs).unref();
 }
 
 const STALL_CHECK_INTERVAL_MS = 1000;
@@ -21,6 +21,7 @@ export function runProcessWithTimeout(
 ): Promise<{ ok: boolean; timedOut: boolean }> {
   return new Promise((resolve) => {
     let timedOut = false;
+    let killed = false;
     const startedAt = Date.now();
     const procDone = new Promise<boolean>((res) => {
       proc.on('close', (code) => res(code === 0));
@@ -28,8 +29,9 @@ export function runProcessWithTimeout(
     });
     const checkHandle = setInterval(() => {
       const now = Date.now();
-      if (now - getLastStreamAt() >= idleMs || now - startedAt >= wallClockMs) {
+      if (!killed && (now - getLastStreamAt() >= idleMs || now - startedAt >= wallClockMs)) {
         timedOut = true;
+        killed = true;
         killWithEscalation(proc);
       }
     }, STALL_CHECK_INTERVAL_MS);

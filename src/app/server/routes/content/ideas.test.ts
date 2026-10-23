@@ -24,10 +24,11 @@ async function makeRoot(nextId: Record<string, number> = { idea: 1, ticket: 1 })
   return root;
 }
 
-function route(root: string, method: string, path: string) {
+function route(root: string, method: string, path: string, agent?: unknown) {
   const found = ideaRoutes({
     root,
     activity: { notifyChanged: () => {}, publish: () => {} },
+    agent,
   } as unknown as RouteContext).find((r) => r.method === method && r.path === path);
   if (!found) throw new Error(`no ${method} ${path} route registered`);
   return found;
@@ -249,5 +250,59 @@ describe('POST /api/tickets', () => {
       res,
     );
     expect(status()).toBe(400);
+  });
+});
+
+describe('POST /api/ideas/prioritise', () => {
+  it('answers 409 to a second click while the first run is still in flight', async () => {
+    const root = await makeRoot();
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-1.md'),
+      '---\nid: IDEA-1\ntitle: Test\ntype: fix\nstatus: planned\ncreated: 2026-01-01\n---\n',
+      'utf-8',
+    );
+
+    let resolveFirstPrompt: (value: string) => void = () => {};
+    const firstPrompt = new Promise<string>((resolve) => {
+      resolveFirstPrompt = resolve;
+    });
+    let taskSet: () => void = () => {};
+    const taskSetPromise = new Promise<void>((resolve) => {
+      taskSet = resolve;
+    });
+    const fakeAgent = {
+      runReadOnlyPrompt: (
+        _taskKind: string,
+        _prompt: string,
+        _planTitle: string,
+        opts?: { onTask?: (task: unknown) => void },
+      ) => {
+        opts?.onTask?.({});
+        taskSet();
+        return firstPrompt;
+      },
+      finalizeReadOnlyTask: async () => {},
+    };
+
+    const prioritiseRoute = ideaRoutes({
+      root,
+      activity: { notifyChanged: () => {}, publish: () => {} },
+      agent: fakeAgent,
+    } as unknown as RouteContext).find(
+      (r) => r.method === 'POST' && r.path === '/api/ideas/prioritise',
+    );
+    if (!prioritiseRoute) throw new Error('route not registered');
+
+    const firstRes = fakeRes();
+    const firstCall = prioritiseRoute.handle(fakeReq('{}'), firstRes.res);
+    await taskSetPromise;
+
+    const secondRes = fakeRes();
+    await prioritiseRoute.handle(fakeReq('{}'), secondRes.res);
+    expect(secondRes.status()).toBe(409);
+
+    resolveFirstPrompt(JSON.stringify({ order: ['IDEA-1'], why: ['because'] }));
+    await firstCall;
+    expect(firstRes.status()).toBe(200);
   });
 });

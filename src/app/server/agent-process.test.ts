@@ -99,6 +99,21 @@ describe('runProcessWithTimeout', () => {
     await expect(result).resolves.toEqual({ ok: true, timedOut: false });
   });
 
+  it('arms only one escalation timer across repeated polls past the timeout', async () => {
+    const proc = makeFakeProc();
+    const lastStreamAt = Date.now();
+    runProcessWithTimeout(
+      asChildProcess(proc),
+      30 * 60 * 1000,
+      2 * 60 * 60 * 1000,
+      () => lastStreamAt,
+    );
+    await vi.advanceTimersByTimeAsync(30 * 60 * 1000);
+    const timersAfterFirstTick = vi.getTimerCount();
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(vi.getTimerCount()).toBe(timersAfterFirstTick);
+  });
+
   it('kills at the wall-clock cap even when lastStreamAt keeps advancing', async () => {
     const proc = makeFakeProc();
     let lastStreamAt = Date.now();

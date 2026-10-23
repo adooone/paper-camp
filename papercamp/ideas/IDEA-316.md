@@ -2,7 +2,7 @@
 id: IDEA-316
 title: Leftovers from the fix review
 type: fix
-status: planned
+status: review
 created: 2026-10-23
 tags:
   - app
@@ -102,6 +102,7 @@ a timed-out run arms one SIGKILL timer.
       Merged from the right count, plan id from the snapshot,
       `neverDiverged` from the same counts; stale-branch spawn test.
       run: 10m6s · 66 in · 44.3k out · sonnet-5 · sess:d694d599-b3c9-40f8-8a43-1fd46ded4319
-- [ ] Single-flight prioritise and one kill
+- [x] Single-flight prioritise and one kill
       409 while in flight; kill-once flag and `unref` on the escalation
       timer; tests.
+      run: 6m18s · 108 in · 19k out · sonnet-5 · sess:2aa9fa8e-2b06-43db-a472-b7aedf15f1ef
