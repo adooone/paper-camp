@@ -41,6 +41,33 @@ export const markReadIdFor = (row: LogRow): string | undefined => {
   return undefined;
 };
 
+export async function markReadOrToast(
+  id: string,
+  markReadFn: (id: string) => Promise<void>,
+  onFailure: () => void,
+): Promise<void> {
+  try {
+    await markReadFn(id);
+  } catch {
+    onFailure();
+  }
+}
+
+export async function markAllReadSettled(
+  ownIds: string[],
+  foreignIds: { project: ScopeRow; id: string }[],
+  markOwn: (id: string) => Promise<void>,
+  markForeign: (project: ScopeRow, id: string) => Promise<void>,
+  onFailure: (count: number) => void,
+): Promise<void> {
+  const results = await Promise.allSettled([
+    ...ownIds.map((id) => markOwn(id)),
+    ...foreignIds.map(({ project, id }) => markForeign(project, id)),
+  ]);
+  const failed = results.filter((r) => r.status === 'rejected').length;
+  if (failed > 0) onFailure(failed);
+}
+
 export interface ScopedActivityEntry {
   row: LogRow;
   project?: ScopeRow;

@@ -81,9 +81,10 @@ a timed-out run arms one SIGKILL timer.
 `knip.json`'s `ignoreBinaries`, which names real external binaries.
 
 ### Phases
-- [ ] Mark-read failures that surface
+- [x] Mark-read failures that surface
       Catch and toast on the entry page; `allSettled` with one summary
       toast in `markAllRead`; tests for both.
+      run: 2m25s · 62 in · 10.1k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
 - [ ] Tree hash that survives an inner repo
       Directory entries hashed by path, never through `hash-object`; test
       with a nested repo.

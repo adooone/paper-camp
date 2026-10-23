@@ -2,9 +2,10 @@ import { useScope } from '@/app/features/scope';
 import { markRead } from '@/app/hooks';
 import { filterLogRows } from '@/core/run-filters';
 import { computeLogStats } from '@/core/run-stats';
+import { useToast } from '@dendelion/folk-ui';
 import { useMemo, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
-import { markReadIdFor, mergeScopedActivityEntries } from '../helpers';
+import { markAllReadSettled, markReadIdFor, mergeScopedActivityEntries } from '../helpers';
 import { useActivityFilters } from './use-activity-filters';
 import { useLogRows } from './use-run-rows';
 import { useScopeActivity } from './use-scope-activity';
@@ -12,6 +13,7 @@ import { useScopeActivity } from './use-scope-activity';
 export const useActivityPage = () => {
   const { loading, allRows, availableTypes } = useLogRows();
   const [visibleCount, setVisibleCount] = useState(LOG_PAGE_SIZE);
+  const { toast } = useToast();
 
   const scope = useScope(null);
   const allScopeRows = useMemo(() => scope.groups.flatMap((g) => g.rows), [scope.groups]);
@@ -68,10 +70,13 @@ export const useActivityPage = () => {
   const totalEntryCount =
     allRows.length + scopeActivity.data.reduce((sum, { rows }) => sum + rows.length, 0);
 
-  const markAllRead = async () => {
-    for (const id of unreadIds) await markRead(id);
-    for (const { project, id } of foreignUnread) await scopeActivity.markRead(project, id);
-  };
+  const markAllRead = () =>
+    markAllReadSettled(unreadIds, foreignUnread, markRead, scopeActivity.markRead, (failed) =>
+      toast({
+        title: `Failed to mark ${failed} ${failed === 1 ? 'entry' : 'entries'} read`,
+        variant: 'error',
+      }),
+    );
 
   return {
     loading,
