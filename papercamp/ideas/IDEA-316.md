@@ -98,9 +98,10 @@ a timed-out run arms one SIGKILL timer.
       `resolveIdsWithMainActivity` returns its sha; `readCorpus` keys on it;
       `resolveMainSha` removed; a test counts git spawns on a cache hit.
       run: 3m9s · 74 in · 11.4k out · sonnet-5 · sess:d694d599-b3c9-40f8-8a43-1fd46ded4319
-- [ ] Stale branch within the spawn budget
+- [x] Stale branch within the spawn budget
       Merged from the right count, plan id from the snapshot,
       `neverDiverged` from the same counts; stale-branch spawn test.
+      run: 10m6s · 66 in · 44.3k out · sonnet-5 · sess:d694d599-b3c9-40f8-8a43-1fd46ded4319
 - [ ] Single-flight prioritise and one kill
       409 while in flight; kill-once flag and `unref` on the escalation
       timer; tests.

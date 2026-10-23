@@ -190,6 +190,42 @@ describe('GET /api/git/status', () => {
     expect(spawnMock.mock.calls.length).toBeLessThanOrEqual(4);
   });
 
+  it('spawns exactly four git processes on a stale feature branch behind origin/main', async () => {
+    const root = initGitRepo(1);
+    const remote = mkdtempSync(join(tmpdir(), 'papercamp-git-remote-'));
+    roots.push(remote);
+    git(remote, 'init', '--bare', '-b', 'main');
+    git(root, 'remote', 'add', 'origin', remote);
+    git(root, 'push', '-u', 'origin', 'main');
+    git(root, 'checkout', '-b', 'feat/feat-1-done');
+    writeFileSync(join(root, 'feature.txt'), 'done\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'finish feature');
+    git(root, 'checkout', 'main');
+    git(root, 'merge', '--no-ff', '-m', 'merge feature', 'feat/feat-1-done');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    git(root, 'checkout', 'feat/feat-1-done');
+    const manager = createGitManager(root);
+    // Prime and let the throttled background origin/main refresh settle before
+    // measuring — a fresh manager's first poll fires it, but a steady-state poll
+    // (the common case — SSE-driven, frequent) hits neither again within the 60s window.
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      res(),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    spawnMock.mockClear();
+    const { res: statusRes, json } = fakeRes();
+    await route(root, '/api/git/status', { git: manager }).handle(
+      fakeReq('/api/git/status'),
+      statusRes,
+    );
+    expect((json() as { branchHygiene: string }).branchHygiene).toBe('stale-merged');
+    expect(spawnMock.mock.calls.length).toBe(4);
+  });
+
   it('spawns at most three git processes on main', async () => {
     const root = initGitRepo(1);
     const manager = createGitManager(root);

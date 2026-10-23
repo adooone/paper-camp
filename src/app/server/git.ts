@@ -2,7 +2,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { branchName, resolvePrsByEntity } from '@/core/git-pr';
+import { branchName } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse/parser';
 import type {
   BranchHygieneStatus,
@@ -482,16 +482,6 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return { ahead, behind };
   }
 
-  // Squash-merge drops the branch's commits from `main`, so an ancestry check can't
-  // see it — the PR's own state is the only signal left.
-  async function isBranchMerged(aheadCount: number): Promise<boolean> {
-    const entityId = getFeatureBranchPlanId();
-    if (!entityId) return aheadCount === 0;
-    const prs = await resolvePrsByEntity(root);
-    if (prs === undefined) return aheadCount === 0;
-    return prs.get(entityId)?.state === 'merged';
-  }
-
   async function getBranchHygieneStatus(
     snapshot: StatusSnapshot,
   ): Promise<{ status: BranchHygieneStatus; ahead: number; behind: number }> {
@@ -511,7 +501,9 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     const { ahead, behind } = await divergenceAgainst(main);
 
     // "Stale" requires both merged AND main having advanced past it, not just merged.
-    if (behind > 0 && (await isBranchMerged(ahead))) {
+    // Ancestry alone decides merged-ness: a zero right-hand count means every commit
+    // on this branch is already reachable from main.
+    if (behind > 0 && ahead === 0) {
       // A fresh branch cut from a stale local `main` looks identical against origin/main
       // even though it never diverged — only divergence from the local ref is staleness.
       const neverDiverged =
