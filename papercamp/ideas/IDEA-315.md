@@ -96,9 +96,10 @@ init --settings`, run by hand.
       own project's set; a test with the same id open in one project and
       done in another.
       run: 3m48s · 80 in · 12k out · sonnet-5 · sess:d7ae3fc4-8638-4ecb-9a2e-0cb39d0cf2e1
-- [ ] Dismiss that reports failure
+- [x] Dismiss that reports failure
       `markNotificationReadAt` throws on non-OK; `markRead` rolls back and
       rethrows; failed-POST test shows the toast.
+      run: 2m24s · 62 in · 6.1k out · sonnet-5 · sess:eaa0c2f6-0205-4adc-b89d-9472a283f1fd
 - [ ] One running prioritise task
       No `done` between attempts, error fields cleared on retry, slot
       cleared on settle; `prioritise.test.ts` asserts a single `done` row.

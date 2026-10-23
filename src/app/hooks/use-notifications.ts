@@ -34,7 +34,8 @@ export async function markRead(id: string): Promise<void> {
   }
   try {
     await markNotificationRead(id);
-  } catch {
+  } catch (err) {
     if (previous) queryClient.setQueryData(key, previous);
+    throw err;
   }
 }
