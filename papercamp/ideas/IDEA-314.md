@@ -104,9 +104,10 @@ capacity data.
       Non-JSON bodies throw status and text; `fetch` failures throw
       `NO_DAEMON_ERROR`; tool tests for both.
       run: 1m23s · 26 in · 4.9k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
-- [ ] Parked questions and notifications from the snapshot
+- [x] Parked questions and notifications from the snapshot
       `readParkedQuestions(entries)`; both routes read `readCorpus`; parse
       counter asserts one parse per tick.
+      run: 2m3s · 50 in · 7.6k out · sonnet-5 · sess:97ee9918-b2de-4066-a1ae-8c0696ed4bf1
 - [ ] Capacity card that probes once and clamps
       Settle-once mount probe, `capacity` event on run writes, 0–100 clamp,
       *Window reset* header, comments removed; a rendering test for the

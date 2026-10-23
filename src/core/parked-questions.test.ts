@@ -1,15 +1,6 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
-import { rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { EntityEntry, ThreadMessage } from '../types/index';
-import {
-  collectParkedQuestions,
-  readParkedQuestions,
-  resolveClosedIdeaQuestions,
-} from './parked-questions';
-import { formatEntityFile } from './serialize/entity-file';
+import { collectParkedQuestions, resolveClosedIdeaQuestions } from './parked-questions';
 
 const entity = (overrides: Partial<EntityEntry>): EntityEntry => ({
   id: 'IDEA-1',
@@ -96,68 +87,6 @@ describe('collectParkedQuestions', () => {
     const result = collectParkedQuestions(entities);
     expect(result.map((q) => q.text)).toEqual(['undated', 'ancient but dated']);
     expect(result[0].ageDays).toBe(Number.POSITIVE_INFINITY);
-  });
-});
-
-const roots: string[] = [];
-
-afterAll(async () => {
-  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
-});
-
-function tmpIdeas(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'papercamp-parked-questions-'));
-  roots.push(dir);
-  return dir;
-}
-
-function write(dir: string, entity: Parameters<typeof formatEntityFile>[0]): void {
-  writeFileSync(join(dir, `${entity.id}.md`), `${formatEntityFile(entity)}\n`);
-}
-
-describe('readParkedQuestions', () => {
-  it('scans every entity file in the ideas dir, oldest-first', async () => {
-    const dir = tmpIdeas();
-    write(dir, {
-      id: 'IDEA-1',
-      title: 'First',
-      type: 'feat',
-      status: 'in-progress',
-      created: '2026-01-01',
-      thread: [question({ date: daysAgo(1), text: 'which auth flow?' })],
-    });
-    write(dir, {
-      id: 'IDEA-2',
-      title: 'Second',
-      type: 'feat',
-      status: 'in-progress',
-      created: '2026-01-02',
-      thread: [question({ date: daysAgo(5), text: 'ship now or wait?' })],
-    });
-    write(dir, {
-      id: 'IDEA-3',
-      title: 'Third',
-      type: 'feat',
-      status: 'in-progress',
-      created: '2026-01-03',
-      thread: [question({ text: 'already resolved', state: 'resolved' })],
-    });
-
-    const result = await readParkedQuestions(dir);
-    expect(result.map((q) => q.entityId)).toEqual(['IDEA-2', 'IDEA-1']);
-    expect(result.map((q) => q.text)).toEqual(['ship now or wait?', 'which auth flow?']);
-  });
-
-  it('returns an empty queue when nothing is parked', async () => {
-    const dir = tmpIdeas();
-    write(dir, {
-      id: 'IDEA-1',
-      title: 'First',
-      type: 'feat',
-      status: 'in-progress',
-      created: '2026-01-01',
-    });
-    expect(await readParkedQuestions(dir)).toEqual([]);
   });
 });
 

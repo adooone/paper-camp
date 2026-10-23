@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CorpusError,
   appendThread,
@@ -13,6 +13,7 @@ import {
   updateEntity,
 } from './corpus';
 import { clearPrCache } from './git-pr/pr';
+import * as readers from './readers';
 import { readEntities } from './readers';
 import { formatEntityFile } from './serialize/entity-file';
 
@@ -498,6 +499,22 @@ describe('readCorpus — caching', () => {
     const second = await readCorpus(root, { live: true });
     expect(second.entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-2']);
     expect(first.entries.map((e) => e.id)).toEqual(['IDEA-1']);
+  });
+
+  it('parses the ideas dir once per changed tick, however many readers share that tick', async () => {
+    installGh([]);
+    const root = tmpRoot();
+    write(root, { id: 'IDEA-1', title: 'A', type: 'feat', created: '2026-07-01', body: 'x' });
+    const parseCount = vi.spyOn(readers, 'readEntities');
+
+    await Promise.all([readCorpus(root, { live: true }), readCorpus(root, { live: true })]);
+    expect(parseCount).toHaveBeenCalledTimes(1);
+
+    write(root, { id: 'IDEA-2', title: 'B', type: 'feat', created: '2026-07-02', body: 'x' });
+    await Promise.all([readCorpus(root, { live: true }), readCorpus(root, { live: true })]);
+    expect(parseCount).toHaveBeenCalledTimes(2);
+
+    parseCount.mockRestore();
   });
 });
 

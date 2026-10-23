@@ -1,6 +1,5 @@
 import type { EntityEntry, ParkedQuestion, ThreadMessage } from '../types/index';
 import { splitQuestionText } from './decision-text';
-import { readEntities } from './readers';
 
 function ageInDays(date: string): number {
   return Math.floor((Date.now() - Date.parse(date)) / 86_400_000);
@@ -33,8 +32,7 @@ export function collectParkedQuestions(entities: EntityEntry[]): ParkedQuestion[
     .sort((a, b) => b.ageDays - a.ageDays);
 }
 
-export async function readParkedQuestions(ideasDir: string): Promise<ParkedQuestion[]> {
-  const { entries } = await readEntities(ideasDir);
+export function readParkedQuestions(entries: EntityEntry[]): ParkedQuestion[] {
   return collectParkedQuestions(entries);
 }
 

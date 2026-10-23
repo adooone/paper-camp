@@ -80,16 +80,19 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
   },
   {
     path: '/api/parked-questions',
-    handler: async (root) => readParkedQuestions(campFile(root, 'ideas')),
+    handler: async (root) => {
+      const { entries } = await readCorpus(root, { live: true });
+      return readParkedQuestions(entries);
+    },
   },
   {
     path: '/api/notifications',
     handler: async (root) => {
-      const [parked, stored] = await Promise.all([
-        readParkedQuestions(campFile(root, 'ideas')),
+      const [{ entries }, stored] = await Promise.all([
+        readCorpus(root, { live: true }),
         readNotifications(root),
       ]);
-      return mergeNotifications(parked, stored);
+      return mergeNotifications(readParkedQuestions(entries), stored);
     },
   },
   {
