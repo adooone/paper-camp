@@ -86,10 +86,11 @@ The `.mcp.json` and `opencode.json` this repo lacks: that is `paper-camp
 init --settings`, run by hand.
 
 ### Phases
-- [ ] Tick after the checkout and once per tick
+- [x] Tick after the checkout and once per tick
       Second `notifyChanged()` after `returnToMain` on both paths; the
       `changed` branch leaves `use-status-client`; heartbeat catch clears
       its interval; route and activity tests.
+      run: 4m32s · 96 in · 13.9k out · sonnet-5 · sess:d7ae3fc4-8638-4ecb-9a2e-0cb39d0cf2e1
 - [ ] Interrupted notices keyed per project
       `closedIds` as a map by runtime URL; `interruptedNotices` gets its
       own project's set; a test with the same id open in one project and

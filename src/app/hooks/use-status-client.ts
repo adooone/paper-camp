@@ -97,25 +97,14 @@ export function useStatusClient(): StatusClientState {
       timers[key] = setTimeout(run, ms);
     };
     const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.type === 'agent') {
-        schedule('agent', () => loadAgentStatus(), 120);
-        return;
-      }
-      if (payload.message !== 'changed') return;
-      schedule(
-        'activity',
-        () => {
-          loadGitStatus();
-          loadAgentStatus();
-        },
-        250,
-      );
+      if (payload.type !== 'agent') return;
+      schedule('agent', () => loadAgentStatus(), 120);
     });
     return () => {
       for (const timer of Object.values(timers)) if (timer) clearTimeout(timer);
       unsubscribe();
     };
-  }, [loadGitStatus, loadAgentStatus]);
+  }, [loadAgentStatus]);
 
   const runGitAction = useCallback(async (kind: GitAction, action: () => Promise<void>) => {
     if (gitActionRef.current) return;

@@ -113,6 +113,7 @@ export function createActivityManager(
           res.write(': ping\n\n');
         } catch {
           clients.delete(res);
+          clearInterval(heartbeat);
         }
       }, HEARTBEAT_INTERVAL_MS);
       heartbeat.unref?.();

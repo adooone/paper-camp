@@ -129,12 +129,14 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
           // merged-but-unfinished rather than rolled into the generic 409 catch below.
           try {
             const { remoteDeleted } = await git.returnToMain();
+            activity.notifyChanged();
             sendJson(res, 200, {
               ok: true,
               branch: git.getCurrentBranch(),
               remoteDeleted,
             });
           } catch (error) {
+            activity.notifyChanged();
             sendJson(res, 200, {
               ok: true,
               merged: true,

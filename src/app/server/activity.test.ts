@@ -89,6 +89,25 @@ describe('createActivityManager', () => {
       vi.advanceTimersByTime(25_000);
       expect(a.writes).toHaveLength(3);
     });
+
+    it('clears its own interval once a ping write throws', () => {
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      let writeCount = 0;
+      const res = {
+        write: () => {
+          writeCount += 1;
+          if (writeCount > 1) throw new Error('client gone');
+        },
+        on: () => {},
+      } as unknown as ServerResponse;
+      activity.subscribe(res);
+
+      vi.advanceTimersByTime(25_000);
+      expect(writeCount).toBe(2); // hello, then the first ping throws
+
+      vi.advanceTimersByTime(50_000);
+      expect(writeCount).toBe(2); // interval is dead, no further pings attempted
+    });
   });
 
   describe('notifyChanged', () => {

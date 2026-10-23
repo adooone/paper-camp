@@ -3,6 +3,8 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { readCorpus } from '@/core/corpus';
+import { squashMergePr } from '@/core/git-pr';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import { FetchFailedError, createGitManager } from '../git';
 import { gitRoutes } from './git';
@@ -15,6 +17,18 @@ vi.mock('node:child_process', async (importOriginal) => {
   return { ...actual, spawn: vi.fn(actual.spawn) };
 });
 const spawnMock = vi.mocked(spawn);
+
+vi.mock('@/core/git-pr', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/core/git-pr')>();
+  return { ...actual, squashMergePr: vi.fn() };
+});
+const squashMergePrMock = vi.mocked(squashMergePr);
+
+vi.mock('@/core/corpus', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/core/corpus')>();
+  return { ...actual, readCorpus: vi.fn() };
+});
+const readCorpusMock = vi.mocked(readCorpus);
 
 const roots: string[] = [];
 
@@ -334,5 +348,63 @@ describe('mutating git routes signal activity.notifyChanged', () => {
     }).handle(fakeReqWithBody('/api/git/checkout', { branch: 'does-not-exist' }), res);
     expect(status()).toBe(409);
     expect(notifyChanged).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/git/complete-idea', () => {
+  function completeIdeaGit(overrides: {
+    returnToMain?: () => Promise<{ remoteDeleted: boolean }>;
+  }) {
+    return {
+      getFeatureBranchPlanId: () => 'IDEA-1',
+      assertCleanWorkingTree: vi.fn().mockResolvedValue(undefined),
+      getCurrentBranch: vi.fn().mockReturnValue('feat/idea-1-work'),
+      returnToMain: overrides.returnToMain ?? vi.fn().mockResolvedValue({ remoteDeleted: true }),
+    } as unknown as RouteContext['git'];
+  }
+
+  it('notifies after the merge and again after returnToMain succeeds', async () => {
+    const root = initGitRepo(1);
+    readCorpusMock.mockResolvedValue({
+      work: [{ id: 'IDEA-1', pr: { number: 42 } }],
+    } as unknown as Awaited<ReturnType<typeof readCorpus>>);
+    squashMergePrMock.mockResolvedValue({ ok: true });
+    const order: string[] = [];
+    const notifyChanged = vi.fn(() => order.push('notify'));
+    const returnToMain = vi.fn(async () => {
+      order.push('returnToMain');
+      return { remoteDeleted: true };
+    });
+    const { res, status, json } = fakeRes();
+
+    await route(root, '/api/git/complete-idea', {
+      git: completeIdeaGit({ returnToMain }),
+      activity: { notifyChanged },
+    }).handle(fakeReqWithBody('/api/git/complete-idea', { planId: 'IDEA-1' }), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true });
+    expect(notifyChanged).toHaveBeenCalledTimes(2);
+    expect(order).toEqual(['notify', 'returnToMain', 'notify']);
+  });
+
+  it('notifies again after returnToMain fails on the merged-but-unfinished path', async () => {
+    const root = initGitRepo(1);
+    readCorpusMock.mockResolvedValue({
+      work: [{ id: 'IDEA-1', pr: { number: 42 } }],
+    } as unknown as Awaited<ReturnType<typeof readCorpus>>);
+    squashMergePrMock.mockResolvedValue({ ok: true });
+    const notifyChanged = vi.fn();
+    const returnToMain = vi.fn().mockRejectedValue(new Error('checkout failed'));
+    const { res, status, json } = fakeRes();
+
+    await route(root, '/api/git/complete-idea', {
+      git: completeIdeaGit({ returnToMain }),
+      activity: { notifyChanged },
+    }).handle(fakeReqWithBody('/api/git/complete-idea', { planId: 'IDEA-1' }), res);
+
+    expect(status()).toBe(200);
+    expect(json()).toMatchObject({ ok: true, merged: true });
+    expect(notifyChanged).toHaveBeenCalledTimes(2);
   });
 });
