@@ -43,11 +43,8 @@ function nightFindingBody(finding: NightSuggestionEntry): string {
 }
 
 export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
-  // getPrioritiseVerdict's retry calls this again for the same click — reusing
-  // the first call's task instead of starting a new one (IDEA-312). Neither call
-  // auto-settles: the task stays 'running' until the route handler below knows
-  // whether the verdict was accepted or every attempt failed, so a slot bound to
-  // this click's retry is never cleared (and reusable by another click) early.
+  // getPrioritiseVerdict's retry reuses this click's task instead of starting a new
+  // one (IDEA-312); neither call auto-settles, so the slot isn't cleared early.
   let prioritiseTask: AgentTask | undefined;
   const runPrioritisePrompt = (prompt: string, retryReason?: string): Promise<string> => {
     if (retryReason !== undefined && prioritiseTask) {

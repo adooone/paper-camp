@@ -1897,9 +1897,8 @@ export function createAgentManager(
       task?: AgentTask;
       onTask?: (task: AgentTask) => void;
       retryReason?: string;
-      // False when the caller may retry on this very result (e.g. a verdict still
-      // being validated) — the task then stays 'running' until the caller finalizes
-      // it via finalizeReadOnlyTask, instead of flipping done/error mid-retry.
+      // False when the caller may retry on this result — the task stays 'running'
+      // until the caller finalizes it via finalizeReadOnlyTask.
       autoSettle?: boolean;
     },
   ): Promise<string> {
@@ -2013,9 +2012,8 @@ export function createAgentManager(
     });
   }
 
-  // Settles a task a caller ran with `autoSettle: false` — once it knows a retry
-  // won't follow, since runReadOnlyPrompt itself can't tell a provisional result
-  // from a final one.
+  // Settles a task a caller ran with `autoSettle: false`, once it knows a retry
+  // won't follow — runReadOnlyPrompt itself can't tell provisional from final.
   function finalizeReadOnlyTask(task: AgentTask, status: 'done' | 'error'): Promise<void> {
     return setStatus(task, status);
   }

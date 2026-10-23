@@ -23,10 +23,8 @@ const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 // Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
 const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
 
-/**
- * Thrown by assertCleanWorkingTree so a caller can refuse before merging, rather
- * than landing a squash-merge and only then failing to switch to main.
- */
+/** Thrown by assertCleanWorkingTree so a caller can refuse before merging, rather
+ * than landing a squash-merge and only then failing to switch to main. */
 class DirtyWorkingTreeError extends Error {
   files: string[];
 
