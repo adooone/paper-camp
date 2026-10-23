@@ -10,23 +10,31 @@ import { createAgentManager } from './agent';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from './prioritise';
 
 // Mirrors routes/content/ideas.ts's retry adaptor: binds a retry to the first
-// attempt's task instead of opening a second one (IDEA-312).
-function prioritisePrompt(manager: ReturnType<typeof createAgentManager>) {
+// attempt's task instead of opening a second one (IDEA-312), and never
+// auto-settles — the task stays 'running' until the caller finalizes it once it
+// knows whether the verdict was accepted or every attempt failed.
+function prioritisePrompt(manager: ReturnType<typeof createAgentManager>): {
+  run: (prompt: string, retryReason?: string) => Promise<string>;
+  task: () => AgentTask | undefined;
+} {
   let task: AgentTask | undefined;
-  return (prompt: string, retryReason?: string): Promise<string> => {
-    if (retryReason !== undefined && task) {
-      const reused = task;
-      task = undefined;
+  return {
+    run: (prompt: string, retryReason?: string): Promise<string> => {
+      if (retryReason !== undefined && task) {
+        return manager.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+          task,
+          retryReason,
+          autoSettle: false,
+        });
+      }
       return manager.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
-        task: reused,
-        retryReason,
+        autoSettle: false,
+        onTask: (t) => {
+          task = t;
+        },
       });
-    }
-    return manager.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
-      onTask: (t) => {
-        task = t;
-      },
-    });
+    },
+    task: () => task,
   };
 }
 
@@ -135,6 +143,32 @@ function readRunOrder(root: string): string[] {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+// logTaskCompletion's write is fire-and-forget off setStatus(), so it can land
+// slightly after getStatus() already reports the terminal status — poll.
+async function readTaskLogRows(
+  root: string,
+  taskId: string,
+): Promise<{ outcome?: string; reason?: string }[]> {
+  const logPath = join(root, 'papercamp', 'tasks.log');
+  const start = Date.now();
+  while (Date.now() - start < 2000) {
+    try {
+      const raw = readFileSync(logPath, 'utf-8');
+      const rows = raw
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+        .filter((entry) => entry.id === taskId && entry.outcome);
+      if (rows.length > 0) return rows;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return [];
 }
 
 function readLog(root: string, id: string): string[] {
@@ -306,7 +340,7 @@ describe('agent.runPrioritise through getPrioritiseVerdict (IDEA-312)', () => {
     process.env.PRIORITISE_RESPONSES = '';
   });
 
-  it('binds the retry to the first attempt task instead of opening a second one', async () => {
+  it('binds the retry to the first attempt task instead of opening a second one, never going done in between', async () => {
     const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
     const secondVerdict = JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
     process.env.PRIORITISE_RESPONSES = JSON.stringify([
@@ -315,16 +349,72 @@ describe('agent.runPrioritise through getPrioritiseVerdict (IDEA-312)', () => {
     ]);
     const root = tmpRoot();
     const manager = createAgentManager(root);
+    const prompt = prioritisePrompt(manager);
 
-    const verdict = await getPrioritiseVerdict(worklist, '', prioritisePrompt(manager));
-
-    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    const verdict = await getPrioritiseVerdict(worklist, '', prompt.run);
     const tasks = manager.getStatus().filter((t) => t.taskKind === 'prioritise');
     expect(tasks).toHaveLength(1);
-    expect(tasks[0].status).toBe('done');
-    const lines = tasks[0].lines.join('\n');
+    // Still 'running' — the route only finalizes once it knows the verdict stuck.
+    expect(tasks[0].status).toBe('running');
+    const task = prompt.task();
+    if (!task) throw new Error('expected a task');
+    await manager.finalizeReadOnlyTask(task, 'done');
+
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    expect(manager.getStatus().find((t) => t.id === task.id)?.status).toBe('done');
+    const lines = task.lines.join('\n');
     expect(lines).toContain('[retry] Agent verdict was not valid JSON');
     expect(lines).toContain(secondVerdict);
+
+    const rows = await readTaskLogRows(root, task.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].outcome).toBe('done');
+  });
+
+  it('clears errorReason and errorKind from a failed attempt once the retry succeeds', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    const secondVerdict = JSON.stringify({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    process.env.PRIORITISE_RESPONSES = JSON.stringify([
+      { stdout: '', exit: 1 },
+      { stdout: secondVerdict },
+    ]);
+    const root = tmpRoot();
+    const manager = createAgentManager(root);
+    const prompt = prioritisePrompt(manager);
+
+    const verdict = await getPrioritiseVerdict(worklist, '', prompt.run);
+    const task = prompt.task();
+    if (!task) throw new Error('expected a task');
+    await manager.finalizeReadOnlyTask(task, 'done');
+
+    expect(verdict).toEqual({ order: ['IDEA-2', 'IDEA-1'], why: ['first', 'second'] });
+    const status = manager.getStatus().find((t) => t.id === task.id);
+    expect(status?.status).toBe('done');
+    expect(status?.errorKind).toBeUndefined();
+
+    const rows = await readTaskLogRows(root, task.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toHaveProperty('reason');
+  });
+
+  it('settles as error once every attempt fails, with one error row', async () => {
+    const worklist = [plan({ id: 'IDEA-1' }), plan({ id: 'IDEA-2' })];
+    process.env.PRIORITISE_RESPONSES = JSON.stringify([
+      { stdout: '{not json}' },
+      { stdout: '{still not json}' },
+    ]);
+    const root = tmpRoot();
+    const manager = createAgentManager(root);
+    const prompt = prioritisePrompt(manager);
+
+    await expect(getPrioritiseVerdict(worklist, '', prompt.run)).rejects.toThrow();
+    const task = prompt.task();
+    if (!task) throw new Error('expected a task');
+    await manager.finalizeReadOnlyTask(task, 'error');
+
+    const rows = await readTaskLogRows(root, task.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].outcome).toBe('error');
   });
 });
 

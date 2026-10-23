@@ -1893,7 +1893,15 @@ export function createAgentManager(
     taskKind: ReadOnlyTaskKind,
     prompt: string,
     planTitle: string,
-    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void; retryReason?: string },
+    opts?: {
+      task?: AgentTask;
+      onTask?: (task: AgentTask) => void;
+      retryReason?: string;
+      // False when the caller may retry on this very result (e.g. a verdict still
+      // being validated) — the task then stays 'running' until the caller finalizes
+      // it via finalizeReadOnlyTask, instead of flipping done/error mid-retry.
+      autoSettle?: boolean;
+    },
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
       return Promise.reject(new Error('Prompt exceeds the 10MB stdin limit'));
@@ -1921,10 +1929,15 @@ export function createAgentManager(
         ? Object.assign(opts.task, { proc })
         : registerAndStart(newTask({ taskKind, planTitle, agentId, adapter, proc }));
       if (opts?.task) {
-        if (opts.retryReason !== undefined) pushLine(task, `[retry] ${opts.retryReason}`);
+        if (opts.retryReason !== undefined) {
+          pushLine(task, `[retry] ${opts.retryReason}`);
+          task.errorReason = undefined;
+          task.errorKind = undefined;
+        }
         void setStatus(task, 'running');
       }
       opts?.onTask?.(task);
+      const autoSettle = opts?.autoSettle ?? true;
 
       let settled = false;
       // A settling callback that ends in error awaits setStatus so task.errorKind is
@@ -1938,7 +1951,7 @@ export function createAgentManager(
       const timeout = setTimeout(() => {
         settle(async () => {
           pushLine(task, `${planTitle} timed out`);
-          await setStatus(task, 'error');
+          if (autoSettle) await setStatus(task, 'error');
           killWithEscalation(proc);
           reject(readOnlyPromptError(`${planTitle} timed out`, task.errorKind));
         });
@@ -1974,7 +1987,7 @@ export function createAgentManager(
                   .filter(Boolean)
                   .join('\n');
             pushLine(task, result);
-            await setStatus(task, 'done');
+            if (autoSettle) await setStatus(task, 'done');
             resolve(result);
           } else {
             const errText = extractFailureText(
@@ -1984,19 +1997,27 @@ export function createAgentManager(
             );
             task.errorReason = errText;
             pushLine(task, errText);
-            await setStatus(task, 'error');
+            if (autoSettle) await setStatus(task, 'error');
             reject(readOnlyPromptError(errText, task.errorKind));
           }
         });
       });
       proc.on('error', (err) => {
         settle(async () => {
+          task.errorReason = err.message;
           pushLine(task, `Failed to spawn agent: ${err.message}`);
-          await setStatus(task, 'error');
+          if (autoSettle) await setStatus(task, 'error');
           reject(readOnlyPromptError(err.message, task.errorKind));
         });
       });
     });
+  }
+
+  // Settles a task a caller ran with `autoSettle: false` — once it knows a retry
+  // won't follow, since runReadOnlyPrompt itself can't tell a provisional result
+  // from a final one.
+  function finalizeReadOnlyTask(task: AgentTask, status: 'done' | 'error'): Promise<void> {
+    return setStatus(task, status);
   }
 
   function stop(taskId?: string): Result {
@@ -2127,6 +2148,7 @@ export function createAgentManager(
     startRunAllPhases,
     runBatch,
     runReadOnlyPrompt,
+    finalizeReadOnlyTask,
     getFixReviewResult,
     consumeFixReviewResult,
     resumeAuthParkedTasks,
@@ -2227,8 +2249,14 @@ export interface AgentManager {
     taskKind: ReadOnlyTaskKind,
     prompt: string,
     planTitle: string,
-    opts?: { task?: AgentTask; onTask?: (task: AgentTask) => void; retryReason?: string },
+    opts?: {
+      task?: AgentTask;
+      onTask?: (task: AgentTask) => void;
+      retryReason?: string;
+      autoSettle?: boolean;
+    },
   ) => Promise<string>;
+  finalizeReadOnlyTask: (task: AgentTask, status: 'done' | 'error') => Promise<void>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;

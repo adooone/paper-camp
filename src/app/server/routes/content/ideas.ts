@@ -44,18 +44,21 @@ function nightFindingBody(finding: NightSuggestionEntry): string {
 
 export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
   // getPrioritiseVerdict's retry calls this again for the same click — reusing
-  // the first call's task instead of starting a new one (IDEA-312).
+  // the first call's task instead of starting a new one (IDEA-312). Neither call
+  // auto-settles: the task stays 'running' until the route handler below knows
+  // whether the verdict was accepted or every attempt failed, so a slot bound to
+  // this click's retry is never cleared (and reusable by another click) early.
   let prioritiseTask: AgentTask | undefined;
   const runPrioritisePrompt = (prompt: string, retryReason?: string): Promise<string> => {
     if (retryReason !== undefined && prioritiseTask) {
-      const task = prioritiseTask;
-      prioritiseTask = undefined;
       return agent.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
-        task,
+        task: prioritiseTask,
         retryReason,
+        autoSettle: false,
       });
     }
     return agent.runReadOnlyPrompt('prioritise', prompt, 'Prioritise queue', {
+      autoSettle: false,
       onTask: (task) => {
         prioritiseTask = task;
       },
@@ -552,6 +555,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           const { work } = await readCorpus(root, { live: true });
           const roadmapText = await readMaybe(join(root, 'ROADMAP.md'));
           const verdict = await getPrioritiseVerdict(work, roadmapText, runPrioritisePrompt);
+          if (prioritiseTask) {
+            await agent.finalizeReadOnlyTask(prioritiseTask, 'done');
+            prioritiseTask = undefined;
+          }
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
           if (moved.length > 0 || annotated.length > 0) activity.notifyChanged();
           sendJson(res, 200, {
@@ -562,6 +569,10 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
             ...(annotationError ? { annotationError } : {}),
           });
         } catch (error) {
+          if (prioritiseTask) {
+            await agent.finalizeReadOnlyTask(prioritiseTask, 'error');
+            prioritiseTask = undefined;
+          }
           sendJson(res, 400, { error: (error as Error).message });
         }
       },

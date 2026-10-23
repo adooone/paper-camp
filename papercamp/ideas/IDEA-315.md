@@ -100,9 +100,10 @@ init --settings`, run by hand.
       `markNotificationReadAt` throws on non-OK; `markRead` rolls back and
       rethrows; failed-POST test shows the toast.
       run: 2m24s · 62 in · 6.1k out · sonnet-5 · sess:eaa0c2f6-0205-4adc-b89d-9472a283f1fd
-- [ ] One running prioritise task
+- [x] One running prioritise task
       No `done` between attempts, error fields cleared on retry, slot
       cleared on settle; `prioritise.test.ts` asserts a single `done` row.
+      run: 8m14s · 120 in · 38k out · sonnet-5 · sess:eaa0c2f6-0205-4adc-b89d-9472a283f1fd
 - [ ] The daemon update test passes
       Diagnose the post-update restart under `asRealCliEntry`, fix code or
       stub, recursive temp-dir cleanup; full `vitest run` green.
