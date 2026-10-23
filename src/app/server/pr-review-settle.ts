@@ -1,4 +1,4 @@
-import { join, sep } from 'node:path';
+import { appendThread } from '@/core/corpus';
 import {
   type PrReviewDelivery,
   createPrReview,
@@ -8,7 +8,7 @@ import {
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
-import { campFile, entityFileInput, fileExists, writeEntityFile } from './helpers';
+import { campFile } from './helpers';
 
 const VERDICTS: PrReviewVerdict[] = ['approve', 'comment', 'request-changes'];
 
@@ -118,9 +118,8 @@ export function renderReviewThreadMessage(result: PrReviewResult): string {
 
 /** Closed by status or by living in ideas/archive/ — the same two signals
  *  `deriveStatus` treats as closed. Distinct from core/status's isClosedEntity. */
-function isReviewTargetClosed(entry: { status?: string }, file: string): boolean {
-  if (entry.status === 'done' || entry.status === 'dropped') return true;
-  return file.includes(`${sep}archive${sep}`);
+function isReviewTargetClosed(entry: { status?: string; archived?: boolean }): boolean {
+  return entry.status === 'done' || entry.status === 'dropped' || entry.archived === true;
 }
 
 type ThreadWriteOutcome = 'written' | 'closed' | 'failed';
@@ -131,25 +130,14 @@ async function appendReviewThreadMessage(
   summary: string,
 ): Promise<ThreadWriteOutcome> {
   const ideasDir = campFile(root, 'ideas');
-  const primaryFile = join(ideasDir, `${entityId}.md`);
-  const archivedFile = join(ideasDir, 'archive', `${entityId}.md`);
-  const file = (await fileExists(primaryFile)) ? primaryFile : archivedFile;
-  if (!(await fileExists(file))) return 'failed';
-
   const { entries } = await readEntities(ideasDir);
   const entry = entries.find((e) => e.id === entityId);
   if (!entry) return 'failed';
   // A review can land long after the PR merged and the entity closed; writing it then
   // would reopen a settled file for a verdict nothing can act on, so it's left alone.
-  if (isReviewTargetClosed(entry, file)) return 'closed';
+  if (isReviewTargetClosed(entry)) return 'closed';
 
-  await writeEntityFile(
-    root,
-    file,
-    entityFileInput(entry, {
-      thread: [...(entry.thread ?? []), agentThreadMessage(summary, 'review')],
-    }),
-  );
+  await appendThread(root, entityId, agentThreadMessage(summary, 'review'));
   return 'written';
 }
 

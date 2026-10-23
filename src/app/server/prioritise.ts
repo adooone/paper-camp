@@ -1,20 +1,11 @@
-import { join } from 'node:path';
 import { buildPrioritisePrompt } from '@/app/features/plans/prompts';
-import { readCorpus } from '@/core/corpus';
+import { CorpusError, readCorpus, updateEntity } from '@/core/corpus';
 import { hasBlockingNeed } from '@/core/needs';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import type { RunOrderFileEntry } from '@/core/run-order-file';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PlanEntry, PrioritiseVerdict, ThreadMessage } from '@/types/index';
-import {
-  campFile,
-  entityFileInput,
-  fileExists,
-  readRunOrderFile,
-  withRunOrderLock,
-  writeEntityFile,
-  writeRunOrderFile,
-} from './helpers';
+import { readRunOrderFile, withRunOrderLock, writeRunOrderFile } from './helpers';
 
 /** `strictWhy` is on for the first attempt only: a misaligned `why` is worth one
  * retry, but never worth discarding an otherwise-valid ordering. */
@@ -163,7 +154,6 @@ export async function applyPrioritiseVerdict(
   root: string,
   verdict: PrioritiseVerdict,
 ): Promise<ApplyPrioritiseResult> {
-  const ideasDir = campFile(root, 'ideas');
   const { entries, work } = await readCorpus(root, { live: true });
   const classified = classifyRunOrderEntries(entries, work);
   const byId = new Map(classified.map((e) => [e.id, e]));
@@ -189,23 +179,14 @@ export async function applyPrioritiseVerdict(
   const annotated: string[] = [];
   let annotationError: string | undefined;
   for (const id of verdict.order) {
-    const primaryFile = join(ideasDir, `${id}.md`);
-    const file = (await fileExists(primaryFile))
-      ? primaryFile
-      : join(ideasDir, 'archive', `${id}.md`);
-    if (!(await fileExists(file))) continue;
-    const entry = entries.find((e) => e.id === id);
-    if (!entry) continue;
+    if (!entries.some((e) => e.id === id)) continue;
     try {
-      await writeEntityFile(
-        root,
-        file,
-        entityFileInput(entry, {
-          thread: [...withoutRankNote(entry.thread), agentThreadMessage(rankNote(reasonFor(id)))],
-        }),
-      );
+      await updateEntity(root, id, (entry) => ({
+        thread: [...withoutRankNote(entry.thread), agentThreadMessage(rankNote(reasonFor(id)))],
+      }));
       annotated.push(id);
     } catch (err) {
+      if (err instanceof CorpusError && err.status === 404) continue;
       annotationError = `Failed to annotate ${id}: ${(err as Error).message}`;
       break;
     }

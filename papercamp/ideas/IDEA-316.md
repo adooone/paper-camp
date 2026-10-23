@@ -89,10 +89,11 @@ a timed-out run arms one SIGKILL timer.
       Directory entries hashed by path, never through `hash-object`; test
       with a nested repo.
       run: 1m46s · 40 in · 5.4k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
-- [ ] Thread writes inside the chain
+- [x] Thread writes inside the chain
       Thread derived in `mutate` for PATCH; `prioritise.ts`,
       `pr-review-settle.ts` and the release stamp through `appendThread` /
       `updateEntity`; thread-vs-log concurrent test.
+      run: 5m20s · 118 in · 22.1k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
 - [ ] One sha per corpus read
       `resolveIdsWithMainActivity` returns its sha; `readCorpus` keys on it;
       `resolveMainSha` removed; a test counts git spawns on a cache hit.

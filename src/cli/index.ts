@@ -8,8 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
-import { entityFileInput, writeEntityFile } from '../app/server/helpers';
-import { readCorpus } from '../core/corpus';
+import { CorpusError, readCorpus, updateEntity } from '../core/corpus';
 import { bumpCorpusFormat } from '../core/corpus-format';
 import {
   collectDoctorContext,
@@ -877,20 +876,29 @@ export async function runStampRelease(root: string, version: string): Promise<bo
       console.log(`  [skip]     ${id} — file not found`);
       continue;
     }
-    const entry = parseEntityFile(await readFile(planFile, 'utf-8')).entries[0];
-    if (!entry) {
-      console.log(`  [skip]     ${id} — could not parse`);
+    let skip: string | undefined;
+    try {
+      await updateEntity(root, id, (entry) => {
+        if (entry.status === 'dropped') {
+          skip = 'dropped';
+          return undefined;
+        }
+        if (entry.released) {
+          skip = `already stamped ${entry.released}`;
+          return undefined;
+        }
+        return { released: version };
+      });
+    } catch (err) {
+      console.log(
+        `  [skip]     ${id} — ${err instanceof CorpusError ? err.message : (err as Error).message}`,
+      );
       continue;
     }
-    if (entry.status === 'dropped') {
-      console.log(`  [skip]     ${id} — dropped`);
+    if (skip) {
+      console.log(`  [skip]     ${id} — ${skip}`);
       continue;
     }
-    if (entry.released) {
-      console.log(`  [skip]     ${id} — already stamped ${entry.released}`);
-      continue;
-    }
-    await writeEntityFile(root, planFile, entityFileInput(entry, { released: version }));
     console.log(`  [stamped]  ${id} -> ${version}`);
     stamped++;
   }

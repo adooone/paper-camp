@@ -99,18 +99,6 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
 
         // Run order lives in papercamp/run-order.md, not frontmatter (IDEA-98); notes
         // aren't part of that list, so their `order` still writes straight to frontmatter.
-        let thread = target.thread;
-        if (updates.thread !== undefined) {
-          thread = updates.thread;
-        }
-        if (updates.log !== undefined) {
-          thread = replaceThreadKinds(
-            thread,
-            ['log'],
-            updates.log.map((e) => ({ kind: 'log' as const, date: e.date, text: e.text })),
-          );
-        }
-
         const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => {
           let phases = updates.phases;
           if (updates.phase !== undefined) {
@@ -123,6 +111,19 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
             }
             phases = entry.phases.map((p, i) => (i === index ? { ...p, done } : p));
           }
+          // Derived from the fresh entry, not the pre-chain read, so a concurrent
+          // appendThread landing in between isn't overwritten by a stale log/thread edit.
+          let thread = entry.thread;
+          if (updates.thread !== undefined) {
+            thread = updates.thread;
+          }
+          if (updates.log !== undefined) {
+            thread = replaceThreadKinds(
+              thread,
+              ['log'],
+              updates.log.map((e) => ({ kind: 'log' as const, date: e.date, text: e.text })),
+            );
+          }
           return {
             ...(updates.title !== undefined && { title: updates.title.trim() }),
             ...(updates.body !== undefined && { body: updates.body }),
@@ -132,7 +133,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
             ...(updates.status !== undefined && { status: updates.status ?? undefined }),
             ...(phases !== undefined && { phases }),
             ...(updates.fixes !== undefined && { fixes: updates.fixes }),
-            ...(thread !== target.thread && { thread }),
+            ...(thread !== entry.thread && { thread }),
             ...(updates.agent !== undefined && { agent: updates.agent ?? undefined }),
             ...(updates.subject !== undefined && { subject: updates.subject ?? undefined }),
             order:

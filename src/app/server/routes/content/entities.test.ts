@@ -289,6 +289,34 @@ Plan body.
     expect(planFile).toContain('- [x] First phase');
     expect(planFile).toContain('- [x] Second phase');
   });
+
+  it('a thread append survives a concurrent log PATCH', async () => {
+    const root = await makeRoot();
+    const threadRes = fakeRes();
+    const patchRes = fakeRes();
+    await Promise.all([
+      route(root, 'POST', '/api/entities/thread').handle(
+        fakeReq(
+          '/api/entities/thread?id=IDEA-2',
+          JSON.stringify({ kind: 'note', text: 'A concurrent note.' }),
+        ),
+        threadRes.res,
+      ),
+      route(root, 'PATCH', '/api/entities').handle(
+        fakeReq(
+          '/api/entities?id=IDEA-2',
+          JSON.stringify({ log: [{ date: '2026-07-02', text: 'A concurrent log line.' }] }),
+        ),
+        patchRes.res,
+      ),
+    ]);
+    expect(threadRes.status()).toBe(200);
+    expect(patchRes.status()).toBe(200);
+
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
+    expect(planFile).toContain('A concurrent note.');
+    expect(planFile).toContain('A concurrent log line.');
+  });
 });
 
 describe('PATCH /api/entities on a note', () => {
