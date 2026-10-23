@@ -10,7 +10,7 @@ export interface PaperCampToolbarOptions {
   port?: number;
 }
 
-function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
+export function paperCamp(options: PaperCampToolbarOptions = {}): Plugin {
   let scriptTag: HtmlTagDescriptor | undefined;
 
   return {
