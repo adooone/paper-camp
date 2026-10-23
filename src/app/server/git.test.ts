@@ -881,6 +881,38 @@ describe('getStatusSnapshot', () => {
   });
 });
 
+describe('getTreeHash', () => {
+  let root: string;
+  let initialSha: string;
+  let manager: ReturnType<typeof gitManager>;
+
+  beforeAll(async () => {
+    root = await initRepo();
+    initialSha = git(root, 'rev-parse', 'HEAD');
+    manager = gitManager(root);
+  });
+
+  beforeEach(() => {
+    resetRepo(root, initialSha);
+  });
+
+  it('stays stable across polls with an untracked nested git repo present', async () => {
+    const inner = join(root, 'inner');
+    await mkdir(inner);
+    git(inner, 'init');
+    git(inner, 'config', 'user.email', 'test@example.com');
+    git(inner, 'config', 'user.name', 'Test User');
+    git(inner, 'config', 'commit.gpgsign', 'false');
+    await writeFile(join(inner, 'file.txt'), 'hello\n');
+    git(inner, 'add', '.');
+    git(inner, 'commit', '-m', 'inner commit');
+
+    const first = await manager.getTreeHash();
+    const second = await manager.getTreeHash();
+    expect(first).toBe(second);
+  });
+});
+
 describe('ensureBranch', () => {
   let root: string;
   let initialSha: string;

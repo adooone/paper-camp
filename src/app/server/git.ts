@@ -746,13 +746,24 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // content — hashing it misses a second edit to an already-modified file.
   async function getTreeHash(): Promise<string> {
     // --untracked-files=all so a brand-new directory lists its files, not just
-    // the directory itself — hash-object can't hash a directory.
+    // the directory itself — hash-object can't hash a directory. An untracked
+    // directory that is itself a git repo still comes back as a single entry
+    // ending in "/" since git won't recurse into it; hash-object errors on
+    // that path, so it's hashed by its path string instead of being sent in.
     const output = await runGit(['status', '--porcelain=v2', '--untracked-files=all']);
     const { entries } = parsePorcelainV2Branch(output);
-    const paths = entries.filter((entry) => !entry.status.includes('D')).map((entry) => entry.path);
+    const live = entries.filter((entry) => !entry.status.includes('D'));
+    const filePaths = live.filter((entry) => !entry.path.endsWith('/')).map((entry) => entry.path);
+    const dirPaths = live.filter((entry) => entry.path.endsWith('/')).map((entry) => entry.path);
     const content =
-      paths.length > 0 ? await runGit(['hash-object', '--stdin-paths'], paths.join('\n')) : '';
-    return createHash('sha1').update(output).update(content).digest('hex');
+      filePaths.length > 0
+        ? await runGit(['hash-object', '--stdin-paths'], filePaths.join('\n'))
+        : '';
+    return createHash('sha1')
+      .update(output)
+      .update(content)
+      .update(dirPaths.join('\n'))
+      .digest('hex');
   }
 
   async function getLastCommitFor(file: string): Promise<string> {

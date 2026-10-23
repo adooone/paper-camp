@@ -85,9 +85,10 @@ a timed-out run arms one SIGKILL timer.
       Catch and toast on the entry page; `allSettled` with one summary
       toast in `markAllRead`; tests for both.
       run: 2m25s · 62 in · 10.1k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
-- [ ] Tree hash that survives an inner repo
+- [x] Tree hash that survives an inner repo
       Directory entries hashed by path, never through `hash-object`; test
       with a nested repo.
+      run: 1m46s · 40 in · 5.4k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
 - [ ] Thread writes inside the chain
       Thread derived in `mutate` for PATCH; `prioritise.ts`,
       `pr-review-settle.ts` and the release stamp through `appendThread` /
