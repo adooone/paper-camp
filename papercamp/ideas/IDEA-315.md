@@ -104,9 +104,10 @@ init --settings`, run by hand.
       No `done` between attempts, error fields cleared on retry, slot
       cleared on settle; `prioritise.test.ts` asserts a single `done` row.
       run: 8m14s · 120 in · 38k out · sonnet-5 · sess:eaa0c2f6-0205-4adc-b89d-9472a283f1fd
-- [ ] The daemon update test passes
+- [x] The daemon update test passes
       Diagnose the post-update restart under `asRealCliEntry`, fix code or
       stub, recursive temp-dir cleanup; full `vitest run` green.
+      run: 10m59s · 66 in · 18.6k out · sonnet-5 · sess:7be30f81-0d9b-41ce-9a29-4d5502f30faf
 - [ ] knip clean
       Unused exports and types removed or unexported; `pnpm knip` reports
       nothing.

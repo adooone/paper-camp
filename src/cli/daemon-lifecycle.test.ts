@@ -250,6 +250,14 @@ describe('lastLines', () => {
 
 const CLI_ENTRY = join(__dirname, 'index.ts');
 
+/** Resolved once, before any test stubs `VOLTA_HOME`: `bun`'s own
+ * `process.execPath` is its real binary, bypassing the volta shim that a
+ * stubbed `VOLTA_HOME` (see `stubNpm`) would otherwise send looking for a
+ * "bun" tool in a bare temp dir and hang trying to install one. */
+const REAL_BUN_PATH = spawnSync('bun', ['-e', 'console.log(process.execPath)'], {
+  encoding: 'utf-8',
+}).stdout.trim();
+
 const FAKE_DAEMON_SCRIPT = `
 const { createServer } = require('node:http');
 const { writeFileSync, rmSync } = require('node:fs');
@@ -458,7 +466,7 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     const originalArgv1 = process.argv[1];
     const originalExecPath = process.execPath;
     process.argv[1] = CLI_ENTRY;
-    process.execPath = 'bun';
+    process.execPath = REAL_BUN_PATH;
     try {
       return await fn();
     } finally {
