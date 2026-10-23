@@ -35,15 +35,25 @@ async function daemonClient(root: string): Promise<DaemonClient> {
   const base = `${target.origin}/p/${target.slug}`;
 
   async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const response = await fetch(`${base}${path}`, {
-      method,
-      ...(body !== undefined && {
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${base}${path}`, {
+        method,
+        ...(body !== undefined && {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }),
+      });
+    } catch {
+      throw new Error(NO_DAEMON_ERROR);
+    }
     const text = await response.text();
-    const data = text ? JSON.parse(text) : undefined;
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : undefined;
+    } catch {
+      throw new Error(`${response.status} ${response.statusText}: ${text.slice(0, 200)}`);
+    }
     if (!response.ok) {
       throw new Error(
         (data as { error?: string } | undefined)?.error ?? `request failed: ${response.status}`,

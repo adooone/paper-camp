@@ -158,6 +158,62 @@ describe('no daemon running', () => {
     expect(JSON.stringify(result.content)).toContain('paper-camp start');
     expect(JSON.stringify(result.content)).toContain('paper-camp init');
   });
+
+  it('a stale daemon.json pointing at a dead port fails with the no-daemon error, not a raw fetch error', async () => {
+    const root = await makeRoot();
+    const deadServer = createServer((_req, res) => res.end());
+    const deadPort = await new Promise<number>((resolve) => {
+      deadServer.listen(0, '127.0.0.1', () => resolve((deadServer.address() as AddressInfo).port));
+    });
+    await new Promise<void>((r) => deadServer.close(() => r()));
+    vi.mocked(resolveDaemonTarget).mockResolvedValue({
+      origin: `http://127.0.0.1:${deadPort}`,
+      slug: TEST_SLUG,
+    });
+    const server = new McpServer({ name: 'paper-camp-test', version: '0.0.0' });
+    registerReadTools(server, root);
+    registerWriteTools(server, root);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'test-client', version: '0.0.0' });
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+
+    const result = await client.callTool({ name: 'list_plans', arguments: {} });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain('paper-camp start');
+    expect(JSON.stringify(result.content)).toContain('paper-camp init');
+  });
+});
+
+describe('a non-JSON daemon response', () => {
+  it('names the status and body instead of throwing a SyntaxError', async () => {
+    const root = await makeRoot();
+    const server = createServer((_req, res) => {
+      res.statusCode = 403;
+      res.statusMessage = 'Forbidden';
+      res.end('<html>you are not allowed here</html>');
+    });
+    servers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    vi.mocked(resolveDaemonTarget).mockResolvedValue({
+      origin: `http://127.0.0.1:${port}`,
+      slug: TEST_SLUG,
+    });
+    const mcpServer = new McpServer({ name: 'paper-camp-test', version: '0.0.0' });
+    registerReadTools(mcpServer, root);
+    registerWriteTools(mcpServer, root);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'test-client', version: '0.0.0' });
+    await Promise.all([client.connect(clientTransport), mcpServer.connect(serverTransport)]);
+
+    const result = await client.callTool({ name: 'list_plans', arguments: {} });
+    expect(result.isError).toBe(true);
+    const text = JSON.stringify(result.content);
+    expect(text).toContain('403');
+    expect(text).toContain('Forbidden');
+    expect(text).toContain('you are not allowed here');
+  });
 });
 
 describe('write tools', () => {

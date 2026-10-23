@@ -100,9 +100,10 @@ capacity data.
       `phase: { index, done }` on `PATCH /api/entities`; `update_phase`
       sends it; concurrent-toggle test.
       run: 5m58s · 66 in · 14.8k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
-- [ ] MCP errors that name the cause
+- [x] MCP errors that name the cause
       Non-JSON bodies throw status and text; `fetch` failures throw
       `NO_DAEMON_ERROR`; tool tests for both.
+      run: 1m23s · 26 in · 4.9k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
 - [ ] Parked questions and notifications from the snapshot
       `readParkedQuestions(entries)`; both routes read `readCorpus`; parse
       counter asserts one parse per tick.
