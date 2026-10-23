@@ -91,10 +91,11 @@ init --settings`, run by hand.
       `changed` branch leaves `use-status-client`; heartbeat catch clears
       its interval; route and activity tests.
       run: 4m32s · 96 in · 13.9k out · sonnet-5 · sess:d7ae3fc4-8638-4ecb-9a2e-0cb39d0cf2e1
-- [ ] Interrupted notices keyed per project
+- [x] Interrupted notices keyed per project
       `closedIds` as a map by runtime URL; `interruptedNotices` gets its
       own project's set; a test with the same id open in one project and
       done in another.
+      run: 3m48s · 80 in · 12k out · sonnet-5 · sess:d7ae3fc4-8638-4ecb-9a2e-0cb39d0cf2e1
 - [ ] Dismiss that reports failure
       `markNotificationReadAt` throws on non-OK; `markRead` rolls back and
       rethrows; failed-POST test shows the toast.

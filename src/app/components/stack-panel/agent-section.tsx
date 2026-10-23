@@ -11,6 +11,7 @@ import {
   type AgentTaskState,
   type AgentTaskStatus,
   type Notification,
+  type PlanEntry,
   type StoredNotification,
   type TaskKind,
   type TaskLogEntry,
@@ -323,6 +324,28 @@ interface ScopedNotice {
   project?: ScopeRow;
 }
 
+export const closedIdsFromPlans = (entries: PlanEntry[] | undefined): Set<string> =>
+  new Set(
+    (entries ?? [])
+      .filter((plan) => plan.status === 'done' || plan.status === 'dropped')
+      .map((plan) => plan.id)
+      .filter((id): id is string => id !== undefined),
+  );
+
+export const buildScopedNotices = (
+  own: { taskLog: TaskLogEntry[]; closedIds: Set<string>; project?: ScopeRow },
+  foreign: { taskLog: TaskLogEntry[]; closedIds: Set<string>; project: ScopeRow }[],
+  readIds: Set<string>,
+): ScopedNotice[] => [
+  ...interruptedNotices(own.taskLog, { closedIds: own.closedIds, readIds }).map((entry) => ({
+    entry,
+    project: own.project,
+  })),
+  ...foreign.flatMap(({ project, taskLog, closedIds }) =>
+    interruptedNotices(taskLog, { closedIds, readIds }).map((entry) => ({ entry, project })),
+  ),
+];
+
 export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const taskLog = useAppStore((s) => s.taskLog);
@@ -344,12 +367,6 @@ export const AgentSection = () => {
       queryFn: async () => (await fetchPlansAt(project.runtimeUrl)) ?? { entries: [] },
     })),
   });
-  const closedIds = new Set(
-    [...(plans?.entries ?? []), ...foreignPlansQueries.flatMap((q) => q.data?.entries ?? [])]
-      .filter((plan) => plan.status === 'done' || plan.status === 'dropped')
-      .map((plan) => plan.id)
-      .filter((id): id is string => id !== undefined),
-  );
   const readIds = new Set([
     ...readNotificationIds(notifications ?? []),
     ...foreignRuns.flatMap(({ notifications: foreignNotifications }) =>
@@ -366,18 +383,15 @@ export const AgentSection = () => {
   ];
   const visibleTasks = allTasks.slice(0, MAX_VISIBLE_TASKS);
   const hiddenCount = allTasks.length - visibleTasks.length;
-  const notices: ScopedNotice[] = [
-    ...interruptedNotices(taskLog, { closedIds, readIds }).map((entry) => ({
-      entry,
-      project: ownTask,
+  const notices: ScopedNotice[] = buildScopedNotices(
+    { taskLog, closedIds: closedIdsFromPlans(plans?.entries), project: ownTask },
+    foreignRuns.map(({ project, taskLog: foreignTaskLog }, i) => ({
+      project,
+      taskLog: foreignTaskLog,
+      closedIds: closedIdsFromPlans(foreignPlansQueries[i]?.data?.entries),
     })),
-    ...foreignRuns.flatMap(({ project, taskLog: foreignTaskLog }) =>
-      interruptedNotices(foreignTaskLog, { closedIds, readIds }).map((entry) => ({
-        entry,
-        project,
-      })),
-    ),
-  ];
+    readIds,
+  );
 
   const handleDismissNotice = async (entry: TaskLogEntry, project?: ScopeRow) => {
     const foreign = foreignProject(project);

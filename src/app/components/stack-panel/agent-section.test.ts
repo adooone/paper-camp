@@ -1,9 +1,11 @@
 import type { ScopeRow } from '@/app/features/scope';
-import type { AgentTaskState } from '@/types/index';
+import type { AgentTaskState, PlanEntry, TaskLogEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   CAPACITY_CARD_HEIGHT_CLASS,
   TASK_CARD_HEIGHT_CLASS,
+  buildScopedNotices,
+  closedIdsFromPlans,
   foreignProject,
   taskCardTitle,
   taskKindLabel,
@@ -120,6 +122,70 @@ describe('foreignProject', () => {
   it('passes through a project that is not the current one', () => {
     const row = scopeRow({ isCurrent: false });
     expect(foreignProject(row)).toBe(row);
+  });
+});
+
+const taskLogEntry = (overrides: Partial<TaskLogEntry> = {}): TaskLogEntry => ({
+  id: 'task-1',
+  taskKind: 'phase',
+  planId: 'IDEA-5',
+  planTitle: 'Fifth idea',
+  agentId: 'claude-code',
+  startedAt: '2026-08-01T00:00:00.000Z',
+  endedAt: '2026-08-01T00:05:00.000Z',
+  outcome: 'interrupted',
+  ...overrides,
+});
+
+const planEntry = (overrides: Partial<PlanEntry> = {}): PlanEntry => ({
+  title: 'Fifth idea',
+  status: 'done',
+  id: 'IDEA-5',
+  created: '2026-08-01T00:00:00.000Z',
+  tags: [],
+  needs: [],
+  body: '',
+  phases: [],
+  ...overrides,
+});
+
+describe('closedIdsFromPlans', () => {
+  it('is empty with no entries', () => {
+    expect(closedIdsFromPlans(undefined)).toEqual(new Set());
+  });
+
+  it('keeps only done and dropped plan ids', () => {
+    const ids = closedIdsFromPlans([
+      planEntry({ id: 'IDEA-1', status: 'done' }),
+      planEntry({ id: 'IDEA-2', status: 'dropped' }),
+      planEntry({ id: 'IDEA-3', status: 'planned' }),
+    ]);
+    expect(ids).toEqual(new Set(['IDEA-1', 'IDEA-2']));
+  });
+});
+
+describe('buildScopedNotices', () => {
+  it('keeps the interrupted card for an id open in one project while another project closed the same id', () => {
+    const otherProject = scopeRow({ runtimeUrl: 'https://other.test', name: 'Other' });
+    const notices = buildScopedNotices(
+      { taskLog: [taskLogEntry()], closedIds: new Set(), project: undefined },
+      [{ taskLog: [taskLogEntry()], closedIds: new Set(['IDEA-5']), project: otherProject }],
+      new Set(),
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0].entry.planId).toBe('IDEA-5');
+    expect(notices[0].project).toBeUndefined();
+  });
+
+  it('drops the card once its own project closes the id, regardless of other projects', () => {
+    const otherProject = scopeRow({ runtimeUrl: 'https://other.test', name: 'Other' });
+    const notices = buildScopedNotices(
+      { taskLog: [taskLogEntry()], closedIds: new Set(['IDEA-5']), project: undefined },
+      [{ taskLog: [taskLogEntry()], closedIds: new Set(), project: otherProject }],
+      new Set(),
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0].project).toBe(otherProject);
   });
 });
 
