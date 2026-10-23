@@ -501,8 +501,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     const { ahead, behind } = await divergenceAgainst(main);
 
     // "Stale" requires both merged AND main having advanced past it, not just merged.
-    // Ancestry alone decides merged-ness: a zero right-hand count means every commit
-    // on this branch is already reachable from main.
+    // Merged-ness is a zero right-hand count: every commit on this branch is reachable from main.
     if (behind > 0 && ahead === 0) {
       // A fresh branch cut from a stale local `main` looks identical against origin/main
       // even though it never diverged — only divergence from the local ref is staleness.
@@ -737,11 +736,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // The porcelain line alone only carries HEAD/index blob ids, never worktree
   // content — hashing it misses a second edit to an already-modified file.
   async function getTreeHash(): Promise<string> {
-    // --untracked-files=all so a brand-new directory lists its files, not just
-    // the directory itself — hash-object can't hash a directory. An untracked
-    // directory that is itself a git repo still comes back as a single entry
-    // ending in "/" since git won't recurse into it; hash-object errors on
-    // that path, so it's hashed by its path string instead of being sent in.
+    // --untracked-files=all lists a new directory's files, not just the directory itself.
+    // An inner-repo directory comes back as one "/"-entry hash-object can't take, so it's hashed by path instead.
     const output = await runGit(['status', '--porcelain=v2', '--untracked-files=all']);
     const { entries } = parsePorcelainV2Branch(output);
     const live = entries.filter((entry) => !entry.status.includes('D'));
