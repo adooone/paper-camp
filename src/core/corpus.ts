@@ -123,9 +123,8 @@ export function invalidateCorpus(root: string): void {
   snapshotCache.delete(root);
 }
 
-// One promise chain per root — a second updateEntity/createIdea call on the same root
-// waits for the first's read-mutate-write to finish, so a hook and a dashboard write
-// landing close together never both read the pre-write file and clobber each other.
+// One promise chain per root, so a hook and a dashboard write landing close
+// together never both read the pre-write file and clobber each other.
 const writeChains = new Map<string, Promise<unknown>>();
 
 function serializeWrite<T>(root: string, run: () => Promise<T>): Promise<T> {
