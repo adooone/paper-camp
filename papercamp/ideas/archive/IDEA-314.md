@@ -2,9 +2,10 @@
 id: IDEA-314
 title: Corpus and capacity that stay current
 type: fix
-status: review
+status: done
 idea: IDEA-307
 created: 2026-10-21
+updated: 2026-10-23
 tags:
   - server
   - core
@@ -116,7 +117,7 @@ capacity data.
 
 ### Thread
 - [x] 2026-10-21 [log] [agent] Run order: Depends on correct git/check primitives from IDEA-313 (main-sha keying, serialized writes) and benefits from the slimmed manager/routes IDEA-309 produces, so it follows both.
-- [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
-- [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
-- [ ] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
-- [ ] 2026-10-23 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
+- [x] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
+- [x] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
+- [x] 2026-10-22 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed
+- [x] 2026-10-23 [question] [agent] Run-all parked on phase 1 ("Key the snapshot on main's sha") — the agent needs a decision: Failed to authenticate: OAuth session expired and could not be refreshed

@@ -2,8 +2,9 @@
 id: IDEA-309
 title: Smaller orchestrator and routes
 type: refactor
-status: review
+status: done
 created: 2026-10-19
+updated: 2026-10-23
 tags:
   - server
   - agents

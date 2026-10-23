@@ -2,8 +2,9 @@
 id: IDEA-315
 title: Small fixes from the review pass
 type: fix
-status: review
+status: done
 created: 2026-10-21
+updated: 2026-10-23
 tags:
   - app
   - server
