@@ -63,6 +63,13 @@ interface MainActivityCacheEntry {
 
 const mainActivityCache = new Map<string, MainActivityCacheEntry>();
 
+/** The default branch's current sha — callers that need to key a cache on main's
+ * position (the corpus snapshot) share this instead of re-resolving the branch name. */
+export async function resolveMainSha(root: string): Promise<string> {
+  const branch = await resolveDefaultBranch(root);
+  return (await runGit(root, ['rev-parse', branch])).trim();
+}
+
 /** Cached per root by the default branch's current sha — a `git log` over the whole
  * history is expensive to redo on every corpus read when main hasn't moved. */
 export async function resolveIdsWithMainActivity(root: string): Promise<Set<string>> {

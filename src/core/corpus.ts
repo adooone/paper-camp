@@ -13,7 +13,7 @@ import type {
 } from '../types/index';
 import { assertCorpusWritable } from './corpus-format';
 import { entityToIdea, entityToPlan } from './entity-view';
-import { resolveIdsWithMainActivity } from './git-log';
+import { resolveIdsWithMainActivity, resolveMainSha } from './git-log';
 import { getPrMapFetchedAt, resolvePrsByEntity } from './git-pr/pr-lookup';
 import { type EntriesByRoot, attachResolvedNeeds } from './needs';
 import { parseEntityFile } from './parse/parser';
@@ -136,14 +136,15 @@ export async function readCorpus(
   const ideasDir = join(root, 'papercamp', 'ideas');
   const ttlMs = live ? undefined : Number.POSITIVE_INFINITY;
 
-  const [fingerprint, prs, mainActivityIds] = await Promise.all([
+  const [fingerprint, prs, mainActivityIds, mainSha] = await Promise.all([
     corpusFingerprint(ideasDir),
     resolvePrsByEntity(root, ttlMs),
     resolveIdsWithMainActivity(root),
+    resolveMainSha(root),
   ]);
   const resolved = prs !== undefined;
   const fetchedAt = (await getPrMapFetchedAt(root)) ?? 0;
-  const key = `${fingerprint}:${fetchedAt}`;
+  const key = `${fingerprint}:${fetchedAt}:${mainSha}`;
 
   const hit = snapshotCache.get(root);
   if (hit && hit.key === key) return hit.promise;

@@ -91,9 +91,10 @@ never exceeds 100%.
 capacity data.
 
 ### Phases
-- [ ] Key the snapshot on main's sha
+- [x] Key the snapshot on main's sha
       `mainSha` in the cache key from the sha `resolveIdsWithMainActivity`
       computes; a test commits between reads.
+      run: 1m54s · 40 in · 5k out · sonnet-5 · sess:0980ec63-45e1-4f90-a265-b6357e0083e4
 - [ ] Serialise entity writes and send phase ops
       Per-root chain for `updateEntity`, `appendThread`, `createIdea`;
       `phase: { index, done }` on `PATCH /api/entities`; `update_phase`

@@ -363,6 +363,36 @@ describe('readCorpus — status derivation from main-branch commit activity', ()
     expect(byId['IDEA-20']).toBe('in-progress');
     expect(byId['IDEA-21']).toBe('review');
   });
+
+  it('moves status after a commit to main that never touches the idea file', async () => {
+    installGh([]);
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-corpus-git-'));
+    mkdirSync(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
+    const run = (...args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf-8' });
+    run('init', '-b', 'main');
+    run('config', 'user.email', 'test@example.com');
+    run('config', 'user.name', 'Test User');
+    run('config', 'commit.gpgsign', 'false');
+
+    write(root, {
+      id: 'IDEA-20',
+      title: 'Not yet on main',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: false }],
+    });
+
+    const before = await readCorpus(root, { live: true });
+    expect(before.work.find((e) => e.id === 'IDEA-20')?.status).toBe('planned');
+
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    run('add', '.');
+    run('commit', '-m', 'feat(core): Add the thing\n\nRefs: IDEA-20');
+
+    const after = await readCorpus(root, { live: true });
+    expect(after.work.find((e) => e.id === 'IDEA-20')?.status).toBe('in-progress');
+  });
 });
 
 describe('readCorpus — archivable ideas', () => {
