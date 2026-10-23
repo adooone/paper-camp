@@ -56,6 +56,11 @@ async function computeIdsWithMainActivity(root: string, branch: string): Promise
   return ids;
 }
 
+export interface MainActivity {
+  ids: Set<string>;
+  sha: string;
+}
+
 interface MainActivityCacheEntry {
   sha: string;
   promise: Promise<Set<string>>;
@@ -63,28 +68,23 @@ interface MainActivityCacheEntry {
 
 const mainActivityCache = new Map<string, MainActivityCacheEntry>();
 
-/** The default branch's current sha — callers that need to key a cache on main's
- * position (the corpus snapshot) share this instead of re-resolving the branch name. */
-export async function resolveMainSha(root: string): Promise<string> {
-  const branch = await resolveDefaultBranch(root);
-  return (await runGit(root, ['rev-parse', branch])).trim();
-}
-
 /** Cached per root by the default branch's current sha — a `git log` over the whole
- * history is expensive to redo on every corpus read when main hasn't moved. */
-export async function resolveIdsWithMainActivity(root: string): Promise<Set<string>> {
+ * history is expensive to redo on every corpus read when main hasn't moved. The sha
+ * comes back with the ids so callers that key a cache on main's position (the corpus
+ * snapshot) don't need a second `rev-parse` of their own. */
+export async function resolveIdsWithMainActivity(root: string): Promise<MainActivity> {
   const branch = await resolveDefaultBranch(root);
   const sha = (await runGit(root, ['rev-parse', branch])).trim();
 
   const hit = mainActivityCache.get(root);
-  if (hit && hit.sha === sha) return hit.promise;
+  if (hit && hit.sha === sha) return hit.promise.then((ids) => ({ ids, sha }));
 
   const promise = computeIdsWithMainActivity(root, branch).catch((err) => {
     if (mainActivityCache.get(root)?.sha === sha) mainActivityCache.delete(root);
     throw err;
   });
   mainActivityCache.set(root, { sha, promise });
-  return promise;
+  return promise.then((ids) => ({ ids, sha }));
 }
 
 export interface GitLogCommit {

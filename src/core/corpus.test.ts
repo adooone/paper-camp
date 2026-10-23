@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,6 +16,14 @@ import { clearPrCache } from './git-pr/pr';
 import * as readers from './readers';
 import { readEntities } from './readers';
 import { formatEntityFile } from './serialize/entity-file';
+
+// `spawn` wrapped in a vi.fn so a test can count real git invocations — a bare
+// vi.spyOn can't redefine this module's export.
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return { ...actual, spawn: vi.fn(actual.spawn) };
+});
+const spawnMock = vi.mocked(spawn);
 
 const originalPath = process.env.PATH;
 
@@ -393,6 +401,40 @@ describe('readCorpus — status derivation from main-branch commit activity', ()
 
     const after = await readCorpus(root, { live: true });
     expect(after.work.find((e) => e.id === 'IDEA-20')?.status).toBe('in-progress');
+  });
+
+  it('spawns no git process of its own on a cache hit, beyond resolveIdsWithMainActivity', async () => {
+    installGh([]);
+    const root = mkdtempSync(join(tmpdir(), 'papercamp-corpus-git-'));
+    mkdirSync(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
+    const run = (...args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf-8' });
+    run('init', '-b', 'main');
+    run('config', 'user.email', 'test@example.com');
+    run('config', 'user.name', 'Test User');
+    run('config', 'commit.gpgsign', 'false');
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    run('add', '.');
+    run('commit', '-m', 'feat(core): Add the thing\n\nRefs: IDEA-20');
+
+    write(root, {
+      id: 'IDEA-20',
+      title: 'In progress via main',
+      type: 'feat',
+      created: '2026-07-01',
+      body: 'x',
+      phases: [{ text: 'One', done: false }],
+    });
+
+    await readCorpus(root, { live: true });
+    spawnMock.mockClear();
+    await readCorpus(root, { live: true });
+
+    const gitSpawns = spawnMock.mock.calls.filter(([cmd]) => cmd === 'git');
+    expect(gitSpawns).toHaveLength(2);
+    expect(gitSpawns.map(([, args]) => (args as string[])[0])).toEqual([
+      'symbolic-ref',
+      'rev-parse',
+    ]);
   });
 });
 

@@ -116,7 +116,7 @@ export async function resolveIdeasForRelease(
 }
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
-  const [{ entries }, prs, taskLogRaw, changelogRaw, commits, mainActivityIds] = await Promise.all([
+  const [{ entries }, prs, taskLogRaw, changelogRaw, commits, mainActivity] = await Promise.all([
     readEntities(join(root, 'papercamp', 'ideas')),
     resolvePrsByEntity(root),
     readFileMaybe(join(root, 'papercamp', 'tasks.log')),
@@ -124,6 +124,7 @@ export async function resolveEntityTrail(root: string, id: string): Promise<Prov
     resolveCommitsForEntity(root, id),
     resolveIdsWithMainActivity(root),
   ]);
+  const mainActivityIds = mainActivity.ids;
 
   const entry = entries.find((e) => e.id === id);
   const pr = prs?.get(id);

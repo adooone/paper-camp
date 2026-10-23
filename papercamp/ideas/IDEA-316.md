@@ -94,9 +94,10 @@ a timed-out run arms one SIGKILL timer.
       `pr-review-settle.ts` and the release stamp through `appendThread` /
       `updateEntity`; thread-vs-log concurrent test.
       run: 5m20s · 118 in · 22.1k out · sonnet-5 · sess:412a4c0d-cc2a-4dcb-9524-748316f577fa
-- [ ] One sha per corpus read
+- [x] One sha per corpus read
       `resolveIdsWithMainActivity` returns its sha; `readCorpus` keys on it;
       `resolveMainSha` removed; a test counts git spawns on a cache hit.
+      run: 3m9s · 74 in · 11.4k out · sonnet-5 · sess:d694d599-b3c9-40f8-8a43-1fd46ded4319
 - [ ] Stale branch within the spawn budget
       Merged from the right count, plan id from the snapshot,
       `neverDiverged` from the same counts; stale-branch spawn test.

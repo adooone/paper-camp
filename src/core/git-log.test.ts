@@ -1,14 +1,22 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import {
   parseBranchLine,
   parseGitLogOutput,
   readFirstParentLog,
   resolveIdsWithMainActivity,
 } from './git-log';
+
+// `spawn` wrapped in a vi.fn so a test can count real git invocations — a bare
+// vi.spyOn can't redefine this module's export.
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return { ...actual, spawn: vi.fn(actual.spawn) };
+});
+const spawnMock = vi.mocked(spawn);
 
 function git(cwd: string, ...args: string[]): string {
   const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
@@ -56,7 +64,7 @@ describe('resolveIdsWithMainActivity', () => {
     commit(root, 'a.txt', 'feat(core): Add the thing', 'Refs: IDEA-116');
     commit(root, 'b.txt', 'fix(app): Tweak it', 'Refs: IDEA-9');
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set(['IDEA-116', 'IDEA-9']));
     });
   });
@@ -65,7 +73,7 @@ describe('resolveIdsWithMainActivity', () => {
     const root = initGitRepo();
     commit(root, 'a.txt', 'feat(app): Roadmap items become the subject vocabulary (IDEA-95) (#78)');
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set(['IDEA-95']));
     });
   });
@@ -74,7 +82,7 @@ describe('resolveIdsWithMainActivity', () => {
     const root = initGitRepo();
     commit(root, 'a.txt', 'chore(repo): seed main');
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set());
     });
   });
@@ -83,7 +91,7 @@ describe('resolveIdsWithMainActivity', () => {
     const root = initGitRepo();
     commit(root, 'papercamp/ideas/IDEA-243.md', 'docs(ideas): Auto-fix — plan', 'Refs: IDEA-243');
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set());
     });
   });
@@ -97,7 +105,7 @@ describe('resolveIdsWithMainActivity', () => {
       'Refs: IDEA-243',
     );
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set(['IDEA-243']));
     });
   });
@@ -106,9 +114,25 @@ describe('resolveIdsWithMainActivity', () => {
     const root = mkdtempSync(join(tmpdir(), 'papercamp-git-log-plain-'));
     gitRoots.push(root);
 
-    return resolveIdsWithMainActivity(root).then((ids) => {
+    return resolveIdsWithMainActivity(root).then(({ ids }) => {
       expect(ids).toEqual(new Set());
     });
+  });
+
+  it('returns the resolved sha, and spawns no `git log` on a cache hit', async () => {
+    const root = initGitRepo();
+    commit(root, 'a.txt', 'feat(core): Add the thing', 'Refs: IDEA-116');
+    const headSha = git(root, 'rev-parse', 'main');
+
+    const first = await resolveIdsWithMainActivity(root);
+    expect(first.sha).toBe(headSha);
+    expect(first.ids).toEqual(new Set(['IDEA-116']));
+
+    spawnMock.mockClear();
+    const second = await resolveIdsWithMainActivity(root);
+    expect(second.sha).toBe(headSha);
+    expect(second.ids).toEqual(new Set(['IDEA-116']));
+    expect(spawnMock.mock.calls.map(([, args]) => (args as string[])[0])).not.toContain('log');
   });
 });
 
