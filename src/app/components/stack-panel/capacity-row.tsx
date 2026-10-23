@@ -1,5 +1,6 @@
 import { useCapacity } from '@/app/hooks/use-capacity';
 import { useAppStore } from '@/app/stores/app-store';
+import type { CapacityRecord } from '@/core/capacity';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
 import type { RateLimitSnapshot, RateLimitWindow } from '@/types/index';
 import {
@@ -12,7 +13,7 @@ import {
   type StampVariant,
   Tooltip,
 } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { chalkStatusText } from './shared';
 
 const levelVariant = {
@@ -65,11 +66,27 @@ export function windowView(window: RateLimitWindow | undefined, now: number): Wi
   if (!window) return null;
   const resetAtMs = window.resetsAt === undefined ? undefined : resetsAtMs(window.resetsAt);
   const isReset = resetAtMs !== undefined && resetAtMs <= now;
-  return { pct: Math.round(window.utilization * 100), isReset, resetAtMs };
+  const pct = Math.min(100, Math.max(0, Math.round(window.utilization * 100)));
+  return { pct, isReset, resetAtMs };
 }
 
 export interface CapacityRowProps {
   heightClassName?: string;
+}
+
+/** Decides the one-time mount probe: settles on the query's first non-loading render
+ * (so a second call with `settled: true` is always a no-op), then probes only if
+ * there's no record on file yet or its five-hour window has already reset. */
+export function mountProbeDecision(
+  settled: boolean,
+  isLoading: boolean,
+  record: CapacityRecord | null,
+  now: number,
+): { settle: boolean; probe: boolean } {
+  if (settled || isLoading) return { settle: false, probe: false };
+  const fiveHour = record?.snapshot.unifiedWindows?.five_hour;
+  const expired = fiveHour?.resetsAt !== undefined && resetsAtMs(fiveHour.resetsAt) <= now;
+  return { settle: true, probe: !record || expired };
 }
 
 const CapacityBarRow = ({
@@ -99,7 +116,6 @@ const CapacityBarRow = ({
         className="min-w-0 flex-1"
         value={isReset ? 0 : pct}
         max={100}
-        // The chalk *Text* tokens are the light marks that read on the board.
         color={levelText[level]}
         surface="chalkboard"
         sketch
@@ -118,7 +134,7 @@ const CapacityBarRow = ({
 
 export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const { record, refreshing, refresh } = useCapacity();
+  const { record, isLoading, refreshing, refresh } = useCapacity();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -129,13 +145,13 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const live: RateLimitSnapshot | null =
     agentStatus.find((t) => LIVE_STATUSES.has(t.status) && t.rateLimit)?.rateLimit ?? null;
 
-  // On mount only: a probe is cheap but not free, so a fresh five-hour window
-  // reuses the reading already on file and leaves refreshing to the button.
+  const settledRef = useRef(false);
   useEffect(() => {
-    const fiveHour = record?.snapshot.unifiedWindows?.five_hour;
-    const expired = fiveHour?.resetsAt !== undefined && resetsAtMs(fiveHour.resetsAt) <= Date.now();
-    if (!record || expired) refresh();
-  }, [record, refresh]);
+    const decision = mountProbeDecision(settledRef.current, isLoading, record, Date.now());
+    if (!decision.settle) return;
+    settledRef.current = true;
+    if (decision.probe) refresh();
+  }, [isLoading, record, refresh]);
 
   const snapshot = live ?? record?.snapshot ?? null;
   const level = capacityLevel(snapshot?.status ?? 'allowed');
@@ -159,7 +175,9 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
           <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
             {fiveHourWindow?.resetsAt === undefined
               ? 'Capacity'
-              : `Resets in ${formatGap(resetsAtMs(fiveHourWindow.resetsAt) - now)}`}
+              : fiveHour?.isReset
+                ? 'Window reset'
+                : `Resets in ${formatGap(resetsAtMs(fiveHourWindow.resetsAt) - now)}`}
           </span>
           {refreshing ? (
             <span className="inline-flex shrink-0">

@@ -712,7 +712,9 @@ export function createAgentManager(
       if (parsed.reason) task.errorReason = parsed.reason;
       if (parsed.rateLimit) {
         task.rateLimit = parsed.rateLimit;
-        writeCapacity(root, parsed.rateLimit, 'run').catch(() => {});
+        writeCapacity(root, parsed.rateLimit, 'run')
+          .then(() => publish?.({ type: 'capacity' }))
+          .catch(() => {});
       }
       if (parsed.usage) task.runUsage = parsed.usage;
       if (parsed.text) pushLine(task, parsed.text);
@@ -814,7 +816,9 @@ export function createAgentManager(
         }
         if (parsed?.rateLimit) {
           task.rateLimit = parsed.rateLimit;
-          writeCapacity(root, parsed.rateLimit, 'run').catch(() => {});
+          writeCapacity(root, parsed.rateLimit, 'run')
+            .then(() => publish?.({ type: 'capacity' }))
+            .catch(() => {});
         }
         if (parsed?.reason) {
           task.errorReason = parsed.reason;

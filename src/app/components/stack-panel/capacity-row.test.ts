@@ -1,9 +1,11 @@
+import type { CapacityRecord } from '@/core/capacity';
 import { describe, expect, it } from 'vitest';
 import {
   formatGap,
   formatResetTime,
   formatResetTooltip,
   formatWeeklyTooltip,
+  mountProbeDecision,
   windowView,
 } from './capacity-row';
 
@@ -79,5 +81,41 @@ describe('windowView', () => {
     const now = Date.now();
     const view = windowView({ utilization: 0.9, resetsAt: Math.floor((now + 60_000) / 1000) }, now);
     expect(view?.isReset).toBe(false);
+  });
+
+  it('clamps an overage utilization to 100%', () => {
+    expect(windowView({ utilization: 1.12 }, Date.now())?.pct).toBe(100);
+  });
+});
+
+const recordWithFiveHour = (resetsAt?: number): CapacityRecord => ({
+  snapshot: { status: 'allowed', unifiedWindows: { five_hour: { utilization: 0.1, resetsAt } } },
+  capturedAt: '2026-01-01T00:00:00.000Z',
+  source: 'probe',
+});
+
+describe('mountProbeDecision', () => {
+  const now = Date.now();
+
+  it('does not settle while the query is still loading', () => {
+    expect(mountProbeDecision(false, true, null, now)).toEqual({ settle: false, probe: false });
+  });
+
+  it('settles and probes when there is no record on file', () => {
+    expect(mountProbeDecision(false, false, null, now)).toEqual({ settle: true, probe: true });
+  });
+
+  it('settles without probing when the record has a fresh five-hour window', () => {
+    const record = recordWithFiveHour(Math.floor((now + 60_000) / 1000));
+    expect(mountProbeDecision(false, false, record, now)).toEqual({ settle: true, probe: false });
+  });
+
+  it('settles and probes when the five-hour window has already reset', () => {
+    const record = recordWithFiveHour(Math.floor((now - 1000) / 1000));
+    expect(mountProbeDecision(false, false, record, now)).toEqual({ settle: true, probe: true });
+  });
+
+  it('never settles again once already settled, regardless of the record', () => {
+    expect(mountProbeDecision(true, false, null, now)).toEqual({ settle: false, probe: false });
   });
 });

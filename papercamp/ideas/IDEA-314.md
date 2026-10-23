@@ -2,7 +2,7 @@
 id: IDEA-314
 title: Corpus and capacity that stay current
 type: fix
-status: in-progress
+status: review
 idea: IDEA-307
 created: 2026-10-21
 tags:
@@ -108,10 +108,11 @@ capacity data.
       `readParkedQuestions(entries)`; both routes read `readCorpus`; parse
       counter asserts one parse per tick.
       run: 2m3s · 50 in · 7.6k out · sonnet-5 · sess:97ee9918-b2de-4066-a1ae-8c0696ed4bf1
-- [ ] Capacity card that probes once and clamps
+- [x] Capacity card that probes once and clamps
       Settle-once mount probe, `capacity` event on run writes, 0–100 clamp,
       *Window reset* header, comments removed; a rendering test for the
       mount rule.
+      run: 4m56s · 100 in · 17.9k out · sonnet-5 · sess:97ee9918-b2de-4066-a1ae-8c0696ed4bf1
 
 ### Thread
 - [x] 2026-10-21 [log] [agent] Run order: Depends on correct git/check primitives from IDEA-313 (main-sha keying, serialized writes) and benefits from the slimmed manager/routes IDEA-309 produces, so it follows both.

@@ -9,13 +9,14 @@ import { useCallback, useEffect, useState } from 'react';
 
 export interface UseCapacityResult {
   record: CapacityRecord | null;
+  isLoading: boolean;
   refreshing: boolean;
   refresh: () => void;
 }
 
 export function useCapacity(): UseCapacityResult {
   const { runtimeUrl } = useRuntimeConnection();
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: capacityQueryKey(runtimeUrl),
     queryFn: fetchCapacity,
   });
@@ -42,5 +43,5 @@ export function useCapacity(): UseCapacityResult {
       .finally(() => setRefreshing(false));
   }, [toast]);
 
-  return { record: data ?? null, refreshing, refresh };
+  return { record: data ?? null, isLoading, refreshing, refresh };
 }

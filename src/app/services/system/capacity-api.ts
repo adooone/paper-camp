@@ -1,7 +1,6 @@
 import { apiFetch, apiUrl } from '@/app/services/api-base';
 import type { CapacityRecord } from '@/core/capacity';
 
-// Generous: the probe spawns the CLI and waits for its first stream line.
 const PROBE_TIMEOUT_MS = 30_000;
 
 export const fetchCapacity = async (): Promise<CapacityRecord | null> => {
