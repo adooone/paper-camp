@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
@@ -90,8 +90,30 @@ describe('runReleaseNotes', () => {
 
     expect(ok).toBe(true);
     expect(logs.output).toBe(
-      ['## v0.2.0', '', '### Features', '', '- Do the thing (IDEA-1)'].join('\n'),
+      ['## v0.2.0', '', '### Features', '', '- **Do the thing** (IDEA-1)'].join('\n'),
     );
+  });
+
+  it('--write replaces the version section in CHANGELOG.md and prints it', async () => {
+    const { root } = await makeReleasedProject();
+
+    const logs = captureLogs();
+    const ok = await runReleaseNotes(root, 'v0.2.0', { write: true });
+    logs.restore();
+
+    expect(ok).toBe(true);
+    expect(logs.output).toBe(
+      [
+        '## [0.2.0](https://github.com/o/r/compare/v0.1.0...v0.2.0) (2026-08-06)',
+        '',
+        '### Features',
+        '',
+        '- **Do the thing** (IDEA-1)',
+      ].join('\n'),
+    );
+
+    const changelog = await readFile(join(root, 'CHANGELOG.md'), 'utf-8');
+    expect(changelog).toBe(`# Changelog\n\n${logs.output}\n`);
   });
 
   it('fails when the CHANGELOG has no range for the requested version', async () => {

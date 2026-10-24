@@ -27,7 +27,11 @@ const ReleaseBlock = ({ version }: { version: string }) => {
             {notes.sections
               .map(
                 (section) =>
-                  `### ${section.label}\n\n${section.ideas.map((idea) => `- ${idea.title} (${idea.id})`).join('\n')}`,
+                  `### ${section.label}\n\n${section.ideas
+                    .map((idea) =>
+                      idea.id ? `- **${idea.title}** (${idea.id})` : `- ${idea.title}`,
+                    )
+                    .join('\n')}`,
               )
               .join('\n\n')}
           </Markdown>

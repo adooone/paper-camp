@@ -57,10 +57,11 @@ release-please run on the same PR leaves the grouped section in place.
 Branching per idea: work stays on `main`. Rewriting past CHANGELOG sections.
 
 ### Phases
-- [ ] Write the grouped section in place
+- [x] Write the grouped section in place
       `release-notes <version> --write` replaces the version's section in
       `CHANGELOG.md` and prints it; commits without an idea keep their
       line; tests for the rewrite and the idempotent second run.
+      run: 6m12s · 114 in · 25.6k out · sonnet-5 · sess:b7c47609-d845-4a6a-b4b7-b1fe5e908b90
 - [ ] Regroup the release PR from the workflow
       The `release.yml` step on the release branch: rewrite, commit, push,
       `gh pr edit --body`.

@@ -1342,7 +1342,7 @@ export interface ProvenanceTrail {
 }
 
 export interface ReleaseNoteIdea {
-  id: string;
+  id?: string;
   title: string;
 }
 

@@ -115,6 +115,30 @@ export async function resolveIdeasForRelease(
   return byIdea;
 }
 
+export interface ReleaseCommit {
+  sha: string;
+  id: string | null;
+  subject: string;
+}
+
+// Mirrors resolveIdeasForRelease's commit resolution, but keeps every commit in order
+// instead of grouping by idea, so a commit with no idea reference can still get its own line.
+export async function resolveReleaseCommits(root: string, range: string): Promise<ReleaseCommit[]> {
+  const output = await runGit(root, ['log', '--format=%H%x1f%s', '--reverse', range]);
+  const lines = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return Promise.all(
+    lines.map(async (line) => {
+      const [sha, subject = ''] = line.split('\x1f');
+      const id = await resolveEntityIdForCommit(root, sha);
+      return { sha, id, subject };
+    }),
+  );
+}
+
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
   const [{ entries }, prs, taskLogRaw, changelogRaw, commits, mainActivity] = await Promise.all([
     readEntities(join(root, 'papercamp', 'ideas')),

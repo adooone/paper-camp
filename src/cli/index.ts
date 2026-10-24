@@ -36,7 +36,11 @@ import {
 } from '../core/machine-registry';
 import { parseEntityFile, parseIdeaFile, parsePlanFile } from '../core/parse';
 import { entityToPlan } from '../core/readers';
-import { formatReleaseNotesMarkdown, resolveReleaseNotes } from '../core/release-notes';
+import {
+  formatReleaseNotesMarkdown,
+  resolveReleaseNotes,
+  writeReleaseNotes,
+} from '../core/release-notes';
 import {
   AlreadyInitializedError,
   PAPER_CAMP_VERSION,
@@ -917,7 +921,21 @@ program
     if (!ok) process.exitCode = 1;
   });
 
-export async function runReleaseNotes(root: string, version: string): Promise<boolean> {
+export async function runReleaseNotes(
+  root: string,
+  version: string,
+  opts: { write?: boolean } = {},
+): Promise<boolean> {
+  if (opts.write) {
+    const section = await writeReleaseNotes(root, version);
+    if (!section) {
+      console.error(`No release range for "${version}" found in CHANGELOG.md`);
+      return false;
+    }
+    console.log(section);
+    return true;
+  }
+
   const sections = await resolveReleaseNotes(root, version);
   if (!sections) {
     console.error(`No release range for "${version}" found in CHANGELOG.md`);
@@ -933,8 +951,9 @@ program
     'Print release notes for <version> grouped by idea instead of by raw commit — one row per ' +
       'idea (its title, not the commit subject), sectioned the same as the CHANGELOG',
   )
-  .action(async (version: string) => {
-    const ok = await runReleaseNotes(process.cwd(), version);
+  .option('--write', "replace the version's section in CHANGELOG.md in place, then print it")
+  .action(async (version: string, opts: { write?: boolean }) => {
+    const ok = await runReleaseNotes(process.cwd(), version, opts);
     if (!ok) process.exitCode = 1;
   });
 

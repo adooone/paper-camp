@@ -110,7 +110,7 @@ const LOG_FORMAT = `${RECORD_SEP}%H${FIELD_SEP}%s${FIELD_SEP}%cI${FIELD_SEP}%D${
 
 const CONVENTIONAL_PREFIX_RE = /^([a-z]+(?:\([^)]*\))?):\s*(.+)$/i;
 
-function splitPrefix(subject: string): { prefix: string; subject: string } {
+export function splitPrefix(subject: string): { prefix: string; subject: string } {
   const match = subject.match(CONVENTIONAL_PREFIX_RE);
   return match ? { prefix: match[1], subject: match[2] } : { prefix: '', subject };
 }
