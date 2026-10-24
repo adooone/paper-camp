@@ -2,14 +2,16 @@
 id: IDEA-316
 title: Leftovers from the fix review
 type: fix
-status: review
+status: done
 created: 2026-10-23
+updated: 2026-10-24
 tags:
   - app
   - server
   - core
   - git
 subject: Code health
+order: 1
 ---
 
 A review of IDEA-309, 313, 314 and 315 on HEAD found every phase delivered
