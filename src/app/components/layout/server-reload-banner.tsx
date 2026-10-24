@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { useEffect, useState } from 'react';
 
 // Vite's HMR websocket, not the app's own SSE stream — it must still reach the

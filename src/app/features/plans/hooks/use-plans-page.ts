@@ -44,7 +44,7 @@ export const usePlansPage = () => {
   }, [subjectParam, setSubjectFilter]);
 
   const handleGroupChange = (next: GroupMode) => {
-    navigate({ to: '/', search: (prev) => ({ ...prev, group: next }) });
+    navigate({ to: '/', search: (prev: Record<string, unknown>) => ({ ...prev, group: next }) });
   };
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
