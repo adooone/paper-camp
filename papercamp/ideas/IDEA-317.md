@@ -2,7 +2,7 @@
 id: IDEA-317
 title: Release notes grouped by idea
 type: feat
-status: planned
+status: review
 created: 2026-10-24
 tags:
   - ci
@@ -66,5 +66,6 @@ Branching per idea: work stays on `main`. Rewriting past CHANGELOG sections.
       The `release.yml` step on the release branch: rewrite, commit, push,
       `gh pr edit --body`.
       run: 3m28s · 26 in · 14.4k out · sonnet-5 · sess:b7c47609-d845-4a6a-b4b7-b1fe5e908b90
-- [ ] The review stamp as a docs commit
+- [x] The review stamp as a docs commit
       `setRunReview` commits `docs(ideas): mark IDEA-N review`; test.
+      run: 1m6s · 32 in · 3k out · sonnet-5 · sess:7d1c701d-39c7-48f9-a14e-2108df689bf4

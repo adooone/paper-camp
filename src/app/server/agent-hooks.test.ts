@@ -122,6 +122,20 @@ describe('commitVerifyFix', () => {
   });
 });
 
+describe('setRunReview', () => {
+  it('commits the review stamp as docs(ideas), not the idea type, so it adds no changelog line', async () => {
+    const root = await makeGitRoot();
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+
+    const plan = { id: 'IDEA-1', title: 'Test plan', kind: 'feat', tags: [] } as never;
+    await hooks.setRunReview(plan);
+
+    const { stdout } = await run('git', ['log', '-1', '--pretty=%s'], { cwd: root });
+    expect(stdout.trim()).toBe('docs(ideas): mark IDEA-1 review');
+  });
+});
+
 describe('annotateFixRun', () => {
   it('persists the run stamp to the corpus without committing it', async () => {
     const root = await makeGitRoot();

@@ -100,25 +100,22 @@ export function createAgentHooks(root: string, git: GitManager) {
   async function setRunReview(plan: PlanEntry): Promise<void> {
     if (!plan.id) return;
     let wasAlreadyClosed = false;
-    let entryType: string | undefined;
     try {
-      const entry = await updateEntity(root, plan.id, (entry) => {
+      await updateEntity(root, plan.id, (entry) => {
         if (entry.status === 'review' || entry.status === 'done' || entry.status === 'dropped') {
           wasAlreadyClosed = true;
           return undefined;
         }
         return { status: 'review' };
       });
-      entryType = entry.type;
     } catch (error) {
       if (error instanceof CorpusError) return;
       throw error;
     }
     if (wasAlreadyClosed) return;
-    const area = resolveCommitScope(plan);
     const refs = plan.id ? `Refs: ${plan.id}` : undefined;
     await git.stageAll();
-    await git.commit([], `${entryType ?? 'feat'}(${area}): mark ${plan.id} review`, refs, {
+    await git.commit([], `docs(ideas): mark ${plan.id} review`, refs, {
       noVerify: true,
     });
   }
