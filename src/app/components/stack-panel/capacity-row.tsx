@@ -32,6 +32,26 @@ const LIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
 
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+export function formatRelative(ms: number): string {
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return `${Math.floor(hours / 24)} d ago`;
+}
+
+export function formatOutdatedTooltip(relative: string, error: Error | null): string {
+  const base = `Last reading ${relative}`;
+  return error ? `${base} — refresh failed: ${error.message}` : base;
+}
+
+export function formatEmptyTooltip(error: Error | null): string {
+  return error ? `refresh failed: ${error.message}` : 'click refresh for a reading';
+}
+
 export function formatGap(ms: number): string {
   const minutes = Math.max(0, Math.round(ms / 60_000));
   if (minutes < 60) return `${minutes}m`;
@@ -95,6 +115,7 @@ const CapacityBarRow = ({
   level,
   fallback,
   tooltip,
+  neutral = false,
   extraStamp,
 }: {
   label: string;
@@ -102,11 +123,16 @@ const CapacityBarRow = ({
   level: keyof typeof levelVariant;
   fallback: string;
   tooltip: string;
+  neutral?: boolean;
   extraStamp?: React.ReactNode;
 }) => {
   const isReset = view?.isReset ?? false;
   const pct = view?.pct ?? 0;
-  const stampVariant: StampVariant = isReset ? 'warning' : levelVariant[level];
+  const stampVariant: StampVariant = isReset
+    ? 'warning'
+    : neutral
+      ? 'neutral'
+      : levelVariant[level];
   const stampText = isReset ? 'reset' : view ? `${pct}%` : fallback;
 
   return (
@@ -134,7 +160,7 @@ const CapacityBarRow = ({
 
 export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const { record, isLoading, refreshing, refresh } = useCapacity();
+  const { record, isLoading, refreshing, error, refresh } = useCapacity();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -159,14 +185,25 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
   const weeklyWindow = snapshot?.unifiedWindows?.seven_day;
   const fiveHour = windowView(fiveHourWindow, now);
   const weekly = windowView(weeklyWindow, now);
-  const fallback = snapshot?.status ?? 'no report';
+  const fallback = snapshot?.status ?? 'no reading';
+
+  const capturedAtMs = !live && record ? Date.parse(record.capturedAt) : null;
+  const isStale = capturedAtMs !== null && now - capturedAtMs > ONE_DAY_MS;
+  const isEmpty = !live && !record;
+  const isOutdated = !live && record !== null && (Boolean(error) || isStale);
+  const readingTooltip = isOutdated
+    ? formatOutdatedTooltip(formatRelative(now - (capturedAtMs as number)), error)
+    : isEmpty
+      ? formatEmptyTooltip(error)
+      : null;
+  const neutral = isOutdated || isEmpty;
 
   const fiveHourTooltip = fiveHour?.isReset
     ? formatResetTooltip(fiveHour.resetAtMs as number)
-    : `5-hour window usage: ${level}`;
+    : (readingTooltip ?? `5-hour window usage: ${level}`);
   const weeklyTooltip = weekly?.isReset
     ? formatResetTooltip(weekly.resetAtMs as number)
-    : formatWeeklyTooltip(weekly?.pct ?? 0, weekly?.resetAtMs);
+    : (readingTooltip ?? formatWeeklyTooltip(weekly?.pct ?? 0, weekly?.resetAtMs));
 
   return (
     <Card surface="chalkboard" size="small" className={heightClassName}>
@@ -205,6 +242,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
           level={level}
           fallback={fallback}
           tooltip={fiveHourTooltip}
+          neutral={neutral}
           extraStamp={
             snapshot?.overage && (
               <Tooltip
@@ -224,6 +262,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
           level={level}
           fallback={fallback}
           tooltip={weeklyTooltip}
+          neutral={neutral}
         />
       </div>
     </Card>

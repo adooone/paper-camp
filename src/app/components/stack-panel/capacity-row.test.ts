@@ -1,7 +1,10 @@
 import type { CapacityRecord } from '@/core/capacity';
 import { describe, expect, it } from 'vitest';
 import {
+  formatEmptyTooltip,
   formatGap,
+  formatOutdatedTooltip,
+  formatRelative,
   formatResetTime,
   formatResetTooltip,
   formatWeeklyTooltip,
@@ -55,6 +58,46 @@ describe('formatWeeklyTooltip', () => {
 
   it('drops the reset clause when there is no resetsAt', () => {
     expect(formatWeeklyTooltip(50, undefined)).toBe('Weekly window: 50%');
+  });
+});
+
+describe('formatRelative', () => {
+  it('reads as just now under a minute', () => {
+    expect(formatRelative(30_000)).toBe('just now');
+  });
+
+  it('shows minutes under an hour', () => {
+    expect(formatRelative(5 * 60_000)).toBe('5 min ago');
+  });
+
+  it('shows hours under a day', () => {
+    expect(formatRelative(3 * 60 * 60_000)).toBe('3 h ago');
+  });
+
+  it('shows days at or beyond 24 hours', () => {
+    expect(formatRelative(2 * 24 * 60 * 60_000)).toBe('2 d ago');
+  });
+});
+
+describe('formatOutdatedTooltip', () => {
+  it('names the reading age when there is no error', () => {
+    expect(formatOutdatedTooltip('2 d ago', null)).toBe('Last reading 2 d ago');
+  });
+
+  it('appends the refresh failure when there is an error', () => {
+    expect(formatOutdatedTooltip('3 h ago', new Error('404 Not Found'))).toBe(
+      'Last reading 3 h ago — refresh failed: 404 Not Found',
+    );
+  });
+});
+
+describe('formatEmptyTooltip', () => {
+  it('points at refresh when there is no error', () => {
+    expect(formatEmptyTooltip(null)).toBe('click refresh for a reading');
+  });
+
+  it('carries the refresh failure when there is an error', () => {
+    expect(formatEmptyTooltip(new Error('Not signed in'))).toBe('refresh failed: Not signed in');
   });
 });
 
