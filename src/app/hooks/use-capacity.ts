@@ -11,17 +11,32 @@ export interface UseCapacityResult {
   record: CapacityRecord | null;
   isLoading: boolean;
   refreshing: boolean;
+  error: Error | null;
   refresh: () => void;
 }
 
 export function useCapacity(): UseCapacityResult {
   const { runtimeUrl } = useRuntimeConnection();
-  const { data, isLoading } = useQuery({
+  const {
+    data,
+    isLoading,
+    error: fetchError,
+    isSuccess,
+  } = useQuery({
     queryKey: capacityQueryKey(runtimeUrl),
     queryFn: fetchCapacity,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (fetchError) setError(fetchError as Error);
+  }, [fetchError]);
+
+  useEffect(() => {
+    if (isSuccess) setError(null);
+  }, [isSuccess]);
 
   useEffect(() => {
     return subscribeToActivityStream((payload) => {
@@ -34,14 +49,16 @@ export function useCapacity(): UseCapacityResult {
     probeCapacity()
       .then(() => refreshCapacity())
       .catch((err) => {
+        const probeError = err as Error;
+        setError(probeError);
         toast({
           title: "Couldn't check capacity",
-          description: (err as Error).message,
+          description: probeError.message,
           variant: 'error',
         });
       })
       .finally(() => setRefreshing(false));
   }, [toast]);
 
-  return { record: data ?? null, isLoading, refreshing, refresh };
+  return { record: data ?? null, isLoading, refreshing, error, refresh };
 }

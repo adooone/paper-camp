@@ -35,12 +35,22 @@ describe('capacity-api', () => {
       expect(await fetchCapacity()).toEqual(record);
     });
 
-    it('resolves null on a non-2xx status', async () => {
+    it('throws the status line on a non-2xx status with no body', async () => {
       await listenOnFreePort((_req, res) => {
-        res.statusCode = 500;
+        res.statusCode = 404;
+        res.statusMessage = 'Not Found';
         res.end();
       });
-      expect(await fetchCapacity()).toBeNull();
+      await expect(fetchCapacity()).rejects.toThrow('404 Not Found');
+    });
+
+    it('throws the server message on a non-2xx status', async () => {
+      await listenOnFreePort((_req, res) => {
+        res.statusCode = 503;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Claude reported no capacity — is the CLI signed in?' }));
+      });
+      await expect(fetchCapacity()).rejects.toThrow('Claude reported no capacity');
     });
   });
 

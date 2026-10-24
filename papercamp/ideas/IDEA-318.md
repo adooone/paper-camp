@@ -3,13 +3,13 @@ id: IDEA-318
 title: Capacity keeps its last reading
 type: fix
 status: planned
+idea: IDEA-310
 created: 2026-10-24
 tags:
   - app
   - stack
   - ui
 subject: Run & monitor
-idea: IDEA-310
 ---
 
 The capacity card reads *no report* on both rows whenever the request for
@@ -58,10 +58,11 @@ Serving `/api/capacity` from a 0.43 daemon: that is the 0.44.0 release and
 `paper-camp update`.
 
 ### Phases
-- [ ] Keep the reading on failure
+- [x] Keep the reading on failure
       `fetchCapacity` throws on non-OK; `useCapacity` exposes the newest
       fetch or probe error and clears it on success; tests for the kept
       data and the error.
+      run: 3m2s · 60 in · 12.3k out · sonnet-5 · sess:aca75948-9057-4286-9589-6b87c56ce9b4
 - [ ] Outdated and no-reading states
       Neutral stamps with the *Last reading …* tooltip when the fetch
       failed or the reading is over 24 h old; *no reading* with the cause

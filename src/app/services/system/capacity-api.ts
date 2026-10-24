@@ -5,7 +5,10 @@ const PROBE_TIMEOUT_MS = 30_000;
 
 export const fetchCapacity = async (): Promise<CapacityRecord | null> => {
   const response = await apiFetch(apiUrl('/api/capacity'));
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `${response.status} ${response.statusText}`);
+  }
   return (await response.json()) as CapacityRecord | null;
 };
 
