@@ -31,3 +31,63 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/.release-please-manifest.json
           target-branch: main
+
+      - name: Checkout the release PR branch
+        if: steps.release.outputs.pr
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ fromJson(steps.release.outputs.pr).headBranchName }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Setup pnpm
+        if: steps.release.outputs.pr
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        if: steps.release.outputs.pr
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # The CLI runs under bun ("cli": "bun src/cli/index.ts").
+      - name: Setup bun
+        if: steps.release.outputs.pr
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        if: steps.release.outputs.pr
+        run: pnpm install
+
+      # Regroups the release PR's raw commit list into one bullet per idea: rewrites the
+      # CHANGELOG section, commits it if it changed, pushes, then swaps the PR body's own
+      # changelog section for the grouped one, keeping release-please's header and footer.
+      # Idempotent, since it re-derives from the current file and PR body on every run, so
+      # a later push that makes release-please regenerate its raw section gets regrouped
+      # again. Best-effort: the PR still merges fine with the raw list if this step fails.
+      - name: Group the release notes by idea
+        if: steps.release.outputs.pr
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ fromJson(steps.release.outputs.pr).number }}
+        run: |
+          VERSION=$(grep -m1 -oP '(?<=\.\.\.)v[0-9]+\.[0-9]+\.[0-9]+(?=\))' CHANGELOG.md)
+          pnpm cli release-notes "$VERSION" --write | tee /tmp/release-notes.md
+
+          if ! git diff --quiet -- CHANGELOG.md; then
+            git config user.name "paper-camp-scout[bot]"
+            git config user.email "paper-camp-scout[bot]@users.noreply.github.com"
+            git add CHANGELOG.md
+            git commit -m "chore(release): Group the notes by idea"
+            git push
+          fi
+
+          BODY=$(gh pr view "$PR_NUMBER" --json body -q .body)
+          MARKERS=$(grep -n '^---$' <<< "$BODY")
+          FIRST=$(sed -n '1p' <<< "$MARKERS" | cut -d: -f1)
+          SECOND=$(sed -n '2p' <<< "$MARKERS" | cut -d: -f1)
+          HEADER=$(sed -n "1,${FIRST}p" <<< "$BODY")
+          FOOTER=$(sed -n "${SECOND},\$p" <<< "$BODY")
+          { echo "$HEADER"; echo; cat /tmp/release-notes.md; echo; echo "$FOOTER"; } > /tmp/new-body.md
+          gh pr edit "$PR_NUMBER" --body-file /tmp/new-body.md

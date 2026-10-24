@@ -62,8 +62,9 @@ Branching per idea: work stays on `main`. Rewriting past CHANGELOG sections.
       `CHANGELOG.md` and prints it; commits without an idea keep their
       line; tests for the rewrite and the idempotent second run.
       run: 6m12s · 114 in · 25.6k out · sonnet-5 · sess:b7c47609-d845-4a6a-b4b7-b1fe5e908b90
-- [ ] Regroup the release PR from the workflow
+- [x] Regroup the release PR from the workflow
       The `release.yml` step on the release branch: rewrite, commit, push,
       `gh pr edit --body`.
+      run: 3m28s · 26 in · 14.4k out · sonnet-5 · sess:b7c47609-d845-4a6a-b4b7-b1fe5e908b90
 - [ ] The review stamp as a docs commit
       `setRunReview` commits `docs(ideas): mark IDEA-N review`; test.
