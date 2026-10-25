@@ -2,8 +2,9 @@
 id: IDEA-317
 title: Release notes grouped by idea
 type: feat
-status: review
+status: done
 created: 2026-10-24
+updated: 2026-10-25
 tags:
   - ci
   - cli
@@ -69,3 +70,6 @@ Branching per idea: work stays on `main`. Rewriting past CHANGELOG sections.
 - [x] The review stamp as a docs commit
       `setRunReview` commits `docs(ideas): mark IDEA-N review`; test.
       run: 1m6s · 32 in · 3k out · sonnet-5 · sess:7d1c701d-39c7-48f9-a14e-2108df689bf4
+
+### Thread
+- [x] 2026-10-25 [log] [agent] Review fixed: the range ends at HEAD while the release tag is missing (release-please tags on merge), an empty range writes nothing, hidden release-please sections stay out of the grouped notes, and the workflow checkout fetches full history and tags.

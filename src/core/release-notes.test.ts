@@ -100,6 +100,51 @@ describe('resolveReleaseNotes', () => {
     ]);
   });
 
+  it('ends the range at HEAD while the release tag does not exist yet', async () => {
+    const root = initGitRepo();
+    writeIdea(root, {
+      id: 'IDEA-1',
+      title: 'Add the thing',
+      type: 'feat',
+      status: 'done',
+      created: '2026-07-01',
+    });
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): seed main');
+    git(root, 'tag', 'v0.1.0');
+
+    writeFileSync(join(root, 'b.txt'), 'b\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'feat(core): Add the thing (IDEA-1) (#1)');
+
+    writeFileSync(
+      join(root, 'CHANGELOG.md'),
+      '# Changelog\n\n## [0.2.0](https://github.com/o/r/compare/v0.1.0...v0.2.0) (2026-08-06)\n',
+    );
+
+    expect(await resolveReleaseNotes(root, 'v0.2.0')).toEqual([
+      { label: 'Features', ideas: [{ id: 'IDEA-1', title: 'Add the thing' }] },
+    ]);
+  });
+
+  it('returns null when the range holds no commits, so nothing is written', async () => {
+    const root = initGitRepo();
+    writeFileSync(join(root, 'a.txt'), 'a\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): seed main');
+    git(root, 'tag', 'v0.1.0');
+    git(root, 'tag', 'v0.2.0');
+
+    const changelog =
+      '# Changelog\n\n## [0.2.0](https://github.com/o/r/compare/v0.1.0...v0.2.0) (2026-08-06)\n\n* raw line\n';
+    writeFileSync(join(root, 'CHANGELOG.md'), changelog);
+
+    expect(await resolveReleaseNotes(root, 'v0.2.0')).toBeNull();
+    expect(await writeReleaseNotes(root, 'v0.2.0')).toBeNull();
+    expect(readFileSync(join(root, 'CHANGELOG.md'), 'utf-8')).toBe(changelog);
+  });
+
   it('returns null when the version has no range in the CHANGELOG', async () => {
     const root = initGitRepo();
     writeFileSync(join(root, 'CHANGELOG.md'), '# Changelog\n');

@@ -38,6 +38,7 @@ jobs:
         with:
           ref: ${{ fromJson(steps.release.outputs.pr).headBranchName }}
           token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
 
       - name: Setup pnpm
         if: steps.release.outputs.pr

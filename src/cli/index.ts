@@ -929,7 +929,7 @@ export async function runReleaseNotes(
   if (opts.write) {
     const section = await writeReleaseNotes(root, version);
     if (!section) {
-      console.error(`No release range for "${version}" found in CHANGELOG.md`);
+      console.error(`No release range with commits for "${version}" — CHANGELOG.md left as is`);
       return false;
     }
     console.log(section);
@@ -938,7 +938,7 @@ export async function runReleaseNotes(
 
   const sections = await resolveReleaseNotes(root, version);
   if (!sections) {
-    console.error(`No release range for "${version}" found in CHANGELOG.md`);
+    console.error(`No release range with commits for "${version}" found in CHANGELOG.md`);
     return false;
   }
   console.log(formatReleaseNotesMarkdown(version, sections));

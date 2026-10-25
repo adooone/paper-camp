@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { EntityType, ReleaseNoteIdea, ReleaseNoteSection } from '../types/index';
-import { splitPrefix } from './git-log';
+import { runGit, splitPrefix } from './git-log';
 import { readEntities } from './readers';
 import { readFileMaybe, resolveReleaseCommits, resolveReleaseRanges } from './trail';
 
@@ -13,7 +13,15 @@ const TYPE_SECTION_LABELS: Record<EntityType, string> = {
   chore: 'Miscellaneous',
 };
 
-const SECTION_ORDER = Array.from(new Set(Object.values(TYPE_SECTION_LABELS)));
+// The same sections release-please shows; refactor, docs and chore are hidden there too.
+const SECTION_ORDER = [TYPE_SECTION_LABELS.feat, TYPE_SECTION_LABELS.fix];
+
+// An open release PR's own tag doesn't exist until it merges, so its range ends at HEAD.
+async function resolveCommitRange(root: string, range: string): Promise<string> {
+  const [from, to] = range.split('..');
+  const tagged = await runGit(root, ['rev-parse', '--verify', '--quiet', `refs/tags/${to}`]);
+  return tagged.trim() === '' ? `${from}..HEAD` : range;
+}
 
 function resolveCommitType(subject: string): EntityType {
   const { prefix } = splitPrefix(subject);
@@ -44,8 +52,9 @@ export async function resolveReleaseNotes(
 
   const [{ entries }, commits] = await Promise.all([
     readEntities(join(root, 'papercamp', 'ideas')),
-    resolveReleaseCommits(root, release.range),
+    resolveCommitRange(root, release.range).then((range) => resolveReleaseCommits(root, range)),
   ]);
+  if (commits.length === 0) return null;
 
   const bySection = new Map<string, ReleaseNoteIdea[]>();
   const seenIdeas = new Set<string>();

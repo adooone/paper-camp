@@ -2,9 +2,10 @@
 id: IDEA-318
 title: Capacity keeps its last reading
 type: fix
-status: review
+status: done
 idea: IDEA-310
 created: 2026-10-24
+updated: 2026-10-25
 tags:
   - app
   - stack
@@ -69,3 +70,6 @@ Serving `/api/capacity` from a 0.43 daemon: that is the 0.44.0 release and
       when there never was one; `formatRelative`; component tests for the
       three states.
       run: 3m49s · 62 in · 17k out · sonnet-5 · sess:aca75948-9057-4286-9589-6b87c56ce9b4
+
+### Thread
+- [x] 2026-10-25 [log] [agent] Review fixed: the held error clears on every successful fetch (`dataUpdatedAt`), not only when `isSuccess` flips, so a refresh after a failed probe returns the stamps to their level colour.

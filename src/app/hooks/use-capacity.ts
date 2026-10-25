@@ -21,7 +21,7 @@ export function useCapacity(): UseCapacityResult {
     data,
     isLoading,
     error: fetchError,
-    isSuccess,
+    dataUpdatedAt,
   } = useQuery({
     queryKey: capacityQueryKey(runtimeUrl),
     queryFn: fetchCapacity,
@@ -35,8 +35,8 @@ export function useCapacity(): UseCapacityResult {
   }, [fetchError]);
 
   useEffect(() => {
-    if (isSuccess) setError(null);
-  }, [isSuccess]);
+    if (dataUpdatedAt > 0) setError(null);
+  }, [dataUpdatedAt]);
 
   useEffect(() => {
     return subscribeToActivityStream((payload) => {
