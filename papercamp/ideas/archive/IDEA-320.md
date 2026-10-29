@@ -2,7 +2,7 @@
 id: IDEA-320
 title: One home for local state
 type: refactor
-status: review
+status: done
 idea: IDEA-319
 created: 2026-10-28
 updated: 2026-10-29

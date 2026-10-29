@@ -2,7 +2,7 @@
 id: IDEA-319
 title: Git that heals itself from the app
 type: fix
-status: review
+status: done
 created: 2026-10-28
 updated: 2026-10-29
 tags:
