@@ -9,12 +9,26 @@ import {
   buildPlanDraftPrompt,
   buildReconcilePrompt,
 } from '@/app/features/plans/prompts';
-import { writeCapacity } from '@/core/capacity';
+import { batchReadiness } from '@/core/batch-readiness';
+import {
+  type BatchRunItem,
+  type BatchRunPauseReason,
+  type BatchRunRules,
+  type BatchRunState,
+  DEFAULT_BATCH_RUN_RULES,
+  evaluateBatchBudget,
+  evaluateBatchCapacityGate,
+  markBatchRunInterrupted,
+  readBatchRunState,
+  writeBatchRunState,
+} from '@/core/batch-run';
+import { readCapacity, writeCapacity } from '@/core/capacity';
 import { readCorpus } from '@/core/corpus';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
 import { readProjectConfig } from '@/core/project-config';
 import { entityToIdea, entityToPlan, readEntities } from '@/core/readers';
+import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
 import type {
@@ -22,6 +36,7 @@ import type {
   AgentTaskState,
   AgentTaskStatus,
   CheckName,
+  DefaultAgentsMap,
   EntityEntry,
   FailingCheck,
   FixReviewResult,
@@ -37,11 +52,19 @@ import type {
   TaskKind,
   ThreadMessageOption,
 } from '@/types/index';
+import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
-import { CorpusError, appendToChatFile, planFile, readMaybe, updateEntity } from './helpers';
+import {
+  CorpusError,
+  appendToChatFile,
+  planFile,
+  readMaybe,
+  readRunOrderFile,
+  updateEntity,
+} from './helpers';
 import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
@@ -230,6 +253,10 @@ export interface AgentTask {
   phaseRuns?: PhaseRunRecord[];
   // issue-fix only: the Issue.id (IDEA-192) this run was launched to fix.
   issueId?: string;
+  // batch-run only: the pending stop/skip control request and the id of the
+  // per-idea run-all task currently in flight, so a control route can target it.
+  batchControl?: 'stop' | 'stop-after-phase' | 'stop-after-idea' | 'skip';
+  currentIdeaTaskId?: string;
 }
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -420,6 +447,7 @@ export function createAgentManager(
     snapshotWorkingTree,
     ensureUpToDate,
     settleResolveConflict: onSettleResolveConflict,
+    checkStaleBase,
   } = hooks;
   const { onCorpusChanged, state: passedState, isMachineBusy, publish } = options;
   // No state handed in means a fresh process or (under the daemon) this project's
@@ -432,6 +460,7 @@ export function createAgentManager(
 
   let interruptedOnBoot = 0;
   if (isColdStart) {
+    void markBatchRunInterrupted(root);
     void reconcileInterruptedTasks(root, new Date().toISOString()).then((entries) => {
       interruptedOnBoot = entries.length;
       if (entries.length === 0) return;
@@ -938,6 +967,7 @@ export function createAgentManager(
   const EXCLUSIVE_KINDS = new Set<TaskKind>([
     'phase',
     'run-all',
+    'batch-run',
     'fix-review',
     'sync',
     'resolve-conflict',
@@ -1981,6 +2011,324 @@ export function createAgentManager(
     return { ok: true };
   }
 
+  function sumPhaseRunCosts(phaseRuns: PhaseRunRecord[] | undefined): number {
+    return (phaseRuns ?? []).reduce((total, run) => total + run.usage.costUsd, 0);
+  }
+
+  function describeBatchPause(reason: BatchRunPauseReason): string {
+    switch (reason.kind) {
+      case 'capacity-ceiling':
+        return 'waiting for the 5h reset';
+      case 'capacity-floor':
+        return '7d floor exceeded';
+      case 'failed-dirty':
+        return `${reason.id} failed and left the tree dirty`;
+      case 'red-checks':
+        return `${reason.id} finished but checks are still red`;
+      case 'auth':
+        return `${reason.id} needs you signed back in`;
+    }
+  }
+
+  function markBatchItem(batch: BatchRunState, id: string, patch: Partial<BatchRunItem>): void {
+    const existing = batch.items.find((item) => item.id === id);
+    if (existing) Object.assign(existing, patch);
+    else batch.items.push({ id, title: '', outcome: 'queued', ...patch });
+  }
+
+  async function persistBatch(batch: BatchRunState): Promise<void> {
+    batch.updatedAt = new Date().toISOString();
+    await writeBatchRunState(root, batch);
+  }
+
+  // The same inputs `batchReadiness` combines (IDEA-321's preview route), resolved
+  // fresh for one idea at the moment the batch is about to run it.
+  async function resolveBatchReadiness(plan: PlanEntry, defaultAgents: DefaultAgentsMap) {
+    const staleBase = checkStaleBase && plan.id ? await checkStaleBase(plan.id) : null;
+    const hasAgent = Boolean(
+      resolveAgent({ agentId: plan.agent, defaultAgents, taskKind: 'run-all' }).adapter,
+    );
+    return batchReadiness({
+      resolvedNeeds: plan.resolvedNeeds,
+      phases: plan.phases,
+      fixes: plan.fixes,
+      thread: plan.thread,
+      staleBase,
+      hasAgent,
+    });
+  }
+
+  // One sweep of the run-order queue: silently passes over ids already settled,
+  // skips (and records) ids whose block won't resolve itself mid-batch, leaves a
+  // `needs:`-blocked id for the next sweep since finishing another idea can
+  // unblock it, and returns the first idea ready to run right now.
+  async function pickNextBatchIdea(
+    batch: BatchRunState,
+    processed: Set<string>,
+    allowIds: Set<string> | 'all',
+  ): Promise<{ id: string; plan: PlanEntry } | undefined> {
+    const { entries, work } = await readCorpus(root, { live: true });
+    const classified = classifyRunOrderEntries(entries, work);
+    const list = await readRunOrderFile(root);
+    const order = normalizeRunOrder(list, classified);
+    const defaultAgents = readProjectConfig(root).defaultAgents;
+
+    for (const entry of order) {
+      if (processed.has(entry.id)) continue;
+      if (allowIds !== 'all' && !allowIds.has(entry.id)) continue;
+      const plan = work.find((p) => p.id === entry.id);
+      if (!plan) continue;
+      markBatchItem(batch, entry.id, { title: plan.title });
+      const readiness = await resolveBatchReadiness(plan, defaultAgents);
+      if (readiness.ready) return { id: entry.id, plan };
+      if (readiness.reason === 'needs') continue;
+      markBatchItem(batch, entry.id, { outcome: 'skipped', reason: readiness.message });
+      processed.add(entry.id);
+    }
+    return undefined;
+  }
+
+  // The sequential loop over the run-order queue (IDEA-321): one idea at a time via
+  // `runIdea`, re-checking readiness, capacity and the stop/budget limits before
+  // each one, persisting to `papercamp/.local/batch.json` so a restart can resume.
+  async function runBatchQueue(
+    task: AgentTask,
+    batch: BatchRunState,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+  ): Promise<void> {
+    const fixedBaseline = (): Promise<FailingCheck[]> =>
+      Promise.resolve(batch.toleratedRed.map((name) => ({ name, output: '' })));
+    const processed = new Set(batch.items.filter((i) => i.outcome !== 'queued').map((i) => i.id));
+    const allowIds: Set<string> | 'all' = batch.rules.pickupUnblocked
+      ? 'all'
+      : new Set(batch.initialIds);
+
+    const endBatch = async (line: string) => {
+      pushLine(task, line);
+      batch.status = 'done';
+      await persistBatch(batch);
+      void setStatus(task, 'done');
+    };
+
+    const pauseBatch = async (reason: BatchRunPauseReason) => {
+      batch.status = 'paused';
+      batch.pause = reason;
+      await persistBatch(batch);
+      pushLine(task, `[batch] paused — ${describeBatchPause(reason)}`);
+      void setStatus(task, 'error');
+    };
+
+    try {
+      while (true) {
+        if (task.batchControl === 'stop' || task.batchControl === 'stop-after-phase') {
+          await endBatch('[batch] stop requested — ending the queue');
+          return;
+        }
+        if (task.batchControl === 'stop-after-idea') {
+          await endBatch('[batch] stopping after the current idea — queue ends here');
+          return;
+        }
+
+        const budget = evaluateBatchBudget({
+          now: Date.now(),
+          stopAtMs: batch.rules.stopAtMs,
+          ideasRun: batch.ideasRun,
+          maxIdeas: batch.rules.maxIdeas,
+          costUsd: batch.costUsd,
+          maxCostUsd: batch.rules.maxCostUsd,
+        });
+        if (budget.stop) {
+          await endBatch(`[batch] stopping — ${budget.reason} limit reached`);
+          return;
+        }
+
+        const capacity = await readCapacity();
+        const gate = evaluateBatchCapacityGate({
+          snapshot: capacity?.snapshot ?? null,
+          ceiling: batch.rules.ceiling ?? DEFAULT_NIGHT_CONFIG.ceiling,
+          floor: batch.rules.floor ?? DEFAULT_NIGHT_CONFIG.floor,
+        });
+        if (!gate.open) {
+          if (gate.reason === 'floor') {
+            await endBatch('[batch] stopping — 7d floor exceeded');
+            return;
+          }
+          if (batch.rules.onCeiling === 'stop') {
+            await endBatch('[batch] stopping — 5h ceiling exceeded');
+            return;
+          }
+          await pauseBatch({ kind: 'capacity-ceiling', resetsAt: gate.resetsAt });
+          return;
+        }
+
+        const next = await pickNextBatchIdea(batch, processed, allowIds);
+        if (!next) break;
+        processed.add(next.id);
+
+        markBatchItem(batch, next.id, { outcome: 'running', title: next.plan.title });
+        await persistBatch(batch);
+
+        const ideaTask = startOrchestrated('run-all', next.plan);
+        task.currentIdeaTaskId = ideaTask.id;
+        markBatchItem(batch, next.id, { taskId: ideaTask.id });
+        pushLine(task, `[batch] running ${next.id} — ${next.plan.title}`);
+
+        const { adapter, model, effort } = resolveAgent({
+          agentId: next.plan.agent,
+          defaultAgents: readProjectConfig(root).defaultAgents,
+          taskKind: 'run-all',
+        });
+
+        const outcome = await runIdea(ideaTask, next.plan, {
+          runProjectChecks,
+          getBaselineChecks: fixedBaseline,
+          adapter,
+          model,
+          effort,
+        });
+        task.currentIdeaTaskId = undefined;
+        batch.costUsd += sumPhaseRunCosts(ideaTask.phaseRuns);
+
+        if (outcome === 'stopped') {
+          if (task.batchControl === 'skip') {
+            task.batchControl = undefined;
+            markBatchItem(batch, next.id, { outcome: 'skipped', reason: 'skipped by request' });
+            await persistBatch(batch);
+            continue;
+          }
+          markBatchItem(batch, next.id, { outcome: 'stopped' });
+          await endBatch(`[batch] ${next.id} stopped — ending the queue`);
+          return;
+        }
+        if (outcome === 'failed-dirty') {
+          markBatchItem(batch, next.id, { outcome });
+          await pauseBatch({ kind: 'failed-dirty', id: next.id });
+          return;
+        }
+        if (outcome === 'red-checks') {
+          markBatchItem(batch, next.id, { outcome });
+          await pauseBatch({ kind: 'red-checks', id: next.id });
+          return;
+        }
+        if (outcome === 'auth') {
+          markBatchItem(batch, next.id, { outcome });
+          await pauseBatch({ kind: 'auth', id: next.id });
+          return;
+        }
+        if (outcome === 'superseded') {
+          markBatchItem(batch, next.id, {
+            outcome: 'failed-clean',
+            reason: 'superseded by another run',
+          });
+          await persistBatch(batch);
+          continue;
+        }
+
+        batch.ideasRun += 1;
+        markBatchItem(batch, next.id, { outcome });
+        await persistBatch(batch);
+      }
+
+      // Nothing left runnable this sweep — anything still queued only waits on a
+      // `needs:` that never closed during the run, so it's recorded, not retried.
+      for (const item of batch.items) {
+        if (item.outcome !== 'queued') continue;
+        item.outcome = 'skipped';
+        item.reason ??= 'still waiting on a need';
+      }
+      await endBatch(`[batch] queue complete — ${batch.ideasRun} idea(s) run`);
+    } catch (err) {
+      pushLine(task, `Batch run failed: ${(err as Error).message}`);
+      batch.status = 'done';
+      await persistBatch(batch).catch(() => {});
+      void setStatus(task, 'error');
+    }
+  }
+
+  function newBatchRunTask(): AgentTask {
+    const { id: agentId, adapter } = resolveAgent({
+      defaultAgents: readProjectConfig(root).defaultAgents,
+      taskKind: 'run-all',
+    });
+    return registerAndStart(
+      newTask({ taskKind: 'batch-run', planTitle: 'Run queue', agentId, adapter }),
+    );
+  }
+
+  function startBatchRun(
+    ids: string[],
+    rules: Partial<BatchRunRules> = {},
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ): Result {
+    if (ids.length === 0) return { ok: false, error: 'No ideas selected to run' };
+    const blocked = admit('batch-run');
+    if (blocked) return blocked;
+
+    const task = newBatchRunTask();
+
+    void (async () => {
+      const baseline = getBaselineChecks ?? runProjectChecks;
+      const toleratedRed = baseline ? (await baseline()).map((c) => c.name) : [];
+      const batch: BatchRunState = {
+        taskId: task.id,
+        startedAt: task.startedAt,
+        updatedAt: task.startedAt,
+        rules: { ...DEFAULT_BATCH_RUN_RULES, ...rules },
+        toleratedRed,
+        initialIds: ids,
+        items: ids.map((id) => ({ id, title: '', outcome: 'queued' as const })),
+        ideasRun: 0,
+        costUsd: 0,
+        status: 'running',
+      };
+      await persistBatch(batch);
+      await runBatchQueue(task, batch, runProjectChecks);
+    })();
+
+    return { ok: true };
+  }
+
+  function findRunningBatchTask(): AgentTask | undefined {
+    return [...tasks.values()].find((t) => t.taskKind === 'batch-run' && !isTaskDone(t));
+  }
+
+  function controlBatchRun(
+    action: 'stop' | 'stop-after-phase' | 'stop-after-idea' | 'skip',
+  ): Result {
+    const task = findRunningBatchTask();
+    if (!task) return { ok: false, error: 'No batch run in progress' };
+    task.batchControl = action;
+    if (action !== 'stop-after-idea' && task.currentIdeaTaskId) {
+      stop(task.currentIdeaTaskId);
+    }
+    return { ok: true };
+  }
+
+  async function resumeBatchRun(runProjectChecks?: () => Promise<FailingCheck[]>): Promise<Result> {
+    const persisted = await readBatchRunState(root);
+    if (!persisted || (persisted.status !== 'paused' && persisted.status !== 'interrupted')) {
+      return { ok: false, error: 'No paused batch run to resume' };
+    }
+    const blocked = admit('batch-run');
+    if (blocked) return blocked;
+
+    const task = newBatchRunTask();
+    const batch: BatchRunState = {
+      ...persisted,
+      taskId: task.id,
+      status: 'running',
+      pause: undefined,
+    };
+
+    void (async () => {
+      await persistBatch(batch);
+      await runBatchQueue(task, batch, runProjectChecks);
+    })();
+
+    return { ok: true };
+  }
+
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
   const STDIN_MAX_BYTES = 10 * 1024 * 1024;
 
@@ -2242,6 +2590,9 @@ export function createAgentManager(
     start,
     startRunAllPhases,
     runBatch,
+    startBatchRun,
+    controlBatchRun,
+    resumeBatchRun,
     runReadOnlyPrompt,
     finalizeReadOnlyTask,
     getFixReviewResult,
@@ -2331,6 +2682,14 @@ export interface AgentManager {
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
   runBatch: (kind: BatchKind, ids: string[] | 'all') => Result;
+  startBatchRun: (
+    ids: string[],
+    rules?: Partial<BatchRunRules>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ) => Result;
+  controlBatchRun: (action: 'stop' | 'stop-after-phase' | 'stop-after-idea' | 'skip') => Result;
+  resumeBatchRun: (runProjectChecks?: () => Promise<FailingCheck[]>) => Promise<Result>;
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,

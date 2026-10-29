@@ -270,8 +270,9 @@ phase.
 - [x] Extract `runIdea` from run-all
       Move the body of `startRunAllPhases` into a `runIdea(task, plan, opts)` that returns a typed outcome (review, needs-you, needs-human, failed-clean, failed-dirty, red-checks, auth); single run-all calls it unchanged.
       run: 5m13s · 74 in · 27k out · sonnet-5 · sess:9ee0026b-2fd4-4b30-9e5f-50ec4db8c986
-- [ ] `batch-run` task with stop rules and persisted state
+- [x] `batch-run` task with stop rules and persisted state
       New `BatchKind` with exclusive write set; sequential loop over the queue with re-check before each idea, pick-up of newly unblocked ideas, capacity gate (wait for reset or stop), clock, count and cost limits, stop/skip controls, and `papercamp/.local/batch.json` with resume after restart.
+      run: 15m48s · 202 in · 75.2k out · sonnet-5 · sess:9ee0026b-2fd4-4b30-9e5f-50ec4db8c986
 - [ ] Git sync between ideas
       Fetch, fast-forward or reconcile before each idea, one bookkeeping commit and push after; pause on code conflict and resume only after a verified resolve-conflict; optional branch-per-idea mode.
 - [ ] Web batch sheet, live card, recovery banner and summary

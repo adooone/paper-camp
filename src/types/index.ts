@@ -1290,6 +1290,7 @@ export type TaskKind =
   | 'audit'
   | 'batch-reconcile'
   | 'batch-draft'
+  | 'batch-run'
   | 'run-all'
   | 'draft'
   | 'extend'

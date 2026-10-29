@@ -43,6 +43,7 @@ const TASK_KIND_TO_DEFAULT_KEY: Record<TaskKind, keyof DefaultAgentsMap> = {
   'batch-reconcile': 'phase',
   'batch-draft': 'phase',
   'run-all': 'phase',
+  'batch-run': 'phase',
   sync: 'phase',
   reconcile: 'phase',
   'fix-review': 'phase',

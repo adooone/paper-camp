@@ -12,7 +12,7 @@ import type {
 } from '@/types/index';
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
-import { CorpusError, updateEntity } from './helpers';
+import { CorpusError, checkStaleBaseForRunAll, updateEntity } from './helpers';
 
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
   return resolvePrimaryScope(plan.tags, 'plans');
@@ -158,6 +158,12 @@ export function createAgentHooks(root: string, git: GitManager) {
     return { ok: true };
   }
 
+  // The batch loop's per-idea readiness recheck (IDEA-321) needs the same staleness
+  // check run-all's launch route already runs before admitting a task.
+  function checkStaleBase(planId: string): Promise<string | null> {
+    return checkStaleBaseForRunAll(git, planId);
+  }
+
   return {
     stampAuditDate,
     commitPhase,
@@ -169,5 +175,6 @@ export function createAgentHooks(root: string, git: GitManager) {
     snapshotWorkingTree,
     ensureUpToDate,
     settleResolveConflict,
+    checkStaleBase,
   };
 }

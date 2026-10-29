@@ -9,6 +9,7 @@ export const LOG_TYPE_LABELS: Record<LogRowType, string> = {
   'batch-reconcile': 'Batch reconcile',
   'batch-draft': 'Batch draft',
   'run-all': 'Run all phases',
+  'batch-run': 'Run queue',
   draft: 'Draft',
   extend: 'Extend',
   suggest: 'Suggest ideas',
