@@ -8,6 +8,7 @@ import {
   type MenuEntry,
   MoreIcon,
   NoteIcon,
+  RunIcon,
   ShuffleIcon,
   WandIcon,
   useToast,
@@ -23,6 +24,7 @@ export const WorklistActionsMenu = () => {
   const launchBatchReconcile = useAppStore((s) => s.launchBatchReconcile);
   const launchBatchDraft = useAppStore((s) => s.launchBatchDraft);
   const launchPrioritise = useAppStore((s) => s.launchPrioritise);
+  const openBatchSheet = useAppStore((s) => s.openBatchSheet);
   const refreshAll = useAppStore((s) => s.refreshAll);
   const ideaEntries = useIdeas();
   const { suggestions } = useSuggestions();
@@ -126,6 +128,13 @@ export const WorklistActionsMenu = () => {
       icon: <ShuffleIcon size={16} />,
       disabled: busy || !hasAgent,
       onSelect: handlePrioritise,
+    },
+    {
+      id: 'run-queue',
+      label: 'Run queue…',
+      icon: <RunIcon size={16} />,
+      disabled: busy || !hasAgent,
+      onSelect: openBatchSheet,
     },
   ];
 

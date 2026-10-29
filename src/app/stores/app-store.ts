@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { type AgentSlice, createAgentSlice, createInitialAgentState } from './slices/agent-slice';
+import { type BatchSlice, createBatchSlice, createInitialBatchState } from './slices/batch-slice';
 import { type DiffSlice, createDiffSlice, createInitialDiffState } from './slices/diff-slice';
 import { type DocsSlice, createDocsSlice, createInitialDocsState } from './slices/docs-slice';
 import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
@@ -38,6 +39,7 @@ export type AppStore = PlansSlice &
   DocsSlice &
   StatusSlice &
   AgentSlice &
+  BatchSlice &
   DiffSlice &
   RuntimeSlice &
   ResetSlice;
@@ -52,11 +54,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createDocsSlice(set, get),
   ...createStatusSlice(set, get),
   ...createAgentSlice(set, get),
+  ...createBatchSlice(set, get),
   ...createDiffSlice(set, get),
   ...createRuntimeSlice(set),
   resetProjectState: () =>
     set({
       ...createInitialAgentState(),
+      ...createInitialBatchState(),
       ...createInitialDiffState(),
       ...createInitialTaskLogState(),
       ...createInitialDocsState(),

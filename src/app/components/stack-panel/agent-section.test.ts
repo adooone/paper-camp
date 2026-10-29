@@ -2,8 +2,6 @@ import type { ScopeRow } from '@/app/features/scope';
 import type { AgentTaskState, PlanEntry, TaskLogEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
-  CAPACITY_CARD_HEIGHT_CLASS,
-  TASK_CARD_HEIGHT_CLASS,
   buildScopedNotices,
   closedIdsFromPlans,
   foreignProject,
@@ -11,6 +9,7 @@ import {
   taskKindLabel,
   taskSubtitle,
 } from './agent-section';
+import { CAPACITY_CARD_HEIGHT_CLASS, TASK_CARD_HEIGHT_CLASS } from './shared';
 
 const task = (overrides: Partial<AgentTaskState> = {}): AgentTaskState => ({
   id: 't1',

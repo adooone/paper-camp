@@ -276,7 +276,8 @@ phase.
 - [x] Git sync between ideas
       Fetch, fast-forward or reconcile before each idea, one bookkeeping commit and push after; pause on code conflict and resume only after a verified resolve-conflict; optional branch-per-idea mode.
       run: 25m47s · 370 in · 92.6k out · sonnet-5 · sess:b821ef43-037e-43a1-8e07-ccacbb67e3d2
-- [ ] Web batch sheet, live card, recovery banner and summary
+- [x] Web batch sheet, live card, recovery banner and summary
       Toolbar button and worklist menu entry, the sheet with ticks, reasons, drag reorder through run-order, rules and preflight; the stack-panel batch card with stop controls; pause banners with one action each; summary kept in Activity.
+      run: 24m25s · 458 in · 107.7k out · sonnet-5 · sess:9ff98940-3241-489c-94ab-fb36d21b420c
 - [ ] Machine-wide queue and the mobile contract
       `POST /api/machine/batch` running projects in series from the hub page; push notifications on pause and finish; document the endpoints and task shape for the paper-camp-mobile idea.

@@ -1,4 +1,5 @@
 import { useScopeRuns } from '@/app/features/activity/hooks';
+import { BatchSheet } from '@/app/features/plans/modals/batch-sheet';
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { markRead, useNotifications, usePlans } from '@/app/hooks';
 import { fetchPlansAt } from '@/app/services/content/entities-api';
@@ -28,8 +29,14 @@ import {
 } from '@dendelion/folk-ui';
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { BatchTaskCard } from './batch-task-card';
 import { CapacityRow } from './capacity-row';
-import { formatLastRun, groupLabelClassName } from './shared';
+import {
+  CAPACITY_CARD_HEIGHT_CLASS,
+  TASK_CARD_HEIGHT_CLASS,
+  formatLastRun,
+  groupLabelClassName,
+} from './shared';
 
 const MAX_VISIBLE_TASKS = 1;
 
@@ -40,9 +47,7 @@ const ProjectTab = ({ project }: { project: ScopeRow }) => (
   </span>
 );
 
-export const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
 const TASK_STACK_MIN_HEIGHT_CLASS = 'min-h-[4.625rem]';
-export const CAPACITY_CARD_HEIGHT_CLASS = 'h-[6.125rem]';
 
 export const foreignProject = (project?: ScopeRow): ScopeRow | undefined =>
   project && !project.isCurrent ? project : undefined;
@@ -350,6 +355,8 @@ export const AgentSection = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const taskLog = useAppStore((s) => s.taskLog);
   const stopAgentTask = useAppStore((s) => s.stopAgent);
+  const batchStatus = useAppStore((s) => s.batchStatus);
+  const batchSummaryDismissed = useAppStore((s) => s.batchSummaryDismissed);
   const navigate = useNavigate();
   const scope = useScope(null);
   const allScopeRows = scope.groups.flatMap((g) => g.rows);
@@ -375,13 +382,20 @@ export const AgentSection = () => {
   ]);
 
   const ownTask = multiProject ? currentScopeRow : undefined;
+  // A batch-run task's own progress (items, pause reason) has no counterpart on
+  // AgentTaskState, so it gets its own card (BatchTaskCard) instead of the generic one.
+  const showBatchCard = Boolean(
+    batchStatus?.batch && !(batchStatus.batch.status === 'done' && batchSummaryDismissed),
+  );
   const allTasks: ScopedTask[] = [
-    ...agentStatus.map((task) => ({ task, project: ownTask })),
+    ...agentStatus
+      .filter((task) => task.taskKind !== 'batch-run')
+      .map((task) => ({ task, project: ownTask })),
     ...foreignRuns.flatMap(({ project, agentStatus: foreignStatus }) =>
       foreignStatus.map((task) => ({ task, project })),
     ),
   ];
-  const visibleTasks = allTasks.slice(0, MAX_VISIBLE_TASKS);
+  const visibleTasks = showBatchCard ? [] : allTasks.slice(0, MAX_VISIBLE_TASKS);
   const hiddenCount = allTasks.length - visibleTasks.length;
   const notices: ScopedNotice[] = buildScopedNotices(
     { taskLog, closedIds: closedIdsFromPlans(plans?.entries), project: ownTask },
@@ -419,7 +433,9 @@ export const AgentSection = () => {
       <div
         className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto pt-2 ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
-        {visibleTasks.length > 0 ? (
+        {showBatchCard ? (
+          <BatchTaskCard />
+        ) : visibleTasks.length > 0 ? (
           visibleTasks.map(({ task, project }) => (
             <AgentTaskCard
               key={task.id}
@@ -451,6 +467,7 @@ export const AgentSection = () => {
       <div className="mt-2 shrink-0">
         <CapacityRow heightClassName={CAPACITY_CARD_HEIGHT_CLASS} />
       </div>
+      <BatchSheet />
     </div>
   );
 };

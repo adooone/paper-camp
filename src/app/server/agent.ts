@@ -16,6 +16,7 @@ import {
   type BatchRunRules,
   type BatchRunState,
   DEFAULT_BATCH_RUN_RULES,
+  clearBatchRunState,
   evaluateBatchBudget,
   evaluateBatchCapacityGate,
   markBatchRunInterrupted,
@@ -2407,6 +2408,18 @@ export function createAgentManager(
     return { ok: true };
   }
 
+  // Drops a paused or interrupted batch's persisted state for good — the only way to
+  // end one short of running it to completion, since a paused batch has no live task
+  // for controlBatchRun's stop/skip actions to target (IDEA-321).
+  async function endPausedBatch(): Promise<Result> {
+    const persisted = await readBatchRunState(root);
+    if (!persisted || (persisted.status !== 'paused' && persisted.status !== 'interrupted')) {
+      return { ok: false, error: 'No paused batch run to end' };
+    }
+    await clearBatchRunState(root);
+    return { ok: true };
+  }
+
   // A resolve-conflict task's own verified success (repo check, not the agent's word)
   // is the only thing allowed to wake a batch paused on a conflict (IDEA-321) — never
   // the agent's exit code alone.
@@ -2688,8 +2701,10 @@ export function createAgentManager(
     startRunAllPhases,
     runBatch,
     startBatchRun,
+    findRunningBatchTask,
     controlBatchRun,
     resumeBatchRun,
+    endPausedBatch,
     runReadOnlyPrompt,
     finalizeReadOnlyTask,
     getFixReviewResult,
@@ -2785,8 +2800,10 @@ export interface AgentManager {
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
+  findRunningBatchTask: () => AgentTask | undefined;
   controlBatchRun: (action: 'stop' | 'stop-after-phase' | 'stop-after-idea' | 'skip') => Result;
   resumeBatchRun: (runProjectChecks?: () => Promise<FailingCheck[]>) => Promise<Result>;
+  endPausedBatch: () => Promise<Result>;
   resumeAuthParkedTasks: (
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,

@@ -3,6 +3,9 @@ import { color } from '@dendelion/folk-ui/tokens';
 export const groupLabelClassName =
   'font-handwritten text-sm tracking-wide text-desk-text-muted mb-2';
 
+export const TASK_CARD_HEIGHT_CLASS = 'h-[4.625rem]';
+export const CAPACITY_CARD_HEIGHT_CLASS = 'h-[6.125rem]';
+
 export const chalkStatusText = {
   pass: color.chalkPassText,
   fail: color.chalkFailText,

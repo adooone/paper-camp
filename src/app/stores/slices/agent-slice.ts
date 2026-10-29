@@ -102,6 +102,12 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
         const prev = get().agentStatus;
         set({ agentStatus: data });
 
+        // A batch-run task's own progress (items, pause reason, rules) lives in
+        // papercamp/.local/batch.json, not on AgentTaskState — refreshed alongside it.
+        if (data.some((t) => t.taskKind === 'batch-run') || get().batchStatus?.batch) {
+          await get().loadBatchStatus();
+        }
+
         // Activity and issue threads read finished runs from tasks.log rather than
         // polling it, so a run that just ended needs this nudge to show as finished.
         const finishedRun = data.some((t) => {
