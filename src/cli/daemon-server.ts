@@ -10,6 +10,7 @@ import {
   isTrustedHost,
 } from '../app/server/api';
 import { readBody, sendJson } from '../app/server/http';
+import { migrateLocalState } from '../app/server/migrate-local-state';
 import { type PairCodeManager, createPairCodeManager } from '../app/server/pair-code';
 import {
   type PairingManagerState,
@@ -187,6 +188,25 @@ export async function createProjectApi(
   checkMachineBusy: () => boolean,
   pairCodeManager: PairCodeManager,
 ): Promise<ApiMiddleware> {
+  // Runs once, the first time this process mounts the project — cheap no-op on every
+  // mount after the first upgrade has already landed its one commit. A project found
+  // mid-rebase or with staged changes is left alone and retried on the next mount
+  // (e.g. the next daemon restart), rather than failing the mount outright.
+  const migration = await migrateLocalState(project.path).catch((error: unknown) => {
+    console.error(`paper-camp: local-state migration failed for "${project.slug}":`, error);
+    return null;
+  });
+  if (migration?.status === 'migrated') {
+    console.log(`paper-camp: migrated "${project.slug}" to papercamp/.local`);
+    if (migration.rotatedPairingToken) {
+      console.log(`paper-camp: rotated the committed pairing token for "${project.slug}"`);
+    }
+  } else if (migration?.status === 'skipped') {
+    console.log(
+      `paper-camp: local-state migration for "${project.slug}" skipped (${migration.skipReason}), will retry on next mount`,
+    );
+  }
+
   return createApiMiddleware(project.path, {
     pairingState,
     onPaired,

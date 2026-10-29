@@ -144,7 +144,9 @@ export const DAEMON_GITIGNORE_ENTRIES = [
 // Ignores the whole folder from inside itself, so nothing written under papercamp/.local/
 // can ever be committed regardless of the project's own .gitignore, and git skips the
 // folder in `status` — a new local-state file is safe just by living under here.
-async function ensureLocalGitignore(campDir: string): Promise<void> {
+// Exported so the IDEA-320 migration can create it for a project upgrading from before
+// `.local/` existed, not just a fresh `init`.
+export async function ensureLocalGitignore(campDir: string): Promise<void> {
   const localDir = join(campDir, '.local');
   await mkdir(localDir, { recursive: true });
   const gitignorePath = join(localDir, '.gitignore');

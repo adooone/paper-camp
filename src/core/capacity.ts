@@ -50,3 +50,18 @@ export async function readCapacity(): Promise<CapacityRecord | null> {
     return null;
   }
 }
+
+/** Called by the IDEA-320 migration for each project that still has its own
+ * `papercamp/capacity.json` — the account's limits are the same everywhere, so
+ * whichever project's copy has the newest `capturedAt` wins the one machine file. */
+export async function adoptCapacityRecord(value: unknown): Promise<boolean> {
+  if (!isCapacityRecord(value)) return false;
+  const current = await readCapacity();
+  if (current && current.capturedAt >= value.capturedAt) return false;
+  const path = capacityPath();
+  await mkdir(dirname(path), { recursive: true });
+  const tmpPath = `${path}.${randomBytes(6).toString('hex')}.tmp`;
+  await writeFile(tmpPath, `${JSON.stringify(value, null, 2)}\n`, 'utf-8');
+  await rename(tmpPath, path);
+  return true;
+}

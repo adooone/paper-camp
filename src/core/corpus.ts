@@ -191,7 +191,9 @@ export async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-const PLAN_NAMES = new Set([
+/** Also read by the IDEA-320 migration: nothing in this set may ever sit in a
+ * project's `.gitignore` — a plan file is always meant to be committed. */
+export const PLAN_NAMES = new Set([
   'ideas',
   'config.json',
   'suggestions.md',

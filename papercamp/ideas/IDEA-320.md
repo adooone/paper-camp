@@ -110,7 +110,8 @@ clones appending to `chat.md` pull without a conflict.
 - [x] Path helpers and the self-ignoring `.local/` folder
       Split `campFile` into plan, local and machine helpers, move every daemon write onto them, create `papercamp/.local/.gitignore`, move `capacity.json` to the config dir, and add the test that rejects plan writes outside the plan list.
       run: 22m5s · 448 in · 83.7k out · sonnet-5 · sess:7bd174b5-4580-400f-9fdc-31a92d585c8d
-- [ ] Migration on mount
+- [x] Migration on mount
       Move files, untrack them, clean the old `.gitignore` lines, write the `.gitattributes` union block, commit once, skip projects that are mid-rebase or have staged changes, and rotate a committed pairing token.
+      run: 9m3s · 100 in · 41.3k out · sonnet-5 · sess:df32600d-0086-487b-961b-daf801736e7f
 - [ ] Doctor and drift on the git card
       `paper-camp doctor` checks and fixes the layout; each git card shows drift with a fix, and the projects page shows the total.

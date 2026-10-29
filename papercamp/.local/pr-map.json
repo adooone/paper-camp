@@ -1,0 +1,1233 @@
+{
+  "fetchedAt": 1793291568258,
+  "prs": {
+    "IDEA-290": {
+      "number": 234,
+      "url": "https://github.com/adooone/paper-camp/pull/234",
+      "state": "merged",
+      "headSha": "293f4b1a2541d5d5cd5f3c79cef2dd5ce7092ba6",
+      "headBranch": "refactor/idea-290-three-pages-instead-of-seven"
+    },
+    "IDEA-253": {
+      "number": 223,
+      "url": "https://github.com/adooone/paper-camp/pull/223",
+      "state": "merged",
+      "headSha": "70ec2ee7c0cd39e15c3d411d3d4ce9ae0a3c8932",
+      "headBranch": "refactor/idea-253-settings-in-the-plans-row-grammar"
+    },
+    "IDEA-241": {
+      "number": 218,
+      "url": "https://github.com/adooone/paper-camp/pull/218",
+      "state": "merged",
+      "headSha": "fe2f40135c538a75d0012dca66b98079b7e7492a",
+      "headBranch": "feat/idea-241-night-shift-health-reviews"
+    },
+    "IDEA-242": {
+      "number": 210,
+      "url": "https://github.com/adooone/paper-camp/pull/210",
+      "state": "merged",
+      "headSha": "52c2362a0ce61782ee5e70c389cee29392f4fecd",
+      "headBranch": "chore/idea-242-tests-in-a-minute"
+    },
+    "IDEA-240": {
+      "number": 209,
+      "url": "https://github.com/adooone/paper-camp/pull/209",
+      "state": "merged",
+      "headSha": "9f66bc03861d1dc60b3aa329b5215ac8da058487",
+      "headBranch": "feat/idea-240-ship-no-frontend-in-the-npm-package"
+    },
+    "IDEA-237": {
+      "number": 208,
+      "url": "https://github.com/adooone/paper-camp/pull/208",
+      "state": "merged",
+      "headSha": "9a7deba2be24919f10ecd389fe71a3d8b23e4850",
+      "headBranch": "feat/idea-237-one-log-view-for-every-run"
+    },
+    "IDEA-233": {
+      "number": 207,
+      "url": "https://github.com/adooone/paper-camp/pull/207",
+      "state": "merged",
+      "headSha": "2430e56ad5ae2fbe02b0696a43975209316b8c45",
+      "headBranch": "feat/idea-233-daemon-lifecycle-like-pm2"
+    },
+    "IDEA-223": {
+      "number": 202,
+      "url": "https://github.com/adooone/paper-camp/pull/202",
+      "state": "merged",
+      "headSha": "0488e2e90bb5218cdfb449bcd0335382e527b476",
+      "headBranch": "feat/idea-223-desk-discovery-for-new-projects"
+    },
+    "IDEA-221": {
+      "number": 201,
+      "url": "https://github.com/adooone/paper-camp/pull/201",
+      "state": "merged",
+      "headSha": "ffdfed9e73b2e3d050cbe1ea5ad1bbef4639b6ee",
+      "headBranch": "feat/idea-221-hub-rebuild-as-a-project-picker"
+    },
+    "IDEA-217": {
+      "number": 196,
+      "url": "https://github.com/adooone/paper-camp/pull/196",
+      "state": "merged",
+      "headSha": "dc27a298091525cd89450cf64991fcbc1a554770",
+      "headBranch": "fix/idea-217-github-connect-on-the-projects-tab"
+    },
+    "IDEA-216": {
+      "number": 195,
+      "url": "https://github.com/adooone/paper-camp/pull/195",
+      "state": "merged",
+      "headSha": "698957daa30ab763db8ddf899d8b3b0c0dd74285",
+      "headBranch": "feat/idea-216-pairing-survives-dev-restarts"
+    },
+    "IDEA-210": {
+      "number": 194,
+      "url": "https://github.com/adooone/paper-camp/pull/194",
+      "state": "merged",
+      "headSha": "df9ced4c0a838ebf3655c3b1ecf7798444576825",
+      "headBranch": "refactor/idea-210-settings-feature-conventions-pass"
+    },
+    "IDEA-208": {
+      "number": 193,
+      "url": "https://github.com/adooone/paper-camp/pull/193",
+      "state": "merged",
+      "headSha": "40e5c19e35aa2e96e4e8f2851079e46f61a653a2",
+      "headBranch": "refactor/idea-208-hub-feature-conventions-pass"
+    },
+    "TICKET-6": {
+      "number": 190,
+      "url": "https://github.com/adooone/paper-camp/pull/190",
+      "state": "merged",
+      "headSha": "f522cb3922e397b51520bdaefb81dc1b31609f15",
+      "headBranch": "feat/ticket-6-reachable-from-anywhere"
+    },
+    "IDEA-205": {
+      "number": 189,
+      "url": "https://github.com/adooone/paper-camp/pull/189",
+      "state": "merged",
+      "headSha": "5b6c900dc648b94d7b67e4aedc9bae835f1fe8c6",
+      "headBranch": "feat/idea-205-hub-shell-and-projects-list"
+    },
+    "TICKET-2": {
+      "number": 188,
+      "url": "https://github.com/adooone/paper-camp/pull/188",
+      "state": "merged",
+      "headSha": "d2cd319ab40b7425eef50724adad1da7ed226af6",
+      "headBranch": "feat/ticket-2-detach-the-client"
+    },
+    "IDEA-199": {
+      "number": 187,
+      "url": "https://github.com/adooone/paper-camp/pull/187",
+      "state": "merged",
+      "headSha": "c9b8b5e530e68bf989a306e8e6cffde068136cfe",
+      "headBranch": "feat/idea-199-style-pass-as-a-phase-action"
+    },
+    "IDEA-197": {
+      "number": 186,
+      "url": "https://github.com/adooone/paper-camp/pull/186",
+      "state": "merged",
+      "headSha": "d45f30f4a941bd24e9d7b71afb5789d569e21834",
+      "headBranch": "refactor/idea-197-break-up-entity-detail-tsx"
+    },
+    "IDEA-201": {
+      "number": 185,
+      "url": "https://github.com/adooone/paper-camp/pull/185",
+      "state": "merged",
+      "headSha": "9081136ce4c617dba48ce072fe8387004da66999",
+      "headBranch": "feat/idea-201-boards-and-tickets"
+    },
+    "IDEA-193": {
+      "number": 184,
+      "url": "https://github.com/adooone/paper-camp/pull/184",
+      "state": "merged",
+      "headSha": "8952ed406e15048f604c1b4da2f581c385e10f04",
+      "headBranch": "feat/idea-193-client-runtime-and-plugin-layers"
+    },
+    "IDEA-185": {
+      "number": 182,
+      "url": "https://github.com/adooone/paper-camp/pull/182",
+      "state": "merged",
+      "headSha": "dfc4afbebc8de38db7c1dc70d87558aa7c481798",
+      "headBranch": "refactor/idea-185-delete-the-idea-group-machinery"
+    },
+    "IDEA-192": {
+      "number": 181,
+      "url": "https://github.com/adooone/paper-camp/pull/181",
+      "state": "merged",
+      "headSha": "c30d06aef768accb0e1889f1f4c5135b20c09b44",
+      "headBranch": "feat/idea-192-an-issues-page-you-can-act-on"
+    },
+    "IDEA-180": {
+      "number": 180,
+      "url": "https://github.com/adooone/paper-camp/pull/180",
+      "state": "closed",
+      "headSha": "e518a1dbb79371235336feab7aac984938b2da25",
+      "headBranch": "feat/idea-180-say-what-each-idea-is-for"
+    },
+    "IDEA-187": {
+      "number": 179,
+      "url": "https://github.com/adooone/paper-camp/pull/179",
+      "state": "merged",
+      "headSha": "76961b59a855011143a6d4f29bf3af071fbc1e47",
+      "headBranch": "feat/idea-187-fixes-are-their-own-entity"
+    },
+    "IDEA-194": {
+      "number": 178,
+      "url": "https://github.com/adooone/paper-camp/pull/178",
+      "state": "merged",
+      "reviewDecision": "approved",
+      "headSha": "6f7b875eb05efe6089f2a35ba500e4d7f5d633c8",
+      "headBranch": "feat/idea-194-complete-an-idea-without-leaving"
+    },
+    "IDEA-179": {
+      "number": 177,
+      "url": "https://github.com/adooone/paper-camp/pull/177",
+      "state": "merged",
+      "headSha": "6568bbaeddcd20a795e4585a8ff5db586b9e602f",
+      "headBranch": "fix/idea-179-prioritise-lies-about-what-it-did"
+    },
+    "IDEA-183": {
+      "number": 176,
+      "url": "https://github.com/adooone/paper-camp/pull/176",
+      "state": "merged",
+      "headSha": "a2d3e3051dcb85c9b7cf3c6f181238ff84ee0449",
+      "headBranch": "fix/idea-183-filters-and-sort-tell-the-truth"
+    },
+    "IDEA-168": {
+      "number": 175,
+      "url": "https://github.com/adooone/paper-camp/pull/175",
+      "state": "merged",
+      "headSha": "fbac9adfe4fac46b291da3c94614528a4d79214c",
+      "headBranch": "feat/idea-168-version-the-corpus-format"
+    },
+    "IDEA-191": {
+      "number": 174,
+      "url": "https://github.com/adooone/paper-camp/pull/174",
+      "state": "merged",
+      "headSha": "c20f3a99740d70da4946ba2370c1210f7284bc7a",
+      "headBranch": "refactor/idea-191-tests-run-in-process-and-fast"
+    },
+    "IDEA-190": {
+      "number": 173,
+      "url": "https://github.com/adooone/paper-camp/pull/173",
+      "state": "merged",
+      "headSha": "0db2ad71cb4ddcdeedb09cc0e3f5be3dfbae94a3",
+      "headBranch": "fix/idea-190-agents-commit-only-what-they-wrote"
+    },
+    "IDEA-178": {
+      "number": 172,
+      "url": "https://github.com/adooone/paper-camp/pull/172",
+      "state": "merged",
+      "headSha": "3bf319cfbace43172605d9dc1686406bc294f42c",
+      "headBranch": "fix/idea-178-rate-limits-must-not-rewrite-status"
+    },
+    "IDEA-188": {
+      "number": 171,
+      "url": "https://github.com/adooone/paper-camp/pull/171",
+      "state": "merged",
+      "headSha": "5ce205dce544dc5b7947afdc6f472fd785ee3101",
+      "headBranch": "feat/idea-188-fixes-accumulate-into-one-commit"
+    },
+    "IDEA-189": {
+      "number": 170,
+      "url": "https://github.com/adooone/paper-camp/pull/170",
+      "state": "merged",
+      "headSha": "bb120f5365e85db89253eb0a4aabfb290121a1ac",
+      "headBranch": "feat/idea-189-page-texture-fills-the-centre-column"
+    },
+    "IDEA-184": {
+      "number": 169,
+      "url": "https://github.com/adooone/paper-camp/pull/169",
+      "state": "merged",
+      "headSha": "cfa11ebca40f1a8db6edcdd987fa15eeeed21cf5",
+      "headBranch": "fix/idea-184-one-row-treatment-on-the-plans-page"
+    },
+    "IDEA-186": {
+      "number": 167,
+      "url": "https://github.com/adooone/paper-camp/pull/167",
+      "state": "merged",
+      "headSha": "5142a1fa055a6ff18db734d2bfbf0d3015f72c63",
+      "headBranch": "feat/idea-186-use-the-whole-width"
+    },
+    "IDEA-163": {
+      "number": 166,
+      "url": "https://github.com/adooone/paper-camp/pull/166",
+      "state": "merged",
+      "headSha": "77d5c503ee3ee94e25e180ffa8ee124d31b9d7cd",
+      "headBranch": "fix/idea-163-stack-panel-affordance-and-a11y-pass"
+    },
+    "IDEA-167": {
+      "number": 165,
+      "url": "https://github.com/adooone/paper-camp/pull/165",
+      "state": "merged",
+      "headSha": "f668940d83ebe3af88a0654a86195b74565c754a",
+      "headBranch": "fix/idea-167-git-status-vocabulary-and-chrome"
+    },
+    "IDEA-166": {
+      "number": 164,
+      "url": "https://github.com/adooone/paper-camp/pull/164",
+      "state": "merged",
+      "headSha": "746d1bb4ee126af6a9860a03b7f659db2871b676",
+      "headBranch": "feat/idea-166-readable-diffs-on-the-git-page"
+    },
+    "IDEA-181": {
+      "number": 163,
+      "url": "https://github.com/adooone/paper-camp/pull/163",
+      "state": "merged",
+      "headSha": "4c77bc3564213c14e11652ba2c406bd69f959ae8",
+      "headBranch": "feat/idea-181-fetch-from-github-only-when-asked"
+    },
+    "IDEA-176": {
+      "number": 162,
+      "url": "https://github.com/adooone/paper-camp/pull/162",
+      "state": "merged",
+      "headSha": "3fcb190e64e628cfecaa8771ceef34785541894e",
+      "headBranch": "fix/idea-176-sync-stops-stashing-over-the-corpus"
+    },
+    "IDEA-171": {
+      "number": 161,
+      "url": "https://github.com/adooone/paper-camp/pull/161",
+      "state": "merged",
+      "headSha": "a8c477941e4de1c39231e1625ddcda928ce33169",
+      "headBranch": "fix/idea-171-run-all-redoes-work-from-a-stale-base"
+    },
+    "IDEA-165": {
+      "number": 160,
+      "url": "https://github.com/adooone/paper-camp/pull/160",
+      "state": "merged",
+      "headSha": "c55ccc3d8f146fcc83a8ebe39d81ad244573c0f0",
+      "headBranch": "feat/idea-165-stage-files-write-the-message"
+    },
+    "IDEA-162": {
+      "number": 159,
+      "url": "https://github.com/adooone/paper-camp/pull/159",
+      "state": "merged",
+      "headSha": "396f58fca08bc4142241a0a6a2f02dd9c32e64ac",
+      "headBranch": "refactor/idea-162-one-source-of-truth-for-checks"
+    },
+    "IDEA-172": {
+      "number": 158,
+      "url": "https://github.com/adooone/paper-camp/pull/158",
+      "state": "merged",
+      "headSha": "0c59eae8df93adfea24ca13129b357732cf99d00",
+      "headBranch": "fix/idea-172-persist-drafts-and-ui-choices"
+    },
+    "IDEA-161": {
+      "number": 157,
+      "url": "https://github.com/adooone/paper-camp/pull/157",
+      "state": "merged",
+      "headSha": "99f7f87c021675fc4aa0050a0b3a24d4f8605b0c",
+      "headBranch": "fix/idea-161-desk-section-clips-its-own-content"
+    },
+    "IDEA-174": {
+      "number": 156,
+      "url": "https://github.com/adooone/paper-camp/pull/156",
+      "state": "merged",
+      "headSha": "76ee757628cf09f8bdbdc3990d34110a414c8af9",
+      "headBranch": "feat/idea-174-show-a-running-pr-review-in-the-ui"
+    },
+    "IDEA-173": {
+      "number": 155,
+      "url": "https://github.com/adooone/paper-camp/pull/155",
+      "state": "merged",
+      "headSha": "78e66eb07016301034978f260ccc36b1c0bd0c79",
+      "headBranch": "fix/idea-173-never-lose-a-computed-pr-review"
+    },
+    "IDEA-175": {
+      "number": 154,
+      "url": "https://github.com/adooone/paper-camp/pull/154",
+      "state": "merged",
+      "headSha": "dfd798ce20798a051c234fbbae7d91916ef1a8f1",
+      "headBranch": "feat/idea-175-scout-posts-a-formatted-review"
+    },
+    "IDEA-170": {
+      "number": 153,
+      "url": "https://github.com/adooone/paper-camp/pull/153",
+      "state": "merged",
+      "headSha": "8e6327982d81a5641e90120e5d5102c5c8fa62df",
+      "headBranch": "feat/idea-170-review-pull-requests-with-a-local-agent"
+    },
+    "IDEA-137": {
+      "number": 152,
+      "url": "https://github.com/adooone/paper-camp/pull/152",
+      "state": "merged",
+      "headSha": "f6b713ea790fd0e71682516e524307bef26af4ab",
+      "headBranch": "fix/idea-137-durable-drafted-plans"
+    },
+    "IDEA-169": {
+      "number": 151,
+      "url": "https://github.com/adooone/paper-camp/pull/151",
+      "state": "merged",
+      "headSha": "ec7578c56cd235d0a2296d934d30fbd69b13fd99",
+      "headBranch": "feat/idea-169-draft-all-ideas-at-once"
+    },
+    "IDEA-158": {
+      "number": 150,
+      "url": "https://github.com/adooone/paper-camp/pull/150",
+      "state": "merged",
+      "headSha": "6ed2366450d4cfbae15438d0aeba387c845833c6",
+      "headBranch": "feat/idea-158-build-command-in-the-desk-stack-panel"
+    },
+    "IDEA-151": {
+      "number": 149,
+      "url": "https://github.com/adooone/paper-camp/pull/149",
+      "state": "merged",
+      "headSha": "59d4f0c2882bf146a1622737f083b4f7f89c8d75",
+      "headBranch": "feat/idea-151-manual-commits-become-phase-rows"
+    },
+    "IDEA-149": {
+      "number": 147,
+      "url": "https://github.com/adooone/paper-camp/pull/147",
+      "state": "merged",
+      "headSha": "b9e97e8f15fdb6d4a28f6f821c5846ce8e94cc8f",
+      "headBranch": "feat/idea-149-feedback-fixes-start-running-at-once"
+    },
+    "IDEA-160": {
+      "number": 146,
+      "url": "https://github.com/adooone/paper-camp/pull/146",
+      "state": "merged",
+      "headSha": "8fa2db355393ec5be2cb2d4b2557fd6a34dce676",
+      "headBranch": "fix/idea-160-one-activity-stream-for-the-whole-app"
+    },
+    "IDEA-159": {
+      "number": 145,
+      "url": "https://github.com/adooone/paper-camp/pull/145",
+      "state": "merged",
+      "headSha": "0e30a33e951659fc4250b4f646583f9993c4befa",
+      "headBranch": "fix/idea-159-git-actions-time-out-instead-of-hanging"
+    },
+    "IDEA-156": {
+      "number": 143,
+      "url": "https://github.com/adooone/paper-camp/pull/143",
+      "state": "merged",
+      "headSha": "529f804d412b884aae2fafce4dd0b9c5eab08ab8",
+      "headBranch": "feat/idea-156-fix-button-replaces-commit-when-checks"
+    },
+    "IDEA-154": {
+      "number": 142,
+      "url": "https://github.com/adooone/paper-camp/pull/142",
+      "state": "merged",
+      "headSha": "3189a39fcecc7717942c3089243c2cd8c3f83dd9",
+      "headBranch": "feat/idea-154-git-view-replaces-the-toolbar-s-four"
+    },
+    "IDEA-153": {
+      "number": 141,
+      "url": "https://github.com/adooone/paper-camp/pull/141",
+      "state": "merged",
+      "headSha": "c5c9a95f7790f3e6043a23b5966c92a75a4fa687",
+      "headBranch": "feat/idea-153-notifications-view-replaces-the-inbox"
+    },
+    "IDEA-148": {
+      "number": 140,
+      "url": "https://github.com/adooone/paper-camp/pull/140",
+      "state": "merged",
+      "headSha": "2c51e5eef616b5c71a53b0a46ac89ef5be8242af",
+      "headBranch": "fix/idea-148-bare-mount-url-white-screens-the-desk"
+    },
+    "IDEA-150": {
+      "number": 139,
+      "url": "https://github.com/adooone/paper-camp/pull/139",
+      "state": "merged",
+      "headSha": "a480a1836f17fbc1cc2059bc38d77bf9201f3fa9",
+      "headBranch": "refactor/idea-150-route-plans-and-ideas-by-id"
+    },
+    "IDEA-155": {
+      "number": 138,
+      "url": "https://github.com/adooone/paper-camp/pull/138",
+      "state": "merged",
+      "headSha": "ba08ad89222dfad9176215f3325a5c23468b92a5",
+      "headBranch": "fix/idea-155-only-the-page-container-scrolls"
+    },
+    "IDEA-152": {
+      "number": 137,
+      "url": "https://github.com/adooone/paper-camp/pull/137",
+      "state": "merged",
+      "headSha": "0ca380135cf56fa6bebf541b0f8d44584058229c",
+      "headBranch": "refactor/idea-152-strip-animations-to-a-static-baseline"
+    },
+    "IDEA-157": {
+      "number": 136,
+      "url": "https://github.com/adooone/paper-camp/pull/136",
+      "state": "merged",
+      "headSha": "f61ca6764c51c21a30da5a10e55847d9bbeaac9f",
+      "headBranch": "feat/idea-157-build-check-in-the-status-manager"
+    },
+    "IDEA-147": {
+      "number": 134,
+      "url": "https://github.com/adooone/paper-camp/pull/134",
+      "state": "merged",
+      "headSha": "0a6f123a83b2b736f254e95f2d43f8ecfed9a674",
+      "headBranch": "feat/idea-147-scout-panel-replaces-the-sidesheet"
+    },
+    "IDEA-146": {
+      "number": 133,
+      "url": "https://github.com/adooone/paper-camp/pull/133",
+      "state": "merged",
+      "headSha": "cf921e2832659c1253eb348bca61a5b85a3a1149",
+      "headBranch": "feat/idea-146-deliver-lives-in-the-idea-view"
+    },
+    "IDEA-145": {
+      "number": 132,
+      "url": "https://github.com/adooone/paper-camp/pull/132",
+      "state": "merged",
+      "reviewDecision": "approved",
+      "headSha": "e1cd4d70ecf0378b57863d9af93eec24124d6e5a",
+      "headBranch": "fix/idea-145-changes-page-in-plans-style"
+    },
+    "IDEA-121": {
+      "number": 131,
+      "url": "https://github.com/adooone/paper-camp/pull/131",
+      "state": "merged",
+      "headSha": "a958110445c3012af601d7c5903c78033041c617",
+      "headBranch": "feat/idea-121-paper-camp-doctor"
+    },
+    "IDEA-119": {
+      "number": 130,
+      "url": "https://github.com/adooone/paper-camp/pull/130",
+      "state": "merged",
+      "headSha": "b6003d98feeaaeab7aa799a9cffdcf5f873a8bed",
+      "headBranch": "feat/idea-119-run-monitor-on-the-desk"
+    },
+    "IDEA-122": {
+      "number": 128,
+      "url": "https://github.com/adooone/paper-camp/pull/128",
+      "state": "merged",
+      "headSha": "83fe6a49175339770fb6cd1079b80b13b1e6d675",
+      "headBranch": "feat/idea-122-mcp-as-the-primary-write-path"
+    },
+    "IDEA-144": {
+      "number": 126,
+      "url": "https://github.com/adooone/paper-camp/pull/126",
+      "state": "merged",
+      "headSha": "a96fccd1a8634d15757481f453dbb70ce2a4cbcf",
+      "headBranch": "feat/idea-144-minimal-island"
+    },
+    "IDEA-136": {
+      "number": 125,
+      "url": "https://github.com/adooone/paper-camp/pull/125",
+      "state": "merged",
+      "headSha": "d977405dd50411514128be3e2b3a5fc7dac4fcc8",
+      "headBranch": "fix/idea-136-roadmap-page-redesign"
+    },
+    "IDEA-135": {
+      "number": 124,
+      "url": "https://github.com/adooone/paper-camp/pull/124",
+      "state": "merged",
+      "headSha": "f268d7f14bf7e5960f3e302d53b68bd1dcf5c036",
+      "headBranch": "feat/idea-135-run-analytics"
+    },
+    "IDEA-141": {
+      "number": 122,
+      "url": "https://github.com/adooone/paper-camp/pull/122",
+      "state": "merged",
+      "headSha": "d8e80bb90da39f44625b0681b83e8a1be3b703cc",
+      "headBranch": "feat/idea-141-phases-as-living-progress-rows"
+    },
+    "IDEA-140": {
+      "number": 121,
+      "url": "https://github.com/adooone/paper-camp/pull/121",
+      "state": "merged",
+      "headSha": "17bb7fcd7d468931f141446d7a8de04d9e2dec05",
+      "headBranch": "feat/idea-140-bottom-center-island"
+    },
+    "IDEA-142": {
+      "number": 120,
+      "url": "https://github.com/adooone/paper-camp/pull/120",
+      "state": "merged",
+      "headSha": "0ce76d7a80c881416749ffbe0d62ed0213cf7d71",
+      "headBranch": "refactor/idea-142-faster-phase-runs"
+    },
+    "IDEA-143": {
+      "number": 119,
+      "url": "https://github.com/adooone/paper-camp/pull/119",
+      "state": "merged",
+      "headSha": "98b0224058226f45f6013fd8cbc596181ba23e32",
+      "headBranch": "chore/idea-143-one-title-style-for-all-ideas"
+    },
+    "IDEA-139": {
+      "number": 118,
+      "url": "https://github.com/adooone/paper-camp/pull/118",
+      "state": "merged",
+      "headSha": "91bcf1a7ab97a1e3bad5b6e40d3c00e362086302",
+      "headBranch": "fix/idea-139-desk-is-broken-under-the-mount-router-basepath-api-base-and-a-friendlier-route"
+    },
+    "IDEA-138": {
+      "number": 117,
+      "url": "https://github.com/adooone/paper-camp/pull/117",
+      "state": "merged",
+      "headSha": "775a4bac83bccdd672eb4ea0a5f240320582b297",
+      "headBranch": "feat/idea-138-single-bar-toolbar-with-a-stack-style-chat-sidebar"
+    },
+    "IDEA-116": {
+      "number": 115,
+      "url": "https://github.com/adooone/paper-camp/pull/115",
+      "state": "merged",
+      "headSha": "73d0e7db1d0ecab41a4276008037f03351aa85f0",
+      "headBranch": "feat/idea-116-direct-to-main-work-can-never-reach-review-done-in-derived-status"
+    },
+    "IDEA-133": {
+      "number": 114,
+      "url": "https://github.com/adooone/paper-camp/pull/114",
+      "state": "merged",
+      "headSha": "ebbb7274161ab1450609ef093af8550e011b90b3",
+      "headBranch": "feat/idea-133-toolbar-is-an-extended-statusbar-top-full-width-always-visible-in-layout"
+    },
+    "IDEA-134": {
+      "number": 113,
+      "url": "https://github.com/adooone/paper-camp/pull/113",
+      "state": "merged",
+      "headSha": "b00f42a369ae327496b41a8357aa111bb88c48c0",
+      "headBranch": "fix/idea-134-plans-page-decluttering"
+    },
+    "IDEA-118": {
+      "number": 112,
+      "url": "https://github.com/adooone/paper-camp/pull/112",
+      "state": "merged",
+      "headSha": "7c20c289bbe2ec35149a847e3279b75d14fe50f2",
+      "headBranch": "feat/idea-118-parked-decisions-inbox-every-agent-question-awaiting-a-human-one-queue"
+    },
+    "IDEA-132": {
+      "number": 111,
+      "url": "https://github.com/adooone/paper-camp/pull/111",
+      "state": "merged",
+      "headSha": "4fbb1dcb6fdcb877fe87ebfdc2c777d0db3285bc",
+      "headBranch": "fix/idea-132-published-toolbar-is-dead-on-arrival-v0-14-0-embed-fails-end-to-end"
+    },
+    "IDEA-124": {
+      "number": 109,
+      "url": "https://github.com/adooone/paper-camp/pull/109",
+      "state": "merged",
+      "headSha": "983045d439d1a03aafa868408734b249b18fc09b",
+      "headBranch": "feat/idea-124-tie-ideas-to-releases-release-notes-grouped-by-idea"
+    },
+    "IDEA-131": {
+      "number": 108,
+      "url": "https://github.com/adooone/paper-camp/pull/108",
+      "state": "merged",
+      "headSha": "00ea8c9a4e545f29ed0a1e48cbb546384abcb067",
+      "headBranch": "refactor/idea-131-faster-agent-runs-and-chat-replies"
+    },
+    "IDEA-130": {
+      "number": 107,
+      "url": "https://github.com/adooone/paper-camp/pull/107",
+      "state": "merged",
+      "headSha": "38bbc0c8cb20b67f0eb666984c0247f3a1a651fa",
+      "headBranch": "feat/idea-130-paper-scout-the-conversational-agent"
+    },
+    "IDEA-128": {
+      "number": 105,
+      "url": "https://github.com/adooone/paper-camp/pull/105",
+      "state": "merged",
+      "headSha": "76a170d7af61f8a72c4875511fb39ba13797a54d",
+      "headBranch": "feat/idea-128-in-app-dev-toolbar-paper-camp-living-inside-the-target-application"
+    },
+    "IDEA-129": {
+      "number": 104,
+      "url": "https://github.com/adooone/paper-camp/pull/104",
+      "state": "merged",
+      "headSha": "8e93743f789c896dfaf9e97d394618626f28efaa",
+      "headBranch": "refactor/idea-129-isolate-the-statusbar-store-free-core-ready-for-a-second-mount"
+    },
+    "IDEA-125": {
+      "number": 103,
+      "url": "https://github.com/adooone/paper-camp/pull/103",
+      "state": "merged",
+      "headSha": "1680314117e90734e9386e721af76680bb296987",
+      "headBranch": "fix/idea-125-headless-runs-die-as-bare-error-when-the-agent-hits-a-permission-ask"
+    },
+    "IDEA-127": {
+      "number": 102,
+      "url": "https://github.com/adooone/paper-camp/pull/102",
+      "state": "merged",
+      "headSha": "2c6e797baa30ab647ed18461e7cc57e98270d439",
+      "headBranch": "fix/idea-127-settings-port-is-a-dead-field-dev-never-reads-it"
+    },
+    "IDEA-126": {
+      "number": 100,
+      "url": "https://github.com/adooone/paper-camp/pull/100",
+      "state": "merged",
+      "headSha": "542d347e0402d5bbbdb7307e46503189c9aec7cd",
+      "headBranch": "fix/idea-126-read-only-helper-tasks-silently-supersede-a-running-run-all"
+    },
+    "IDEA-115": {
+      "number": 98,
+      "url": "https://github.com/adooone/paper-camp/pull/98",
+      "state": "merged",
+      "headSha": "9bde470bf07ce9118aa2d2a6c68f03d73ab64e7d",
+      "headBranch": "fix/idea-115-npm-package-is-broken-on-linux-bundled-node-pty-can-t-load"
+    },
+    "IDEA-102": {
+      "number": 97,
+      "url": "https://github.com/adooone/paper-camp/pull/97",
+      "state": "merged",
+      "headSha": "aec4b7501f574acd9d07ba66c1c2bda476b828d6",
+      "headBranch": "feat/idea-102-agent-resolves-sync-rebase-conflicts"
+    },
+    "IDEA-108": {
+      "number": 96,
+      "url": "https://github.com/adooone/paper-camp/pull/96",
+      "state": "merged",
+      "headSha": "5bc39fff341b2e6a83856295daaac885750a79c4",
+      "headBranch": "feat/idea-108-surface-a-diverged-main-with-a-one-click-agent-fix"
+    },
+    "IDEA-99": {
+      "number": 95,
+      "url": "https://github.com/adooone/paper-camp/pull/95",
+      "state": "merged",
+      "headSha": "f1330dc052ca898b8ecd1b2f1d62cb8590696586",
+      "headBranch": "feat/idea-99-project-stats-view"
+    },
+    "IDEA-101": {
+      "number": 94,
+      "url": "https://github.com/adooone/paper-camp/pull/94",
+      "state": "merged",
+      "headSha": "8f755b1a68adf179f1b02e70332b204c8d2f404f",
+      "headBranch": "feat/idea-101-in-app-sign-in-via-oauth-relay"
+    },
+    "IDEA-112": {
+      "number": 93,
+      "url": "https://github.com/adooone/paper-camp/pull/93",
+      "state": "merged",
+      "headSha": "79284d288ddfc0d56a1255b236a7871f3dd4c16b",
+      "headBranch": "refactor/idea-112-move-all-styling-to-tailwind"
+    },
+    "IDEA-110": {
+      "number": 92,
+      "url": "https://github.com/adooone/paper-camp/pull/92",
+      "state": "merged",
+      "headSha": "8aa192451622b2334ffcef82980a3ba177530b4d",
+      "headBranch": "feat/idea-110-in-app-code-review-with-diffs"
+    },
+    "IDEA-113": {
+      "number": 91,
+      "url": "https://github.com/adooone/paper-camp/pull/91",
+      "state": "merged",
+      "headSha": "5300ac98a3cdec8b545dadc9480f4a317ee84ef9",
+      "headBranch": "feat/idea-113-feedback-as-a-single-chat-thread"
+    },
+    "IDEA-107": {
+      "number": 90,
+      "url": "https://github.com/adooone/paper-camp/pull/90",
+      "state": "merged",
+      "headSha": "337e670782c84efbc14a5afa64da2fa0d0d0ee28",
+      "headBranch": "refactor/idea-107-de-complicate-the-worst-code"
+    },
+    "IDEA-106": {
+      "number": 89,
+      "url": "https://github.com/adooone/paper-camp/pull/89",
+      "state": "merged",
+      "headSha": "ca98380a4031f1e2cbe4be5878334580c51ac49b",
+      "headBranch": "feat/idea-106-slim-agent-prompts-for-short-direct-output"
+    },
+    "IDEA-104": {
+      "number": 88,
+      "url": "https://github.com/adooone/paper-camp/pull/88",
+      "state": "merged",
+      "headSha": "dfb2ff5103cd7900a477b0d70a7035dca2155eaf",
+      "headBranch": "feat/idea-104-decisions-and-questions-live-on-the-idea"
+    },
+    "IDEA-103": {
+      "number": 87,
+      "url": "https://github.com/adooone/paper-camp/pull/87",
+      "state": "merged",
+      "headSha": "567cd2dad17540f6d807b95b6383157b53d9fc4a",
+      "headBranch": "feat/idea-103-one-feedback-thread-on-every-idea-any-status"
+    },
+    "IDEA-105": {
+      "number": 86,
+      "url": "https://github.com/adooone/paper-camp/pull/86",
+      "state": "merged",
+      "headSha": "449aa7645532776b5554c1afcedc06d5ff23a49a",
+      "headBranch": "fix/idea-105-plain-language-the-confusing-ui-text"
+    },
+    "IDEA-109": {
+      "number": 84,
+      "url": "https://github.com/adooone/paper-camp/pull/84",
+      "state": "merged",
+      "headSha": "053b29aa35b0bcb0c11cd3aa419285127d04b595",
+      "headBranch": "feat/idea-109-compact-deliver-section-more-room-for-the-agent-stack"
+    },
+    "IDEA-100": {
+      "number": 83,
+      "url": "https://github.com/adooone/paper-camp/pull/83",
+      "state": "merged",
+      "headSha": "cd66306461f6641b6f8a839f5ad65ecd14c13153",
+      "headBranch": "feat/idea-100-self-healing-run-all-fix-red-checks-ask-only-when-stuck"
+    },
+    "IDEA-97": {
+      "number": 82,
+      "url": "https://github.com/adooone/paper-camp/pull/82",
+      "state": "merged",
+      "headSha": "4da9af6de863aef605ffc25873b32a8df8b8eb75",
+      "headBranch": "feat/idea-97-surface-decisions-where-they-bind"
+    },
+    "IDEA-96": {
+      "number": 81,
+      "url": "https://github.com/adooone/paper-camp/pull/81",
+      "state": "merged",
+      "headSha": "e80d77041c3e5961604b5f6a003a56205cf75d85",
+      "headBranch": "feat/idea-96-open-questions-as-a-working-queue"
+    },
+    "IDEA-94": {
+      "number": 80,
+      "url": "https://github.com/adooone/paper-camp/pull/80",
+      "state": "merged",
+      "headSha": "3a2828b202e6b106678ed97a71c96d063376330f",
+      "headBranch": "feat/idea-94-git-actions-in-the-toolbar-agent-as-fallback"
+    },
+    "IDEA-93": {
+      "number": 79,
+      "url": "https://github.com/adooone/paper-camp/pull/79",
+      "state": "merged",
+      "headSha": "474d7b2306204fec8852cebf9e6809945343a648",
+      "headBranch": "feat/idea-93-trace-an-idea-from-roadmap-to-release"
+    },
+    "IDEA-95": {
+      "number": 78,
+      "url": "https://github.com/adooone/paper-camp/pull/78",
+      "state": "merged",
+      "headSha": "7d578e7cdaa3464659dd4acc515b8478a8866d3d",
+      "headBranch": "feat/idea-95-roadmap-items-become-the-subject-vocabulary"
+    },
+    "IDEA-92": {
+      "number": 77,
+      "url": "https://github.com/adooone/paper-camp/pull/77",
+      "state": "merged",
+      "headSha": "82f43d828d75b66ee556aab2a19d68cc0b752600",
+      "headBranch": "feat/idea-92-timeline-view-and-horizon-lanes"
+    },
+    "IDEA-91": {
+      "number": 76,
+      "url": "https://github.com/adooone/paper-camp/pull/76",
+      "state": "merged",
+      "headSha": "bc48ec7b3c71431ca48877702ab0dd6f3ddd282d",
+      "headBranch": "feat/idea-91-roadmap-items-survive-promotion"
+    },
+    "IDEA-89": {
+      "number": 75,
+      "url": "https://github.com/adooone/paper-camp/pull/75",
+      "state": "merged",
+      "headSha": "fdeb60f2ed459915464ed46a5b6e88980e26a0df",
+      "headBranch": "feat/idea-89-review-a-finished-plan-in-prose"
+    },
+    "IDEA-87": {
+      "number": 74,
+      "url": "https://github.com/adooone/paper-camp/pull/74",
+      "state": "merged",
+      "headSha": "3ea25fff1dac37e6aaae5b394faa3ca16156644e",
+      "headBranch": "feat/idea-87-margin-notes-on-plans-and-phases"
+    },
+    "IDEA-90": {
+      "number": 73,
+      "url": "https://github.com/adooone/paper-camp/pull/73",
+      "state": "merged",
+      "headSha": "ee44af95316896e81138c0399d8ca4b505b1f831",
+      "headBranch": "feat/idea-90-connections-for-every-service"
+    },
+    "IDEA-86": {
+      "number": 72,
+      "url": "https://github.com/adooone/paper-camp/pull/72",
+      "state": "merged",
+      "headSha": "30616166e63e660c8fe03637b813219351641373",
+      "headBranch": "feat/idea-86-surface-agent-sign-in-state-in-the-app"
+    },
+    "IDEA-98": {
+      "number": 71,
+      "url": "https://github.com/adooone/paper-camp/pull/71",
+      "state": "merged",
+      "headSha": "6c1ea0ca914c707e2dd64fea8b3078937b73a555",
+      "headBranch": "refactor/idea-98-track-run-order-in-one-file"
+    },
+    "IDEA-85": {
+      "number": 70,
+      "url": "https://github.com/adooone/paper-camp/pull/70",
+      "state": "merged",
+      "headSha": "53fbe5472ba494948a23d427b10487ccd4800509",
+      "headBranch": "feat/idea-85-apply-the-merge-policy-from-settings"
+    },
+    "IDEA-84": {
+      "number": 68,
+      "url": "https://github.com/adooone/paper-camp/pull/68",
+      "state": "merged",
+      "headSha": "9ebebd8220410710ce6b15d1e7e3f2dfe1057d41",
+      "headBranch": "fix/idea-84-fix-header-background"
+    },
+    "IDEA-83": {
+      "number": 67,
+      "url": "https://github.com/adooone/paper-camp/pull/67",
+      "state": "merged",
+      "headSha": "dcd61fd5a17666a96dde20858806aa0469d24fe7",
+      "headBranch": "fix/idea-83-one-release-line-per-idea"
+    },
+    "IDEA-82": {
+      "number": 66,
+      "url": "https://github.com/adooone/paper-camp/pull/66",
+      "state": "merged",
+      "headSha": "d086bdd5fcd041311e3ee441a4a771b8b31139e0",
+      "headBranch": "fix/idea-82-order-that-can-never-be-empty"
+    },
+    "IDEA-78": {
+      "number": 65,
+      "url": "https://github.com/adooone/paper-camp/pull/65",
+      "state": "merged",
+      "headSha": "cbf4ebdcb380b411453bc254d4287f550b9c9c92",
+      "headBranch": "feat/idea-78-responsive-polish-for-phone-widths"
+    },
+    "IDEA-81": {
+      "number": 64,
+      "url": "https://github.com/adooone/paper-camp/pull/64",
+      "state": "merged",
+      "headSha": "5930b1b41cb6a27156bf13d55865900cee80a5d4",
+      "headBranch": "feat/idea-81-make-the-roadmap-look-like-a-map"
+    },
+    "IDEA-79": {
+      "number": 63,
+      "url": "https://github.com/adooone/paper-camp/pull/63",
+      "state": "merged",
+      "headSha": "eff32d8b567ee05d2125aadde084c88253e21f07",
+      "headBranch": "feat/idea-79-first-run-experience"
+    },
+    "IDEA-80": {
+      "number": 61,
+      "url": "https://github.com/adooone/paper-camp/pull/61",
+      "state": "merged",
+      "headSha": "fefa4aa7513c4617f3ee4bd311747606c879ca93",
+      "headBranch": "fix/idea-80-dev-server-reload-honesty"
+    },
+    "IDEA-77": {
+      "number": 59,
+      "url": "https://github.com/adooone/paper-camp/pull/59",
+      "state": "merged",
+      "headSha": "7d070a920b429232c7ce540f8ca63c2961e250ae",
+      "headBranch": "feat/idea-77-candidate-ideas-under-roadmap-items"
+    },
+    "IDEA-76": {
+      "number": 58,
+      "url": "https://github.com/adooone/paper-camp/pull/58",
+      "state": "merged",
+      "headSha": "c5afd3e80f512c335fe75bd8f4d381f7a99b58b6",
+      "headBranch": "feat/idea-76-first-run-access-setup"
+    },
+    "IDEA-75": {
+      "number": 57,
+      "url": "https://github.com/adooone/paper-camp/pull/57",
+      "state": "merged",
+      "headSha": "8ce788390ec6a1fe0100114ea4e8422a27c5e936",
+      "headBranch": "fix/idea-75-error-surfacing-consistency"
+    },
+    "IDEA-74": {
+      "number": 56,
+      "url": "https://github.com/adooone/paper-camp/pull/56",
+      "state": "merged",
+      "headSha": "ea99fdcb0781bc819d1e785a5057a9345f675c36",
+      "headBranch": "feat/idea-74-goal-and-roadmap-in-the-app"
+    },
+    "IDEA-69": {
+      "number": 55,
+      "url": "https://github.com/adooone/paper-camp/pull/55",
+      "state": "merged",
+      "headSha": "5e5543aab2bf2627f4e46f1b431d7675d2ce17ed",
+      "headBranch": "refactor/idea-69-slim-the-codebase-for-release"
+    },
+    "IDEA-72": {
+      "number": 54,
+      "url": "https://github.com/adooone/paper-camp/pull/54",
+      "state": "merged",
+      "headSha": "471c6a3d58017b5a81e61dde6fbe753f073b6ad9",
+      "headBranch": "feat/idea-72-truthful-status-and-one-click-archive"
+    },
+    "IDEA-71": {
+      "number": 53,
+      "url": "https://github.com/adooone/paper-camp/pull/53",
+      "state": "merged",
+      "headSha": "ec58f8baee961e0793929290198280f7095a26ad",
+      "headBranch": "feat/idea-71-run-order-for-the-worklist"
+    },
+    "IDEA-70": {
+      "number": 52,
+      "url": "https://github.com/adooone/paper-camp/pull/52",
+      "state": "merged",
+      "headSha": "5cf26004d81825bbea12dcc7b506dfb227bc8ee8",
+      "headBranch": "feat/idea-70-subjects-and-idea-detail-polish"
+    },
+    "IDEA-68": {
+      "number": 51,
+      "url": "https://github.com/adooone/paper-camp/pull/51",
+      "state": "merged",
+      "headSha": "6e92dc2ed097cecc35c116d8d8fe5b6a8729f228",
+      "headBranch": "refactor/idea-68-trim-the-ui-to-what-s-used"
+    },
+    "IDEA-73": {
+      "number": 50,
+      "url": "https://github.com/adooone/paper-camp/pull/50",
+      "state": "merged",
+      "headSha": "6f5980f8d1100f7040c06bb287dd05595646d50c",
+      "headBranch": "fix/idea-73-smooth-the-page-transitions"
+    },
+    "IDEA-63": {
+      "number": 48,
+      "url": "https://github.com/adooone/paper-camp/pull/48",
+      "state": "merged",
+      "headSha": "c55c670ac91e69a5227941e16c26c429b1379eed",
+      "headBranch": "refactor/idea-63-sweep-comments-to-the-7-bar"
+    },
+    "IDEA-67": {
+      "number": 47,
+      "url": "https://github.com/adooone/paper-camp/pull/47",
+      "state": "merged",
+      "headSha": "024e491b0554662e68522253f6b4cd920879308e",
+      "headBranch": "fix/idea-67-deterministic-dirty-sync"
+    },
+    "IDEA-66": {
+      "number": 46,
+      "url": "https://github.com/adooone/paper-camp/pull/46",
+      "state": "merged",
+      "headSha": "b6cc75e927c1c3787f4157b46155b874b4678451",
+      "headBranch": "fix/idea-66-sync-from-a-dirty-merged-branch"
+    },
+    "IDEA-64": {
+      "number": 45,
+      "url": "https://github.com/adooone/paper-camp/pull/45",
+      "state": "merged",
+      "headSha": "52057b1f454b9187825825a9335e81c7f81ab7aa",
+      "headBranch": "feat/idea-64-sort-the-worklist-by-column-header"
+    },
+    "IDEA-65": {
+      "number": 43,
+      "url": "https://github.com/adooone/paper-camp/pull/43",
+      "state": "merged",
+      "headSha": "d2c394db13cbdc1c907b8d321b5d8c19ff5c8f5c",
+      "headBranch": "feat/idea-65-parallel-agents-and-a-task-log"
+    },
+    "IDEA-62": {
+      "number": 42,
+      "url": "https://github.com/adooone/paper-camp/pull/42",
+      "state": "merged",
+      "headSha": "c3994bb7b581481816f6cb77623f9ca683a5b29d",
+      "headBranch": "feat/idea-62-ai-suggested-idea-drafts"
+    },
+    "IDEA-61": {
+      "number": 41,
+      "url": "https://github.com/adooone/paper-camp/pull/41",
+      "state": "merged",
+      "headSha": "4465736eb63f8d5068354994319baec1526a663e",
+      "headBranch": "refactor/idea-61-speed-up-api-reads-and-refetch-churn"
+    },
+    "IDEA-60": {
+      "number": 40,
+      "url": "https://github.com/adooone/paper-camp/pull/40",
+      "state": "merged",
+      "headSha": "7de331b44d3231d2228f2891b84ce12b844ab5ce",
+      "headBranch": "refactor/idea-60-group-code-into-domain-subfolders"
+    },
+    "IDEA-59": {
+      "number": 39,
+      "url": "https://github.com/adooone/paper-camp/pull/39",
+      "state": "merged",
+      "headSha": "60c3ddacfe62b14079527621eb8d233dfeb8390f",
+      "headBranch": "refactor/idea-59-trim-comments-to-the-essential"
+    },
+    "IDEA-58": {
+      "number": 38,
+      "url": "https://github.com/adooone/paper-camp/pull/38",
+      "state": "merged",
+      "headSha": "43822ba5ffce0a04a7eb2794f15beb1363a8b584",
+      "headBranch": "refactor/idea-58-simplify-and-de-dupe-the-codebase"
+    },
+    "IDEA-35": {
+      "number": 37,
+      "url": "https://github.com/adooone/paper-camp/pull/37",
+      "state": "merged",
+      "headSha": "ef9e074241c4c321e02a1e6c9d362484dc3d5f52",
+      "headBranch": "feat/idea-35-mirror-plans-onto-github-prs"
+    },
+    "IDEA-39": {
+      "number": 35,
+      "url": "https://github.com/adooone/paper-camp/pull/35",
+      "state": "merged",
+      "headSha": "e64a8b985f098472979bb3cf759ac2e12e7718d4",
+      "headBranch": "feat/idea-39-build-the-focus-cockpit"
+    },
+    "IDEA-57": {
+      "number": 34,
+      "url": "https://github.com/adooone/paper-camp/pull/34",
+      "state": "merged",
+      "headSha": "692a62e01e8183d25ee3cb493dd4b2009191c2ad",
+      "headBranch": "feat/idea-57-drive-pr-review-fixes-from-the-app"
+    },
+    "IDEA-44": {
+      "number": 33,
+      "url": "https://github.com/adooone/paper-camp/pull/33",
+      "state": "merged",
+      "headSha": "d885f045b259748a4c13c3acc48595dbc9af8a46",
+      "headBranch": "feat/idea-44-check-idea-overlap-at-capture"
+    },
+    "IDEA-56": {
+      "number": 31,
+      "url": "https://github.com/adooone/paper-camp/pull/31",
+      "state": "merged",
+      "headSha": "abee40bc094120e69aeef482639ab58db7b46b65",
+      "headBranch": "feat/idea-56-surface-pr-status-in-the-dashboard"
+    },
+    "IDEA-55": {
+      "number": 30,
+      "url": "https://github.com/adooone/paper-camp/pull/30",
+      "state": "merged",
+      "headSha": "9fd15cfb82ec1db56cd2ed92030701f2aebd04c0",
+      "headBranch": "feat/idea-55-actualise-all-ideas-at-once"
+    },
+    "IDEA-40": {
+      "number": 29,
+      "url": "https://github.com/adooone/paper-camp/pull/29",
+      "state": "merged",
+      "headSha": "9df9ab3a549b0e9c347eade4f39a5f610a9982a9",
+      "headBranch": "feat/idea-40-make-sub-views-real-routes"
+    },
+    "IDEA-41": {
+      "number": 28,
+      "url": "https://github.com/adooone/paper-camp/pull/28",
+      "state": "merged",
+      "headSha": "036dfc22fffe14e30f19dc64317ee64aafd63b01",
+      "headBranch": "fix/idea-41-settings-and-affordance-polish"
+    },
+    "FEAT-42": {
+      "number": 27,
+      "url": "https://github.com/adooone/paper-camp/pull/27",
+      "state": "merged",
+      "headSha": "0e694212cbe228334f03283b20d7a9341d4990f1",
+      "headBranch": "feat/feat-42-unify-the-ideas-and-plans-worklist"
+    },
+    "FEAT-41": {
+      "number": 26,
+      "url": "https://github.com/adooone/paper-camp/pull/26",
+      "state": "merged",
+      "headSha": "b5c3f14e28a55eeab5d6605e7ad79525ff3294ef",
+      "headBranch": "feat/feat-41-filter-and-sort-the-plans-list"
+    },
+    "FEAT-37": {
+      "number": 24,
+      "url": "https://github.com/adooone/paper-camp/pull/24",
+      "state": "merged",
+      "headSha": "9e60750281967e39c86e50ef2b21652c0ba6a012",
+      "headBranch": "feat/feat-37-densify-the-plans-worklist"
+    },
+    "FEAT-35": {
+      "number": 23,
+      "url": "https://github.com/adooone/paper-camp/pull/23",
+      "state": "merged",
+      "headSha": "6ca3a0dc35cb23d91fc379c8695969fcdcac2854",
+      "headBranch": "feat/feat-35-adopt-paper-ui-0-5-0-components"
+    },
+    "FEAT-34": {
+      "number": 22,
+      "url": "https://github.com/adooone/paper-camp/pull/22",
+      "state": "merged",
+      "headSha": "f59321c2e19dc7ce586d6283006b9754a2ca5717",
+      "headBranch": "feat/feat-34-migrate-to-paper-ui-0-5-0"
+    },
+    "FEAT-32": {
+      "number": 21,
+      "url": "https://github.com/adooone/paper-camp/pull/21",
+      "state": "merged",
+      "headSha": "4c7bc7dc96e350befb6ee716b039c991e3c75582",
+      "headBranch": "feat/feat-32-paper-camp-mcp-server"
+    },
+    "FEAT-31": {
+      "number": 20,
+      "url": "https://github.com/adooone/paper-camp/pull/20",
+      "state": "merged",
+      "headSha": "44da253fb64f77df464a5f95a75723249f989713",
+      "headBranch": "feat/feat-31-claude-code-native-integration"
+    },
+    "FEAT-29": {
+      "number": 19,
+      "url": "https://github.com/adooone/paper-camp/pull/19",
+      "state": "merged",
+      "headSha": "f43eaf76a56e249eab8b5b76130d9611a6e62b36",
+      "headBranch": "feat/feat-29-content-hash-audit-freshness"
+    },
+    "FEAT-33": {
+      "number": 17,
+      "url": "https://github.com/adooone/paper-camp/pull/17",
+      "state": "merged",
+      "headSha": "00123ea216569f2943c5deb7dd566f93ac96fa84",
+      "headBranch": "feat/feat-33-responsive-layout-and-stack-panel-redesign"
+    },
+    "FEAT-28": {
+      "number": 16,
+      "url": "https://github.com/adooone/paper-camp/pull/16",
+      "state": "merged",
+      "headSha": "af84ab2d79acf55ed374319c029d80c6dd8a6330",
+      "headBranch": "feat/feat-28-reconcile-pass-and-audit-gating"
+    },
+    "FEAT-30": {
+      "number": 15,
+      "url": "https://github.com/adooone/paper-camp/pull/15",
+      "state": "merged",
+      "headSha": "bf00b264e62e8f6a4ee98eebc7caedab75f69b6f",
+      "headBranch": "feat/feat-30-run-all-phases-with-per-phase-commits"
+    },
+    "FEAT-27": {
+      "number": 13,
+      "url": "https://github.com/adooone/paper-camp/pull/13",
+      "state": "merged",
+      "headSha": "9a2b36a1b0b6623625e6b7341557380f867f1924",
+      "headBranch": "feat/feat-27-sync-to-main-guard"
+    },
+    "FEAT-26": {
+      "number": 12,
+      "url": "https://github.com/adooone/paper-camp/pull/12",
+      "state": "merged",
+      "headSha": "683ce807e67cb7518f7d7f5d5ae8f822f42f4495",
+      "headBranch": "feat/feat-26-per-agent-model-and-effort"
+    },
+    "DOCS-3": {
+      "number": 11,
+      "url": "https://github.com/adooone/paper-camp/pull/11",
+      "state": "merged",
+      "reviewDecision": "approved",
+      "headSha": "f4663efb4646504a32a893ae4f2e0c9c5660d054",
+      "headBranch": "docs/docs-3-actualize-about-md-for-per-file-storage"
+    },
+    "CHORE-1": {
+      "number": 10,
+      "url": "https://github.com/adooone/paper-camp/pull/10",
+      "state": "merged",
+      "headSha": "08792dcbed12dce2427f772f714bd46cef149798",
+      "headBranch": "chore/chore-1-demote-idea-headings-to-h2"
+    },
+    "FEAT-25": {
+      "number": 9,
+      "url": "https://github.com/adooone/paper-camp/pull/9",
+      "state": "merged",
+      "headSha": "201fe094ef2409832725d582c973bb1c103afe70",
+      "headBranch": "feat/feat-25-batch-plan-freshness-audit"
+    },
+    "DOCS-2": {
+      "number": 8,
+      "url": "https://github.com/adooone/paper-camp/pull/8",
+      "state": "merged",
+      "headSha": "da665b7cba34dc833f2da2e6c1745c8bcac544ab",
+      "headBranch": "docs/docs-2-restructure-repo-root-docs"
+    },
+    "FEAT-23": {
+      "number": 7,
+      "url": "https://github.com/adooone/paper-camp/pull/7",
+      "state": "merged",
+      "headSha": "c38a265f58dc46e3f239f4d87acc2a70f55d3ed9",
+      "headBranch": "feat/feat-23-resolve-open-questions-from-docs"
+    },
+    "FEAT-24": {
+      "number": 5,
+      "url": "https://github.com/adooone/paper-camp/pull/5",
+      "state": "merged",
+      "headSha": "290124c846f98400b5ffb8c4a4465edef7163cdf",
+      "headBranch": "feat/feat-24-plan-storage-architecture"
+    },
+    "FEAT-22": {
+      "number": 1,
+      "url": "https://github.com/adooone/paper-camp/pull/1",
+      "state": "merged",
+      "headSha": "920e3c83f57430cd99ed8795dccf5eb0aa48392f",
+      "headBranch": "feat/feat-22-github-ci-cd-automation"
+    }
+  }
+}
