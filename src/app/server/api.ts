@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
+import { localStateDriftCount, readLocalStateDrift } from '@/core/corpus';
 import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
@@ -31,6 +32,7 @@ export interface ApiMiddleware {
   getPairingState: () => PairingManagerState;
   getActivityState: () => ActivityManagerState;
   getLastRequestAt: () => number | null;
+  getLocalStateDriftCount: () => Promise<number>;
 }
 
 // Trusted because a DNS-rebinding attacker controls their own public domain,
@@ -277,5 +279,7 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).getPairingState = pairing.getState;
   (handler as ApiMiddleware).getActivityState = activity.getState;
   (handler as ApiMiddleware).getLastRequestAt = () => lastRequestAt;
+  (handler as ApiMiddleware).getLocalStateDriftCount = async () =>
+    localStateDriftCount(await readLocalStateDrift(root));
   return handler as ApiMiddleware;
 }

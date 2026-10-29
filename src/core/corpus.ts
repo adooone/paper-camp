@@ -13,7 +13,7 @@ import type {
 } from '../types/index';
 import { assertCorpusWritable } from './corpus-format';
 import { entityToIdea, entityToPlan } from './entity-view';
-import { resolveIdsWithMainActivity } from './git-log';
+import { resolveIdsWithMainActivity, runGit } from './git-log';
 import { getPrMapFetchedAt, resolvePrsByEntity } from './git-pr/pr-lookup';
 import { type EntriesByRoot, attachResolvedNeeds } from './needs';
 import { parseEntityFile } from './parse/parser';
@@ -215,6 +215,56 @@ export const planFile = (root: string, name: string): string => {
  * which ignores itself via `papercamp/.local/.gitignore` and so is never committed. */
 export const localFile = (root: string, name: string): string =>
   join(root, 'papercamp', '.local', name);
+
+/** `chat.md` is shared and committed by every project, so appends from two clones
+ * must merge without a conflict — a `merge=union` line in `.gitattributes` keeps
+ * both sides' lines on pull. Read by both the IDEA-320 migration (which writes the
+ * block) and doctor (which checks for it). */
+export const GITATTRIBUTES_BLOCK_START = '# paper-camp:start';
+export const GITATTRIBUTES_BLOCK_END = '# paper-camp:end';
+export const GITATTRIBUTES_BLOCK_BODY = 'papercamp/chat.md merge=union';
+
+export interface LocalStateDrift {
+  /** Files tracked by git under `papercamp/` whose top-level name isn't part of
+   * `PLAN_NAMES` — the committed-but-should-be-local drift IDEA-320 migrates away. */
+  trackedOutsidePlan: string[];
+  hasLocalGitignore: boolean;
+  hasGitattributesBlock: boolean;
+}
+
+export function localStateDriftCount(drift: LocalStateDrift | null): number {
+  if (!drift) return 0;
+  return (
+    drift.trackedOutsidePlan.length +
+    (drift.hasLocalGitignore ? 0 : 1) +
+    (drift.hasGitattributesBlock ? 0 : 1)
+  );
+}
+
+/** Also used at daemon mount (for the projects page's drift total) and by `paper-camp
+ * doctor`/the git card, so the three checks live in one place next to what they check.
+ * `null` outside a git repo (nothing committed yet to drift, nothing to check). */
+export async function readLocalStateDrift(root: string): Promise<LocalStateDrift | null> {
+  const isRepo = (await runGit(root, ['rev-parse', '--is-inside-work-tree'])).trim() === 'true';
+  if (!isRepo) return null;
+
+  const tracked = await runGit(root, ['ls-files', '--', 'papercamp']);
+  const trackedOutsidePlan = tracked
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((relPath) => {
+      const top = relPath.slice('papercamp/'.length).split('/')[0];
+      return !PLAN_NAMES.has(top);
+    });
+
+  const hasLocalGitignore = await fileExists(join(root, 'papercamp', '.local', '.gitignore'));
+
+  const gitattributes = await readFile(join(root, '.gitattributes'), 'utf-8').catch(() => '');
+  const hasGitattributesBlock = gitattributes.includes(GITATTRIBUTES_BLOCK_START);
+
+  return { trackedOutsidePlan, hasLocalGitignore, hasGitattributesBlock };
+}
 
 export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
 

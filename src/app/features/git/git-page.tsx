@@ -1,4 +1,4 @@
-import { DeliverBar, GitStashSurface } from '@/app/components';
+import { DeliverBar, GitLocalStateDriftSurface, GitStashSurface } from '@/app/components';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
@@ -30,7 +30,10 @@ export const GitPage = () => {
   const header = (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <PageTitle className="!mb-0">Git</PageTitle>
-      <GitStashSurface />
+      <div className="flex items-center gap-2">
+        <GitLocalStateDriftSurface />
+        <GitStashSurface />
+      </div>
     </div>
   );
 

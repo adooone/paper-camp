@@ -3,16 +3,18 @@ import { randomBytes } from 'node:crypto';
 import { access, lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { adoptCapacityRecord } from '@/core/capacity';
-import { PLAN_NAMES, localFile } from '@/core/corpus';
+import {
+  GITATTRIBUTES_BLOCK_BODY,
+  GITATTRIBUTES_BLOCK_END,
+  GITATTRIBUTES_BLOCK_START,
+  PLAN_NAMES,
+  localFile,
+} from '@/core/corpus';
 import { DAEMON_GITIGNORE_ENTRIES, ensureLocalGitignore } from '@/core/scaffold/scaffold';
+import type { LocalStateMigrationResult } from '@/types/index';
 import { savePairingState } from './pairing';
 
-export interface MigrationResult {
-  status: 'migrated' | 'skipped' | 'no-op';
-  skipReason?: 'rebase-in-progress' | 'staged-changes';
-  rotatedPairingToken: boolean;
-  adoptedCapacity: boolean;
-}
+export type MigrationResult = LocalStateMigrationResult;
 
 const COMMIT_MESSAGE = 'chore(papercamp): Move local state to papercamp/.local';
 
@@ -27,10 +29,6 @@ const RENAMED_LOCAL_FILES = [
   { old: 'night.json', local: 'night.json' },
   { old: 'run-order.md', local: 'run-order.md' },
 ] as const;
-
-const GITATTRIBUTES_BLOCK_START = '# paper-camp:start';
-const GITATTRIBUTES_BLOCK_END = '# paper-camp:end';
-const GITATTRIBUTES_BLOCK_BODY = 'papercamp/chat.md merge=union';
 
 async function pathExists(path: string): Promise<boolean> {
   try {

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { buildConvergenceAuditPrompt } from '../app/features/plans/prompts';
 import { type AgentAdapter, resolveAgent } from '../app/server/agents/index';
+import { migrateLocalState } from '../app/server/migrate-local-state';
 import { CorpusError, readCorpus, updateEntity } from '../core/corpus';
 import { bumpCorpusFormat } from '../core/corpus-format';
 import {
@@ -797,7 +798,7 @@ program
   )
   .option(
     '--fix',
-    'apply the automatic fixes doctor knows how to migrate (currently: archive placement, draft PR template refresh)',
+    'apply the automatic fixes doctor knows how to migrate (currently: archive placement, draft PR template refresh, papercamp/.local layout)',
   )
   .option(
     '--bump-format',
@@ -829,7 +830,33 @@ program
       return;
     }
 
-    const plan = planDoctorFixes(context, findings);
+    const localStateRuleIds = new Set([
+      'local-state-tracked-outside-plan',
+      'local-state-missing-local-gitignore',
+      'local-state-missing-gitattributes-block',
+    ]);
+    const localStateFindings = findings.filter((f) => localStateRuleIds.has(f.rule));
+    const otherFindings = findings.filter((f) => !localStateRuleIds.has(f.rule));
+
+    // The fix for all three local-state rules is one and the same: re-run the IDEA-320
+    // migration, which moves/untracks whatever drifted and rewrites .gitignore/.gitattributes.
+    let migrationFixedAll = false;
+    if (localStateFindings.length > 0) {
+      const migration = await migrateLocalState(root).catch((error: unknown) => {
+        console.error('paper-camp: local-state migration failed:', error);
+        return null;
+      });
+      if (migration?.status === 'migrated') {
+        migrationFixedAll = true;
+        console.log('  [fixed]  papercamp/.local layout (ran the IDEA-320 migration)');
+      } else if (migration?.status === 'skipped') {
+        console.log(
+          `  [skip]   papercamp/.local layout — ${migration.skipReason}, will retry later`,
+        );
+      }
+    }
+
+    const plan = planDoctorFixes(context, otherFindings);
     for (const action of plan.actions) {
       if (action.kind === 'move') {
         await mkdir(dirname(join(root, action.to)), { recursive: true });
@@ -842,11 +869,16 @@ program
       }
     }
 
-    const manual = [...plan.unfixable, ...plan.rejected];
+    const manual = [
+      ...plan.unfixable,
+      ...plan.rejected,
+      ...(migrationFixedAll ? [] : localStateFindings),
+    ];
+    const totalFixed = plan.actions.length + (migrationFixedAll ? localStateFindings.length : 0);
     const remaining = reportFindings(manual);
     console.log(remaining.text);
     console.log(
-      `Applied ${plan.actions.length} fix(es); ${manual.length} finding(s) need manual attention.`,
+      `Applied ${totalFixed} fix(es); ${manual.length} finding(s) need manual attention.`,
     );
     if (plan.rejected.length > 0) {
       console.log(

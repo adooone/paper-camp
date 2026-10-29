@@ -2,7 +2,7 @@
 id: IDEA-320
 title: One home for local state
 type: refactor
-status: idea
+status: review
 idea: IDEA-319
 created: 2026-10-28
 updated: 2026-10-29
@@ -113,5 +113,6 @@ clones appending to `chat.md` pull without a conflict.
 - [x] Migration on mount
       Move files, untrack them, clean the old `.gitignore` lines, write the `.gitattributes` union block, commit once, skip projects that are mid-rebase or have staged changes, and rotate a committed pairing token.
       run: 9m3s · 100 in · 41.3k out · sonnet-5 · sess:df32600d-0086-487b-961b-daf801736e7f
-- [ ] Doctor and drift on the git card
+- [x] Doctor and drift on the git card
       `paper-camp doctor` checks and fixes the layout; each git card shows drift with a fix, and the projects page shows the total.
+      run: 16m43s · 322 in · 64.9k out · sonnet-5 · sess:ed310735-d88f-44f7-8dc0-c666782df3fa

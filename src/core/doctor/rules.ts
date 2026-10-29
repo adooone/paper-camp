@@ -1,6 +1,6 @@
 export type DoctorSeverity = 'error' | 'warning';
 
-export type DoctorCategory = 'metadata' | 'structural' | 'tooling';
+export type DoctorCategory = 'metadata' | 'structural' | 'tooling' | 'local-state';
 
 export interface DoctorRule {
   id: string;
@@ -117,6 +117,27 @@ export const DOCTOR_RULES = [
     severity: 'warning',
     summary:
       'desk.ci.draftPr is on but the workflow or PR template file has no paper-camp template header, so it looks hand-written — paper-camp will not overwrite it.',
+  },
+  {
+    id: 'local-state-tracked-outside-plan',
+    category: 'local-state',
+    severity: 'warning',
+    summary:
+      'A file under papercamp/ is tracked by git but is not part of the committed plan (ideas/, config.json, suggestions.md, chat.md, about.md, assets/) — run `paper-camp doctor --fix` to move it to papercamp/.local/ or the account config dir and untrack it.',
+  },
+  {
+    id: 'local-state-missing-local-gitignore',
+    category: 'local-state',
+    severity: 'warning',
+    summary:
+      'papercamp/.local/.gitignore is missing, so nothing under papercamp/.local/ is protected from being committed — run `paper-camp doctor --fix` to create it.',
+  },
+  {
+    id: 'local-state-missing-gitattributes-block',
+    category: 'local-state',
+    severity: 'warning',
+    summary:
+      '.gitattributes has no paper-camp managed block, so two clones appending to papercamp/chat.md will conflict on pull instead of merging — run `paper-camp doctor --fix` to add it.',
   },
 ] as const satisfies readonly DoctorRule[];
 

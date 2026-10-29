@@ -11,6 +11,7 @@ import { FetchFailedError } from '../git';
 import { launchResolveConflict } from '../git-chat';
 import { planFile } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
+import { migrateLocalState } from '../migrate-local-state';
 import type { Route, RouteContext } from './types';
 
 // A genuine content conflict needs domain judgement, so it's never auto-escalated —
@@ -440,6 +441,23 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
         } catch (error) {
           const kind = (error as { kind?: 'auth' }).kind;
           sendJson(res, 400, { error: (error as Error).message, ...(kind ? { kind } : {}) });
+        }
+      },
+    },
+
+    // The one-tap fix on the git card's local-state drift row: re-runs the IDEA-320
+    // migration, which covers all three drift checks (tracked-outside-plan, missing
+    // papercamp/.local/.gitignore, missing .gitattributes block) in one pass.
+    {
+      method: 'POST',
+      path: '/api/git/fix-local-state',
+      handle: async (_req, res) => {
+        try {
+          const result = await migrateLocalState(root);
+          activity.notifyChanged();
+          sendJson(res, 200, result);
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
         }
       },
     },

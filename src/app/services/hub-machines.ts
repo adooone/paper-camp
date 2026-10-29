@@ -34,6 +34,9 @@ export interface HubProjectRow {
   label?: string;
   stamp: ProjectRowStamp;
   lastOpenedAt: string | null;
+  /** IDEA-320 local-state drift findings reported by the daemon's own mount — unset
+   * for a solo project (no daemon) or one the daemon hasn't mounted yet. */
+  driftCount?: number;
 }
 
 export interface HubMachine {
@@ -105,6 +108,16 @@ export function compareProjectRows(a: HubProjectRow, b: HubProjectRow): number {
   return compareByRecency(a.lastOpenedAt, b.lastOpenedAt);
 }
 
+/** Summed across every machine's projects, for the one total the projects page
+ * shows — a project the daemon hasn't mounted yet (unset driftCount) adds nothing. */
+export function totalLocalStateDrift(machines: HubMachine[]): number {
+  return machines.reduce(
+    (total, machine) =>
+      total + machine.projects.reduce((sum, row) => sum + (row.driftCount ?? 0), 0),
+    0,
+  );
+}
+
 export function machineMostRecentActivity(projects: HubProjectRow[]): string | null {
   return projects.reduce<string | null>((latest, project) => {
     if (!project.lastOpenedAt) return latest;
@@ -169,6 +182,7 @@ export function buildHubMachines(
             label: remembered?.label,
             stamp: projectRowStamp({ ...runState, missing: project.missing || runState.missing }),
             lastOpenedAt: remembered?.lastOpenedAt ?? null,
+            driftCount: project.driftCount,
           };
         });
     rows.sort(compareProjectRows);

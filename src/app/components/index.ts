@@ -1,5 +1,6 @@
 export { CheckboxFilterRow } from './checkbox-filter-row';
 export { DeliverBar } from './git/deliver-bar';
+export { GitLocalStateDriftSurface } from './git/git-local-state-drift-surface';
 export { GitStashSurface } from './git/git-stash-surface';
 export { DoodleIllustration } from './doodle-illustration';
 export { InlineSelect } from './inline-select';

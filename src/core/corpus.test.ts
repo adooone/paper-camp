@@ -10,8 +10,10 @@ import {
   createIdea,
   invalidateCorpus,
   localFile,
+  localStateDriftCount,
   planFile,
   readCorpus,
+  readLocalStateDrift,
   updateEntity,
 } from './corpus';
 import { clearPrCache } from './git-pr/pr';
@@ -820,5 +822,63 @@ describe('localFile', () => {
     const root = tmpRoot();
     expect(localFile(root, 'tasks.log')).toBe(join(root, 'papercamp', '.local', 'tasks.log'));
     expect(localFile(root, 'run-order.md')).toBe(join(root, 'papercamp', '.local', 'run-order.md'));
+  });
+});
+
+function git(cwd: string, ...args: string[]): void {
+  const result = spawnSync('git', args, { cwd, encoding: 'utf-8' });
+  if (result.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
+}
+
+function gitRoot(): string {
+  const root = tmpRoot();
+  git(root, 'init', '-b', 'main');
+  git(root, 'config', 'user.email', 'test@example.com');
+  git(root, 'config', 'user.name', 'Test User');
+  git(root, 'config', 'commit.gpgsign', 'false');
+  writeFileSync(join(root, 'papercamp', 'config.json'), '{}\n');
+  return root;
+}
+
+describe('readLocalStateDrift', () => {
+  it('flags a tracked file outside the plan, a missing .local/.gitignore, and a missing .gitattributes block', async () => {
+    const root = gitRoot();
+    writeFileSync(join(root, 'papercamp', 'capacity.json'), '{}\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'seed');
+
+    const drift = await readLocalStateDrift(root);
+
+    expect(drift?.trackedOutsidePlan).toEqual(['papercamp/capacity.json']);
+    expect(drift?.hasLocalGitignore).toBe(false);
+    expect(drift?.hasGitattributesBlock).toBe(false);
+    expect(localStateDriftCount(drift)).toBe(3);
+  });
+
+  it('reports no drift once the plan files are all that is tracked and both markers exist', async () => {
+    const root = gitRoot();
+    mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
+    writeFileSync(join(root, 'papercamp', '.local', '.gitignore'), '*\n');
+    writeFileSync(
+      join(root, '.gitattributes'),
+      '# paper-camp:start\npapercamp/chat.md merge=union\n# paper-camp:end\n',
+    );
+    git(root, 'add', 'papercamp/config.json', '.gitattributes');
+    git(root, 'commit', '-m', 'seed');
+
+    const drift = await readLocalStateDrift(root);
+
+    expect(drift).toEqual({
+      trackedOutsidePlan: [],
+      hasLocalGitignore: true,
+      hasGitattributesBlock: true,
+    });
+    expect(localStateDriftCount(drift)).toBe(0);
+  });
+
+  it('is null outside a git repo, where there is nothing to drift against', async () => {
+    const root = tmpRoot();
+    expect(await readLocalStateDrift(root)).toBeNull();
+    expect(localStateDriftCount(await readLocalStateDrift(root))).toBe(0);
   });
 });

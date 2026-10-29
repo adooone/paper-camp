@@ -1,4 +1,10 @@
-import type { FileDiffEntry, GitBranch, GitLogResponse, GitStatusResponse } from '@/types/index';
+import type {
+  FileDiffEntry,
+  GitBranch,
+  GitLogResponse,
+  GitStatusResponse,
+  LocalStateMigrationResult,
+} from '@/types/index';
 import { apiFetch, apiUrl } from './api-base';
 
 // Above the server's 30s cap so a stall surfaces the server's own timeout
@@ -246,4 +252,14 @@ export const createPlanBranch = async (
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to create branch');
   return { branch: data.branch as string, warning: data.warning as string | undefined };
+};
+
+// The git card's one-tap fix for local-state drift — re-runs the IDEA-320 migration.
+export const fixLocalStateDrift = async (): Promise<LocalStateMigrationResult> => {
+  const response = await apiFetch(apiUrl('/api/git/fix-local-state'), {
+    method: 'POST',
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Failed to fix local-state drift');
+  return response.json();
 };

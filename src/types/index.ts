@@ -1079,6 +1079,9 @@ export interface MachineProjectSummary {
   missing: boolean;
   /** Runs marked `interrupted` when this project last mounted (a crash mid-run) — unset while unmounted. */
   interruptedCount?: number;
+  /** Local-state drift findings (IDEA-320) — tracked-outside-plan files, a missing
+   * papercamp/.local/.gitignore, a missing .gitattributes block — unset while unmounted. */
+  driftCount?: number;
 }
 
 /** The full body a daemon answers `MACHINE_PROJECTS_PATH` with. `pendingUpdateVersion`
@@ -1246,6 +1249,15 @@ export interface GitSyncFailure {
 }
 
 export type GitSyncResult = { ok: true } | GitSyncFailure;
+
+/** The IDEA-320 migration's outcome, shared between the server (migrate-local-state.ts)
+ * and the client's one-tap "fix" on the git card's local-state drift row. */
+export interface LocalStateMigrationResult {
+  status: 'migrated' | 'skipped' | 'no-op';
+  skipReason?: 'rebase-in-progress' | 'staged-changes';
+  rotatedPairingToken: boolean;
+  adoptedCapacity: boolean;
+}
 
 export type AgentTaskStatus = 'starting' | 'running' | 'stopping' | 'done' | 'error' | 'superseded';
 

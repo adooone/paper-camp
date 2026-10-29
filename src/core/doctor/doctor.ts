@@ -1,6 +1,9 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
+import type { LocalStateDrift } from '../corpus';
+import { readLocalStateDrift } from '../corpus';
+import { localStateChecks } from './checks/local-state';
 import { metadataChecks } from './checks/metadata';
 import { structuralChecks } from './checks/structural';
 import { toolingChecks } from './checks/tooling';
@@ -21,6 +24,7 @@ export interface DoctorContext {
   hasOpencodeJsonEntry?: boolean;
   draftPrWorkflowContent?: string | null;
   pullRequestTemplateContent?: string | null;
+  localStateDrift?: LocalStateDrift | null;
 }
 
 export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
@@ -29,6 +33,7 @@ export const DOCTOR_CHECKS: DoctorCheck[] = [
   ...metadataChecks,
   ...structuralChecks,
   ...toolingChecks,
+  ...localStateChecks,
 ];
 
 function isEnoent(error: unknown): boolean {
@@ -140,6 +145,7 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
     pullRequestTemplateContent: await readFileOptional(
       join(root, '.github', 'pull_request_template.md'),
     ),
+    localStateDrift: await readLocalStateDrift(root),
   };
 }
 

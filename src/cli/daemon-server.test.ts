@@ -200,6 +200,7 @@ describe('readMachineProjectSummaries', () => {
   const fakeApi = (active: boolean) =>
     ({
       agent: { hasActiveTask: () => active, getInterruptedOnBoot: () => 0 },
+      getLocalStateDriftCount: async () => 0,
     }) as unknown as ApiMiddleware;
 
   it('lists slug and name, sorted, with no filesystem path, unmounted by default', async () => {
@@ -242,6 +243,7 @@ describe('readMachineProjectSummaries', () => {
         busy: false,
         missing: false,
         interruptedCount: 0,
+        driftCount: 0,
       },
     ]);
   });
@@ -265,6 +267,7 @@ describe('readMachineProjectSummaries', () => {
         busy: true,
         missing: false,
         interruptedCount: 0,
+        driftCount: 0,
       },
     ]);
   });
@@ -918,7 +921,10 @@ describe('createDaemonRequestHandler', () => {
         res.statusCode = 200;
         res.end('mounted');
       }),
-      { agent: { hasActiveTask: () => false, getInterruptedOnBoot: () => 0 } },
+      {
+        agent: { hasActiveTask: () => false, getInterruptedOnBoot: () => 0 },
+        getLocalStateDriftCount: async () => 0,
+      },
     ) as unknown as ApiMiddleware;
     const { mount, mounted } = createProjectMounter(registryPath, () => Promise.resolve(mockedApi));
     const handler = createDaemonRequestHandler(
@@ -1058,6 +1064,7 @@ describe('createDaemonRequestHandler', () => {
           busy: false,
           missing: false,
           interruptedCount: 0,
+          driftCount: 0,
         },
       ],
       pendingUpdateVersion: null,
