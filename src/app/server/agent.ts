@@ -1496,8 +1496,7 @@ export function createAgentManager(
   }
 
   // Shared by run-all's end-of-run sweep and a single phase/fix task's own verify.
-  // Returns `ok: false` once it has already driven the task to a terminal status;
-  // `outcome` tells the caller which of those terminal states it landed in.
+  // Returns `ok: false` once it has already driven the task to a terminal status.
   async function verifyAndFix(
     task: AgentTask,
     plan: PlanEntry,
@@ -1798,8 +1797,7 @@ export function createAgentManager(
   }
 
   // Drives one idea through its unchecked phases, its Fixes, and the final checks —
-  // shared by single run-all and (IDEA-321) the batch loop, which calls this once per
-  // queued idea instead of re-implementing run-all's state machine.
+  // shared by single run-all and the batch loop (IDEA-321), once per queued idea.
   async function runIdea(
     task: AgentTask,
     plan: PlanEntry,
@@ -2075,10 +2073,8 @@ export function createAgentManager(
     });
   }
 
-  // One sweep of the run-order queue: silently passes over ids already settled,
-  // skips (and records) ids whose block won't resolve itself mid-batch, leaves a
-  // `needs:`-blocked id for the next sweep since finishing another idea can
-  // unblock it, and returns the first idea ready to run right now.
+  // One sweep of the run-order queue: skips (and records) ids whose block won't
+  // resolve mid-batch, leaves `needs:`-blocked ids for the next sweep, returns the first ready idea.
   async function pickNextBatchIdea(
     batch: BatchRunState,
     processed: Set<string>,
@@ -2105,9 +2101,8 @@ export function createAgentManager(
     return undefined;
   }
 
-  // The sequential loop over the run-order queue (IDEA-321): one idea at a time via
-  // `runIdea`, re-checking readiness, capacity and the stop/budget limits before
-  // each one, persisting to `papercamp/.local/batch.json` so a restart can resume.
+  // The sequential loop over the run-order queue (IDEA-321): one idea at a time,
+  // re-checking readiness and limits each time, persisted so a restart can resume.
   async function runBatchQueue(
     task: AgentTask,
     batch: BatchRunState,
@@ -2126,8 +2121,7 @@ export function createAgentManager(
       await persistBatch(batch);
       void setStatus(task, 'done');
       // Neither single-idea run-all nor the machine-wide driver (IDEA-321) sees this
-      // task's own `done` status land, so the finish push fires here, not in
-      // `setStatus` — that path never fires anyway, since the task carries no planId.
+      // task's own `done` status land, so the finish push fires here instead.
       void appendNotification(root, {
         id: randomUUID(),
         kind: 'batch-finished',
@@ -2251,8 +2245,7 @@ export function createAgentManager(
         }
 
         // Only a clean landing pushes: a dirty tree, red checks or an auth error pause
-        // the batch instead, so nothing broken ever reaches origin (IDEA-321). Pushing
-        // per idea, not at the end, keeps the other machine's view at most one behind.
+        // the batch instead, so nothing broken ever reaches origin (IDEA-321).
         const landedClean =
           outcome === 'review' ||
           outcome === 'needs-you' ||
@@ -2344,9 +2337,8 @@ export function createAgentManager(
     );
   }
 
-  // Remembered across calls so a resolve-conflict task finishing later (IDEA-321) can
-  // resume the batch with the same project-checks callback it was started with,
-  // without the route that triggered the resume having to carry it along.
+  // Remembered across calls so a resolve-conflict task finishing later (IDEA-321)
+  // can resume the batch with the same project-checks callback it was started with.
   let batchProjectChecks: (() => Promise<FailingCheck[]>) | undefined;
 
   function startBatchRun(
@@ -2385,8 +2377,7 @@ export function createAgentManager(
   }
 
   // The same order and readiness the preview route shows, minus the UI's per-run
-  // ticks — the machine-wide driver (IDEA-321) has no sheet to tick rows in, so it
-  // takes every ready idea in run order.
+  // ticks — the machine-wide driver (IDEA-321) takes every ready idea in run order.
   async function computeReadyBatchIds(): Promise<string[]> {
     const { entries, work } = await readCorpus(root);
     const list = await readRunOrderFile(root);
@@ -2454,8 +2445,7 @@ export function createAgentManager(
   }
 
   // Drops a paused or interrupted batch's persisted state for good — the only way to
-  // end one short of running it to completion, since a paused batch has no live task
-  // for controlBatchRun's stop/skip actions to target (IDEA-321).
+  // end one short of completion, since a paused batch has no live task to target (IDEA-321).
   async function endPausedBatch(): Promise<Result> {
     const persisted = await readBatchRunState(root);
     if (!persisted || (persisted.status !== 'paused' && persisted.status !== 'interrupted')) {
@@ -2466,8 +2456,7 @@ export function createAgentManager(
   }
 
   // A resolve-conflict task's own verified success (repo check, not the agent's word)
-  // is the only thing allowed to wake a batch paused on a conflict (IDEA-321) — never
-  // the agent's exit code alone.
+  // is the only thing allowed to wake a batch paused on a conflict (IDEA-321).
   async function resumeBatchAfterConflict(): Promise<void> {
     const persisted = await readBatchRunState(root);
     if (!persisted || persisted.status !== 'paused' || persisted.pause?.kind !== 'conflict') return;

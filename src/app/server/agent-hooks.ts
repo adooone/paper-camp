@@ -164,9 +164,8 @@ export function createAgentHooks(root: string, git: GitManager) {
     return checkStaleBaseForRunAll(git, planId);
   }
 
-  // Keeps the other machine's view at most one idea behind instead of one batch
-  // behind — the gap that caused the 2026-10-28 duplicate (IDEA-321). A project
-  // with no `origin` stays local, same as a single run-all would.
+  // Keeps the other machine's view at most one idea behind, not one batch —
+  // the gap that caused the 2026-10-28 duplicate (IDEA-321).
   async function pushAfterIdea(): Promise<void> {
     if (!(await git.hasRemote())) return;
     await git.push();

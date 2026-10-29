@@ -61,8 +61,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
         const level = dirty ? 'dirty' : diverged ? 'diverged' : behind > 0 ? 'behind' : 'clean';
 
         // A blocking need keeps an idea out of run-order.md (IDEA-291), but the batch
-        // preview still lists it — with its `needs` reason — rather than hiding it, so
-        // classification here never marks an entry blocked by needs.
+        // preview still lists it with its `needs` reason rather than hiding it.
         const classified = classifyRunOrderEntries(entries, work);
         const order = normalizeRunOrder(list, classified);
 

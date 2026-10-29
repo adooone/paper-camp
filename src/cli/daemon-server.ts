@@ -441,8 +441,7 @@ export function createMachinePairHandler(
 const MACHINE_BATCH_POLL_MS = 5_000;
 
 /** Waits for a mounted project's own batch to leave the machine busy, whether it
- *  finished or paused (IDEA-321) — a pause only stalls that one project's queue,
- *  not the whole machine, so the next project starts rather than waiting on a human. */
+ *  finished or paused — a pause only stalls that project's queue (IDEA-321). */
 function waitWhileBusy(isBusy: () => boolean): Promise<void> {
   return new Promise((resolve) => {
     const timer = setInterval(() => {
