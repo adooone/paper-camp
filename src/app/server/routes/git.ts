@@ -8,6 +8,7 @@ import type { GitSyncFailure } from '@/types/index';
 import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
 import { FetchFailedError } from '../git';
+import { launchResolveConflict } from '../git-chat';
 import { campFile } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
@@ -302,12 +303,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 400, { error: 'prompt is required' });
             return;
           }
-          const backupRef = await git.createBackupRef();
-          const result = agent.launch(
-            'resolve-conflict',
-            { planTitle: 'Resolve rebase conflict' },
-            `${prompt}\n\nBefore you started, \`${backupRef}\` was created pointing at this branch's pre-rebase tip — if dropping a commit's code changes turns out wrong, that ref has what came before.`,
-          );
+          const result = await launchResolveConflict(prompt, git, agent);
           sendJson(res, result.ok ? 200 : 409, result);
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });

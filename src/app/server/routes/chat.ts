@@ -5,6 +5,7 @@ import { readEntities } from '@/core/readers';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
+import { tryHandleGitChatRequest } from '../git-chat';
 import { appendToChatFile, clearChatFile, readChatFile, readMaybe } from '../helpers';
 import { readJson, sendJson } from '../http';
 import { applyFeedbackMessage } from './agent';
@@ -86,7 +87,24 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
           return;
         }
 
-        await appendUserMessage(root, text.trim());
+        const trimmed = text.trim();
+        await appendUserMessage(root, trimmed);
+        const gitReply = await tryHandleGitChatRequest('project-chat', trimmed, git, agent);
+        if (gitReply.handled) {
+          await appendToChatFile(
+            root,
+            agentThreadMessage(
+              gitReply.reply ?? '',
+              'chat',
+              undefined,
+              undefined,
+              nowMinuteString(),
+            ),
+          );
+          activity.notifyChanged();
+          sendJson(res, 200, { ok: true });
+          return;
+        }
         const thread = await readChatFile(root);
         const { error } = await runChatReply({ root, agent, git, checks, activity }, thread);
         sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });

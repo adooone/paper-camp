@@ -2,7 +2,7 @@
 id: IDEA-319
 title: Git that heals itself from the app
 type: fix
-status: idea
+status: review
 created: 2026-10-28
 updated: 2026-10-29
 tags:
@@ -108,5 +108,6 @@ run that aborts records `error`, not `done`.
 - [x] Verified `resolve-conflict` outcome with backup ref and push
       Create a backup ref first, let the prompt drop code already contained upstream, check repo state after the agent exits, then record done and push, or error with the reason.
       run: 3m59s · 124 in · 27.8k out · sonnet-5 · sess:160d6429-ba30-443d-b81a-68c93d18ebdd
-- [ ] Sync and fix-divergence from chat
+- [x] Sync and fix-divergence from chat
       Route git requests in idea and project chat to the git card's actions, with the same confirmation.
+      run: 4m10s · 92 in · 28.6k out · sonnet-5 · sess:160d6429-ba30-443d-b81a-68c93d18ebdd

@@ -44,6 +44,7 @@ import {
   replyToFeedback,
   summarizeFeedback,
 } from '../feedback-reply';
+import { tryHandleGitChatRequest } from '../git-chat';
 import { campFile, checkStaleBaseForRunAll, readMaybe, resolveChatQuestion } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
@@ -97,6 +98,15 @@ export async function applyFeedbackMessage(
   // Written before the agent runs so the user's message survives a slow or
   // failed run — the reply below is a second, best-effort append on top.
   await updateEntity(root, entity.id, () => ({ thread: threadWithUser }));
+
+  // "Can you pull and push?" routes to the git card's own actions instead of the
+  // idea chat saying it has no git access (IDEA-319) — checked before the LLM reply.
+  const gitReply = await tryHandleGitChatRequest(entity.id, text.trim(), git, agent);
+  if (gitReply.handled) {
+    const thread = [...threadWithUser, agentThreadMessage(gitReply.reply ?? '', 'chat')];
+    await updateEntity(root, entity.id, () => ({ thread }));
+    return { entity, replyText: gitReply.reply };
+  }
 
   let error: string | undefined;
   let undo: { commitSha: string } | undefined;
