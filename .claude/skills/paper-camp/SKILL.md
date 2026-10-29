@@ -61,6 +61,11 @@ Skip files that don't exist yet (a fresh project may have empty logs).
 - Work one plan phase at a time unless told otherwise — don't cascade into
   later phases just because they look quick.
 - If a phase's boundary or intent is unclear, ask before continuing.
+- A supporting file for an idea — a mockup, a screenshot, a diagram, a log
+  excerpt — goes in `papercamp/assets/<ID>/`, linked from the idea's text as
+  `assets/<name>` (or `../assets/<ID>/<name>` from another idea). The folder
+  is the only source of truth; a file dropped there shows up in the idea
+  view and the mobile app without any other registration.
 - Prose in plans and ideas is more current than your memory of past
   conversations. If they conflict, the files win — say so and resync.
 

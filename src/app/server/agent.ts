@@ -4,6 +4,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import {
+  ASSET_GUIDANCE,
   NEEDS_DECISION_PROTOCOL,
   buildPlanDraftPrompt,
   buildReconcilePrompt,
@@ -259,6 +260,8 @@ export function buildAgentPrompt(
 ${toleratedNote}${details}Plan context: ${plan.body}
 
 Do only this phase — do not start any other phase, even if it looks quick.
+
+${ASSET_GUIDANCE}
 
 ${DESTRUCTIVE_GIT_BAN}
 

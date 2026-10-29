@@ -1,8 +1,9 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import type { LocalStateDrift } from '../corpus';
 import { readLocalStateDrift } from '../corpus';
+import { assetChecks } from './checks/assets';
 import { localStateChecks } from './checks/local-state';
 import { metadataChecks } from './checks/metadata';
 import { structuralChecks } from './checks/structural';
@@ -16,6 +17,16 @@ export interface DoctorEntityFile {
   archived: boolean;
 }
 
+export interface DoctorAssetFile {
+  name: string;
+  size: number;
+}
+
+export interface DoctorAssetFolder {
+  id: string;
+  files: DoctorAssetFile[];
+}
+
 export interface DoctorContext {
   files: DoctorEntityFile[];
   config: PaperCampConfig | null;
@@ -25,6 +36,8 @@ export interface DoctorContext {
   draftPrWorkflowContent?: string | null;
   pullRequestTemplateContent?: string | null;
   localStateDrift?: LocalStateDrift | null;
+  assetFolders?: DoctorAssetFolder[];
+  assetMaxBytes?: number;
 }
 
 export type DoctorCheck = (context: DoctorContext) => DoctorFinding[];
@@ -34,7 +47,32 @@ export const DOCTOR_CHECKS: DoctorCheck[] = [
   ...structuralChecks,
   ...toolingChecks,
   ...localStateChecks,
+  ...assetChecks,
 ];
+
+const DEFAULT_ASSET_MAX_FILE_SIZE_MB = 5;
+
+// Mirrors core/assets.ts's own folder-per-idea listing, but doctor already loaded
+// config.json for other checks, so it reads the folder tree directly rather than
+// pulling in that module's project-config dependency a second time.
+async function readAssetFolders(paperCampDir: string): Promise<DoctorAssetFolder[]> {
+  const assetsDir = join(paperCampDir, 'assets');
+  const names = await readdirOptional(assetsDir);
+  const folders: DoctorAssetFolder[] = [];
+  for (const name of names) {
+    const dirPath = join(assetsDir, name);
+    const dirStats = await stat(dirPath).catch(() => undefined);
+    if (!dirStats || !dirStats.isDirectory()) continue;
+    const fileNames = await readdirOptional(dirPath);
+    const files: DoctorAssetFile[] = [];
+    for (const fileName of fileNames) {
+      const fileStats = await stat(join(dirPath, fileName)).catch(() => undefined);
+      if (fileStats?.isFile()) files.push({ name: fileName, size: fileStats.size });
+    }
+    folders.push({ id: name, files });
+  }
+  return folders;
+}
 
 function isEnoent(error: unknown): boolean {
   return (error as NodeJS.ErrnoException | null)?.code === 'ENOENT';
@@ -133,9 +171,10 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
   }
 
   const root = dirname(paperCampDir);
+  const config = await readConfig(join(paperCampDir, 'config.json'));
   return {
     files,
-    config: await readConfig(join(paperCampDir, 'config.json')),
+    config,
     hasPermissionsAllow: await readHasPermissionsAllow(root),
     hasMcpJsonEntry: await readHasPaperCampEntry(join(root, '.mcp.json'), 'mcpServers'),
     hasOpencodeJsonEntry: await readHasPaperCampEntry(join(root, 'opencode.json'), 'mcp'),
@@ -146,6 +185,8 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
       join(root, '.github', 'pull_request_template.md'),
     ),
     localStateDrift: await readLocalStateDrift(root),
+    assetFolders: await readAssetFolders(paperCampDir),
+    assetMaxBytes: (config?.assets?.maxFileSizeMb ?? DEFAULT_ASSET_MAX_FILE_SIZE_MB) * 1024 * 1024,
   };
 }
 

@@ -24,6 +24,10 @@ const TITLE_STYLE = `A title is a noun/verb phrase, at most 40 characters (rough
 const MANUAL_PHASE_RULE =
   'A phase is a unit an agent runs. Anything needing a browser, a device, a human account, or a judgment call is not a phase an agent can run — put it under a `[manual]` marker (`- [ ] [manual] <title>`) or fold it into the body as acceptance, never as a bare phase.';
 
+// Where a mockup, screenshot, diagram, or log excerpt goes so the app can show it (IDEA-322).
+export const ASSET_GUIDANCE =
+  "A supporting file for this idea — a mockup, a screenshot, a diagram, a log excerpt — goes in `papercamp/assets/<ID>/`, linked from the idea's text as `assets/<name>`; the idea view and the mobile app show it from there.";
+
 // The shape a parked question must take (IDEA-287) — a short question plus pickable
 // options beats a paragraph the recipient has to forward to another agent to parse.
 export const NEEDS_DECISION_PROTOCOL = `Ask for one question, not a list: if two decisions block the work, ask the first and stop — the run parks again for the second once the first is answered, since one short question is answered far faster than one long one. Never treat as a decision anything the idea body already settles or anything a file or a test can answer; re-read the idea before parking. Shape it as:
@@ -293,6 +297,7 @@ Hard rules:
 - Phases: actionable steps a future agent or human could pick up one at a time, not one giant phase.
 - Steps that edit the same files are one phase, not split across several.
 - ${MANUAL_PHASE_RULE}
+- ${ASSET_GUIDANCE}
 ${redraft ? '- Only one `### Phases` section may exist when you finish — replace it in place, never leave the old list and append a new one below it.\n' : ''}
 ## Every other open (non-done) plan, for scope context
 

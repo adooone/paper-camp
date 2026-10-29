@@ -1,6 +1,6 @@
 export type DoctorSeverity = 'error' | 'warning';
 
-export type DoctorCategory = 'metadata' | 'structural' | 'tooling' | 'local-state';
+export type DoctorCategory = 'metadata' | 'structural' | 'tooling' | 'local-state' | 'assets';
 
 export interface DoctorRule {
   id: string;
@@ -138,6 +138,27 @@ export const DOCTOR_RULES = [
     severity: 'warning',
     summary:
       '.gitattributes has no paper-camp managed block, so two clones appending to papercamp/chat.md will conflict on pull instead of merging — run `paper-camp doctor --fix` to add it.',
+  },
+  {
+    id: 'asset-orphan-folder',
+    category: 'assets',
+    severity: 'warning',
+    summary:
+      'A folder under papercamp/assets/ has an id that matches no entity in the corpus — dead files left behind by a dropped or renamed idea.',
+  },
+  {
+    id: 'asset-oversized',
+    category: 'assets',
+    severity: 'warning',
+    summary:
+      'A file under papercamp/assets/<ID>/ is over the configured per-file limit (config.json assets.maxFileSizeMb, default 5MB).',
+  },
+  {
+    id: 'asset-dangling-link',
+    category: 'assets',
+    severity: 'warning',
+    summary:
+      'An idea links to `assets/<name>` or `../assets/<ID>/<name>` but no such file exists under papercamp/assets/.',
   },
 ] as const satisfies readonly DoctorRule[];
 

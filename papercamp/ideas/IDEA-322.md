@@ -2,7 +2,7 @@
 id: IDEA-322
 title: Files on an idea
 type: feat
-status: idea
+status: review
 created: 2026-10-29
 updated: 2026-10-29
 tags:
@@ -99,5 +99,9 @@ script can't reach `/api/*`; and `..` in a file name is refused.
 - [x] Files section in the web idea view
       Rows with type icon, size, age and image thumbnails; preview sheet for image, sandboxed HTML and text; drag-and-drop and *Add file* upload; *Copy link* and *Delete*.
       run: 9m56s · 182 in · 54.4k out · sonnet-5 · sess:b09e9256-9668-4083-9ca2-a99ed2f2c338
-- [ ] Agent prompts, skill and doctor
+- [x] Agent prompts, skill and doctor
       Tell phase and draft prompts and the paper-camp skill where files go and how to link them; doctor checks for orphan folders, oversized files and dead asset links; document the routes and `EntityEntry.assets` for the paper-camp-mobile idea.
+      run: 5m42s · 94 in · 22.5k out · sonnet-5 · sess:88b982e3-9419-4d6d-9ff7-aee8bcbcb999
+
+### Thread
+- [x] 2026-10-29 [log] Contract for the paper-camp-mobile idea (`needs: paper-camp/IDEA-322`) — `EntityEntry.assets?: AssetEntry[]` (`{ name, size, type, modified }`, `type` a MIME string) is listed fresh on every `readEntities` read, no extra request needed. Routes, all under the daemon's existing API base: `GET /api/ideas/assets?id=<ID>` lists `{ ok, assets: AssetEntry[] }`; `GET /api/ideas/asset?id=<ID>&name=<name>` streams the file with its MIME `Content-Type` (HTML/SVG also get `Content-Security-Policy: sandbox allow-scripts`, so an embedded web view can render it but not call back into the API); `POST /api/ideas/assets?id=<ID>` with JSON `{ name, dataUri }` (a `data:<mime>;base64,<data>` URI, as the photo picker/camera would produce) uploads one file and returns `{ ok, asset }`, 400 if `name` has a slash/`..` or the file exceeds the configured per-file limit; `DELETE /api/ideas/asset?id=<ID>&name=<name>` removes one file.
