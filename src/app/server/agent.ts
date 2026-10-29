@@ -401,6 +401,7 @@ export function createAgentManager(
     annotateFixRun: onFixRun,
     commitVerifyFix: onVerifyFixCommit,
     snapshotWorkingTree,
+    ensureUpToDate,
   } = hooks;
   const { onCorpusChanged, state: passedState, isMachineBusy, publish } = options;
   // No state handed in means a fresh process or (under the daemon) this project's
@@ -570,6 +571,25 @@ export function createAgentManager(
   function finalizeSuperseded(task: AgentTask): void {
     pushLine(task, '[superseded] preempted by a newer run for this plan');
     void setStatus(task, 'superseded');
+  }
+
+  // Fetches and fast-forwards (or reconciles) before a phase/run-all task does any
+  // work, so no agent builds on a base that's days behind (IDEA-319). Returns true
+  // once it has already driven the task to a terminal status.
+  async function refuseIfStale(task: AgentTask): Promise<boolean> {
+    if (!ensureUpToDate) return false;
+    const freshness = await ensureUpToDate();
+    if (isSuperseded(task)) {
+      finalizeSuperseded(task);
+      return true;
+    }
+    if (!freshness.ok) {
+      task.errorReason = freshness.message;
+      pushLine(task, `[fetch] refused to start — ${freshness.message}`);
+      void setStatus(task, 'error');
+      return true;
+    }
+    return false;
   }
 
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
@@ -1022,6 +1042,7 @@ export function createAgentManager(
 
     (async () => {
       try {
+        if (await refuseIfStale(task)) return;
         const toleratedRed = await readBaseline(task, getBaselineChecks ?? runProjectChecks);
         if (isSuperseded(task)) {
           finalizeSuperseded(task);
@@ -1720,6 +1741,7 @@ export function createAgentManager(
 
     (async () => {
       try {
+        if (await refuseIfStale(task)) return;
         if (onRunStart) await onRunStart(plan);
         if (isSuperseded(task)) {
           finalizeSuperseded(task);

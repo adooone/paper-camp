@@ -4,6 +4,7 @@ title: Git that heals itself from the app
 type: fix
 status: idea
 created: 2026-10-28
+updated: 2026-10-29
 tags:
   - git
   - app
@@ -95,8 +96,9 @@ duplicate dropped, and both sides' idea notes kept. A `resolve-conflict`
 run that aborts records `error`, not `done`.
 
 ### Phases
-- [ ] Fetch before every run
+- [x] Fetch before every run
       Fetch and fast-forward (or refuse with a reason) before phase, fix and run-all tasks. Untracking volatile state is IDEA-320.
+      run: 6m30s · 146 in · 31k out · sonnet-5 · sess:17b087bd-5cbb-448d-a000-8b479c6e0503
 - [ ] One bookkeeping commit per run
       Run stats, capacity and thread lines ride the run's own commit or a single per-run bookkeeping commit.
 - [ ] Rule-based merge for `papercamp/` files inside `reconcileOnto`

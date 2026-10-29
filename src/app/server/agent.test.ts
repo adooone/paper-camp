@@ -1510,6 +1510,74 @@ ${waitForSignalScript(signalPath, FLIP_NEXT_CHECKBOX)}`;
   });
 });
 
+describe('fetch before run (IDEA-319)', () => {
+  it('fetches and fast-forwards onto origin before starting a phase', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    const clone = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-clone-'));
+    roots.push(clone);
+    const { stdout: remoteConfig } = await run('git', ['remote', 'get-url', 'origin'], {
+      cwd: root,
+    });
+    await run('git', ['clone', '-q', remoteConfig.trim(), clone]);
+    await run('git', ['config', 'user.email', 'test@example.com'], { cwd: clone });
+    await run('git', ['config', 'user.name', 'Test'], { cwd: clone });
+    await writeFile(join(clone, 'from-other-machine.txt'), 'hi');
+    await run('git', ['add', '-A'], { cwd: clone });
+    await run('git', ['commit', '-q', '-m', 'other machine'], { cwd: clone });
+    await run('git', ['push', '-q'], { cwd: clone });
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const manager = createAgentManager(root, { ensureUpToDate: hooks.ensureUpToDate });
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('done');
+
+    const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
+    expect(log).toContain('other machine');
+  });
+
+  it('refuses to start a phase when the branch has diverged and cannot reconcile', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    const clone = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-clone-'));
+    roots.push(clone);
+    const { stdout: remoteConfig } = await run('git', ['remote', 'get-url', 'origin'], {
+      cwd: root,
+    });
+    await run('git', ['clone', '-q', remoteConfig.trim(), clone]);
+    await run('git', ['config', 'user.email', 'test@example.com'], { cwd: clone });
+    await run('git', ['config', 'user.name', 'Test'], { cwd: clone });
+    await writeFile(join(clone, 'from-other-machine.txt'), 'hi');
+    await run('git', ['add', '-A'], { cwd: clone });
+    await run('git', ['commit', '-q', '-m', 'other machine'], { cwd: clone });
+    await run('git', ['push', '-q'], { cwd: clone });
+
+    // A commit of root's own, so root and origin diverge instead of root just
+    // being behind — the case ff-only can't resolve and rebase has to attempt.
+    await writeFile(join(root, 'scratch.txt'), 'committed');
+    await run('git', ['add', '-A'], { cwd: root });
+    await run('git', ['commit', '-q', '-m', 'local only'], { cwd: root });
+    // Mirrors the daemon rewriting capacity.json mid-sync (IDEA-319 #3): a tracked
+    // file left dirty makes `git rebase` refuse before it even starts.
+    await writeFile(join(root, 'scratch.txt'), 'dirty');
+
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const manager = createAgentManager(root, { ensureUpToDate: hooks.ensureUpToDate });
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    const lines = currentStatus(manager)?.lines.join('\n') ?? '';
+    expect(lines).toContain('[fetch] refused to start');
+    expect(lines).not.toContain('[phase 1/2]');
+
+    const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(planFile).toContain('- [ ] First phase');
+  });
+});
+
 describe('resumeAuthParkedTasks', () => {
   it('re-launches a single phase that parked on an auth error and clears errorKind', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);

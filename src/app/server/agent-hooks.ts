@@ -2,7 +2,14 @@ import { resolvePrimaryScope } from '@/core/git-pr';
 import { mergeRun } from '@/core/phase-run';
 import { computePlanContentHash } from '@/core/serialize';
 import { todayDateString } from '@/core/serialize';
-import type { CheckName, GitStatusEntry, PhaseItem, PlanEntry, RunUsage } from '@/types/index';
+import type {
+  CheckName,
+  GitStatusEntry,
+  GitSyncResult,
+  PhaseItem,
+  PlanEntry,
+  RunUsage,
+} from '@/types/index';
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
 import { CorpusError, updateEntity } from './helpers';
@@ -54,6 +61,12 @@ export function createAgentHooks(root: string, git: GitManager) {
 
   function snapshotWorkingTree(): Promise<GitStatusEntry[]> {
     return git.getStatus();
+  }
+
+  // Fetch and fast-forward (or reconcile) before a phase/run-all task starts, so
+  // no agent builds on a base that's days behind (IDEA-319).
+  function ensureUpToDate(): Promise<GitSyncResult> {
+    return git.fixDivergence();
   }
 
   function changedSince(start: GitStatusEntry[], end: GitStatusEntry[]): string[] {
@@ -133,5 +146,6 @@ export function createAgentHooks(root: string, git: GitManager) {
     commitCorpus,
     annotateFixRun: annotatePhaseRun,
     snapshotWorkingTree,
+    ensureUpToDate,
   };
 }
