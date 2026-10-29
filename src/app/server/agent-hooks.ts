@@ -138,12 +138,25 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commitCorpus(`docs(ideas): ${plan.title} — plan`, plan.id);
   }
 
+  // Catches whatever a run's own commits didn't ride on — a fix item's edits, an
+  // escalation's thread/chat note, a capacity snapshot — in one commit per run
+  // instead of leaving it dirty or trickling out one commit per write (IDEA-319).
+  async function commitBookkeeping(plan: Pick<PlanEntry, 'id' | 'title'>): Promise<void> {
+    await git.stageAll();
+    if ((await git.getStatus()).length === 0) return;
+    const refs = plan.id ? `Refs: ${plan.id}` : undefined;
+    await git.commit([], `docs(ideas): ${plan.id ?? plan.title} run bookkeeping`, refs, {
+      noVerify: true,
+    });
+  }
+
   return {
     stampAuditDate,
     commitPhase,
     commitVerifyFix,
     setRunReview,
     commitCorpus,
+    commitBookkeeping,
     annotateFixRun: annotatePhaseRun,
     snapshotWorkingTree,
     ensureUpToDate,

@@ -994,6 +994,40 @@ Plan body.
       expect(after.entries[0].fixes?.every((fix) => fix.done)).toBe(true);
     });
 
+    it('sweeps the fix pass into one bookkeeping commit instead of leaving it dirty (IDEA-319)', async () => {
+      const { root, plan } = await makeGitRoot(PLAN_PHASES_DONE_TWO_FIXES);
+      agentScript.current = FLIP_NEXT_CHECKBOX;
+      const git = createGitManager(root);
+      const hooks = createAgentHooks(root, git);
+      const onRunComplete = vi.fn(async () => {});
+      const manager = createAgentManager(root, {
+        commitPhase: hooks.commitPhase,
+        setRunReview: onRunComplete,
+        annotateFixRun: hooks.annotateFixRun,
+        commitBookkeeping: hooks.commitBookkeeping,
+      });
+
+      expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+      expect(await waitForStatus(manager, settled)).toBe('done');
+
+      const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
+      expect(log.trim().split('\n')).toHaveLength(2);
+
+      // tasks.log/notifications.log are gitignored in a real project (IDEA-320); the
+      // test fixture has no .gitignore, so filter the two logTaskCompletion left dirty.
+      const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
+      const meaningfulStatus = status
+        .split('\n')
+        .filter((line) => line && !/papercamp\/(tasks|notifications)\.log/.test(line))
+        .join('\n');
+      expect(meaningfulStatus).toBe('');
+
+      const after = parseEntityFile(
+        await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
+      );
+      expect(after.entries[0].fixes?.every((fix) => fix.done)).toBe(true);
+    });
+
     it('does not start the Fixes pass when a phase in the same run fails', async () => {
       const planMd = PLAN_PHASES_DONE_TWO_FIXES.replace('- [x] First phase', '- [ ] First phase');
       const { root, plan } = await makeRoot(planMd);

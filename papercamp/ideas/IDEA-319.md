@@ -99,8 +99,9 @@ run that aborts records `error`, not `done`.
 - [x] Fetch before every run
       Fetch and fast-forward (or refuse with a reason) before phase, fix and run-all tasks. Untracking volatile state is IDEA-320.
       run: 6m30s · 146 in · 31k out · sonnet-5 · sess:17b087bd-5cbb-448d-a000-8b479c6e0503
-- [ ] One bookkeeping commit per run
+- [x] One bookkeeping commit per run
       Run stats, capacity and thread lines ride the run's own commit or a single per-run bookkeeping commit.
+      run: 7m21s · 102 in · 42.3k out · sonnet-5 · sess:17b087bd-5cbb-448d-a000-8b479c6e0503
 - [ ] Rule-based merge for `papercamp/` files inside `reconcileOnto`
       Autostash dirty `papercamp/` files; resolve frontmatter, phase checkboxes, `run:` lines, thread entries and logs by rule; hand only code conflicts to the agent.
 - [ ] Verified `resolve-conflict` outcome with backup ref and push

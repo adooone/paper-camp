@@ -400,6 +400,7 @@ export function createAgentManager(
     commitCorpus: onRunStart,
     annotateFixRun: onFixRun,
     commitVerifyFix: onVerifyFixCommit,
+    commitBookkeeping: onCommitBookkeeping,
     snapshotWorkingTree,
     ensureUpToDate,
   } = hooks;
@@ -534,6 +535,19 @@ export function createAgentManager(
   }
 
   async function setStatus(task: AgentTask, status: AgentTaskStatus): Promise<void> {
+    // Settle the repo before the task is visible as done/error — otherwise the UI
+    // can show success while a fix item's edits are still sitting uncommitted (IDEA-319).
+    if (
+      (status === 'done' || status === 'error') &&
+      (task.taskKind === 'phase' || task.taskKind === 'run-all') &&
+      onCommitBookkeeping
+    ) {
+      try {
+        await onCommitBookkeeping({ id: task.planId, title: task.planTitle });
+      } catch (err) {
+        pushLine(task, `Warning: could not commit run bookkeeping: ${(err as Error).message}`);
+      }
+    }
     task.status = status;
     // Ask the CLI instead of matching a message it may no longer print — the same
     // probe the login relay uses; a 'question' tag from escalateToLog is left alone.
