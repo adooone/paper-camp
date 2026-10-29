@@ -1,6 +1,7 @@
 import { InlineCode } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
+import ReactMarkdown, { type Components, type Options } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const headingClass = (fontSizeClass: string): string =>
   `font-display-luminari font-semibold ${fontSizeClass} mt-6 mb-3 leading-tight`;
@@ -30,12 +31,32 @@ const components: Components = {
       {children}
     </blockquote>
   ),
+  // Ideas and repo docs are written as GitHub Markdown, so tables come through
+  // remark-gfm; a wide one scrolls on its own instead of widening the page.
+  table: ({ children }) => (
+    <div className="overflow-x-auto mb-4">
+      <table className="border-collapse text-[0.95em]">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="text-left font-semibold align-bottom py-1.5 px-3 border-b-[1.5px] border-solid border-black/[25%]">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="align-top py-1.5 px-3 border-b border-solid border-black/[10%]">{children}</td>
+  ),
 };
+
+// A single `~` stays literal: plans write `~$4` and `~2h` as estimates.
+const remarkPlugins: Options['remarkPlugins'] = [[remarkGfm, { singleTilde: false }]];
 
 interface MarkdownProps {
   children: string;
 }
 
 export const Markdown = ({ children }: MarkdownProps): ReactNode => (
-  <ReactMarkdown components={components}>{children}</ReactMarkdown>
+  <ReactMarkdown components={components} remarkPlugins={remarkPlugins}>
+    {children}
+  </ReactMarkdown>
 );
