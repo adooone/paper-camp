@@ -4,6 +4,7 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { readBatchRunState } from '@/core/batch-run';
 import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
 import type { FailingCheck, PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
@@ -1611,6 +1612,116 @@ describe('fetch before run (IDEA-319)', () => {
 
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('- [ ] First phase');
+  });
+});
+
+async function waitForBatchStatus(
+  root: string,
+  done: (status: string) => boolean,
+): Promise<NonNullable<Awaited<ReturnType<typeof readBatchRunState>>>> {
+  for (;;) {
+    const state = await readBatchRunState(root);
+    if (state && done(state.status)) return state;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}
+
+describe('git sync between ideas (IDEA-321)', () => {
+  it('pushes after an idea that lands clean', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const manager = createAgentManager(root, hooks);
+
+    expect(manager.startBatchRun([plan.id as string])).toEqual({ ok: true });
+    const batchId = manager.getStatus().find((t) => t.taskKind === 'batch-run')?.id as string;
+    expect(await waitForTaskStatus(manager, batchId, settled)).toBe('done');
+
+    const { stdout: originUrl } = await run('git', ['remote', 'get-url', 'origin'], { cwd: root });
+    const { stdout: branch } = await run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      cwd: root,
+    });
+    const { stdout: localHead } = await run('git', ['rev-parse', 'HEAD'], { cwd: root });
+    const { stdout: remoteHead } = await run('git', ['rev-parse', branch.trim()], {
+      cwd: originUrl.trim(),
+    });
+    expect(remoteHead.trim()).toBe(localHead.trim());
+
+    const finalState = await waitForBatchStatus(root, (s) => s === 'done');
+    expect(finalState.items).toEqual([expect.objectContaining({ id: plan.id, outcome: 'review' })]);
+  });
+
+  it('pauses on a sync conflict and resumes once resolve-conflict verifiably lands it', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+
+    // makeGitRoot's template never writes papercamp/.local/.gitignore — real projects
+    // self-ignore it (IDEA-320), so a batch run rewriting batch.json mid-rebase can't
+    // block the rebase on "unstaged changes" the way an untracked-and-unignored one would.
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(join(root, 'papercamp', '.local', '.gitignore'), '*\n');
+
+    // A conflicting edit to the same file on both sides, same repro as
+    // fixDivergence's own "reports a conflicted rebase" test in git.test.ts.
+    await writeFile(join(root, 'CONFLICT.md'), 'upstream\n');
+    await run('git', ['add', '-A'], { cwd: root });
+    await run('git', ['commit', '-q', '-m', 'upstream change'], { cwd: root });
+    await run('git', ['push', '-q'], { cwd: root });
+    await run('git', ['reset', '--hard', 'HEAD~1'], { cwd: root });
+    await writeFile(join(root, 'CONFLICT.md'), 'local\n');
+    await run('git', ['add', '-A'], { cwd: root });
+    await run('git', ['commit', '-q', '-m', 'local change'], { cwd: root });
+
+    const git = createGitManager(root);
+    const hooks = createAgentHooks(root, git);
+    const manager = createAgentManager(root, hooks);
+
+    expect(manager.startBatchRun([plan.id as string])).toEqual({ ok: true });
+    const batchId = manager.getStatus().find((t) => t.taskKind === 'batch-run')?.id as string;
+    expect(await waitForTaskStatus(manager, batchId, settled)).toBe('error');
+    const runAllId = manager.getStatus().find((t) => t.taskKind === 'run-all')?.id as string;
+    expect(await waitForTaskStatus(manager, runAllId, settled)).toBe('error');
+
+    const paused = await readBatchRunState(root);
+    expect(paused?.status).toBe('paused');
+    expect(paused?.pause).toMatchObject({ kind: 'conflict', id: plan.id });
+    const conflictPrompt = (paused?.pause as { conflictPrompt: string }).conflictPrompt;
+    expect(conflictPrompt).toContain('CONFLICT.md');
+
+    // The resolve-conflict agent reproduces the rebase (the earlier one was aborted,
+    // not left mid-conflict) and resolves it for real, instead of trusting its own word.
+    agentScript.current = `
+      const { execSync } = require('node:child_process');
+      try { execSync('git rebase @{u}', { stdio: 'ignore' }); } catch {}
+      require('node:fs').writeFileSync('CONFLICT.md', 'resolved\\n');
+      execSync('git add CONFLICT.md');
+      execSync('git rebase --continue', { stdio: 'ignore' });
+    `;
+    const launched = manager.launch(
+      'resolve-conflict',
+      { planTitle: 'Resolve rebase conflict' },
+      conflictPrompt,
+    );
+    expect(launched.ok).toBe(true);
+    const resolveId = manager.getStatus()[0].id;
+    // Baked into the already-spawned resolve-conflict process' argv above — safe to
+    // flip now so the batch's resumed idea run picks it up once that process exits.
+    agentScript.current = FLIP_NEXT_CHECKBOX;
+
+    expect(await waitForTaskStatus(manager, resolveId, settled)).toBe('done');
+
+    const finalState = await waitForBatchStatus(root, (s) => s === 'done');
+    expect(finalState.items).toEqual([expect.objectContaining({ id: plan.id, outcome: 'review' })]);
+
+    const { stdout: originUrl } = await run('git', ['remote', 'get-url', 'origin'], { cwd: root });
+    const { stdout: branch } = await run('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      cwd: root,
+    });
+    const { stdout: localHead } = await run('git', ['rev-parse', 'HEAD'], { cwd: root });
+    const { stdout: remoteHead } = await run('git', ['rev-parse', branch.trim()], {
+      cwd: originUrl.trim(),
+    });
+    expect(remoteHead.trim()).toBe(localHead.trim());
   });
 });
 

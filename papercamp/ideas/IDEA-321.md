@@ -273,8 +273,9 @@ phase.
 - [x] `batch-run` task with stop rules and persisted state
       New `BatchKind` with exclusive write set; sequential loop over the queue with re-check before each idea, pick-up of newly unblocked ideas, capacity gate (wait for reset or stop), clock, count and cost limits, stop/skip controls, and `papercamp/.local/batch.json` with resume after restart.
       run: 15m48s · 202 in · 75.2k out · sonnet-5 · sess:9ee0026b-2fd4-4b30-9e5f-50ec4db8c986
-- [ ] Git sync between ideas
+- [x] Git sync between ideas
       Fetch, fast-forward or reconcile before each idea, one bookkeeping commit and push after; pause on code conflict and resume only after a verified resolve-conflict; optional branch-per-idea mode.
+      run: 25m47s · 370 in · 92.6k out · sonnet-5 · sess:b821ef43-037e-43a1-8e07-ccacbb67e3d2
 - [ ] Web batch sheet, live card, recovery banner and summary
       Toolbar button and worklist menu entry, the sheet with ticks, reasons, drag reorder through run-order, rules and preflight; the stack-panel batch card with stop controls; pause banners with one action each; summary kept in Activity.
 - [ ] Machine-wide queue and the mobile contract

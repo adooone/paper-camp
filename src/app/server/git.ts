@@ -394,6 +394,19 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return result.stdout.toString().trim();
   }
 
+  // The batch loop (IDEA-321) pushes after every idea only when there's somewhere to
+  // push to. Cached like mainRef(): remote presence never changes mid-process.
+  let hasRemotePromise: Promise<boolean> | undefined;
+  function hasRemote(): Promise<boolean> {
+    if (!hasRemotePromise) {
+      hasRemotePromise = runGit(['remote', 'get-url', 'origin']).then(
+        () => true,
+        () => false,
+      );
+    }
+    return hasRemotePromise;
+  }
+
   // Local main only advances on checkout+pull, so compare against origin/main when it
   // exists. Cached for the manager's lifetime since remote presence never changes.
   let mainRefPromise: Promise<string> | undefined;
@@ -1186,6 +1199,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     getStatusSnapshot,
     getLiveState,
     push,
+    hasRemote,
     getBranchHygieneStatus,
     hasPendingSyncStash,
     getStashes,

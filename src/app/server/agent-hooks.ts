@@ -164,6 +164,25 @@ export function createAgentHooks(root: string, git: GitManager) {
     return checkStaleBaseForRunAll(git, planId);
   }
 
+  // Keeps the other machine's view at most one idea behind instead of one batch
+  // behind — the gap that caused the 2026-10-28 duplicate (IDEA-321). A project
+  // with no `origin` stays local, same as a single run-all would.
+  async function pushAfterIdea(): Promise<void> {
+    if (!(await git.hasRemote())) return;
+    await git.push();
+  }
+
+  // *Branch per idea* (IDEA-321): cuts `idea/IDEA-N` from freshly fetched main so a
+  // PR-shipping project never commits straight to main.
+  function beginIdeaBranch(plan: PlanEntry): Promise<string | undefined> {
+    return git.ensureBranch(plan);
+  }
+
+  // Back to main once the idea branch is pushed, ready for the next idea's own branch.
+  function endIdeaBranch(): Promise<void> {
+    return git.checkoutBranch('main');
+  }
+
   return {
     stampAuditDate,
     commitPhase,
@@ -176,5 +195,8 @@ export function createAgentHooks(root: string, git: GitManager) {
     ensureUpToDate,
     settleResolveConflict,
     checkStaleBase,
+    pushAfterIdea,
+    beginIdeaBranch,
+    endIdeaBranch,
   };
 }

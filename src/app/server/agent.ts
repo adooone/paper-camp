@@ -245,8 +245,11 @@ export interface AgentTask {
   phaseAnchor?: PhaseMilestone;
   anchorEnteredAt?: number;
   lastStreamAt?: number;
-  errorKind?: 'auth' | 'question';
+  errorKind?: 'auth' | 'question' | 'conflict';
   errorReason?: string;
+  // Set alongside errorKind 'conflict': the resolve-conflict prompt for the agent
+  // that would fix the sync, so a paused batch (IDEA-321) can offer it.
+  conflictPrompt?: string;
   finishing?: boolean;
   runUsage?: RunUsage;
   rateLimit?: RateLimitSnapshot;
@@ -271,6 +274,7 @@ export type RunIdeaOutcome =
   | 'failed-dirty'
   | 'red-checks'
   | 'auth'
+  | 'conflict'
   | 'stopped'
   | 'superseded';
 
@@ -448,6 +452,9 @@ export function createAgentManager(
     ensureUpToDate,
     settleResolveConflict: onSettleResolveConflict,
     checkStaleBase,
+    pushAfterIdea: onPushAfterIdea,
+    beginIdeaBranch: onBeginIdeaBranch,
+    endIdeaBranch: onEndIdeaBranch,
   } = hooks;
   const { onCorpusChanged, state: passedState, isMachineBusy, publish } = options;
   // No state handed in means a fresh process or (under the daemon) this project's
@@ -597,7 +604,7 @@ export function createAgentManager(
     task.status = status;
     // Ask the CLI instead of matching a message it may no longer print — the same
     // probe the login relay uses; a 'question' tag from escalateToLog is left alone.
-    if (status === 'error' && task.errorKind !== 'question') {
+    if (status === 'error' && task.errorKind !== 'question' && task.errorKind !== 'conflict') {
       const authStatus = task.agentId === 'claude-code' ? await claudeAuthStatus(root) : null;
       task.errorKind = authStatus?.loggedIn === false ? 'auth' : undefined;
     }
@@ -644,6 +651,10 @@ export function createAgentManager(
     }
     if (!freshness.ok) {
       task.errorReason = freshness.message;
+      if (freshness.stage === 'conflicted') {
+        task.errorKind = 'conflict';
+        task.conflictPrompt = freshness.conflictPrompt;
+      }
       pushLine(task, `[fetch] refused to start — ${freshness.message}`);
       void setStatus(task, 'error');
       return true;
@@ -724,7 +735,8 @@ export function createAgentManager(
         return;
       }
       pushLine(task, '[resolve-conflict] repo settled and pushed');
-      void setStatus(task, 'done');
+      await setStatus(task, 'done');
+      await resumeBatchAfterConflict();
       return;
     }
     if (task.taskKind === 'fix-review') {
@@ -1814,7 +1826,9 @@ export function createAgentManager(
       snapshotWorkingTree ? (await snapshotWorkingTree()).length > 0 : false;
 
     try {
-      if (await refuseIfStale(task)) return 'failed-clean';
+      if (await refuseIfStale(task)) {
+        return task.errorKind === 'conflict' ? 'conflict' : 'failed-clean';
+      }
       if (onRunStart) await onRunStart(plan);
       if (isSuperseded(task)) {
         finalizeSuperseded(task);
@@ -2027,6 +2041,8 @@ export function createAgentManager(
         return `${reason.id} finished but checks are still red`;
       case 'auth':
         return `${reason.id} needs you signed back in`;
+      case 'conflict':
+        return `${reason.id} hit a conflict syncing with origin`;
     }
   }
 
@@ -2168,6 +2184,22 @@ export function createAgentManager(
         markBatchItem(batch, next.id, { outcome: 'running', title: next.plan.title });
         await persistBatch(batch);
 
+        // *Branch per idea*: cut fresh off main before this idea's work, rather than
+        // committing straight to the shared branch (IDEA-321).
+        if (batch.rules.branchPerIdea && onBeginIdeaBranch) {
+          try {
+            const warning = await onBeginIdeaBranch(next.plan);
+            if (warning) pushLine(task, `[batch] ${warning}`);
+          } catch (err) {
+            markBatchItem(batch, next.id, {
+              outcome: 'failed-clean',
+              reason: `could not switch to its branch: ${(err as Error).message}`,
+            });
+            await persistBatch(batch);
+            continue;
+          }
+        }
+
         const ideaTask = startOrchestrated('run-all', next.plan);
         task.currentIdeaTaskId = ideaTask.id;
         markBatchItem(batch, next.id, { taskId: ideaTask.id });
@@ -2188,6 +2220,44 @@ export function createAgentManager(
         });
         task.currentIdeaTaskId = undefined;
         batch.costUsd += sumPhaseRunCosts(ideaTask.phaseRuns);
+
+        if (outcome === 'conflict') {
+          markBatchItem(batch, next.id, { outcome, reason: ideaTask.errorReason });
+          await pauseBatch({
+            kind: 'conflict',
+            id: next.id,
+            conflictPrompt: ideaTask.conflictPrompt ?? '',
+          });
+          return;
+        }
+
+        // Only a clean landing pushes: a dirty tree, red checks or an auth error pause
+        // the batch instead, so nothing broken ever reaches origin (IDEA-321). Pushing
+        // per idea, not at the end, keeps the other machine's view at most one behind.
+        const landedClean =
+          outcome === 'review' ||
+          outcome === 'needs-you' ||
+          outcome === 'needs-human' ||
+          outcome === 'failed-clean';
+        if (landedClean) {
+          if (onPushAfterIdea) {
+            try {
+              await onPushAfterIdea();
+            } catch (err) {
+              pushLine(task, `[batch] could not push after ${next.id}: ${(err as Error).message}`);
+            }
+          }
+          if (batch.rules.branchPerIdea && onEndIdeaBranch) {
+            try {
+              await onEndIdeaBranch();
+            } catch (err) {
+              pushLine(
+                task,
+                `[batch] could not switch back to main after ${next.id}: ${(err as Error).message}`,
+              );
+            }
+          }
+        }
 
         if (outcome === 'stopped') {
           if (task.batchControl === 'skip') {
@@ -2255,6 +2325,11 @@ export function createAgentManager(
     );
   }
 
+  // Remembered across calls so a resolve-conflict task finishing later (IDEA-321) can
+  // resume the batch with the same project-checks callback it was started with,
+  // without the route that triggered the resume having to carry it along.
+  let batchProjectChecks: (() => Promise<FailingCheck[]>) | undefined;
+
   function startBatchRun(
     ids: string[],
     rules: Partial<BatchRunRules> = {},
@@ -2265,6 +2340,7 @@ export function createAgentManager(
     const blocked = admit('batch-run');
     if (blocked) return blocked;
 
+    batchProjectChecks = runProjectChecks;
     const task = newBatchRunTask();
 
     void (async () => {
@@ -2313,6 +2389,8 @@ export function createAgentManager(
     const blocked = admit('batch-run');
     if (blocked) return blocked;
 
+    const checks = runProjectChecks ?? batchProjectChecks;
+    batchProjectChecks = checks;
     const task = newBatchRunTask();
     const batch: BatchRunState = {
       ...persisted,
@@ -2323,10 +2401,28 @@ export function createAgentManager(
 
     void (async () => {
       await persistBatch(batch);
-      await runBatchQueue(task, batch, runProjectChecks);
+      await runBatchQueue(task, batch, checks);
     })();
 
     return { ok: true };
+  }
+
+  // A resolve-conflict task's own verified success (repo check, not the agent's word)
+  // is the only thing allowed to wake a batch paused on a conflict (IDEA-321) — never
+  // the agent's exit code alone.
+  async function resumeBatchAfterConflict(): Promise<void> {
+    const persisted = await readBatchRunState(root);
+    if (!persisted || persisted.status !== 'paused' || persisted.pause?.kind !== 'conflict') return;
+    // The idea that hit the conflict never got to do its own work — requeue it so the
+    // resumed sweep retries it, instead of treating its 'conflict' outcome as settled.
+    const conflictedId = persisted.pause.id;
+    await writeBatchRunState(root, {
+      ...persisted,
+      items: persisted.items.map((item) =>
+        item.id === conflictedId ? { id: item.id, title: item.title, outcome: 'queued' } : item,
+      ),
+    });
+    await resumeBatchRun(batchProjectChecks);
   }
 
   const READONLY_PROMPT_TIMEOUT_MS = 60_000;
@@ -2499,6 +2595,7 @@ export function createAgentManager(
         ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
         ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
         ...(task.errorKind ? { errorKind: task.errorKind } : {}),
+        ...(task.conflictPrompt ? { conflictPrompt: task.conflictPrompt } : {}),
         ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
         ...(task.issueId ? { issueId: task.issueId } : {}),
       }));

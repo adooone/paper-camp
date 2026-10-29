@@ -1408,7 +1408,10 @@ export interface AgentTaskState {
   suggestedCommit?: { title: string; message: string };
   // pr-review only: the PR being reviewed, e.g. https://github.com/o/r/pull/7.
   prReviewUrl?: string;
-  errorKind?: 'auth' | 'question';
+  errorKind?: 'auth' | 'question' | 'conflict';
+  // Set alongside errorKind 'conflict': the resolve-conflict prompt for the agent
+  // that would fix the sync (IDEA-321).
+  conflictPrompt?: string;
   rateLimit?: RateLimitSnapshot;
   // issue-fix only: the Issue.id this run was launched to fix.
   issueId?: string;

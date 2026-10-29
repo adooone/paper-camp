@@ -15,6 +15,9 @@ export interface BatchRunRules {
   stopAtMs?: number;
   maxIdeas?: number;
   maxCostUsd?: number;
+  /** Cut `idea/IDEA-N` from freshly fetched main for each idea instead of committing
+   * straight to main — for a project that ships through PRs (IDEA-321). */
+  branchPerIdea?: boolean;
 }
 
 export const DEFAULT_BATCH_RUN_RULES: BatchRunRules = {
@@ -32,6 +35,7 @@ export type BatchRunItemOutcome =
   | 'failed-dirty'
   | 'red-checks'
   | 'auth'
+  | 'conflict'
   | 'skipped'
   | 'stopped';
 
@@ -49,7 +53,8 @@ export type BatchRunPauseReason =
   | { kind: 'capacity-floor' }
   | { kind: 'failed-dirty'; id: string }
   | { kind: 'red-checks'; id: string }
-  | { kind: 'auth'; id: string };
+  | { kind: 'auth'; id: string }
+  | { kind: 'conflict'; id: string; conflictPrompt: string };
 
 export type BatchRunStatus = 'running' | 'paused' | 'done' | 'interrupted';
 
