@@ -103,8 +103,9 @@ describe('readEntities', () => {
       created: '2026-07-03',
       body: 'x',
     });
+    mkdirSync(join(root, '.local'), { recursive: true });
     writeFileSync(
-      join(root, 'run-order.md'),
+      join(root, '.local', 'run-order.md'),
       'IDEA-2 — First in the list\nIDEA-1 — Second in the list\n',
     );
 

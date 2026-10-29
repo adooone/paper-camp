@@ -142,7 +142,7 @@ export async function buildNightGateResponse(
   const nightConfig = await readNightConfig(project.path);
   const resolved = resolveNightConfig(nightConfig);
   const apiMiddleware = mounted.get(slug);
-  const snapshot = (await readCapacity(project.path))?.snapshot ?? null;
+  const snapshot = (await readCapacity())?.snapshot ?? null;
   const openFindings = (await readNightFindings(project.path)).length;
 
   const gate = evaluateNightGate({

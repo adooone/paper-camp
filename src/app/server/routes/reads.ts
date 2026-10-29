@@ -11,7 +11,7 @@ import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/ro
 import { computeProjectStats } from '@/core/stats';
 import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
-import { campFile, readMaybe } from '../helpers';
+import { localFile, planFile, readMaybe } from '../helpers';
 import { sendJson } from '../http';
 import { readNotifications } from '../notification-log';
 import type { Route, RouteContext } from './types';
@@ -42,13 +42,13 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
   {
     path: '/api/suggestions',
     handler: async (root) => ({
-      entries: parseSuggestions(await readMaybe(campFile(root, 'suggestions.md'))),
+      entries: parseSuggestions(await readMaybe(planFile(root, 'suggestions.md'))),
     }),
   },
   {
     path: '/api/tasks',
     handler: async (root) => ({
-      entries: readTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
+      entries: readTaskLog(await readMaybe(localFile(root, 'tasks.log'))),
     }),
   },
   {
@@ -56,7 +56,7 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
     handler: async (root) => {
       const [findings, taskLog] = await Promise.all([
         readNightFindings(root),
-        readTaskLog(await readMaybe(campFile(root, 'tasks.log'))),
+        readTaskLog(await readMaybe(localFile(root, 'tasks.log'))),
       ]);
       return { groups: buildNightReportGroups(findings, taskLog) };
     },

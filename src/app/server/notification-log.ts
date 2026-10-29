@@ -4,7 +4,7 @@ import { isNotificationKindEnabled, notificationSettingKind } from '@/core/notif
 import { parseNotificationLog } from '@/core/parse';
 import { sendPushForProject } from '@/core/push-send';
 import type { PaperCampConfig, StoredNotification, StoredNotificationKind } from '@/types/index';
-import { campFile, readMaybe } from './helpers';
+import { localFile, planFile, readMaybe } from './helpers';
 
 // Serialized like tasks.log: an append racing a mark-read read-modify-write
 // would drop whichever wrote last.
@@ -19,10 +19,10 @@ interface NewNotification {
   outcome?: 'done' | 'error' | 'interrupted';
 }
 
-const notificationLogPath = (root: string) => campFile(root, 'notifications.log');
+const notificationLogPath = (root: string) => localFile(root, 'notifications.log');
 
 async function resolvePush(root: string, notification: NewNotification): Promise<boolean> {
-  const raw = await readMaybe(campFile(root, 'config.json'));
+  const raw = await readMaybe(planFile(root, 'config.json'));
   const config = raw ? (JSON.parse(raw) as PaperCampConfig) : undefined;
   const settingKind = notificationSettingKind(notification.kind, notification.outcome);
   return isNotificationKindEnabled(config?.notifications?.kinds, settingKind);

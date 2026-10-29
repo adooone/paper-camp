@@ -1,5 +1,6 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { planFile } from '@/core/corpus';
 import { readJson, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
@@ -18,7 +19,7 @@ export function iconRoutes({ root, activity }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/icon',
       handle: async (_req, res) => {
-        const assetsDir = join(root, 'papercamp', 'assets');
+        const assetsDir = planFile(root, 'assets');
         for (const [ext, mime] of Object.entries(MIME_BY_EXT)) {
           try {
             const data = await readFile(join(assetsDir, `icon.${ext}`));
@@ -50,7 +51,7 @@ export function iconRoutes({ root, activity }: RouteContext): Route[] {
         const mime = match[1];
         const ext = mime === 'image/svg+xml' ? 'svg' : mime.split('/')[1];
         const buffer = Buffer.from(match[2], 'base64');
-        const assetsDir = join(root, 'papercamp', 'assets');
+        const assetsDir = planFile(root, 'assets');
         await mkdir(assetsDir, { recursive: true });
         // Remove any previously uploaded icon with a different extension — GET serves
         // the first extension it finds, so a stale one would permanently shadow the new upload.

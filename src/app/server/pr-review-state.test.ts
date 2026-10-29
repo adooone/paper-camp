@@ -18,7 +18,7 @@ afterAll(async () => {
 
 function makeRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'papercamp-pr-review-state-'));
-  mkdirSync(join(root, 'papercamp'), { recursive: true });
+  mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
   roots.push(root);
   return root;
 }
@@ -31,7 +31,7 @@ describe('readReviewedShas', () => {
 
   it('resolves an empty object when the state file is corrupt', async () => {
     const root = makeRoot();
-    writeFileSync(join(root, 'papercamp', 'pr-reviews.json'), 'not json');
+    writeFileSync(join(root, 'papercamp', '.local', 'pr-reviews.json'), 'not json');
     expect(await readReviewedShas(root)).toEqual({});
   });
 });

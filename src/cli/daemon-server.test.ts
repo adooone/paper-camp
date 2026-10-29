@@ -4,7 +4,7 @@ import { type IncomingMessage, type Server, type ServerResponse, createServer } 
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import { createPairCodeManager } from '../app/server/pair-code';
 import type { PairingManagerState } from '../app/server/pairing';
@@ -288,6 +288,16 @@ describe('readMachineProjectSummaries', () => {
 describe('buildNightGateResponse', () => {
   const dirs: string[] = [];
 
+  beforeEach(async () => {
+    const configDir = await mkdtemp(join(tmpdir(), 'paper-camp-night-gate-config-'));
+    dirs.push(configDir);
+    vi.stubEnv('PAPERCAMP_CONFIG_DIR', configDir);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   afterAll(async () => {
     await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
   });
@@ -314,7 +324,7 @@ describe('buildNightGateResponse', () => {
       JSON.stringify({ ...(nightConfig !== undefined && { night: nightConfig }) }),
       'utf-8',
     );
-    if (capacity) await writeCapacity(projectPath, capacity, 'run');
+    if (capacity) await writeCapacity(capacity, 'run');
     return projectPath;
   }
 

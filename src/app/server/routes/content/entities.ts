@@ -22,7 +22,7 @@ import {
   type PlanStatus,
   type ThreadMessage,
 } from '@/types/index';
-import { campFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from '../../helpers';
+import { planFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from '../../helpers';
 import { readJson, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
@@ -86,7 +86,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           return;
         }
 
-        const ideasDir = campFile(root, 'ideas');
+        const ideasDir = planFile(root, 'ideas');
         const { entries } = await readEntities(ideasDir);
         // order is the one field notes can carry too — the up/down worklist
         // controls need to reorder a note against its plan/idea neighbours.
@@ -97,7 +97,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           return;
         }
 
-        // Run order lives in papercamp/run-order.md, not frontmatter (IDEA-98); notes
+        // Run order lives in papercamp/.local/run-order.md, not frontmatter (IDEA-98); notes
         // aren't part of that list, so their `order` still writes straight to frontmatter.
         const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => {
           let phases = updates.phases;

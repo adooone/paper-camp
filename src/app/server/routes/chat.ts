@@ -1,4 +1,4 @@
-import { campFile, createIdea } from '@/core/corpus';
+import { createIdea, localFile, planFile } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { readTaskLog } from '@/core/parse';
 import { readEntities } from '@/core/readers';
@@ -27,8 +27,8 @@ async function runChatReply(
   let error: string | undefined;
   try {
     const [{ entries }, taskLogRaw] = await Promise.all([
-      readEntities(campFile(root, 'ideas')),
-      readMaybe(campFile(root, 'tasks.log')),
+      readEntities(planFile(root, 'ideas')),
+      readMaybe(localFile(root, 'tasks.log')),
     ]);
     const taskLog = readTaskLog(taskLogRaw);
     publishStage({ stage: 'reading', ideas: entries.length });
@@ -71,7 +71,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       handle: async (_req, res) => {
         const [thread, { entries }] = await Promise.all([
           readChatFile(root),
-          readEntities(campFile(root, 'ideas')),
+          readEntities(planFile(root, 'ideas')),
         ]);
         sendJson(res, 200, { thread: resolveClosedIdeaQuestions(thread, entries) });
       },

@@ -8,7 +8,7 @@ import {
 import { readEntities } from '@/core/readers';
 import { agentThreadMessage } from '@/core/serialize';
 import type { PrReviewFinding, PrReviewResult, PrReviewVerdict } from '@/types/index';
-import { campFile } from './helpers';
+import { planFile } from './helpers';
 
 const VERDICTS: PrReviewVerdict[] = ['approve', 'comment', 'request-changes'];
 
@@ -129,7 +129,7 @@ async function appendReviewThreadMessage(
   entityId: string,
   summary: string,
 ): Promise<ThreadWriteOutcome> {
-  const ideasDir = campFile(root, 'ideas');
+  const ideasDir = planFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
   const entry = entries.find((e) => e.id === entityId);
   if (!entry) return 'failed';

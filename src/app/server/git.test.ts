@@ -396,18 +396,22 @@ describe('runGitSync', () => {
     // Here they are tracked, which pins the remaining rule: differing from origin/main
     // is the only thing that decides survival — there is no disposable-by-name list.
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
-    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(join(root, 'papercamp', '.local', 'run-order.md'), 'IDEA-1 — first\n');
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'stale entity\n');
     git(root, 'add', '.');
     git(root, 'commit', '-m', 'add run-order and an entity');
     await addOrigin(root);
     git(root, 'checkout', '-b', 'feat/feat-11-runorder');
-    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-2 — second\nIDEA-1 — first\n');
+    await writeFile(
+      join(root, 'papercamp', '.local', 'run-order.md'),
+      'IDEA-2 — second\nIDEA-1 — first\n',
+    );
     await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'locally edited entity\n');
 
     await manager.runGitSync();
 
-    expect(await readFile(join(root, 'papercamp', 'run-order.md'), 'utf-8')).toBe(
+    expect(await readFile(join(root, 'papercamp', '.local', 'run-order.md'), 'utf-8')).toBe(
       'IDEA-2 — second\nIDEA-1 — first\n',
     );
     expect(await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8')).toBe(
@@ -487,7 +491,8 @@ describe('runGitSync', () => {
 
   it('does not create a corpus commit when papercamp/ is already clean', async () => {
     await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
-    await writeFile(join(root, 'papercamp', 'run-order.md'), 'IDEA-1 — first\n');
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(join(root, 'papercamp', '.local', 'run-order.md'), 'IDEA-1 — first\n');
     git(root, 'add', '.');
     git(root, 'commit', '-m', 'add run-order');
     await addOrigin(root);

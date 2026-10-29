@@ -40,7 +40,7 @@ import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
-import { CorpusError, appendToChatFile, campFile, readMaybe, updateEntity } from './helpers';
+import { CorpusError, appendToChatFile, planFile, readMaybe, updateEntity } from './helpers';
 import { claudeAuthStatus } from './local-adapters';
 import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
@@ -633,7 +633,7 @@ export function createAgentManager(
       }
       if (task.taskKind === 'suggest') {
         if (task.suggestBaseline === undefined) return null;
-        const suggestions = parseSuggestions(await readMaybe(campFile(root, 'suggestions.md')));
+        const suggestions = parseSuggestions(await readMaybe(planFile(root, 'suggestions.md')));
         return suggestions.length > task.suggestBaseline;
       }
       const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
@@ -760,7 +760,7 @@ export function createAgentManager(
       if (parsed.reason) task.errorReason = parsed.reason;
       if (parsed.rateLimit) {
         task.rateLimit = parsed.rateLimit;
-        writeCapacity(root, parsed.rateLimit, 'run')
+        writeCapacity(parsed.rateLimit, 'run')
           .then(() => publish?.({ type: 'capacity' }))
           .catch(() => {});
       }
@@ -864,7 +864,7 @@ export function createAgentManager(
         }
         if (parsed?.rateLimit) {
           task.rateLimit = parsed.rateLimit;
-          writeCapacity(root, parsed.rateLimit, 'run')
+          writeCapacity(parsed.rateLimit, 'run')
             .then(() => publish?.({ type: 'capacity' }))
             .catch(() => {});
         }
@@ -1044,7 +1044,7 @@ export function createAgentManager(
   }
 
   async function findPlanById(planId: string): Promise<PlanEntry | undefined> {
-    const { entries } = await readEntities(campFile(root, 'ideas'));
+    const { entries } = await readEntities(planFile(root, 'ideas'));
     const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
     return entity ? entityToPlan(entity) : undefined;
   }

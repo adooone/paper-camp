@@ -221,41 +221,32 @@ describe('initProject machine registry', () => {
   });
 });
 
-describe('initProject .gitignore', () => {
-  const ALL = DAEMON_GITIGNORE_ENTRIES.join('\n');
+describe('DAEMON_GITIGNORE_ENTRIES', () => {
+  it('lists the pre-.local gitignore lines the migration will drop from existing projects', () => {
+    expect(DAEMON_GITIGNORE_ENTRIES).toContain('papercamp/tasks.log');
+    expect(DAEMON_GITIGNORE_ENTRIES).toContain('papercamp/.pairing.json');
+  });
+});
 
-  it('creates .gitignore with every daemon-written file when the repo has none', async () => {
+describe('initProject papercamp/.local/.gitignore', () => {
+  it('creates a self-ignoring .local/.gitignore, leaving the project .gitignore untouched', async () => {
     const root = await makeTempDir('papercamp-scaffold-gitignore-');
 
     await initProject(root, { projectName: 'demo' });
 
-    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(`${ALL}\n`);
+    expect(await readFile(join(root, 'papercamp', '.local', '.gitignore'), 'utf-8')).toBe('*\n');
+    await expect(readFile(join(root, '.gitignore'), 'utf-8')).rejects.toThrow();
   });
 
-  it('appends only the missing entries after an existing papercamp block', async () => {
-    const root = await makeTempDir('papercamp-scaffold-gitignore-');
-    await writeFile(
-      join(root, '.gitignore'),
-      'node_modules\npapercamp/tasks.log\npapercamp/pr-map.json\n# a comment\n',
-      'utf-8',
-    );
+  it('never overwrites an existing .local/.gitignore', async () => {
+    const root = await makeTempDir('papercamp-scaffold-gitignore-noclobber-');
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(join(root, 'papercamp', '.local', '.gitignore'), 'custom\n', 'utf-8');
 
     await initProject(root, { projectName: 'demo' });
 
-    const missing = DAEMON_GITIGNORE_ENTRIES.filter(
-      (entry) => entry !== 'papercamp/tasks.log' && entry !== 'papercamp/pr-map.json',
-    ).join('\n');
-    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(
-      `node_modules\npapercamp/tasks.log\npapercamp/pr-map.json\n${missing}\n# a comment\n`,
+    expect(await readFile(join(root, 'papercamp', '.local', '.gitignore'), 'utf-8')).toBe(
+      'custom\n',
     );
-  });
-
-  it('leaves a complete file untouched', async () => {
-    const root = await makeTempDir('papercamp-scaffold-gitignore-');
-    await writeFile(join(root, '.gitignore'), `${ALL}\n`, 'utf-8');
-
-    await initProject(root, { projectName: 'demo' });
-
-    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(`${ALL}\n`);
   });
 });

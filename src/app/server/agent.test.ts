@@ -212,6 +212,7 @@ async function makeRoot(planMd: string): Promise<{ root: string; plan: PlanEntry
   const root = await mkdtemp(join(tmpdir(), 'papercamp-agent-test-'));
   roots.push(root);
   await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+  await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
   await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), planMd);
   const plan = entityToPlan(parseEntityFile(planMd).entries[0]);
   return { root, plan };
@@ -1013,12 +1014,13 @@ Plan body.
       const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
       expect(log.trim().split('\n')).toHaveLength(2);
 
-      // tasks.log/notifications.log are gitignored in a real project (IDEA-320); the
-      // test fixture has no .gitignore, so filter the two logTaskCompletion left dirty.
+      // tasks.log/notifications.log live under papercamp/.local/, which ignores itself
+      // (IDEA-320); the test fixture has no .gitignore, so filter the two
+      // logTaskCompletion left dirty.
       const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
       const meaningfulStatus = status
         .split('\n')
-        .filter((line) => line && !/papercamp\/(tasks|notifications)\.log/.test(line))
+        .filter((line) => line && !/papercamp\/\.local\/(tasks|notifications)\.log/.test(line))
         .join('\n');
       expect(meaningfulStatus).toBe('');
 
@@ -1859,7 +1861,7 @@ describe('task log', () => {
 
     // The write is fire-and-forget off setStatus(), so it can land slightly after
     // getStatus() already reports 'done' — poll instead of reading once.
-    const logPath = join(root, 'papercamp', 'tasks.log');
+    const logPath = join(root, 'papercamp', '.local', 'tasks.log');
     const start = Date.now();
     let entry: { outcome?: string; startedAt?: string; endedAt?: string } = {};
     while (Date.now() - start < 2000) {
@@ -1897,7 +1899,7 @@ describe('task log', () => {
 
     // The write is fire-and-forget off setStatus(), so it can land slightly after
     // getStatus() already reports 'error' — poll instead of reading once.
-    const logPath = join(root, 'papercamp', 'tasks.log');
+    const logPath = join(root, 'papercamp', '.local', 'tasks.log');
     const start = Date.now();
     let entry: { outcome?: string } = {};
     while (Date.now() - start < 2000) {
@@ -1924,7 +1926,7 @@ process.exit(1)
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
 
-    const logPath = join(root, 'papercamp', 'tasks.log');
+    const logPath = join(root, 'papercamp', '.local', 'tasks.log');
     const start = Date.now();
     let entry: { outcome?: string; reason?: string } = {};
     while (Date.now() - start < 2000) {
@@ -1951,7 +1953,7 @@ process.exit(1)
 
     // The write is fire-and-forget off setStatus(), so it can land slightly after
     // getStatus() already reports 'done' — poll instead of reading once.
-    const logPath = join(root, 'papercamp', '.task-logs', `${taskId}.log`);
+    const logPath = join(root, 'papercamp', '.local', 'task-logs', `${taskId}.log`);
     const start = Date.now();
     const expected = currentStatus(manager)?.lines.join('\n');
     let raw: string | undefined;
@@ -1971,7 +1973,7 @@ process.exit(1)
 
 describe('boot reconciliation', () => {
   async function pollTasksLog(root: string, until: (entries: TaskLogEntry[]) => boolean) {
-    const logPath = join(root, 'papercamp', 'tasks.log');
+    const logPath = join(root, 'papercamp', '.local', 'tasks.log');
     const start = Date.now();
     let entries: TaskLogEntry[] = [];
     while (Date.now() - start < 2000) {
@@ -2001,7 +2003,10 @@ describe('boot reconciliation', () => {
       agentId: 'claude-code',
       startedAt: '2026-09-08T09:00:00.000Z',
     };
-    await writeFile(join(root, 'papercamp', 'tasks.log'), `${JSON.stringify(startedEntry)}\n`);
+    await writeFile(
+      join(root, 'papercamp', '.local', 'tasks.log'),
+      `${JSON.stringify(startedEntry)}\n`,
+    );
 
     const manager = createAgentManager(root);
 
@@ -2014,7 +2019,7 @@ describe('boot reconciliation', () => {
     });
     expect(manager.getInterruptedOnBoot()).toBe(1);
 
-    const notifPath = join(root, 'papercamp', 'notifications.log');
+    const notifPath = join(root, 'papercamp', '.local', 'notifications.log');
     const start = Date.now();
     let notifications: { entityId?: string; outcome?: string }[] = [];
     while (Date.now() - start < 2000 && notifications.length === 0) {
@@ -2055,7 +2060,7 @@ describe('boot reconciliation', () => {
     await releaseSignal(signalPath);
     expect(await waitForTaskStatus(firstManager, taskId as string, settled)).toBe('done');
 
-    const raw = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const raw = await readFile(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const entries = raw
       .trim()
       .split('\n')
@@ -2069,7 +2074,7 @@ describe('notification log', () => {
   // The write is fire-and-forget off setStatus(), so it can land slightly after
   // getStatus() already reports settled — poll instead of reading once.
   async function pollNotifications(root: string) {
-    const logPath = join(root, 'papercamp', 'notifications.log');
+    const logPath = join(root, 'papercamp', '.local', 'notifications.log');
     const start = Date.now();
     let raw = '';
     while (Date.now() - start < 2000) {

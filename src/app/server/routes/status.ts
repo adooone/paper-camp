@@ -8,7 +8,7 @@ import {
   resolvePrsByEntity,
 } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';
-import { campFile } from '../helpers';
+import { planFile } from '../helpers';
 import { sendJson } from '../http';
 import { appendNotification } from '../notification-log';
 import type { Route, RouteContext } from './types';
@@ -37,7 +37,7 @@ export function statusRoutes({ root, activity }: RouteContext): Route[] {
         if (fresh) {
           const newlyRequested = entitiesWithNewChangesRequested(previous, fresh);
           if (newlyRequested.length > 0) {
-            const { entries } = await readEntities(campFile(root, 'ideas'));
+            const { entries } = await readEntities(planFile(root, 'ideas'));
             for (const { entityId, pr } of newlyRequested) {
               const entity = entries.find((e) => e.id === entityId);
               void appendNotification(root, {

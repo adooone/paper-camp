@@ -78,7 +78,7 @@ export function nightRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 200, { ok: true, pausedUntil: null });
           return;
         }
-        const snapshot = (await readCapacity(root))?.snapshot ?? null;
+        const snapshot = (await readCapacity())?.snapshot ?? null;
         const resetsAt = snapshot?.unifiedWindows?.five_hour?.resetsAt;
         if (resetsAt === undefined) {
           sendJson(res, 400, { error: 'no capacity snapshot yet — run an agent task first' });

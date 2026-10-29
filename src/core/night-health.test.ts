@@ -188,7 +188,7 @@ describe('computeNightHealthMap', () => {
     commitFiles(root, ['src/app/a.ts'], 'feat(app): seed');
 
     await computeNightHealthMap(root);
-    const nightJsonPath = join(root, 'papercamp', 'night.json');
+    const nightJsonPath = join(root, 'papercamp', '.local', 'night.json');
     const persisted = JSON.parse(await readFile(nightJsonPath, 'utf-8'));
     expect(persisted.chunks.find((c: { path: string }) => c.path === 'src/app')).toBeTruthy();
 
@@ -240,7 +240,7 @@ describe('markChunkReviewed and selectNightChunks', () => {
   it('persists the reviewed commit and time for a chunk in night.json', async () => {
     const root = mkdtempSync(join(tmpdir(), 'papercamp-night-mark-'));
     await markChunkReviewed(root, 'src/app', 'abc1234', '2026-09-11T02:00:00.000Z');
-    const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8');
+    const raw = await readFile(join(root, 'papercamp', '.local', 'night.json'), 'utf-8');
     const chunk = (JSON.parse(raw) as NightHealthMap).chunks.find((c) => c.path === 'src/app');
     expect(chunk?.lastReviewedCommit).toBe('abc1234');
     expect(chunk?.lastReviewedAt).toBe('2026-09-11T02:00:00.000Z');

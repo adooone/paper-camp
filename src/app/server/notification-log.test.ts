@@ -125,7 +125,7 @@ describe('markNotificationRead', () => {
 
     await markNotificationRead(root, 'does-not-exist');
 
-    const raw = readFileSync(join(root, 'papercamp', 'notifications.log'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', '.local', 'notifications.log'), 'utf-8');
     expect(raw.trim().split('\n')).toHaveLength(1);
   });
 });

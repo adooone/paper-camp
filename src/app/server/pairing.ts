@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { machineConfigDir } from '@/core/machine-registry';
-import { campFile } from './helpers';
+import { localFile } from './helpers';
 
 export interface PairingManagerState {
   token: string;
@@ -14,10 +14,10 @@ interface PersistedPairingState {
   origins: string[];
 }
 
-export const projectPairingPath = (root: string) => campFile(root, '.pairing.json');
+export const projectPairingPath = (root: string) => localFile(root, 'pairing.json');
 
 /** Beside the machine registry — one token pairs the hub to every project a
- * daemon serves, replacing a mounted project's own `papercamp/.pairing.json`. */
+ * daemon serves, replacing a mounted project's own `papercamp/.local/pairing.json`. */
 export const machinePairingPath = () => join(machineConfigDir(), 'pairing.json');
 
 function isPersistedPairingState(value: unknown): value is PersistedPairingState {

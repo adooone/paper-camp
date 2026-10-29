@@ -122,7 +122,9 @@ describe('opencode external_directory permission ask (IDEA-125)', () => {
 
     // The completion row is written off setStatus(), so it can land just after 'error'.
     const readEntry = async () => {
-      const taskLog = await readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => '');
+      const taskLog = await readFile(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8').catch(
+        () => '',
+      );
       return taskLog
         .trim()
         .split('\n')

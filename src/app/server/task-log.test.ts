@@ -14,7 +14,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 function makeRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'papercamp-tasklog-'));
-  mkdirSync(join(root, 'papercamp', '.task-logs'), { recursive: true });
+  mkdirSync(join(root, 'papercamp', '.local', 'task-logs'), { recursive: true });
   return root;
 }
 
@@ -34,14 +34,14 @@ function seed(root: string, rows: { id: string; daysAgo: number }[]): void {
   const lines = rows.map((r) =>
     entry(r.id, new Date(Date.now() - r.daysAgo * DAY_MS).toISOString()),
   );
-  writeFileSync(join(root, 'papercamp', 'tasks.log'), `${lines.join('\n')}\n`, 'utf-8');
+  writeFileSync(join(root, 'papercamp', '.local', 'tasks.log'), `${lines.join('\n')}\n`, 'utf-8');
   for (const r of rows) {
-    writeFileSync(join(root, 'papercamp', '.task-logs', `${r.id}.log`), 'output', 'utf-8');
+    writeFileSync(join(root, 'papercamp', '.local', 'task-logs', `${r.id}.log`), 'output', 'utf-8');
   }
 }
 
 const ids = (root: string) =>
-  readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8')
+  readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8')
     .split('\n')
     .filter(Boolean)
     .map((l) => JSON.parse(l).id as string);
@@ -68,7 +68,7 @@ describe('logTaskStart', () => {
       startedAt: '2026-09-08T10:00:00.000Z',
     });
 
-    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const logged = raw
       .split('\n')
       .filter(Boolean)
@@ -96,7 +96,7 @@ describe('logTaskStart', () => {
       startedAt: '2026-09-08T10:00:00.000Z',
     });
 
-    expect(existsSync(join(root, 'papercamp', 'tasks.log'))).toBe(false);
+    expect(existsSync(join(root, 'papercamp', '.local', 'tasks.log'))).toBe(false);
   });
 });
 
@@ -125,7 +125,7 @@ describe('reconcileInterruptedTasks', () => {
       },
     ]);
 
-    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const logged = raw
       .split('\n')
       .filter(Boolean)
@@ -151,7 +151,7 @@ describe('reconcileInterruptedTasks', () => {
     const root = makeRoot();
     const marked = await reconcileInterruptedTasks(root, '2026-09-08T12:00:00.000Z');
     expect(marked).toEqual([]);
-    expect(existsSync(join(root, 'papercamp', 'tasks.log'))).toBe(false);
+    expect(existsSync(join(root, 'papercamp', '.local', 'tasks.log'))).toBe(false);
   });
 });
 
@@ -165,7 +165,7 @@ describe('logTaskCompletion reason', () => {
       'error',
     );
 
-    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const logged = raw
       .split('\n')
       .filter(Boolean)
@@ -179,7 +179,7 @@ describe('logTaskCompletion reason', () => {
     const id = 'ffffffff-0000-0000-0000-000000000007';
     await logTaskCompletion(root, completed(id), 'done');
 
-    const raw = readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8');
+    const raw = readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const logged = raw
       .split('\n')
       .filter(Boolean)
@@ -191,7 +191,7 @@ describe('logTaskCompletion reason', () => {
 
 describe('logTaskCompletion usage', () => {
   const findRow = (root: string, id: string) =>
-    readFileSync(join(root, 'papercamp', 'tasks.log'), 'utf-8')
+    readFileSync(join(root, 'papercamp', '.local', 'tasks.log'), 'utf-8')
       .split('\n')
       .filter(Boolean)
       .map((l) => JSON.parse(l))
@@ -287,7 +287,7 @@ describe('logTaskCompletion retention', () => {
 
     await logTaskCompletion(root, completed('cccccccc-0000-0000-0000-000000000004'), 'done');
 
-    const files = readdirSync(join(root, 'papercamp', '.task-logs')).sort();
+    const files = readdirSync(join(root, 'papercamp', '.local', 'task-logs')).sort();
     expect(files).toEqual([
       'bbbbbbbb-0000-0000-0000-000000000003.log',
       'cccccccc-0000-0000-0000-000000000004.log',
@@ -302,7 +302,7 @@ describe('logTaskCompletion retention', () => {
     await logTaskCompletion(root, completed(id), 'error');
 
     expect(ids(root)).toEqual([id]);
-    expect(readFileSync(join(root, 'papercamp', '.task-logs', `${id}.log`), 'utf-8')).toBe(
+    expect(readFileSync(join(root, 'papercamp', '.local', 'task-logs', `${id}.log`), 'utf-8')).toBe(
       'line one',
     );
   });
@@ -310,7 +310,7 @@ describe('logTaskCompletion retention', () => {
 
 describe('appendTaskOutput', () => {
   const outputOf = (root: string, id: string) =>
-    readFileSync(join(root, 'papercamp', '.task-logs', `${id}.log`), 'utf-8');
+    readFileSync(join(root, 'papercamp', '.local', 'task-logs', `${id}.log`), 'utf-8');
 
   it('streams every line in order, past the in-memory tail', async () => {
     const root = makeRoot();
@@ -337,6 +337,6 @@ describe('appendTaskOutput', () => {
     const id = '11111111-0000-0000-0000-000000000008';
     await appendTaskOutput(root, { id, taskKind: 'commit-suggest' }, 'quiet');
 
-    expect(existsSync(join(root, 'papercamp', '.task-logs', `${id}.log`))).toBe(false);
+    expect(existsSync(join(root, 'papercamp', '.local', 'task-logs', `${id}.log`))).toBe(false);
   });
 });

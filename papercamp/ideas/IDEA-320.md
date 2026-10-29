@@ -5,6 +5,7 @@ type: refactor
 status: idea
 idea: IDEA-319
 created: 2026-10-28
+updated: 2026-10-29
 tags:
   - stack
   - git
@@ -106,8 +107,9 @@ leaves `git status` clean; radio's committed token is rotated; and two
 clones appending to `chat.md` pull without a conflict.
 
 ### Phases
-- [ ] Path helpers and the self-ignoring `.local/` folder
+- [x] Path helpers and the self-ignoring `.local/` folder
       Split `campFile` into plan, local and machine helpers, move every daemon write onto them, create `papercamp/.local/.gitignore`, move `capacity.json` to the config dir, and add the test that rejects plan writes outside the plan list.
+      run: 22m5s · 448 in · 83.7k out · sonnet-5 · sess:7bd174b5-4580-400f-9fdc-31a92d585c8d
 - [ ] Migration on mount
       Move files, untrack them, clean the old `.gitignore` lines, write the `.gitattributes` union block, commit once, skip projects that are mid-rebase or have staged changes, and rotate a committed pairing token.
 - [ ] Doctor and drift on the git card

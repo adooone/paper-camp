@@ -9,7 +9,7 @@ import type { AgentManager } from '../agent';
 import { suggestCommitMessage } from '../commit-suggest';
 import { FetchFailedError } from '../git';
 import { launchResolveConflict } from '../git-chat';
-import { campFile } from '../helpers';
+import { planFile } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
 import type { Route, RouteContext } from './types';
 
@@ -75,7 +75,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 400, { error: 'planId is required' });
             return;
           }
-          const { entries } = await readEntities(campFile(root, 'ideas'));
+          const { entries } = await readEntities(planFile(root, 'ideas'));
           const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
           if (!entity) {
             sendJson(res, 404, { error: 'entity not found' });

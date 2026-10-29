@@ -181,7 +181,9 @@ describe('resolvePrsByEntity', () => {
     await resolvePrsByEntity(root);
 
     await clearPrCache(root);
-    const persisted = JSON.parse(readFileSync(join(root, 'papercamp', 'pr-map.json'), 'utf-8'));
+    const persisted = JSON.parse(
+      readFileSync(join(root, 'papercamp', '.local', 'pr-map.json'), 'utf-8'),
+    );
     expect(persisted.fetchedAt).toBe(0);
   });
 

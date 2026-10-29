@@ -288,7 +288,7 @@ describe('runNight("run", chunk)', () => {
     await useConfigDir();
     const scanRoot = await makeTempDir('paper-camp-night-run-');
     const projectDir = join(scanRoot, 'demo');
-    await mkdir(join(projectDir, 'papercamp'), { recursive: true });
+    await mkdir(join(projectDir, 'papercamp', '.local'), { recursive: true });
     await writeFile(
       join(projectDir, 'papercamp', 'config.json'),
       JSON.stringify({
@@ -298,7 +298,7 @@ describe('runNight("run", chunk)', () => {
       'utf-8',
     );
     await writeFile(
-      join(projectDir, 'papercamp', 'night.json'),
+      join(projectDir, 'papercamp', '.local', 'night.json'),
       JSON.stringify({
         chunks: [{ path: 'src/core', lastReviewedCommit: 'abc1234', lastReviewedAt: null }],
       }),
@@ -368,7 +368,7 @@ describe('runNight("run", chunk)', () => {
     expect(suggestions).toContain('severity=high');
     expect(suggestions).toContain('off by one');
 
-    const tasksLog = await readFile(join(projectDir, 'papercamp', 'tasks.log'), 'utf-8');
+    const tasksLog = await readFile(join(projectDir, 'papercamp', '.local', 'tasks.log'), 'utf-8');
     const taskLines = tasksLog
       .trim()
       .split('\n')

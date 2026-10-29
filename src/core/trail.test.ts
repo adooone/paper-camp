@@ -67,6 +67,7 @@ afterEach(() => {
 function makeRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'papercamp-trail-root-'));
   mkdirSync(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
+  mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
   return root;
 }
 
@@ -110,7 +111,7 @@ describe('resolveEntityTrail', () => {
       phases: [{ text: 'Model the provenance trail', done: false }],
     });
     writeFileSync(
-      join(root, 'papercamp', 'tasks.log'),
+      join(root, 'papercamp', '.local', 'tasks.log'),
       `${JSON.stringify({
         id: 't1',
         taskKind: 'run',

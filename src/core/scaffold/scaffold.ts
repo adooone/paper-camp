@@ -108,7 +108,7 @@ export async function initProject(targetDir: string, options: InitOptions): Prom
 
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 
-  await ensureGitignoreEntry(targetDir);
+  await ensureLocalGitignore(campDir);
 
   await scaffoldClaudeCodeIntegration(targetDir);
 
@@ -126,8 +126,10 @@ async function registerInMachineRegistry(targetDir: string, projectName: string)
   }
 }
 
-// Everything the daemon writes for itself: a committed pairing token lets anyone with
-// read access pair as a trusted client, and the caches and logs churn on every refresh.
+// The pre-IDEA-320 mechanism: lines hand-inserted into the project's own .gitignore,
+// one per daemon-written file. Superseded by papercamp/.local/.gitignore, which ignores
+// every file under it with a single `*` and needs no list — kept here so the migration
+// (IDEA-320 phase 2) can find and drop these lines from projects that still have them.
 export const DAEMON_GITIGNORE_ENTRIES = [
   'papercamp/.pairing.json',
   'papercamp/.task-logs/',
@@ -139,25 +141,16 @@ export const DAEMON_GITIGNORE_ENTRIES = [
   'papercamp/run-order.md',
 ] as const;
 
-async function ensureGitignoreEntry(targetDir: string): Promise<void> {
-  const gitignorePath = join(targetDir, '.gitignore');
-  const content = (await exists(gitignorePath)) ? await readFile(gitignorePath, 'utf-8') : '';
-  const lines = content.length > 0 ? content.split('\n') : [];
-  const present = new Set(lines.map((line) => line.trim()));
-  const missing = DAEMON_GITIGNORE_ENTRIES.filter((entry) => !present.has(entry));
-  if (missing.length === 0) return;
-
-  const lastPapercampLine = lines.reduce(
-    (last, line, i) => (line.startsWith('papercamp/') ? i : last),
-    -1,
-  );
-  if (lastPapercampLine === -1) {
-    const separator = content.length > 0 && !content.endsWith('\n') ? '\n' : '';
-    await writeFile(gitignorePath, `${content}${separator}${missing.join('\n')}\n`, 'utf-8');
-    return;
+// Ignores the whole folder from inside itself, so nothing written under papercamp/.local/
+// can ever be committed regardless of the project's own .gitignore, and git skips the
+// folder in `status` — a new local-state file is safe just by living under here.
+async function ensureLocalGitignore(campDir: string): Promise<void> {
+  const localDir = join(campDir, '.local');
+  await mkdir(localDir, { recursive: true });
+  const gitignorePath = join(localDir, '.gitignore');
+  if (!(await exists(gitignorePath))) {
+    await writeFile(gitignorePath, '*\n', 'utf-8');
   }
-  lines.splice(lastPapercampLine + 1, 0, ...missing);
-  await writeFile(gitignorePath, lines.join('\n'), 'utf-8');
 }
 
 export async function scaffoldClaudeCodeIntegration(targetDir: string): Promise<void> {

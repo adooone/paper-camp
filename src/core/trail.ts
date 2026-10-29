@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProvenanceTrail } from '../types/index';
+import { localFile, planFile } from './corpus';
 import {
   COMMIT_SHA_RE,
   resolveDefaultBranch,
@@ -141,9 +142,9 @@ export async function resolveReleaseCommits(root: string, range: string): Promis
 
 export async function resolveEntityTrail(root: string, id: string): Promise<ProvenanceTrail> {
   const [{ entries }, prs, taskLogRaw, changelogRaw, commits, mainActivity] = await Promise.all([
-    readEntities(join(root, 'papercamp', 'ideas')),
+    readEntities(planFile(root, 'ideas')),
     resolvePrsByEntity(root),
-    readFileMaybe(join(root, 'papercamp', 'tasks.log')),
+    readFileMaybe(localFile(root, 'tasks.log')),
     readFileMaybe(join(root, 'CHANGELOG.md')),
     resolveCommitsForEntity(root, id),
     resolveIdsWithMainActivity(root),

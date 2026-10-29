@@ -27,8 +27,14 @@ export function machineConfigDir(): string {
   return process.env.PAPERCAMP_CONFIG_DIR ?? join(homedir(), '.config', 'paper-camp');
 }
 
+/** This machine and account's own state — `projects.json`, `pairing.json`,
+ * `daemon.json`, `capacity.json` — none of it is a git repo. */
+export function machineFile(name: string): string {
+  return join(machineConfigDir(), name);
+}
+
 export function defaultRegistryPath(): string {
-  return join(machineConfigDir(), 'projects.json');
+  return machineFile('projects.json');
 }
 
 function isMachineProject(value: unknown): value is MachineProject {

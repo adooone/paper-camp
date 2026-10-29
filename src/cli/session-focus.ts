@@ -1,6 +1,6 @@
 import { findFocusPlan } from '../app/features/plans/helpers';
 import { createGitManager } from '../app/server/git';
-import { campFile, fileExists } from '../app/server/helpers';
+import { fileExists, planFile } from '../app/server/helpers';
 import { readCorpus } from '../core/corpus';
 import type { PlanEntry } from '../types/index';
 
@@ -19,7 +19,7 @@ function renderPlanLine(plan: PlanEntry): string {
 // No stored `now.md`: recomputed every session so it can't drift from the
 // plans/log it's summarizing.
 export async function buildSessionFocus(root: string): Promise<string | null> {
-  if (!(await fileExists(campFile(root, 'ideas')))) return null;
+  if (!(await fileExists(planFile(root, 'ideas')))) return null;
 
   const { work } = await readCorpus(root, { live: true });
   const git = createGitManager(root);

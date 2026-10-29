@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import type { RateLimitSnapshot } from '../types/index';
+import { machineFile } from './machine-registry';
 
 export type CapacitySource = 'run' | 'probe';
 
@@ -11,8 +12,8 @@ export interface CapacityRecord {
   source: CapacitySource;
 }
 
-function capacityPath(root: string): string {
-  return join(root, 'papercamp', 'capacity.json');
+function capacityPath(): string {
+  return machineFile('capacity.json');
 }
 
 function isCapacityRecord(value: unknown): value is CapacityRecord {
@@ -28,11 +29,10 @@ function isCapacityRecord(value: unknown): value is CapacityRecord {
 }
 
 export async function writeCapacity(
-  root: string,
   snapshot: RateLimitSnapshot,
   source: CapacitySource,
 ): Promise<void> {
-  const path = capacityPath(root);
+  const path = capacityPath();
   const record: CapacityRecord = { snapshot, capturedAt: new Date().toISOString(), source };
   await mkdir(dirname(path), { recursive: true });
   const tmpPath = `${path}.${randomBytes(6).toString('hex')}.tmp`;
@@ -40,8 +40,8 @@ export async function writeCapacity(
   await rename(tmpPath, path);
 }
 
-export async function readCapacity(root: string): Promise<CapacityRecord | null> {
-  const raw = await readFile(capacityPath(root), 'utf-8').catch(() => null);
+export async function readCapacity(): Promise<CapacityRecord | null> {
+  const raw = await readFile(capacityPath(), 'utf-8').catch(() => null);
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);

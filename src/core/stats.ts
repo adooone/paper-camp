@@ -13,7 +13,7 @@ import type {
   UsagePerWeek,
 } from '../types/index';
 import { readCapacity } from './capacity';
-import { readCorpus } from './corpus';
+import { localFile, readCorpus } from './corpus';
 import { computeNightHealthMap } from './night-health';
 import { readTaskLog } from './parse';
 
@@ -232,9 +232,9 @@ export async function computeProjectStats(root: string): Promise<ProjectStats> {
       countTestLines(root),
       readTestCoveragePct(root),
       readCorpus(root, { live: true }),
-      readFile(join(root, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
+      readFile(localFile(root, 'tasks.log'), 'utf-8').catch(() => ''),
       computeNightHealthMap(root),
-      readCapacity(root),
+      readCapacity(),
     ]);
   const { openQuestions, decisions } = countThreadNotes(entries);
   const taskLog = readTaskLog(taskLogRaw);

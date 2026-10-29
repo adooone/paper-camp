@@ -9,7 +9,7 @@ import type {
   TaskKind,
   TaskLogEntry,
 } from '@/types/index';
-import { campFile, readMaybe, taskLogFile } from './helpers';
+import { localFile, readMaybe, taskLogFile } from './helpers';
 
 const RETENTION_DAYS = 3;
 const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
@@ -21,7 +21,7 @@ let taskChain: Promise<unknown> = Promise.resolve();
 // Drops runs past the retention window — rows and their output files, so no row outlives
 // its log. Best-effort: a failed prune never fails a task.
 async function pruneExpiredTasks(root: string): Promise<void> {
-  const path = campFile(root, 'tasks.log');
+  const path = localFile(root, 'tasks.log');
   const raw = await readMaybe(path);
   if (!raw) return;
   const entries = readTaskLog(raw);
@@ -90,11 +90,15 @@ export function logTaskStart(root: string, task: StartingTask): Promise<void> {
     agentId: task.agentId,
     startedAt: task.startedAt,
   };
-  const run = taskChain.then(() =>
-    appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch((err) => {
+  const run = taskChain.then(async () => {
+    const path = localFile(root, 'tasks.log');
+    try {
+      await mkdir(dirname(path), { recursive: true });
+      await appendFile(path, `${JSON.stringify(entry)}\n`, 'utf-8');
+    } catch (err) {
       console.error(`papercamp: could not append task start ${task.id} to tasks.log:`, err);
-    }),
-  );
+    }
+  });
   taskChain = run.catch(() => undefined);
   return run;
 }
@@ -105,7 +109,7 @@ const INTERRUPTED_REASON = 'the server stopped while this task was running';
 // the process that owned it died. Returns the pre-update entries to notify on.
 export function reconcileInterruptedTasks(root: string, bootedAt: string): Promise<TaskLogEntry[]> {
   const run = taskChain.then(async () => {
-    const raw = await readMaybe(campFile(root, 'tasks.log'));
+    const raw = await readMaybe(localFile(root, 'tasks.log'));
     if (!raw) return [];
     const unfinished = readTaskLog(raw).filter((e) => !e.endedAt);
     if (unfinished.length === 0) return [];
@@ -116,11 +120,9 @@ export function reconcileInterruptedTasks(root: string, bootedAt: string): Promi
       reason: INTERRUPTED_REASON,
     }));
     try {
-      await appendFile(
-        campFile(root, 'tasks.log'),
-        updates.map((e) => `${JSON.stringify(e)}\n`).join(''),
-        'utf-8',
-      );
+      const path = localFile(root, 'tasks.log');
+      await mkdir(dirname(path), { recursive: true });
+      await appendFile(path, updates.map((e) => `${JSON.stringify(e)}\n`).join(''), 'utf-8');
     } catch (err) {
       console.error('papercamp: could not append interrupted-task updates to tasks.log:', err);
       return [];
@@ -196,7 +198,7 @@ export function logTaskCompletion(
       console.error(`papercamp: could not write task output for ${task.id}:`, err);
       return;
     }
-    await appendFile(campFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
+    await appendFile(localFile(root, 'tasks.log'), `${JSON.stringify(entry)}\n`, 'utf-8').catch(
       (err) => {
         console.error(`papercamp: could not append task ${task.id} to tasks.log:`, err);
       },

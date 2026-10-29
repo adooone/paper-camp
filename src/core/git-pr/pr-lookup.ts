@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import type { PrInfo, ReviewDecision, ReviewThread } from '../../types/index';
+import { localFile } from '../corpus';
 
 interface PrMapCacheEntry {
   /** `undefined` means `gh` couldn't resolve, distinct from a resolved-but-empty `Map`. */
@@ -13,7 +14,7 @@ const cache = new Map<string, PrMapCacheEntry>();
 
 const PR_CACHE_TTL_MS = 5 * 60 * 1000;
 
-const prMapPath = (root: string) => join(root, 'papercamp', 'pr-map.json');
+const prMapPath = (root: string) => localFile(root, 'pr-map.json');
 
 interface PersistedPrMap {
   fetchedAt: number;

@@ -51,8 +51,8 @@ describe('loadPairingState / savePairingState', () => {
 
   it('resolves undefined for a malformed file', async () => {
     const root = tempRoot();
-    mkdirSync(join(root, 'papercamp'), { recursive: true });
-    writeFileSync(join(root, 'papercamp', '.pairing.json'), 'not json');
+    mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
+    writeFileSync(join(root, 'papercamp', '.local', 'pairing.json'), 'not json');
     expect(await loadPairingState(projectPairingPath(root))).toBeUndefined();
   });
 
@@ -61,7 +61,7 @@ describe('loadPairingState / savePairingState', () => {
     const state = { token: 'abc123', origins: new Set(['https://app.papercamp.dev']) };
     await savePairingState(projectPairingPath(root), state);
 
-    const path = join(root, 'papercamp', '.pairing.json');
+    const path = join(root, 'papercamp', '.local', 'pairing.json');
     expect(JSON.parse(readFileSync(path, 'utf-8'))).toEqual({
       token: 'abc123',
       origins: ['https://app.papercamp.dev'],

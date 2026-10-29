@@ -1,11 +1,12 @@
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { appendChatMessage, formatChatFile, parseChatFile } from '@/core/chat-file';
 import {
   CorpusError,
-  campFile,
   entityFileInput,
   fileExists,
+  localFile,
+  planFile,
   readMaybe,
   updateEntity,
   writeEntityFile,
@@ -18,30 +19,32 @@ import {
 import type { BranchHygieneStatus, StaleBaseRef, ThreadMessage } from '@/types/index';
 
 export {
-  campFile,
   CorpusError,
   entityFileInput,
   fileExists,
+  localFile,
+  planFile,
   readMaybe,
   updateEntity,
   writeEntityFile,
 };
 
-// Dotfile dir for machine-generated task output, distinct from the human/agent-authored corpus.
 export const taskLogFile = (root: string, taskId: string) =>
-  join(root, 'papercamp', '.task-logs', `${taskId}.log`);
+  localFile(root, join('task-logs', `${taskId}.log`));
 
-const runOrderFilePath = (root: string) => campFile(root, 'run-order.md');
+const runOrderFilePath = (root: string) => localFile(root, 'run-order.md');
 
 export async function readRunOrderFile(root: string): Promise<RunOrderFileEntry[]> {
   return parseRunOrderFile(await readMaybe(runOrderFilePath(root)));
 }
 
 export async function writeRunOrderFile(root: string, list: RunOrderFileEntry[]): Promise<void> {
-  await writeFile(runOrderFilePath(root), formatRunOrderFile(list), 'utf-8');
+  const path = runOrderFilePath(root);
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, formatRunOrderFile(list), 'utf-8');
 }
 
-const chatFilePath = (root: string) => campFile(root, 'chat.md');
+const chatFilePath = (root: string) => planFile(root, 'chat.md');
 
 export async function readChatFile(root: string): Promise<ThreadMessage[]> {
   return parseChatFile(await readMaybe(chatFilePath(root)));

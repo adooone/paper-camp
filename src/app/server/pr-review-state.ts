@@ -1,9 +1,9 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { campFile, readMaybe } from './helpers';
+import { localFile, readMaybe } from './helpers';
 
-const reviewedShasPath = (root: string) => campFile(root, 'pr-reviews.json');
-const deliveryFailuresPath = (root: string) => campFile(root, 'pr-review-failures.json');
+const reviewedShasPath = (root: string) => localFile(root, 'pr-reviews.json');
+const deliveryFailuresPath = (root: string) => localFile(root, 'pr-review-failures.json');
 
 export async function readReviewedShas(root: string): Promise<Record<string, string>> {
   const raw = await readMaybe(reviewedShasPath(root));

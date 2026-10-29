@@ -252,7 +252,7 @@ describe('POST /api/agent/feedback-message reply notification', () => {
 
     expect(status()).toBe(200);
 
-    const logPath = join(root, 'papercamp', 'notifications.log');
+    const logPath = join(root, 'papercamp', '.local', 'notifications.log');
     const start = Date.now();
     let entries: { kind?: string; entityId?: string; text?: string; read?: boolean }[] = [];
     while (Date.now() - start < 2000) {

@@ -1,9 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { appendNotification } from '../app/server/notification-log';
 import { logTaskCompletion, logTaskStart } from '../app/server/task-log';
-import { readCorpus } from '../core/corpus';
+import { localFile, planFile, readCorpus } from '../core/corpus';
 import {
   daemonStatePath,
   fetchMachineNightGate,
@@ -47,7 +46,7 @@ import {
 import { runNightChunkPass } from './night-pass';
 
 export async function readNightConfig(root: string): Promise<NightConfig | undefined> {
-  const raw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(() => null);
+  const raw = await readFile(planFile(root, 'config.json'), 'utf-8').catch(() => null);
   if (!raw) return undefined;
   try {
     const parsed = JSON.parse(raw) as { night?: NightConfig };
@@ -113,7 +112,7 @@ function formatGateLine(response: MachineNightGateResponse | null): string {
 }
 
 async function readPersistedChunks(root: string): Promise<ChunkHealth[]> {
-  const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8').catch(() => null);
+  const raw = await readFile(localFile(root, 'night.json'), 'utf-8').catch(() => null);
   if (!raw) return [];
   try {
     return (JSON.parse(raw) as { chunks?: ChunkHealth[] }).chunks ?? [];
@@ -167,14 +166,14 @@ async function printNightStatus(registry: MachineRegistry): Promise<void> {
 
   const [findings, taskLogRaw] = await Promise.all([
     readNightFindings(project.path),
-    readFile(join(project.path, 'papercamp', 'tasks.log'), 'utf-8').catch(() => ''),
+    readFile(localFile(project.path, 'tasks.log'), 'utf-8').catch(() => ''),
   ]);
   const groups = buildNightReportGroups(findings, readTaskLog(taskLogRaw));
   console.log(formatLastNightTotals(groups[0]));
 }
 
 async function readLastReviewedCommit(root: string, chunkPath: string): Promise<string | null> {
-  const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8').catch(() => null);
+  const raw = await readFile(localFile(root, 'night.json'), 'utf-8').catch(() => null);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as {
@@ -278,7 +277,7 @@ async function reportNightPass(
   const dropped = result.findings.length - accepted.length;
   if (accepted.length === 0) return { written: 0, dropped };
 
-  const suggestionsPath = join(project.path, 'papercamp', 'suggestions.md');
+  const suggestionsPath = planFile(project.path, 'suggestions.md');
   const raw = await readFile(suggestionsPath, 'utf-8').catch(() => '');
   const date = todayDateString();
   const entries: NightSuggestionEntry[] = accepted.map((finding: NightFinding) => ({
@@ -315,7 +314,7 @@ export async function runNightPass(
     return false;
   }
 
-  const rawAgentConfig = await readFile(join(project.path, 'papercamp', 'config.json'), 'utf-8')
+  const rawAgentConfig = await readFile(planFile(project.path, 'config.json'), 'utf-8')
     .then((raw) => (JSON.parse(raw) as { defaultAgents?: { nightShift?: unknown } }).defaultAgents)
     .catch(() => undefined);
   const agentConfig = coerceAgentConfig(rawAgentConfig?.nightShift ?? DEFAULT_AGENTS.nightShift);

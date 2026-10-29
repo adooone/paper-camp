@@ -9,6 +9,8 @@ import {
   corpusFingerprint,
   createIdea,
   invalidateCorpus,
+  localFile,
+  planFile,
   readCorpus,
   updateEntity,
 } from './corpus';
@@ -792,5 +794,31 @@ describe('createIdea', () => {
     expect(created?.idea).toBe('IDEA-1');
     expect(created?.status).toBeUndefined();
     expect(created?.phases).toHaveLength(1);
+  });
+});
+
+describe('planFile', () => {
+  it('resolves every name in the committed plan', () => {
+    const root = tmpRoot();
+    expect(planFile(root, 'ideas')).toBe(join(root, 'papercamp', 'ideas'));
+    expect(planFile(root, 'config.json')).toBe(join(root, 'papercamp', 'config.json'));
+    expect(planFile(root, 'suggestions.md')).toBe(join(root, 'papercamp', 'suggestions.md'));
+    expect(planFile(root, 'chat.md')).toBe(join(root, 'papercamp', 'chat.md'));
+    expect(planFile(root, 'about.md')).toBe(join(root, 'papercamp', 'about.md'));
+    expect(planFile(root, 'assets')).toBe(join(root, 'papercamp', 'assets'));
+  });
+
+  it('rejects a name outside the plan list, so a new local-state file can never land here', () => {
+    const root = tmpRoot();
+    expect(() => planFile(root, 'capacity.json')).toThrow(/not part of the plan/);
+    expect(() => planFile(root, 'tasks.log')).toThrow(/not part of the plan/);
+  });
+});
+
+describe('localFile', () => {
+  it('resolves under papercamp/.local/', () => {
+    const root = tmpRoot();
+    expect(localFile(root, 'tasks.log')).toBe(join(root, 'papercamp', '.local', 'tasks.log'));
+    expect(localFile(root, 'run-order.md')).toBe(join(root, 'papercamp', '.local', 'run-order.md'));
   });
 });

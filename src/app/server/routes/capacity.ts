@@ -9,7 +9,7 @@ export function capacityRoutes({ root, activity }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/capacity',
       handle: async (_req, res) => {
-        sendJson(res, 200, await readCapacity(root));
+        sendJson(res, 200, await readCapacity());
       },
     },
     {
@@ -21,9 +21,9 @@ export function capacityRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 503, { error: 'Claude reported no capacity — is the CLI signed in?' });
           return;
         }
-        await writeCapacity(root, snapshot, 'probe');
+        await writeCapacity(snapshot, 'probe');
         activity.publish({ type: 'capacity' });
-        sendJson(res, 200, await readCapacity(root));
+        sendJson(res, 200, await readCapacity());
       },
     },
   ];

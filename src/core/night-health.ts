@@ -1,6 +1,7 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { ChunkHealth, ChunkSignals, NightConfig, NightHealthMap } from '../types/index';
+import { localFile, planFile } from './corpus';
 import { runGit } from './git-log';
 import { readNightFindings } from './night-suggestions';
 import { hasFileChangedSince } from './night-worktree';
@@ -13,11 +14,11 @@ const GAP_SATURATION_DAYS = 30;
 const DEFAULT_ROOTS = ['src'];
 
 function nightJsonPath(root: string): string {
-  return join(root, 'papercamp', 'night.json');
+  return localFile(root, 'night.json');
 }
 
 async function readConfigNightRoots(root: string): Promise<string[] | undefined> {
-  const raw = await readFile(join(root, 'papercamp', 'config.json'), 'utf-8').catch(() => null);
+  const raw = await readFile(planFile(root, 'config.json'), 'utf-8').catch(() => null);
   if (!raw) return undefined;
   try {
     const roots = (JSON.parse(raw) as { night?: NightConfig }).night?.roots;

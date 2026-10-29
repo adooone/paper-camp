@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readCapacity } from '@/core/capacity';
 import type { RateLimitSnapshot } from '@/types/index';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockProbeCapacity } = vi.hoisted(() => ({ mockProbeCapacity: vi.fn() }));
 vi.mock('../capacity-probe', () => ({ probeCapacity: mockProbeCapacity }));
@@ -14,8 +14,15 @@ import type { RouteContext } from './types';
 
 const dirs: string[] = [];
 
+beforeEach(async () => {
+  const configDir = await mkdtemp(join(tmpdir(), 'paper-camp-capacity-route-config-'));
+  dirs.push(configDir);
+  vi.stubEnv('PAPERCAMP_CONFIG_DIR', configDir);
+});
+
 afterEach(async () => {
   mockProbeCapacity.mockReset();
+  vi.unstubAllEnvs();
   await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
   dirs.length = 0;
 });
@@ -79,7 +86,7 @@ describe('POST /api/capacity/refresh', () => {
     await route('/api/capacity/refresh', 'POST', { root }).handle(fakeReq(), res);
     expect(status()).toBe(503);
     expect((json() as { error: string }).error).toMatch(/signed in/);
-    expect(await readCapacity(root)).toBeNull();
+    expect(await readCapacity()).toBeNull();
   });
 
   it('writes the probe reading, publishes a capacity event, and returns the new reading', async () => {
@@ -96,6 +103,6 @@ describe('POST /api/capacity/refresh', () => {
     expect(body.snapshot).toEqual(snapshot);
     expect(body.source).toBe('probe');
     expect(publish).toHaveBeenCalledWith({ type: 'capacity' });
-    expect((await readCapacity(root))?.source).toBe('probe');
+    expect((await readCapacity())?.source).toBe('probe');
   });
 });

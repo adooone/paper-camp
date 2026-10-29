@@ -45,7 +45,7 @@ import {
   summarizeFeedback,
 } from '../feedback-reply';
 import { tryHandleGitChatRequest } from '../git-chat';
-import { campFile, checkStaleBaseForRunAll, readMaybe, resolveChatQuestion } from '../helpers';
+import { checkStaleBaseForRunAll, planFile, readMaybe, resolveChatQuestion } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
 import { appendNotification } from '../notification-log';
@@ -58,7 +58,7 @@ async function resolveFeedbackEntity(
   root: string,
   planId: string,
 ): Promise<{ entries: EntityEntry[]; entity: EntityEntry; targetFile: string } | null> {
-  const ideasDir = campFile(root, 'ideas');
+  const ideasDir = planFile(root, 'ideas');
   const { entries } = await readEntities(ideasDir);
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
   if (!entity) return null;
@@ -154,7 +154,7 @@ export async function applyFeedbackMessage(
         idea: entity.id,
         phases: spawnFix,
       });
-      const fixPath = join(campFile(root, 'ideas'), `${spawnedId}.md`);
+      const fixPath = join(planFile(root, 'ideas'), `${spawnedId}.md`);
       await git.commit(
         [relative(root, fixPath)],
         `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
@@ -295,7 +295,7 @@ function applyKnownRenames(content: string): { content: string; changed: boolean
 }
 
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
-  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const { entries } = await readEntities(planFile(root, 'ideas'));
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
   return entity ? entityToPlan(entity) : undefined;
 }
@@ -312,7 +312,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
 }
 
 async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | undefined> {
-  const { entries } = await readEntities(campFile(root, 'ideas'));
+  const { entries } = await readEntities(planFile(root, 'ideas'));
   const entity = entries.find((e) => e.id === ideaId);
   return entity ? toIdeaEntry(entity) : undefined;
 }
@@ -574,7 +574,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       'prompt is required',
       async ({ prompt }) => {
         const suggestBaseline = parseSuggestions(
-          await readMaybe(campFile(root, 'suggestions.md')),
+          await readMaybe(planFile(root, 'suggestions.md')),
         ).length;
         return agent.launch('suggest', { planTitle: 'Suggest ideas' }, prompt, { suggestBaseline });
       },
@@ -736,7 +736,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        const ideasDir = campFile(root, 'ideas');
+        const ideasDir = planFile(root, 'ideas');
         const { entries } = await readCorpus(root, { live: true });
         const parent = issue.entityId ? entries.find((e) => e.id === issue.entityId) : undefined;
 

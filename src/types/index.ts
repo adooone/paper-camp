@@ -1273,7 +1273,7 @@ export type TaskKind =
   | 'install-toolbar'
   | 'night-review';
 
-// Persisted to papercamp/tasks.log (JSON Lines) — survives a dev-server restart.
+// Persisted to papercamp/.local/tasks.log (JSON Lines) — survives a dev-server restart.
 // A start line and its later finish share an id; `readTaskLog` folds them, so no `endedAt` means never finished.
 export interface TaskLogEntry {
   id: string;

@@ -23,7 +23,7 @@ import {
 } from '@/core/serialize';
 import type { NightSuggestionEntry, RoadmapItem, SuggestionEntry } from '@/types/index';
 import type { AgentTask } from '../../agent';
-import { campFile, readMaybe } from '../../helpers';
+import { planFile, readMaybe } from '../../helpers';
 import { readJson, sendJson } from '../../http';
 import { checkIdeaOverlap } from '../../overlap-check';
 import { applyPrioritiseVerdict, getPrioritiseVerdict } from '../../prioritise';
@@ -107,7 +107,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 500, { error: 'could not assign ticket ID' });
           return;
         }
-        const ideasDir = campFile(root, 'ideas');
+        const ideasDir = planFile(root, 'ideas');
         await mkdir(ideasDir, { recursive: true });
         const entityContent = formatEntityFile({
           id: newId,
@@ -134,7 +134,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'suggestion is required' });
           return;
         }
-        const suggestionsPath = campFile(root, 'suggestions.md');
+        const suggestionsPath = planFile(root, 'suggestions.md');
         const raw = await readMaybe(suggestionsPath);
         const updated = removeSuggestionLine(raw, suggestion);
         if (updated === raw) {
@@ -341,7 +341,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
         // subject is free text, not a foreign key, so nothing else keeps it in sync.
         let renamedSubjects = 0;
         if (renamed) {
-          const { entries } = await readEntities(campFile(root, 'ideas'));
+          const { entries } = await readEntities(planFile(root, 'ideas'));
           const affected = entries.filter((entry) => entry.subject === itemName);
           for (const entry of affected) {
             await updateEntity(root, entry.id, () => ({ subject: currentItemName }));
@@ -425,7 +425,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'suggestion is required' });
           return;
         }
-        const suggestionsPath = campFile(root, 'suggestions.md');
+        const suggestionsPath = planFile(root, 'suggestions.md');
         const raw = await readMaybe(suggestionsPath);
         const updated = removeSuggestionLine(raw, suggestion);
         if (updated === raw) {
@@ -449,7 +449,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'finding is required' });
           return;
         }
-        const suggestionsPath = campFile(root, 'suggestions.md');
+        const suggestionsPath = planFile(root, 'suggestions.md');
         const raw = await readMaybe(suggestionsPath);
         const updated = removeNightFindingLine(raw, finding);
         if (updated === raw) {
@@ -477,7 +477,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'finding is required' });
           return;
         }
-        const suggestionsPath = campFile(root, 'suggestions.md');
+        const suggestionsPath = planFile(root, 'suggestions.md');
         const raw = await readMaybe(suggestionsPath);
         const updated = removeNightFindingLine(raw, finding);
         if (updated === raw) {
@@ -500,7 +500,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'ids is required' });
           return;
         }
-        const { entries } = await readEntities(campFile(root, 'ideas'));
+        const { entries } = await readEntities(planFile(root, 'ideas'));
 
         const archived: string[] = [];
         for (const id of ids) {

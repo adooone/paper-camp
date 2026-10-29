@@ -141,7 +141,7 @@ export interface ApplyPrioritiseResult {
   annotationError?: string;
 }
 
-/** Applies a prioritise verdict: reorders papercamp/run-order.md to the agent's
+/** Applies a prioritise verdict: reorders papercamp/.local/run-order.md to the agent's
  *  target sequence and appends the matching `why` line as a log comment to every
  *  ranked idea, whether or not its position actually moved — a confirmed order is
  *  still a reason worth keeping.

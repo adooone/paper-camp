@@ -24,7 +24,9 @@ vi.mock('@/core/night-health', async (importOriginal) => {
   return {
     ...actual,
     computeNightHealthMap: async (root: string) => {
-      const raw = await readFile(join(root, 'papercamp', 'night.json'), 'utf-8').catch(() => null);
+      const raw = await readFile(join(root, 'papercamp', '.local', 'night.json'), 'utf-8').catch(
+        () => null,
+      );
       const chunks = raw ? (JSON.parse(raw).chunks ?? []) : [];
       return { generatedAt: new Date().toISOString(), chunks };
     },
@@ -242,7 +244,6 @@ describe('POST /api/night/pause', () => {
     const root = await makeProjectDir('demo');
     await enableNight(root);
     await writeCapacity(
-      root,
       {
         status: 'allowed',
         unifiedWindows: { five_hour: { utilization: 0.1, resetsAt: 1800000000 } },
@@ -311,8 +312,9 @@ describe('POST /api/night/run', () => {
     await useConfigDir();
     const root = await makeProjectDir('demo');
     await enableNight(root);
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
     await writeFile(
-      join(root, 'papercamp', 'night.json'),
+      join(root, 'papercamp', '.local', 'night.json'),
       JSON.stringify({
         chunks: [
           { path: 'src/core', score: 10 },
@@ -345,8 +347,9 @@ describe('POST /api/night/run', () => {
     await useConfigDir();
     const root = await makeProjectDir('demo');
     await enableNight(root);
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
     await writeFile(
-      join(root, 'papercamp', 'night.json'),
+      join(root, 'papercamp', '.local', 'night.json'),
       JSON.stringify({ chunks: [{ path: 'src/core', score: 90 }] }),
       'utf-8',
     );

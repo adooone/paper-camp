@@ -22,10 +22,10 @@ async function readFileMaybe(path: string): Promise<string> {
   }
 }
 
-// papercamp/run-order.md sits alongside ideasDir's parent; rank is the 1-based
+// papercamp/.local/run-order.md sits alongside ideasDir's parent; rank is the 1-based
 // list position, not the (possibly stale, pre-migration) frontmatter `order`.
 async function readRunOrderRanks(ideasDir: string): Promise<Map<string, number>> {
-  const content = await readFileMaybe(join(ideasDir, '..', 'run-order.md'));
+  const content = await readFileMaybe(join(ideasDir, '..', '.local', 'run-order.md'));
   return new Map(parseRunOrderFile(content).map((e, i) => [e.id, i + 1]));
 }
 

@@ -62,7 +62,7 @@ export async function corpusFingerprint(ideasDir: string): Promise<string> {
     const mdFiles = files.filter((f) => f.endsWith('.md')).sort();
     stamps.push(...(await Promise.all(mdFiles.map((f) => fileStamp(join(dir, f))))));
   }
-  stamps.push(await fileStamp(join(ideasDir, '..', 'run-order.md')));
+  stamps.push(await fileStamp(join(ideasDir, '..', '.local', 'run-order.md')));
   return stamps.join('\n');
 }
 
@@ -191,7 +191,28 @@ export async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-export const campFile = (root: string, name: string) => join(root, 'papercamp', name);
+const PLAN_NAMES = new Set([
+  'ideas',
+  'config.json',
+  'suggestions.md',
+  'chat.md',
+  'about.md',
+  'assets',
+]);
+
+/** The committed plan: `ideas/`, `config.json`, `suggestions.md`, `chat.md`, `about.md`,
+ * `assets/` — everything else belongs under `localFile` or `machineFile` instead. */
+export const planFile = (root: string, name: string): string => {
+  if (!PLAN_NAMES.has(name)) {
+    throw new Error(`planFile: "${name}" is not part of the plan — use localFile or machineFile`);
+  }
+  return join(root, 'papercamp', name);
+};
+
+/** This checkout's own state — logs, caches, run order — under `papercamp/.local/`,
+ * which ignores itself via `papercamp/.local/.gitignore` and so is never committed. */
+export const localFile = (root: string, name: string): string =>
+  join(root, 'papercamp', '.local', name);
 
 export type EntityFileInput = Parameters<typeof formatEntityFile>[0];
 
@@ -233,7 +254,7 @@ export async function writeEntityFile(
   path: string,
   input: EntityFileInput,
 ): Promise<void> {
-  await assertCorpusWritable(campFile(root, 'config.json'));
+  await assertCorpusWritable(planFile(root, 'config.json'));
   await writeFile(path, `${formatEntityFile(input)}\n`, 'utf-8');
 }
 
@@ -251,7 +272,7 @@ export class CorpusError extends Error {
 /** Resolves an id to its file, trying the primary ideas dir then `archive/` —
  * every write primitive below goes through this instead of assuming primary. */
 export async function resolveEntityFilePath(root: string, id: string): Promise<string | null> {
-  const ideasDir = campFile(root, 'ideas');
+  const ideasDir = planFile(root, 'ideas');
   const primary = join(ideasDir, `${id}.md`);
   if (await fileExists(primary)) return primary;
   const archived = join(ideasDir, 'archive', `${id}.md`);
@@ -286,7 +307,7 @@ export async function updateEntity(
   return serializeWrite(root, async () => {
     const filePath = await resolveEntityFilePath(root, id);
     if (!filePath) throw new CorpusError(`entity "${id}" not found`, 404);
-    const ideasDir = campFile(root, 'ideas');
+    const ideasDir = planFile(root, 'ideas');
     const archived = filePath.startsWith(join(ideasDir, 'archive'));
     const entry = await readEntityAt(filePath, archived);
 
@@ -361,11 +382,11 @@ export interface CreateIdeaInput {
  * derived status takes over once it has phases). */
 export async function createIdea(root: string, input: CreateIdeaInput): Promise<string> {
   return serializeWrite(root, async () => {
-    const configPath = campFile(root, 'config.json');
+    const configPath = planFile(root, 'config.json');
     await assertCorpusWritable(configPath);
     const id = await assignEntityId(configPath);
     if (!id) throw new CorpusError('could not assign entity ID', 500);
-    const ideasDir = campFile(root, 'ideas');
+    const ideasDir = planFile(root, 'ideas');
     await mkdir(ideasDir, { recursive: true });
     const content = formatEntityFile({
       id,

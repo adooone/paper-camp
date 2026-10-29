@@ -28,6 +28,7 @@ afterEach(() => {
 function tmpRoot(): string {
   const root = mkdtempSync(join(tmpdir(), 'papercamp-root-'));
   mkdirSync(join(root, 'papercamp', 'ideas', 'archive'), { recursive: true });
+  mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
   return root;
 }
 
@@ -40,7 +41,7 @@ function write(root: string, entity: Parameters<typeof formatEntityFile>[0]): vo
 
 function writeRunOrder(root: string, lines: string[]): void {
   writeFileSync(
-    join(root, 'papercamp', 'run-order.md'),
+    join(root, 'papercamp', '.local', 'run-order.md'),
     lines.length ? `${lines.join('\n')}\n` : '',
   );
 }
@@ -48,7 +49,7 @@ function writeRunOrder(root: string, lines: string[]): void {
 function readRunOrder(root: string): string[] {
   const raw = (() => {
     try {
-      return readFileSync(join(root, 'papercamp', 'run-order.md'), 'utf-8');
+      return readFileSync(join(root, 'papercamp', '.local', 'run-order.md'), 'utf-8');
     } catch {
       return '';
     }
