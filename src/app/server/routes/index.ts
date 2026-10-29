@@ -4,7 +4,7 @@ import { capacityRoutes } from './capacity';
 import { chatRoutes } from './chat';
 import { checkRoutes } from './checks';
 import { ciRoutes } from './ci';
-import { entityRoutes, ideaRoutes } from './content';
+import { entityRoutes, ideaAssetRoutes, ideaRoutes } from './content';
 import { deskDiscoveryRoutes } from './desk-discovery';
 import { gitRoutes } from './git';
 import { nightRoutes } from './night';
@@ -26,6 +26,7 @@ export type { Route, RouteContext } from './types';
 export function buildRoutes(ctx: RouteContext): Route[] {
   return [
     ...entityRoutes(ctx),
+    ...ideaAssetRoutes(ctx),
     ...ideaRoutes(ctx),
     ...iconRoutes(ctx),
     ...gitRoutes(ctx),

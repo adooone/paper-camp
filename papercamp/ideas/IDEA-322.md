@@ -4,6 +4,7 @@ title: Files on an idea
 type: feat
 status: idea
 created: 2026-10-29
+updated: 2026-10-29
 tags:
   - app
   - planning
@@ -89,8 +90,9 @@ file added by hand on another machine appears after a pull; a mockup's
 script can't reach `/api/*`; and `..` in a file name is refused.
 
 ### Phases
-- [ ] Assets on the corpus and the serving routes
+- [x] Assets on the corpus and the serving routes
       List `papercamp/assets/<ID>/` onto `EntityEntry.assets`; `GET` list and file routes with MIME types, single-segment names and a sandbox CSP for HTML and SVG; `POST` and `DELETE` with the size limit from `config.json` and the per-run bookkeeping commit; route tests including traversal.
+      run: 7m35s · 132 in · 43.8k out · sonnet-5 · sess:909924a3-2277-4499-b4d4-729e82b9a8a6
 - [ ] Asset links in idea markdown
       Rewrite `assets/<name>` and `../assets/<ID>/<name>` in `Markdown` to the route, render image links inline, and send HTML links to the preview.
 - [ ] Files section in the web idea view

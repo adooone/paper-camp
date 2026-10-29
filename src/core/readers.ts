@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { EntityEntry, ParseResult, ParseWarning } from '../types/index';
+import { listIdeaAssets } from './assets';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
 
@@ -65,5 +66,13 @@ export async function readEntities(
     }
   }
 
-  return { entries, warnings, fileCount };
+  const assetsDir = join(ideasDir, '..', 'assets');
+  const withAssets = await Promise.all(
+    entries.map(async (e) => {
+      const assets = await listIdeaAssets(assetsDir, e.id);
+      return assets.length > 0 ? { ...e, assets } : e;
+    }),
+  );
+
+  return { entries: withAssets, warnings, fileCount };
 }

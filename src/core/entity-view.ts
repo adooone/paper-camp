@@ -52,6 +52,7 @@ export function entityToPlan(
     thread: e.thread,
     archived: e.archived,
     pr,
+    assets: e.assets,
   };
 }
 
@@ -66,5 +67,6 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
     order: e.order,
     created: e.created,
     log: logFromThread(e.thread),
+    assets: e.assets,
   };
 }

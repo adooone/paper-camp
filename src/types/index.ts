@@ -277,6 +277,8 @@ export interface PlanEntry {
   /** True when `status` is a guessed fallback because GitHub's PR state
    * couldn't be resolved — see isStatusFallback. */
   statusFallback?: boolean;
+  /** See EntityEntry.assets. */
+  assets?: AssetEntry[];
 }
 
 export interface ArchivableIdea {
@@ -457,6 +459,8 @@ export interface IdeaEntry {
   /** Fallback sort key for unordered entries — see `order`. Absent on view-model-only IdeaEntry literals that never enter the worklist sort. */
   created?: string;
   log?: LogEntry[];
+  /** See EntityEntry.assets. */
+  assets?: AssetEntry[];
 }
 
 // Unified entity — one file per entity, plan as an optional Phases section.
@@ -519,6 +523,20 @@ export interface EntityEntry {
   /** Frontmatter keys this paper-camp doesn't recognise, carried through verbatim so a
    * write never drops a field a newer version wrote — see entityFrontmatterKnownKeys. */
   unknownFrontmatter?: Record<string, unknown>;
+  /** `papercamp/assets/<id>/`'s contents, listed fresh on every read by readEntities —
+   * never stored in frontmatter (IDEA-322). */
+  assets?: AssetEntry[];
+}
+
+/** One file under `papercamp/assets/<id>/` (IDEA-322) — listed by readEntities,
+ * served by the `/api/ideas/assets` routes. */
+export interface AssetEntry {
+  name: string;
+  size: number;
+  /** MIME type guessed from the file extension. */
+  type: string;
+  /** mtime, ISO 8601. */
+  modified: string;
 }
 
 // No `id`/`status`: it only becomes a real idea if a human promotes it.
@@ -976,6 +994,12 @@ export interface PaperCampConfig {
   /** Night shift gate and scoring settings (IDEA-241); merge with DEFAULT_NIGHT_CONFIG for unset fields. */
   night?: NightConfig;
   notifications?: NotificationsConfig;
+  /** Per-file upload limit for `papercamp/assets/<ID>/` (IDEA-322); unset defaults to 5MB. */
+  assets?: AssetsConfig;
+}
+
+export interface AssetsConfig {
+  maxFileSizeMb?: number;
 }
 
 export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
