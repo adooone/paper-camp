@@ -201,6 +201,23 @@ export function medianPhaseDurationMs(entries: TaskLogEntry[]): number | null {
   return durations.length % 2 === 0 ? (durations[mid - 1] + durations[mid]) / 2 : durations[mid];
 }
 
+/** The per-phase cost a batch preview estimates a queued idea's remaining phases
+ * against — `undefined` until at least one phase has reported a cost. */
+export function medianPhaseCostUsd(entries: TaskLogEntry[]): number | undefined {
+  const costs: number[] = [];
+  for (const entry of entries) {
+    if (entry.phaseRuns?.length) {
+      for (const p of entry.phaseRuns) if (p.kind === 'phase') costs.push(p.usage.costUsd);
+    } else if (entry.taskKind === 'phase' && entry.usage) {
+      costs.push(entry.usage.costUsd);
+    }
+  }
+  if (costs.length === 0) return undefined;
+  costs.sort((a, b) => a - b);
+  const mid = Math.floor(costs.length / 2);
+  return costs.length % 2 === 0 ? (costs[mid - 1] + costs[mid]) / 2 : costs[mid];
+}
+
 export function mostExpensiveIdeas(entries: TaskLogEntry[], limit = 5): IdeaCost[] {
   const byId = new Map<string, IdeaCost>();
   for (const entry of entries) {

@@ -1,4 +1,5 @@
 import { agentRoutes } from './agent';
+import { batchRoutes } from './batch';
 import { capabilitiesRoutes } from './capabilities';
 import { capacityRoutes } from './capacity';
 import { chatRoutes } from './chat';
@@ -36,6 +37,7 @@ export function buildRoutes(ctx: RouteContext): Route[] {
     ...checkRoutes(ctx),
     ...ciRoutes(ctx),
     ...agentRoutes(ctx),
+    ...batchRoutes(ctx),
     ...chatRoutes(ctx),
     ...taskRoutes(ctx),
     ...notificationRoutes(ctx),

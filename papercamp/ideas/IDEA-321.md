@@ -4,14 +4,15 @@ title: Run the queue
 type: feat
 status: idea
 created: 2026-10-29
-needs:
-  - IDEA-319
-  - IDEA-320
+updated: 2026-10-29
 tags:
   - run
   - app
   - git
   - multi-project
+needs:
+  - IDEA-319
+  - IDEA-320
 subject: Run & monitor
 ---
 
@@ -263,8 +264,9 @@ restart mid-run leaves a *Resume* that picks up at the next unfinished
 phase.
 
 ### Phases
-- [ ] Readiness predicate and preview route
+- [x] Readiness predicate and preview route
       `batchReadiness` in `src/core/` combining needs, manual-only, open question, stale base and agent checks; `GET /api/batch/preview` with reasons, phase counts, cost estimate, capacity and git preflight; tests per reason.
+      run: 8m44s · 172 in · 33.2k out · sonnet-5 · sess:c5f24bae-3d1f-4acd-be5d-2962018c40d9
 - [ ] Extract `runIdea` from run-all
       Move the body of `startRunAllPhases` into a `runIdea(task, plan, opts)` that returns a typed outcome (review, needs-you, needs-human, failed-clean, failed-dirty, red-checks, auth); single run-all calls it unchanged.
 - [ ] `batch-run` task with stop rules and persisted state

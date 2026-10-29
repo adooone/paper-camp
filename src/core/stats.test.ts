@@ -4,6 +4,7 @@ import {
   countEntitiesByStatus,
   countThreadNotes,
   isoWeekKey,
+  medianPhaseCostUsd,
   medianPhaseDurationMs,
   mostExpensiveIdeas,
   tasksPerWeek,
@@ -239,6 +240,28 @@ describe('medianPhaseDurationMs', () => {
 
   it('returns null when no phase runs are recorded', () => {
     expect(medianPhaseDurationMs([logEntry({ taskKind: 'draft' })])).toBeNull();
+  });
+});
+
+describe('medianPhaseCostUsd', () => {
+  it('takes the median over phase-kind runs, ignoring fixes and non-phase tasks', () => {
+    const entries: TaskLogEntry[] = [
+      logEntry({
+        taskKind: 'run-all',
+        phaseRuns: [
+          { kind: 'phase', index: 0, usage: usage({ costUsd: 0.1 }) },
+          { kind: 'phase', index: 1, usage: usage({ costUsd: 0.3 }) },
+          { kind: 'fix', index: 0, usage: usage({ costUsd: 9.99 }) },
+        ],
+      }),
+      logEntry({ taskKind: 'phase', usage: usage({ costUsd: 0.2 }) }),
+      logEntry({ taskKind: 'draft', usage: usage({ costUsd: 9.99 }) }),
+    ];
+    expect(medianPhaseCostUsd(entries)).toBe(0.2);
+  });
+
+  it('returns undefined when no phase runs are recorded', () => {
+    expect(medianPhaseCostUsd([logEntry({ taskKind: 'draft' })])).toBeUndefined();
   });
 });
 
