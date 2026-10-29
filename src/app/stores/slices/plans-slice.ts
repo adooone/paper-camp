@@ -1,7 +1,9 @@
 import {
   DEFAULT_PLAN_LIST_FILTERS,
+  type GroupMode,
   type PlanListFilters,
   type PlanSortKey,
+  isGroupMode,
 } from '@/app/features/plans/helpers';
 import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { IdeaStatus, PlanStatus } from '@/types/index';
@@ -12,8 +14,16 @@ type DetailView = 'details' | 'feedback';
 const PLAN_FILTERS_KEY = 'plan-filters';
 const DETAIL_VIEW_KEY = 'detail-view';
 
+// Filters saved by an older build lack newer fields such as `group`, so they
+// are laid over the defaults rather than used as they are.
 function readStoredPlanFilters(): PlanListFilters {
-  return readLocalDraft<PlanListFilters>(PLAN_FILTERS_KEY) ?? DEFAULT_PLAN_LIST_FILTERS;
+  const stored = readLocalDraft<Partial<PlanListFilters>>(PLAN_FILTERS_KEY);
+  if (!stored) return DEFAULT_PLAN_LIST_FILTERS;
+  return {
+    ...DEFAULT_PLAN_LIST_FILTERS,
+    ...stored,
+    group: isGroupMode(stored.group) ? stored.group : DEFAULT_PLAN_LIST_FILTERS.group,
+  };
 }
 
 function readStoredDetailView(): DetailView {
@@ -37,6 +47,7 @@ export type PlansSlice = {
   clearPlanStatusFilter: () => void;
   setPlanSortKey: (sortKey: PlanSortKey) => void;
   togglePlanSortDirection: () => void;
+  setPlanGroup: (group: GroupMode) => void;
 
   // Which detail view the open plan shows; lifted so the sidebar switcher and
   // the content agree. Reset to 'details' when the open plan changes.
@@ -105,6 +116,8 @@ export function createPlansSlice(set: SetState): PlansSlice {
           sortDirection: s.planFilters.sortDirection === 'asc' ? 'desc' : 'asc',
         }),
       })),
+    setPlanGroup: (group) =>
+      set((s) => ({ planFilters: storePlanFilters({ ...s.planFilters, group }) })),
 
     detailView: readStoredDetailView(),
     setDetailView: (view) => {

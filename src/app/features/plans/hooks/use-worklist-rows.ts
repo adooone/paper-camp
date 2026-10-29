@@ -1,14 +1,12 @@
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
-  DEFAULT_GROUP_MODE,
   type PlanSortKey,
   type WorklistRow,
   groupRowsByProject,
   groupRowsBySubject,
-  isGroupMode,
 } from '../helpers';
 
 export const useWorklistRows = (rows: WorklistRow[]) => {
@@ -19,8 +17,7 @@ export const useWorklistRows = (rows: WorklistRow[]) => {
   } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as Record<string, unknown>;
-  const group = isGroupMode(search.group) ? search.group : DEFAULT_GROUP_MODE;
+  const group = useAppStore((s) => s.planFilters.group);
   const sortKey = useAppStore((s) => s.planFilters.sortKey);
   const sortDirection = useAppStore((s) => s.planFilters.sortDirection);
   const setPlanSortKey = useAppStore((s) => s.setPlanSortKey);

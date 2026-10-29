@@ -6,6 +6,7 @@ import {
   type PlanEntry,
   type PlanStatus,
 } from '@/types/index';
+import { DEFAULT_GROUP_MODE, type GroupMode } from './group-mode';
 import { phasePercentage } from './helpers';
 
 export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress' | 'order';
@@ -21,6 +22,8 @@ export interface PlanListFilters {
   noteStatuses: IdeaStatus[];
   /** Set by a roadmap item's "N in queue" link; null means unfiltered. */
   subject: string | null;
+  /** How the worklist is grouped; kept with the filters so it survives opening a plan. */
+  group: GroupMode;
 }
 
 /** Excludes done/dropped so 40+ closed plans stay out of first paint until a chip reveals them. */
@@ -37,6 +40,7 @@ export const DEFAULT_PLAN_LIST_FILTERS: PlanListFilters = {
   sortDirection: 'asc',
   noteStatuses: DEFAULT_VISIBLE_NOTE_STATUSES,
   subject: null,
+  group: DEFAULT_GROUP_MODE,
 };
 
 /** The sidebar's Status section and the old toolbar chips share this order. */

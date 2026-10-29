@@ -15,7 +15,7 @@ import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { DEFAULT_GROUP_MODE, type GroupMode, isGroupMode } from '../helpers';
+import { type GroupMode, isGroupMode } from '../helpers';
 
 export const usePlansPage = () => {
   const { plans, plansError } = usePlans();
@@ -25,6 +25,7 @@ export const usePlansPage = () => {
   const setDetailView = useAppStore((s) => s.setDetailView);
   const planFilters = useAppStore((s) => s.planFilters);
   const setSubjectFilter = useAppStore((s) => s.setSubjectFilter);
+  const setPlanGroup = useAppStore((s) => s.setPlanGroup);
   const dismissSuggestion = useAppStore((s) => s.dismissSuggestion);
   const activePlan = useActivePlan();
   const activeIdea = useActiveIdea();
@@ -37,14 +38,26 @@ export const usePlansPage = () => {
     subject?: string;
     group?: string;
   };
-  const group: GroupMode = isGroupMode(groupParam) ? groupParam : DEFAULT_GROUP_MODE;
+  const group = planFilters.group;
 
   useEffect(() => {
     setSubjectFilter(subjectParam ?? null);
   }, [subjectParam, setSubjectFilter]);
 
+  // Grouping is saved with the plan filters, so it survives opening a plan and
+  // coming back. A `?group=` link still sets it once, then leaves the URL.
+  useEffect(() => {
+    if (!isGroupMode(groupParam)) return;
+    setPlanGroup(groupParam);
+    navigate({
+      to: '.',
+      search: (prev: Record<string, unknown>) => ({ ...prev, group: undefined }),
+      replace: true,
+    });
+  }, [groupParam, setPlanGroup, navigate]);
+
   const handleGroupChange = (next: GroupMode) => {
-    navigate({ to: '/', search: (prev: Record<string, unknown>) => ({ ...prev, group: next }) });
+    setPlanGroup(next);
   };
 
   // Reset to Details only on an actual plan/idea change, not on initial mount —
