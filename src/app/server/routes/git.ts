@@ -445,9 +445,8 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       },
     },
 
-    // The one-tap fix on the git card's local-state drift row: re-runs the IDEA-320
-    // migration, which covers all three drift checks (tracked-outside-plan, missing
-    // papercamp/.local/.gitignore, missing .gitattributes block) in one pass.
+    // The one-tap fix on the git card's local-state drift row: re-runs the
+    // migration, covering all three drift checks in one pass.
     {
       method: 'POST',
       path: '/api/git/fix-local-state',

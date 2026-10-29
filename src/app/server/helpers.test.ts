@@ -35,11 +35,12 @@ describe('entityFileInput', () => {
     const root = await mkdtemp(join(tmpdir(), 'papercamp-entity-file-input-'));
     const dir = join(root, 'ideas');
     await mkdir(join(dir, 'archive'), { recursive: true });
+    await mkdir(join(root, '.local'), { recursive: true });
     await writeFile(
       join(dir, 'IDEA-1.md'),
       '---\nid: IDEA-1\ntitle: Test\ntype: feat\nstatus: planned\ncreated: 2026-07-01\norder: 9\n---\nx\n',
     );
-    await writeFile(join(root, 'run-order.md'), 'IDEA-1 — Test\n');
+    await writeFile(join(root, '.local', 'run-order.md'), 'IDEA-1 — Test\n');
 
     const { entries } = await readEntities(dir);
     const entry = entries.find((e) => e.id === 'IDEA-1');

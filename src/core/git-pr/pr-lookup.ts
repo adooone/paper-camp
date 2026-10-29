@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { PrInfo, ReviewDecision, ReviewThread } from '../../types/index';
-import { localFile } from '../corpus';
+import { localFile } from '../local-paths';
 
 interface PrMapCacheEntry {
   /** `undefined` means `gh` couldn't resolve, distinct from a resolved-but-empty `Map`. */

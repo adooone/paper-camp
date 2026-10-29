@@ -60,9 +60,8 @@ async function isGitRepo(root: string): Promise<boolean> {
   return code === 0;
 }
 
-// No existing check tells a rebase mid-conflict apart from a landed one (mirrors
-// the same check in git.ts) — a migration commit mid-rebase would land on the
-// wrong parent.
+// Mirrors the same check in git.ts — a migration commit mid-rebase would land
+// on the wrong parent.
 async function isRebaseInProgress(root: string): Promise<boolean> {
   for (const name of ['rebase-merge', 'rebase-apply']) {
     const { code, stdout } = await runGit(root, ['rev-parse', '--git-path', name]);
@@ -96,10 +95,8 @@ async function untrack(root: string, relPath: string): Promise<void> {
   await runGit(root, ['rm', '--cached', '-r', '--ignore-unmatch', '--', relPath]);
 }
 
-// Moves an old papercamp/<name> file or directory onto its papercamp/.local/<name>
-// home. If something already lives at the destination (an earlier partial run, or
-// phase 1's own code already having written there), the destination wins and the
-// stale source is just discarded — there is nowhere else for it to go.
+// If the destination already exists (an earlier partial run, or phase 1 already
+// writing there), it wins and the stale source is discarded.
 async function moveIntoLocal(oldPath: string, newPath: string): Promise<void> {
   if (await pathExists(newPath)) {
     await rm(oldPath, { recursive: true, force: true });
@@ -109,11 +106,8 @@ async function moveIntoLocal(oldPath: string, newPath: string): Promise<void> {
   await rename(oldPath, newPath);
 }
 
-// Nothing under PLAN_NAMES may ever sit in .gitignore (a plan file is always meant
-// to be committed — this is what settles paper-camp's own chat.md drift), and every
-// pre-.local entry in DAEMON_GITIGNORE_ENTRIES is now redundant with papercamp/.local/
-// ignoring itself. Comment lines explaining one of those entries, written directly
-// above it with no blank line between, are dropped along with it.
+// A plan file must never be gitignored (chat.md needs to stay committed), and
+// every pre-.local entry in DAEMON_GITIGNORE_ENTRIES is now redundant.
 async function cleanGitignore(root: string): Promise<boolean> {
   const path = join(root, '.gitignore');
   const content = await readFile(path, 'utf-8').catch(() => null);
@@ -141,10 +135,8 @@ async function cleanGitignore(root: string): Promise<boolean> {
   return true;
 }
 
-// `chat.md` is shared and committed by every project, so appends from two clones
-// must merge without a conflict — `merge=union` keeps both sides' lines on pull.
-// The block is replaced wholesale on re-run rather than diffed, so it stays in sync
-// with GITATTRIBUTES_BLOCK_BODY across upgrades.
+// `chat.md` is committed by every clone, so `merge=union` keeps both sides' lines
+// on pull; the block is replaced wholesale on re-run to stay in sync with upgrades.
 async function ensureGitattributesBlock(root: string): Promise<boolean> {
   const path = join(root, '.gitattributes');
   const content = await readFile(path, 'utf-8').catch(() => '');
@@ -227,9 +219,8 @@ export async function migrateLocalState(root: string): Promise<MigrationResult> 
   }
   let rotatedPairingToken = false;
   if (pairingEverCommitted) {
-    // The old token is permanently readable in that project's git history (and, for
-    // a public repo, on GitHub) — minting a fresh one and dropping the old state is
-    // the only way to make the leaked token stop working.
+    // The old token is permanently readable in git history, so minting a fresh
+    // one is the only way to make the leaked token stop working.
     await savePairingState(newPairingPath, {
       token: randomBytes(32).toString('hex'),
       origins: new Set(),

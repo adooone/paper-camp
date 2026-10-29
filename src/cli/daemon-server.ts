@@ -189,10 +189,8 @@ export async function createProjectApi(
   checkMachineBusy: () => boolean,
   pairCodeManager: PairCodeManager,
 ): Promise<ApiMiddleware> {
-  // Runs once, the first time this process mounts the project — cheap no-op on every
-  // mount after the first upgrade has already landed its one commit. A project found
-  // mid-rebase or with staged changes is left alone and retried on the next mount
-  // (e.g. the next daemon restart), rather than failing the mount outright.
+  // Cheap no-op after the first mount's migration has landed. A project found
+  // mid-rebase or with staged changes is left alone and retried on the next mount.
   const migration = await migrateLocalState(project.path).catch((error: unknown) => {
     console.error(`paper-camp: local-state migration failed for "${project.slug}":`, error);
     return null;

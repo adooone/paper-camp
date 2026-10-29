@@ -6,7 +6,7 @@
     "overage": false,
     "unifiedWindows": {
       "five_hour": {
-        "utilization": 0.36,
+        "utilization": 0.37,
         "resetsAt": 1793299200
       },
       "seven_day": {
@@ -15,6 +15,6 @@
       }
     }
   },
-  "capturedAt": "2026-10-29T16:56:27.014Z",
+  "capturedAt": "2026-10-29T17:02:37.032Z",
   "source": "run"
 }

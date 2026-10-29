@@ -126,10 +126,8 @@ async function registerInMachineRegistry(targetDir: string, projectName: string)
   }
 }
 
-// The pre-IDEA-320 mechanism: lines hand-inserted into the project's own .gitignore,
-// one per daemon-written file. Superseded by papercamp/.local/.gitignore, which ignores
-// every file under it with a single `*` and needs no list — kept here so the migration
-// (IDEA-320 phase 2) can find and drop these lines from projects that still have them.
+// Superseded by papercamp/.local/.gitignore; kept so the migration can find and
+// drop these hand-inserted lines from projects that still have them.
 export const DAEMON_GITIGNORE_ENTRIES = [
   'papercamp/.pairing.json',
   'papercamp/.task-logs/',
@@ -141,11 +139,8 @@ export const DAEMON_GITIGNORE_ENTRIES = [
   'papercamp/run-order.md',
 ] as const;
 
-// Ignores the whole folder from inside itself, so nothing written under papercamp/.local/
-// can ever be committed regardless of the project's own .gitignore, and git skips the
-// folder in `status` — a new local-state file is safe just by living under here.
-// Exported so the IDEA-320 migration can create it for a project upgrading from before
-// `.local/` existed, not just a fresh `init`.
+// Ignores the whole folder from inside itself, so a new local-state file is safe
+// just by living under here. Exported so the migration can create it on upgrade too.
 export async function ensureLocalGitignore(campDir: string): Promise<void> {
   const localDir = join(campDir, '.local');
   await mkdir(localDir, { recursive: true });
