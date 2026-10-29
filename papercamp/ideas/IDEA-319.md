@@ -102,8 +102,9 @@ run that aborts records `error`, not `done`.
 - [x] One bookkeeping commit per run
       Run stats, capacity and thread lines ride the run's own commit or a single per-run bookkeeping commit.
       run: 7m21s · 102 in · 42.3k out · sonnet-5 · sess:17b087bd-5cbb-448d-a000-8b479c6e0503
-- [ ] Rule-based merge for `papercamp/` files inside `reconcileOnto`
+- [x] Rule-based merge for `papercamp/` files inside `reconcileOnto`
       Autostash dirty `papercamp/` files; resolve frontmatter, phase checkboxes, `run:` lines, thread entries and logs by rule; hand only code conflicts to the agent.
+      run: 7m57s · 74 in · 38.8k out · sonnet-5 · sess:04c7f083-f31a-4203-b856-4f9387ea3e93
 - [ ] Verified `resolve-conflict` outcome with backup ref and push
       Create a backup ref first, let the prompt drop code already contained upstream, check repo state after the agent exits, then record done and push, or error with the reason.
 - [ ] Sync and fix-divergence from chat

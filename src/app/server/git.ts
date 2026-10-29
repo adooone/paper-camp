@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { lstat, readFile } from 'node:fs/promises';
+import { lstat, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { branchName } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse/parser';
@@ -16,12 +16,17 @@ import type {
   StaleBaseRef,
 } from '../../types';
 import { buildGitSyncRecoveryPrompt } from './git-sync-recovery';
+import { mergePapercampEntity } from './papercamp-merge';
 import { buildResolveConflictPrompt } from './resolve-conflict-prompt';
 
 const AI_DIFF_BLOCKLIST = [/(^|\/)\.env(\.|$)/i, /\.(pem|key|p12|crt)$/i];
 
 // Unmerged porcelain status codes — a rebase (or merge) conflict, as opposed to a plain edit.
 const CONFLICT_STATUSES = new Set(['UU', 'AA', 'DD', 'AU', 'UA', 'DU', 'UD']);
+
+// Idea/plan entity files — the only papercamp/ files reconcileOnto resolves by rule;
+// tasks.log already auto-resolves via its own `merge=union` .gitattributes entry.
+const ENTITY_FILE_RE = /^papercamp\/(?:ideas|plans)(?:\/archive)?\/[A-Za-z]+-\d+\.md$/;
 
 /** Thrown by assertCleanWorkingTree so a caller can refuse before merging, rather
  * than landing a squash-merge and only then failing to switch to main. */
@@ -791,40 +796,140 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
-  async function reconcileOnto(ref: string): Promise<void> {
-    try {
-      await runGit(['merge', '--ff-only', ref]);
-      return;
-    } catch {}
-    try {
-      await runGit(['rebase', ref]);
-    } catch (err) {
-      const conflictedFiles = (await runGitStatus())
+  // The daemon rewrites papercamp/ (capacity.json, run bookkeeping) on its own schedule,
+  // independent of any rebase — stashed around the rebase so that churn can never block
+  // it from starting, and popped back once it's done.
+  async function stashDirtyPapercamp(): Promise<boolean> {
+    const dirty = (await runGitStatus({ untrackedFiles: 'all' })).some((entry) =>
+      entry.path.startsWith('papercamp/'),
+    );
+    if (!dirty) return false;
+    await runGit([
+      'stash',
+      'push',
+      '--include-untracked',
+      '-m',
+      'papercamp-reconcile',
+      '--',
+      'papercamp',
+    ]);
+    return true;
+  }
+
+  // During a conflict, stage 1/2/3 hold the merge base, "ours" and "theirs" — the only
+  // look this needs at what each side wrote, without disturbing the in-progress rebase.
+  async function readConflictStages(
+    path: string,
+  ): Promise<{ base: string; ours: string; theirs: string } | null> {
+    const [base, ours, theirs] = await Promise.all(
+      [1, 2, 3].map((stage) => runGit(['show', `:${stage}:${path}`]).catch(() => null)),
+    );
+    if (base === null || ours === null || theirs === null) return null;
+    return { base, ours, theirs };
+  }
+
+  // Resolves one conflicted papercamp/ entity file by rule and stages it. Returns false
+  // (leaving the conflict markers in place, unstaged) for anything the rules in
+  // mergePapercampEntity can't decide — a real content conflict goes to the agent instead.
+  async function tryResolvePapercampConflict(path: string): Promise<boolean> {
+    if (!ENTITY_FILE_RE.test(path)) return false;
+    const stages = await readConflictStages(path);
+    if (!stages) return false;
+    const merged = mergePapercampEntity(stages.base, stages.ours, stages.theirs);
+    if (merged === null) return false;
+    await writeFile(join(root, path), merged, 'utf-8');
+    await runGit(['add', '--', toLiteralPathspec(path)]);
+    return true;
+  }
+
+  async function captureConflictContent(
+    paths: string[],
+  ): Promise<{ path: string; content: string }[]> {
+    return Promise.all(
+      paths.map(async (path) => {
+        const content = await readFile(join(root, path), 'utf-8').catch(() => '');
+        return {
+          path,
+          content:
+            content.length > MAX_CONFLICT_CONTENT_CHARS
+              ? `${content.slice(0, MAX_CONFLICT_CONTENT_CHARS)}\n... (truncated)`
+              : content,
+        };
+      }),
+    );
+  }
+
+  // Drives a rebase already mid-conflict to completion: auto-resolve every papercamp/
+  // conflict by rule, and if that clears the stop entirely, continue — which may surface
+  // another conflict on the next commit, so this repeats until the rebase finishes or a
+  // conflict remains that no rule can decide (real code, or a papercamp edit the rules
+  // can't reconcile), which goes to the agent instead.
+  async function driveRebaseToCompletion(ref: string, firstError: unknown): Promise<void> {
+    let lastError = firstError;
+    // Bounded by rebase progress: each successful iteration clears one commit's conflicts,
+    // so this can't loop more than the number of commits being replayed.
+    for (let i = 0; i < 100; i++) {
+      const conflicted = (await runGitStatus())
         .filter((entry) => CONFLICT_STATUSES.has(entry.status))
         .map((entry) => entry.path);
       // A rebase can fail with no unmerged path (unstaged changes, bad ref, hook
       // rejection) — that's not a content conflict, so keep git's own error.
-      if (conflictedFiles.length === 0) {
+      if (conflicted.length === 0) {
         await runGit(['rebase', '--abort']).catch(() => {});
-        throw err;
+        throw lastError;
       }
-      // Captured before the abort below restores the pre-rebase content — this is
-      // the resolve-conflict agent's only look at what the markers actually said.
-      const conflictedContent = await Promise.all(
-        conflictedFiles.map(async (path) => {
-          const content = await readFile(join(root, path), 'utf-8').catch(() => '');
-          return {
-            path,
-            content:
-              content.length > MAX_CONFLICT_CONTENT_CHARS
-                ? `${content.slice(0, MAX_CONFLICT_CONTENT_CHARS)}\n... (truncated)`
-                : content,
-          };
-        }),
-      );
-      await runGit(['rebase', '--abort']).catch(() => {});
-      throw new RebaseConflictError(ref, conflictedFiles, conflictedContent);
+
+      const unresolved: string[] = [];
+      for (const path of conflicted) {
+        if (!(await tryResolvePapercampConflict(path))) unresolved.push(path);
+      }
+
+      if (unresolved.length > 0) {
+        // Captured before the abort below restores the pre-rebase content — this is
+        // the resolve-conflict agent's only look at what the markers actually said.
+        const conflictedContent = await captureConflictContent(unresolved);
+        await runGit(['rebase', '--abort']).catch(() => {});
+        throw new RebaseConflictError(ref, unresolved, conflictedContent);
+      }
+
+      try {
+        await runGit(['rebase', '--continue']);
+        return;
+      } catch (err) {
+        lastError = err;
+      }
     }
+    await runGit(['rebase', '--abort']).catch(() => {});
+    throw lastError;
+  }
+
+  async function reconcileOnto(ref: string): Promise<void> {
+    const stashed = await stashDirtyPapercamp();
+    let outcome: { ok: true } | { ok: false; err: unknown };
+    try {
+      try {
+        await runGit(['merge', '--ff-only', ref]);
+      } catch {
+        try {
+          await runGit(['rebase', ref]);
+        } catch (err) {
+          await driveRebaseToCompletion(ref, err);
+        }
+      }
+      outcome = { ok: true };
+    } catch (err) {
+      outcome = { ok: false, err };
+    }
+    if (stashed) {
+      try {
+        await runGit(['stash', 'pop', '--index']);
+      } catch (popErr) {
+        // The rebase's own failure already explains what's wrong; don't bury it under
+        // a secondary stash-pop error that only matters once the rebase itself succeeded.
+        if (outcome.ok) outcome = { ok: false, err: popErr };
+      }
+    }
+    if (!outcome.ok) throw outcome.err;
   }
 
   // Tells a genuine rebase conflict (needs domain judgement to resolve) apart from
