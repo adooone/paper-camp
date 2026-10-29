@@ -4,6 +4,7 @@ export * from './clarifications-section';
 export * from './deliver-section';
 export * from './entity-detail';
 export * from './feedback-section';
+export * from './files-section';
 export * from './fixes-section';
 export * from './group-select';
 export * from './list-view';

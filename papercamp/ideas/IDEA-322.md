@@ -96,7 +96,8 @@ script can't reach `/api/*`; and `..` in a file name is refused.
 - [x] Asset links in idea markdown
       Rewrite `assets/<name>` and `../assets/<ID>/<name>` in `Markdown` to the route, render image links inline, and send HTML links to the preview.
       run: 3m13s · 80 in · 22.1k out · sonnet-5 · sess:b09e9256-9668-4083-9ca2-a99ed2f2c338
-- [ ] Files section in the web idea view
+- [x] Files section in the web idea view
       Rows with type icon, size, age and image thumbnails; preview sheet for image, sandboxed HTML and text; drag-and-drop and *Add file* upload; *Copy link* and *Delete*.
+      run: 9m56s · 182 in · 54.4k out · sonnet-5 · sess:b09e9256-9668-4083-9ca2-a99ed2f2c338
 - [ ] Agent prompts, skill and doctor
       Tell phase and draft prompts and the paper-camp skill where files go and how to link them; doctor checks for orphan folders, oversized files and dead asset links; document the routes and `EntityEntry.assets` for the paper-camp-mobile idea.

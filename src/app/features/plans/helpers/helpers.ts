@@ -1,5 +1,11 @@
 import type { RunningPhaseFill } from '@/app/features/plans/hooks';
-import type { AgentTaskState, PhaseItem, PlanEntry, ThreadMessage } from '@/types/index';
+import type {
+  AgentTaskState,
+  AssetEntry,
+  PhaseItem,
+  PlanEntry,
+  ThreadMessage,
+} from '@/types/index';
 
 // Phases and post-build fixes share one table; fixes are appended and tinted
 // (`.fix-row`) so they read as part of the same list, distinct only by colour.
@@ -18,6 +24,39 @@ export const relativeDate = (dateStr: string): string => {
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
   if (days < 365) return `${Math.floor(days / 30)}mo ago`;
   return `${Math.floor(days / 365)}y ago`;
+};
+
+export type AssetKind = 'image' | 'html' | 'text' | 'other';
+
+export const assetKind = (asset: AssetEntry): AssetKind => {
+  if (asset.type.startsWith('image/')) return 'image';
+  if (asset.type === 'text/html') return 'html';
+  if (asset.type === 'application/json' || asset.type.startsWith('text/')) return 'text';
+  return 'other';
+};
+
+export const parseAssetUrl = (url: string): { id: string; name: string } | null => {
+  const params = new URL(url, 'http://localhost').searchParams;
+  const id = params.get('id');
+  const name = params.get('name');
+  return id && name ? { id, name } : null;
+};
+
+export const assetMarkdownLink = (asset: AssetEntry): string =>
+  assetKind(asset) === 'image'
+    ? `![${asset.name}](assets/${asset.name})`
+    : `[${asset.name}](assets/${asset.name})`;
+
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value < 10 ? 1 : 0)} ${units[unitIndex]}`;
 };
 
 // Time-only when the fetch was today (GitHub data is read on demand — "as of

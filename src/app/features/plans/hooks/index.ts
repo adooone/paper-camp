@@ -3,6 +3,7 @@ export * from './use-deliver-commit-form';
 export * from './use-feedback-composer';
 export * from './use-feedback-quiet-summary';
 export * from './use-finding-fix-task';
+export * from './use-idea-assets';
 export * from './use-plan-actions-column';
 export * from './use-plan-status-patch';
 export * from './use-plans-page';

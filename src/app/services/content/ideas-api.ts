@@ -1,6 +1,12 @@
 import type { SimilarityCandidate } from '@/app/features/plans/helpers';
 import { apiFetch, apiUrl } from '@/app/services/api-base';
-import type { ArchivableIdea, IdeaEntry, OverlapVerdict, ParseResult } from '@/types/index';
+import type {
+  ArchivableIdea,
+  AssetEntry,
+  IdeaEntry,
+  OverlapVerdict,
+  ParseResult,
+} from '@/types/index';
 
 export interface PrioritiseResult {
   ok: boolean;
@@ -98,4 +104,31 @@ export const prioritiseQueue = async (): Promise<PrioritiseResult> => {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error ?? 'Failed to prioritise queue');
   return data as PrioritiseResult;
+};
+
+export const assetUrl = (id: string, name: string): string =>
+  apiUrl(`/api/ideas/asset?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`);
+
+export const uploadIdeaAsset = async (
+  id: string,
+  name: string,
+  dataUri: string,
+): Promise<AssetEntry> => {
+  const response = await fetch(apiUrl(`/api/ideas/assets?id=${encodeURIComponent(id)}`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, dataUri }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to upload file');
+  return data.asset as AssetEntry;
+};
+
+export const deleteIdeaAsset = async (id: string, name: string): Promise<void> => {
+  const response = await fetch(
+    apiUrl(`/api/ideas/asset?id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`),
+    { method: 'DELETE' },
+  );
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? 'Failed to delete file');
 };

@@ -1,4 +1,5 @@
 import {
+  useIdeaAssets,
   usePlanStatusPatch,
   useRunningPhaseFill,
   useSendFeedbackMessage,
@@ -16,14 +17,17 @@ import { STATUS_COLOR } from '../constants';
 import {
   effectiveStatus,
   latestReviewNote,
+  parseAssetUrl,
   relativeDate,
   rollupProgress,
   runningPrReviewForPlan,
   runningTaskForPlan,
 } from '../helpers';
+import { AssetPreviewModal } from '../modals';
 import { ClarificationsSection } from './clarifications-section';
 import { DeliverSection } from './deliver-section';
 import { FeedbackSection } from './feedback-section';
+import { FilesSection } from './files-section';
 import { FixesSection } from './fixes-section';
 import { NeedsRow } from './needs-row';
 import { ParentLinkRow } from './parent-link-row';
@@ -62,6 +66,29 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     log: plan.log,
   };
   const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
+  const {
+    assets,
+    uploading,
+    dragActive,
+    preview,
+    previewLoading,
+    fileInputRef,
+    handleFileInputChange,
+    handleAddFileClick,
+    dropHandlers,
+    openPreview,
+    closePreview,
+    handleDelete: handleDeleteAsset,
+    assetUrl,
+  } = useIdeaAssets(plan.id ?? null, plan.assets);
+
+  const handleOpenAssetPreview = (url: string) => {
+    const parsed = parseAssetUrl(url);
+    const asset =
+      parsed && parsed.id === plan.id ? assets.find((a) => a.name === parsed.name) : undefined;
+    if (asset) openPreview(asset);
+    else window.open(url, '_blank', 'noopener');
+  };
 
   useEffect(() => {
     loadTaskLog();
@@ -107,7 +134,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
   } = useSendFeedbackMessage(plan, { reload: refreshPlans, notify: toast });
 
   return (
-    <div>
+    <div {...dropHandlers}>
       <div className="flex items-baseline justify-between gap-3 mb-2">
         <Text
           as="h2"
@@ -181,8 +208,28 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
 
           <ClarificationsSection clarifications={plan.clarifications ?? []} />
 
-          <PlanBodySection plan={plan} />
+          <FilesSection
+            assets={assets}
+            dragActive={dragActive}
+            uploading={uploading}
+            fileInputRef={fileInputRef}
+            onFileInputChange={handleFileInputChange}
+            onAddFileClick={handleAddFileClick}
+            onOpenPreview={openPreview}
+            onDelete={handleDeleteAsset}
+            assetUrl={assetUrl}
+          />
+
+          <PlanBodySection plan={plan} onOpenAssetPreview={handleOpenAssetPreview} />
         </>
+      )}
+      {preview && (
+        <AssetPreviewModal
+          preview={preview}
+          loading={previewLoading}
+          onClose={closePreview}
+          onDelete={() => handleDeleteAsset(preview.asset)}
+        />
       )}
     </div>
   );
