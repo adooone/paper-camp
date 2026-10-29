@@ -93,8 +93,9 @@ script can't reach `/api/*`; and `..` in a file name is refused.
 - [x] Assets on the corpus and the serving routes
       List `papercamp/assets/<ID>/` onto `EntityEntry.assets`; `GET` list and file routes with MIME types, single-segment names and a sandbox CSP for HTML and SVG; `POST` and `DELETE` with the size limit from `config.json` and the per-run bookkeeping commit; route tests including traversal.
       run: 7m35s · 132 in · 43.8k out · sonnet-5 · sess:909924a3-2277-4499-b4d4-729e82b9a8a6
-- [ ] Asset links in idea markdown
+- [x] Asset links in idea markdown
       Rewrite `assets/<name>` and `../assets/<ID>/<name>` in `Markdown` to the route, render image links inline, and send HTML links to the preview.
+      run: 3m13s · 80 in · 22.1k out · sonnet-5 · sess:b09e9256-9668-4083-9ca2-a99ed2f2c338
 - [ ] Files section in the web idea view
       Rows with type icon, size, age and image thumbnails; preview sheet for image, sandboxed HTML and text; drag-and-drop and *Add file* upload; *Copy link* and *Delete*.
 - [ ] Agent prompts, skill and doctor

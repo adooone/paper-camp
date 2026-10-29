@@ -24,7 +24,7 @@ export const NoteDetail = ({ idea }: NoteDetailProps) => {
           </Stamp>
         )}
       </h2>
-      <Markdown>
+      <Markdown ideaId={idea.id ?? undefined}>
         {idea.body
           .replace(/^#{1,3}\s+.+(\n|$)/, '')
           // Only a leading delimiter, not the `m` flag — otherwise this strips any
