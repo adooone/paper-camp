@@ -1,9 +1,8 @@
 import type { AgentManager } from './agent';
 import type { GitManager } from './git';
 
-// Catches the plan's own example ("pull and push") plus git-flavored phrasing,
-// without needing an LLM call for every message — tied to git nouns (main, origin,
-// branch, repo) so an unrelated "push the deadline" or "let's sync tomorrow" misses.
+// Catches the plan's own example ("pull and push") plus git-flavored phrasing, tied
+// to git nouns so an unrelated "push the deadline" or "let's sync tomorrow" misses.
 const GIT_SYNC_RE =
   /\b(?:pull\s*(?:and|&)\s*push|push\s*(?:and|&)\s*pull|git\s*sync|(?:sync|pull|push)\s*(?:to|with|from)?\s*(?:main|origin|branch|repo|git)|(?:main|origin|branch|repo|git)\s*sync|fix\s*[- ]?diverg\w*|(?:merge|rebase)\s*conflict|resolve\s+(?:the\s+)?conflict)\b/i;
 
@@ -47,8 +46,7 @@ export interface GitChatOutcome {
 }
 
 // Routes a chat message to the same sync/fix-divergence/resolve-conflict actions the
-// git card has, with the same confirmation: a plain sync runs immediately, but a
-// content conflict only reaches the agent once the user explicitly confirms (IDEA-319).
+// git card has: a plain sync runs immediately, a content conflict needs confirmation.
 export async function tryHandleGitChatRequest(
   key: string,
   text: string,

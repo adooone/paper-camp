@@ -797,9 +797,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
-  // The daemon rewrites papercamp/ (capacity.json, run bookkeeping) on its own schedule,
-  // independent of any rebase — stashed around the rebase so that churn can never block
-  // it from starting, and popped back once it's done.
+  // The daemon rewrites papercamp/ on its own schedule, independent of any rebase —
+  // stashed around the rebase so that churn can never block it from starting.
   async function stashDirtyPapercamp(): Promise<boolean> {
     const dirty = (await runGitStatus({ untrackedFiles: 'all' })).some((entry) =>
       entry.path.startsWith('papercamp/'),
@@ -829,9 +828,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return { base, ours, theirs };
   }
 
-  // Resolves one conflicted papercamp/ entity file by rule and stages it. Returns false
-  // (leaving the conflict markers in place, unstaged) for anything the rules in
-  // mergePapercampEntity can't decide — a real content conflict goes to the agent instead.
+  // Resolves one conflicted papercamp/ entity file by rule and stages it. Returns false,
+  // leaving conflict markers in place, for anything mergePapercampEntity can't decide.
   async function tryResolvePapercampConflict(path: string): Promise<boolean> {
     if (!ENTITY_FILE_RE.test(path)) return false;
     const stages = await readConflictStages(path);
@@ -860,11 +858,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     );
   }
 
-  // Drives a rebase already mid-conflict to completion: auto-resolve every papercamp/
-  // conflict by rule, and if that clears the stop entirely, continue — which may surface
-  // another conflict on the next commit, so this repeats until the rebase finishes or a
-  // conflict remains that no rule can decide (real code, or a papercamp edit the rules
-  // can't reconcile), which goes to the agent instead.
+  // Drives a rebase already mid-conflict to completion by repeatedly auto-resolving
+  // papercamp/ conflicts by rule until done, or a conflict remains for the agent.
   async function driveRebaseToCompletion(ref: string, firstError: unknown): Promise<void> {
     let lastError = firstError;
     // Bounded by rebase progress: each successful iteration clears one commit's conflicts,
@@ -976,8 +971,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   // The repo state, not the resolve-conflict agent's own exit code, decides success —
-  // the reflog can show `rebase --continue` then `rebase --abort` while the process
-  // still exits 0 (IDEA-319).
+  // the process can exit 0 after a `rebase --continue` followed by `rebase --abort`.
   async function verifyResolveConflictOutcome(): Promise<
     { ok: true } | { ok: false; reason: string }
   > {

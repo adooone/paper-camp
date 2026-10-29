@@ -52,9 +52,8 @@ function combineRuns(a: PhaseRun | undefined, b: PhaseRun | undefined): PhaseRun
   };
 }
 
-// Phase lists are identical in shape on both sides of a conflict — same file, same
-// commit history up to the fork — so index alignment is safe; a length mismatch means
-// something unexpected happened upstream and the whole file goes to the agent instead.
+// Phase lists are identical in shape on both sides of a conflict, so index alignment
+// is safe; a length mismatch means the whole file goes to the agent instead.
 function mergePhases(
   base: PhaseItem[],
   ours: PhaseItem[],
@@ -83,8 +82,7 @@ function mergePhases(
 }
 
 // Union, not a 3-way pick: an entry appended on either side since the fork is kept,
-// deduped by exact content, in roughly chronological order (undated entries keep
-// their relative position).
+// deduped by exact content, in roughly chronological order.
 function mergeThread(ours: ThreadMessage[] = [], theirs: ThreadMessage[] = []): ThreadMessage[] {
   const merged = [...ours];
   for (const message of theirs) {
@@ -101,11 +99,8 @@ function mergeThread(ours: ThreadMessage[] = [], theirs: ThreadMessage[] = []): 
     .map(({ message }) => message);
 }
 
-// Resolves a rebase conflict in a papercamp/ idea or plan file by the rules IDEA-319
-// settles on: most-advanced status, newest updated, OR'd phase checkboxes with
-// accumulated run totals, and a unioned thread. Anything it can't decide by rule —
-// two sides editing the same prose or frontmatter field differently — returns null
-// so the caller leaves the conflict for the agent instead of guessing.
+// Resolves a rebase conflict in a papercamp/ idea or plan file by rule; returns null
+// for anything it can't decide so the caller leaves the conflict for the agent.
 export function mergePapercampEntity(base: string, ours: string, theirs: string): string | null {
   const baseEntry = parseEntityFile(base).entries[0];
   const oursEntry = parseEntityFile(ours).entries[0];

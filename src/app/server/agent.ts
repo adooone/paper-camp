@@ -589,8 +589,7 @@ export function createAgentManager(
   }
 
   // Fetches and fast-forwards (or reconciles) before a phase/run-all task does any
-  // work, so no agent builds on a base that's days behind (IDEA-319). Returns true
-  // once it has already driven the task to a terminal status.
+  // work, so no agent builds on a base that's days behind (IDEA-319).
   async function refuseIfStale(task: AgentTask): Promise<boolean> {
     if (!ensureUpToDate) return false;
     const freshness = await ensureUpToDate();
