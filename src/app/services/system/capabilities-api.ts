@@ -3,12 +3,16 @@ import {
   type AgentTaskState,
   type CapabilityResult,
   type ConnectionResult,
+  MACHINE_BATCH_PATH,
   MACHINE_NIGHT_PATH,
   MACHINE_PROJECTS_PATH,
+  type MachineBatchResponse,
   type MachineNightGateResponse,
   type MachineProjectsResponse,
+  PAIRING_TOKEN_HEADER,
 } from '@/types/index';
 import { apiUrl } from '../api-base';
+import { machineToken } from '../machine-store';
 
 export interface CapabilitiesPayload {
   capabilities: CapabilityResult[];
@@ -112,6 +116,34 @@ export const fetchMachineNightGate = async (
     return (await response.json()) as MachineNightGateResponse;
   } catch {
     return null;
+  }
+};
+
+/**
+ * Mutating, unlike `fetchMachineProjects`/`fetchMachineNightGate` above, so it
+ * needs this machine's own pairing token (not the current project's, which
+ * `apiUrl`'s fetch wrapper carries) — stored the first time a project on it was
+ * opened, by `open-project.ts`'s pairing handshake.
+ */
+export const startMachineBatch = async (
+  machineUrl: string,
+  slugs: string[],
+): Promise<MachineBatchResponse> => {
+  try {
+    const token = machineToken(machineUrl);
+    const response = await fetch(`${machineUrl}${MACHINE_BATCH_PATH}`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(token && { [PAIRING_TOKEN_HEADER]: token }),
+      },
+      body: JSON.stringify({ slugs }),
+    });
+    if (response.ok) return { ok: true };
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, error: body?.error ?? `Request failed (${response.status})` };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
 };
 

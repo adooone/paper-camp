@@ -17,7 +17,7 @@ function runnablePhaseCount(items: { done: boolean; source?: string }[]): number
   return items.filter((item) => !item.done && item.source !== 'manual').length;
 }
 
-function parseBatchRules(raw: unknown): Partial<BatchRunRules> {
+export function parseBatchRules(raw: unknown): Partial<BatchRunRules> {
   const {
     pickupUnblocked,
     ceiling,

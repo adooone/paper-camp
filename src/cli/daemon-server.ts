@@ -6,6 +6,7 @@ import {
   createApiMiddleware,
   handlePreflight,
   hostOf,
+  isForbiddenRequest,
   isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
@@ -19,6 +20,8 @@ import {
   machinePairingPath,
   savePairingState,
 } from '../app/server/pairing';
+import { parseBatchRules } from '../app/server/routes/batch';
+import type { BatchRunRules } from '../core/batch-run';
 import { readCapacity } from '../core/capacity';
 import {
   type DaemonState,
@@ -45,10 +48,12 @@ import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { readTailnetStatus } from '../core/tailnet';
 import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import {
+  MACHINE_BATCH_PATH,
   MACHINE_NIGHT_PATH,
   MACHINE_PAIR_CODE_PATH,
   MACHINE_PROJECTS_PATH,
   MACHINE_UPDATE_PATH,
+  type MachineBatchRequest,
   type MachineNightGateResponse,
   type MachinePairCodeMintResponse,
   type MachineProjectSummary,
@@ -433,6 +438,87 @@ export function createMachinePairHandler(
   };
 }
 
+const MACHINE_BATCH_POLL_MS = 5_000;
+
+/** Waits for a mounted project's own batch to leave the machine busy, whether it
+ *  finished or paused (IDEA-321) — a pause only stalls that one project's queue,
+ *  not the whole machine, so the next project starts rather than waiting on a human. */
+function waitWhileBusy(isBusy: () => boolean): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setInterval(() => {
+      if (isBusy()) return;
+      clearInterval(timer);
+      resolve();
+    }, MACHINE_BATCH_POLL_MS);
+  });
+}
+
+/** One project's queue, then the next, each through its own mounted `AgentManager`
+ *  so its own git sync, checks and `isMachineBusy` admission apply unchanged
+ *  (IDEA-321) — a slug with nothing ready, or that fails to mount, is skipped
+ *  rather than blocking the rest of the machine. */
+export async function runMachineBatchQueue(
+  slugs: string[],
+  mount: (slug: string) => Promise<MountResult>,
+  rules: Partial<BatchRunRules> = {},
+): Promise<void> {
+  for (const slug of slugs) {
+    const result = await mount(slug);
+    if (result.kind !== 'mounted') continue;
+    const { api } = result;
+    const started = await api.agent.startAllReadyQueue(
+      rules,
+      () => api.checks.runChecksAndWait(),
+      () => api.checks.getCachedOrRunChecks(),
+    );
+    if (!started.ok) continue;
+    await waitWhileBusy(() => api.agent.hasActiveTask());
+  }
+}
+
+/** `POST /api/machine/batch` at the daemon root (IDEA-321) — mutating, so it is
+ *  pairing-gated like a mounted project's own routes, not just Host-checked like
+ *  the read-only machine summaries above. */
+export function createMachineBatchHandler(
+  pairingState: PairingManagerState,
+  persistPairing: () => void,
+  mount: (slug: string) => Promise<MountResult>,
+): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
+  const pairing = createPairingManager(pairingState, persistPairing);
+  return async (req, res) => {
+    applyCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+      handlePreflight(req, res);
+      return;
+    }
+    if (req.method !== 'POST') {
+      sendJson(res, 405, { error: 'POST required' });
+      return;
+    }
+    if (isForbiddenRequest(req, pairing.isPairedOrigin, pairing.token)) {
+      sendJson(res, 403, { error: 'Forbidden: request failed the Host/Origin check' });
+      return;
+    }
+    let body: MachineBatchRequest;
+    try {
+      body = JSON.parse((await readBody(req)) || '{}') as MachineBatchRequest;
+    } catch {
+      sendJson(res, 400, { error: 'Body must be JSON' });
+      return;
+    }
+    if (
+      !Array.isArray(body.slugs) ||
+      body.slugs.length === 0 ||
+      !body.slugs.every((slug) => typeof slug === 'string' && slug.trim().length > 0)
+    ) {
+      sendJson(res, 400, { error: 'slugs is required' });
+      return;
+    }
+    void runMachineBatchQueue(body.slugs, mount, parseBatchRules(body.rules));
+    sendJson(res, 202, { ok: true });
+  };
+}
+
 /** The daemon's routing decision, isolated from `startDaemonServer`'s process
  * lifecycle (signal handlers, tunnel, tailnet) so it can be driven by a real
  * `http.Server` in tests without spinning any of that up. */
@@ -456,12 +542,21 @@ export function createDaemonRequestHandler(
     _req,
     res,
   ) => sendJson(res, 404, { error: 'pairing is not served here' }),
+  handleMachineBatch: (req: IncomingMessage, res: ServerResponse) => Promise<void> = async (
+    _req,
+    res,
+  ) => sendJson(res, 404, { error: 'machine batch is not served here' }),
 ): (req: IncomingMessage, res: ServerResponse) => Promise<void> {
   return async (req, res) => {
     const pathname = decodeURIComponent((req.url ?? '/').split('?')[0]);
 
     if (pathname === MACHINE_PAIR_PATH) {
       await handleMachinePair(req, res);
+      return;
+    }
+
+    if (pathname === MACHINE_BATCH_PATH) {
+      await handleMachineBatch(req, res);
       return;
     }
 
@@ -656,6 +751,7 @@ export async function startDaemonServer({
     handleMachineUpdate,
     handleMachinePairCode,
     createMachinePairHandler(pairingState, persistPairing, pairCodeManager),
+    createMachineBatchHandler(pairingState, persistPairing, mount),
   );
 
   const server = createServer((req, res) => {

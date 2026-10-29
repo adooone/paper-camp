@@ -18,8 +18,10 @@ import {
 import { appendNightFindings } from '../core/night-suggestions';
 import type { RateLimitSnapshot } from '../types/index';
 import {
+  type MountResult,
   buildNightGateResponse,
   createDaemonRequestHandler,
+  createMachineBatchHandler,
   createMachinePairCodeHandler,
   createMachinePairHandler,
   createMachineUpdateHandler,
@@ -31,6 +33,7 @@ import {
   isMachineBusy,
   parseMountRequest,
   readMachineProjectSummaries,
+  runMachineBatchQueue,
   watchForIdleRestart,
 } from './daemon-server';
 
@@ -1297,5 +1300,146 @@ describe('createMachinePairHandler', () => {
     });
     expect(response.status).toBeLessThan(300);
     expect(response.headers.get('access-control-allow-origin')).toBe('https://paper.adoo.one');
+  });
+});
+
+function fakeBatchApi(
+  startAllReadyQueue: () => Promise<{ ok: boolean; error?: string }>,
+  hasActiveTask: () => boolean,
+): ApiMiddleware {
+  return {
+    agent: { startAllReadyQueue: vi.fn(startAllReadyQueue), hasActiveTask },
+    checks: { runChecksAndWait: vi.fn(), getCachedOrRunChecks: vi.fn() },
+  } as unknown as ApiMiddleware;
+}
+
+describe('runMachineBatchQueue', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('runs each project in series, waiting for it to leave the machine busy before the next', async () => {
+    const order: string[] = [];
+    let aliceBusy = true;
+    const alice = fakeBatchApi(
+      async () => {
+        order.push('alice:start');
+        return { ok: true };
+      },
+      () => aliceBusy,
+    );
+    const bob = fakeBatchApi(
+      async () => {
+        order.push('bob:start');
+        return { ok: true };
+      },
+      () => false,
+    );
+    const mount = vi.fn(
+      async (slug: string): Promise<MountResult> => ({
+        kind: 'mounted',
+        api: slug === 'alice' ? alice : bob,
+      }),
+    );
+
+    const done = runMachineBatchQueue(['alice', 'bob'], mount);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(order).toEqual(['alice:start']);
+
+    aliceBusy = false;
+    await vi.advanceTimersByTimeAsync(20_000);
+    await done;
+
+    expect(order).toEqual(['alice:start', 'bob:start']);
+  });
+
+  it('skips a slug that fails to mount, without stopping the rest of the queue', async () => {
+    const bob = fakeBatchApi(
+      async () => ({ ok: true }),
+      () => false,
+    );
+    const mount = vi.fn(
+      async (slug: string): Promise<MountResult> =>
+        slug === 'ghost' ? { kind: 'unknown' } : { kind: 'mounted', api: bob },
+    );
+
+    const done = runMachineBatchQueue(['ghost', 'bob'], mount);
+    await vi.advanceTimersByTimeAsync(20_000);
+    await done;
+
+    expect(bob.agent.startAllReadyQueue).toHaveBeenCalledOnce();
+  });
+
+  it('moves straight to the next slug when a project has nothing ready to run', async () => {
+    const idle = fakeBatchApi(
+      async () => ({ ok: false, error: 'No ready ideas to run' }),
+      () => true,
+    );
+    const mount = vi.fn(async (): Promise<MountResult> => ({ kind: 'mounted', api: idle }));
+
+    const done = runMachineBatchQueue(['idle'], mount);
+    await vi.advanceTimersByTimeAsync(0);
+    await done;
+
+    expect(idle.agent.startAllReadyQueue).toHaveBeenCalledOnce();
+  });
+});
+
+describe('createMachineBatchHandler', () => {
+  const batchServers: Server[] = [];
+  afterAll(() => {
+    for (const server of batchServers) server.close();
+  });
+
+  async function startBatchServer(mount: (slug: string) => Promise<MountResult>) {
+    const state: PairingManagerState = {
+      token: 'long-token',
+      origins: new Set(['https://paper.adoo.one']),
+    };
+    const persist = vi.fn();
+    const handler = createMachineBatchHandler(state, persist, mount);
+    const server = createServer((req, res) => {
+      void handler(req, res);
+    });
+    batchServers.push(server);
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => resolve((server.address() as AddressInfo).port));
+    });
+    const post = (body: unknown, origin = 'https://paper.adoo.one') =>
+      fetch(`http://127.0.0.1:${port}/api/machine/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify(body),
+      });
+    return { post };
+  }
+
+  it('accepts a paired origin and starts the queue', async () => {
+    const mount = vi.fn(async (): Promise<MountResult> => ({ kind: 'unknown' }));
+    const { post } = await startBatchServer(mount);
+
+    const response = await post({ slugs: ['alice', 'bob'] });
+
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({ ok: true });
+  });
+
+  it('rejects a request with no slugs', async () => {
+    const { post } = await startBatchServer(vi.fn());
+
+    const response = await post({ slugs: [] });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('rejects an origin that was never paired with this machine', async () => {
+    const { post } = await startBatchServer(vi.fn());
+
+    const response = await post({ slugs: ['alice'] }, 'https://stranger.example');
+
+    expect(response.status).toBe(403);
   });
 });

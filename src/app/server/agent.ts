@@ -2125,14 +2125,32 @@ export function createAgentManager(
       batch.status = 'done';
       await persistBatch(batch);
       void setStatus(task, 'done');
+      // Neither single-idea run-all nor the machine-wide driver (IDEA-321) sees this
+      // task's own `done` status land, so the finish push fires here, not in
+      // `setStatus` — that path never fires anyway, since the task carries no planId.
+      void appendNotification(root, {
+        id: randomUUID(),
+        kind: 'batch-finished',
+        entityId: task.id,
+        entityTitle: task.planTitle,
+        text: line.replace(/^\[batch\] /, ''),
+      });
     };
 
     const pauseBatch = async (reason: BatchRunPauseReason) => {
       batch.status = 'paused';
       batch.pause = reason;
       await persistBatch(batch);
-      pushLine(task, `[batch] paused — ${describeBatchPause(reason)}`);
+      const text = describeBatchPause(reason);
+      pushLine(task, `[batch] paused — ${text}`);
       void setStatus(task, 'error');
+      void appendNotification(root, {
+        id: randomUUID(),
+        kind: 'batch-paused',
+        entityId: task.id,
+        entityTitle: task.planTitle,
+        text,
+      });
     };
 
     try {
@@ -2364,6 +2382,33 @@ export function createAgentManager(
     })();
 
     return { ok: true };
+  }
+
+  // The same order and readiness the preview route shows, minus the UI's per-run
+  // ticks — the machine-wide driver (IDEA-321) has no sheet to tick rows in, so it
+  // takes every ready idea in run order.
+  async function computeReadyBatchIds(): Promise<string[]> {
+    const { entries, work } = await readCorpus(root);
+    const list = await readRunOrderFile(root);
+    const order = normalizeRunOrder(list, classifyRunOrderEntries(entries, work));
+    const defaultAgents = readProjectConfig(root).defaultAgents;
+    const ready: string[] = [];
+    for (const { id } of order) {
+      const plan = work.find((p) => p.id === id);
+      if (!plan) continue;
+      if ((await resolveBatchReadiness(plan, defaultAgents)).ready) ready.push(id);
+    }
+    return ready;
+  }
+
+  async function startAllReadyQueue(
+    rules: Partial<BatchRunRules> = {},
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ): Promise<Result> {
+    const ids = await computeReadyBatchIds();
+    if (ids.length === 0) return { ok: false, error: 'No ready ideas to run' };
+    return startBatchRun(ids, rules, runProjectChecks, getBaselineChecks);
   }
 
   function findRunningBatchTask(): AgentTask | undefined {
@@ -2701,6 +2746,7 @@ export function createAgentManager(
     startRunAllPhases,
     runBatch,
     startBatchRun,
+    startAllReadyQueue,
     findRunningBatchTask,
     controlBatchRun,
     resumeBatchRun,
@@ -2800,6 +2846,11 @@ export interface AgentManager {
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Result;
+  startAllReadyQueue: (
+    rules?: Partial<BatchRunRules>,
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ) => Promise<Result>;
   findRunningBatchTask: () => AgentTask | undefined;
   controlBatchRun: (action: 'stop' | 'stop-after-phase' | 'stop-after-idea' | 'skip') => Result;
   resumeBatchRun: (runProjectChecks?: () => Promise<FailingCheck[]>) => Promise<Result>;

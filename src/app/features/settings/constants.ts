@@ -58,6 +58,8 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationSettingKind, string> =
   'night-review-findings': 'Review findings',
   'service-stopped': 'Service stopped',
   'reply-posted': 'Reply posted',
+  'batch-paused': 'Queue paused',
+  'batch-finished': 'Queue finished',
 };
 
 export const PERMISSION_STAMP: Record<

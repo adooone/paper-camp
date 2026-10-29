@@ -2,7 +2,17 @@ import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
-import { Button, CheckIcon, ChevronRightIcon, Menu, type MenuEntry } from '@dendelion/folk-ui';
+import { startMachineBatch } from '@/app/services/system';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import {
+  Button,
+  CheckIcon,
+  ChevronRightIcon,
+  Menu,
+  type MenuEntry,
+  RunIcon,
+  useToast,
+} from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { HUB_PATH } from './nav';
 
@@ -19,6 +29,7 @@ export const ProjectSwitcherMenu = () => {
   const { machines, openRow } = useHubMachines();
   const { projectName, nameLoading } = useProjectIdentity();
   const { runtimeUrl: currentRuntimeUrl } = useRuntimeConnection();
+  const { toast } = useToast();
 
   const groups = machines
     .map((machine) => ({
@@ -31,6 +42,22 @@ export const ProjectSwitcherMenu = () => {
 
   const showHostHeadings = groups.length > 1;
 
+  const handleRunAllQueues = async (machine: HubMachine, rows: HubProjectRow[]) => {
+    const result = await startMachineBatch(
+      machine.machineUrl,
+      rows.map((row) => row.slug),
+    );
+    if (!result.ok) {
+      toast({
+        title: 'Failed to start',
+        description: oneLineErrorSummary(result.error ?? 'Unknown error'),
+        variant: 'error',
+      });
+      return;
+    }
+    toast({ title: `Running ${rows.length} project queue(s) on ${machine.host}` });
+  };
+
   const items: MenuEntry[] = groups.flatMap(({ machine, rows }) => {
     const asleep = machineAsleep(machine);
     const heading: MenuEntry[] = showHostHeadings
@@ -42,8 +69,18 @@ export const ProjectSwitcherMenu = () => {
           },
         ]
       : [];
+    const runAllQueues: MenuEntry[] = [
+      {
+        id: `run-all-queues-${machine.machineUrl}`,
+        icon: <RunIcon size={14} />,
+        label: 'Run all queues…',
+        disabled: asleep,
+        onSelect: asleep ? undefined : () => handleRunAllQueues(machine, rows),
+      },
+    ];
     return [
       ...heading,
+      ...runAllQueues,
       ...rows.map((row): MenuEntry => {
         const current = row.runtimeUrl === currentRuntimeUrl;
         return {

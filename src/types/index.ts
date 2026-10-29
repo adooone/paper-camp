@@ -309,7 +309,9 @@ export type StoredNotificationKind =
   | 'check-failed'
   | 'pr-review-changes-requested'
   | 'night-review-findings'
-  | 'service-stopped';
+  | 'service-stopped'
+  | 'batch-paused'
+  | 'batch-finished';
 
 export interface StoredNotification {
   id: string;
@@ -334,6 +336,8 @@ export const NOTIFICATION_SETTING_KINDS = [
   'night-review-findings',
   'service-stopped',
   'reply-posted',
+  'batch-paused',
+  'batch-finished',
 ] as const;
 
 export type NotificationSettingKind = (typeof NOTIFICATION_SETTING_KINDS)[number];
@@ -348,6 +352,8 @@ export const DEFAULT_NOTIFICATION_KINDS: Record<NotificationSettingKind, boolean
   'night-review-findings': true,
   'service-stopped': true,
   'reply-posted': false,
+  'batch-paused': true,
+  'batch-finished': true,
 };
 
 export interface NotificationsConfig {
@@ -1146,6 +1152,21 @@ export type MachinePairCodeOutcome =
   | { status: 'pending' }
   | { status: 'paired'; origin: string }
   | { status: 'expired' };
+
+/** Runs every project's own ready queue in series, one `paper-camp-mobile`-usable
+ *  call from the hub (IDEA-321) — pairing-gated like any other mutating route,
+ *  since it starts work rather than just reading state. */
+export const MACHINE_BATCH_PATH = '/api/machine/batch' as const;
+
+export interface MachineBatchRequest {
+  slugs: string[];
+  rules?: Record<string, unknown>;
+}
+
+export interface MachineBatchResponse {
+  ok: boolean;
+  error?: string;
+}
 
 export interface MergePolicy {
   allowSquashMerge: boolean;

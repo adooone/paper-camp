@@ -2,7 +2,7 @@
 id: IDEA-321
 title: Run the queue
 type: feat
-status: idea
+status: review
 created: 2026-10-29
 updated: 2026-10-29
 tags:
@@ -279,5 +279,6 @@ phase.
 - [x] Web batch sheet, live card, recovery banner and summary
       Toolbar button and worklist menu entry, the sheet with ticks, reasons, drag reorder through run-order, rules and preflight; the stack-panel batch card with stop controls; pause banners with one action each; summary kept in Activity.
       run: 24m25s · 458 in · 107.7k out · sonnet-5 · sess:9ff98940-3241-489c-94ab-fb36d21b420c
-- [ ] Machine-wide queue and the mobile contract
+- [x] Machine-wide queue and the mobile contract
       `POST /api/machine/batch` running projects in series from the hub page; push notifications on pause and finish; document the endpoints and task shape for the paper-camp-mobile idea.
+      run: 18m16s · 294 in · 73.5k out · sonnet-5 · sess:9ff98940-3241-489c-94ab-fb36d21b420c
