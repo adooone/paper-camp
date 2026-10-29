@@ -234,6 +234,19 @@ export interface AgentTask {
 
 type Result = { ok: true } | { ok: false; error: string };
 
+// What one idea's run-all attempt settled into — the batch loop (IDEA-321) acts on
+// this instead of re-deriving it from task state.
+export type RunIdeaOutcome =
+  | 'review'
+  | 'needs-you'
+  | 'needs-human'
+  | 'failed-clean'
+  | 'failed-dirty'
+  | 'red-checks'
+  | 'auth'
+  | 'stopped'
+  | 'superseded';
+
 export type BatchKind = 'batch-reconcile' | 'batch-draft';
 
 export type ReadOnlyTaskKind =
@@ -1106,7 +1119,7 @@ export function createAgentManager(
         }
 
         if (runProjectChecks) {
-          const ok = await verifyAndFix(
+          const verified = await verifyAndFix(
             task,
             plan,
             adapter,
@@ -1119,7 +1132,7 @@ export function createAgentManager(
             phase.text,
             `Phase ${phaseIndex + 1} ("${phase.text}")`,
           );
-          if (!ok) return;
+          if (!verified.ok) return;
         }
 
         void setStatus(task, 'done');
@@ -1440,7 +1453,8 @@ export function createAgentManager(
   }
 
   // Shared by run-all's end-of-run sweep and a single phase/fix task's own verify.
-  // Returns false once it has already driven the task to a terminal status.
+  // Returns `ok: false` once it has already driven the task to a terminal status;
+  // `outcome` tells the caller which of those terminal states it landed in.
   async function verifyAndFix(
     task: AgentTask,
     plan: PlanEntry,
@@ -1453,17 +1467,17 @@ export function createAgentManager(
     label: string,
     itemText: string,
     context: string,
-  ): Promise<boolean> {
+  ): Promise<{ ok: true } | { ok: false; outcome: RunIdeaOutcome }> {
     pushLine(task, '[verify] running lint/format/test/consistency/docs');
     const startSnapshot: GitStatusEntry[] = snapshotWorkingTree ? await snapshotWorkingTree() : [];
     let failing = await runProjectChecks();
     if (isSuperseded(task)) {
       finalizeSuperseded(task);
-      return false;
+      return { ok: false, outcome: 'superseded' };
     }
     if (isStopping(task)) {
       void setStatus(task, 'done');
-      return false;
+      return { ok: false, outcome: 'stopped' };
     }
     let introduced = failing.filter((c) => !toleratedRed.has(c.name));
     const introducedAtStart = introduced;
@@ -1501,7 +1515,7 @@ export function createAgentManager(
       }
       if (isSuperseded(task)) {
         finalizeSuperseded(task);
-        return false;
+        return { ok: false, outcome: 'superseded' };
       }
       if (task.blocker) {
         fixBlocker = task.blocker;
@@ -1519,7 +1533,7 @@ export function createAgentManager(
       failing = await runProjectChecks();
       if (isSuperseded(task)) {
         finalizeSuperseded(task);
-        return false;
+        return { ok: false, outcome: 'superseded' };
       }
       introduced = failing.filter((c) => !toleratedRed.has(c.name));
       verifyOk = introduced.length === 0;
@@ -1529,7 +1543,7 @@ export function createAgentManager(
 
     if (isStopping(task)) {
       void setStatus(task, 'done');
-      return false;
+      return { ok: false, outcome: 'stopped' };
     }
 
     if (verifyOk && onVerifyFixCommit) {
@@ -1551,7 +1565,7 @@ export function createAgentManager(
         { options: fixBlocker.options, context: fixBlocker.context },
       );
       void setStatus(task, 'error');
-      return false;
+      return { ok: false, outcome: 'needs-you' };
     }
 
     if (!verifyOk) {
@@ -1576,10 +1590,10 @@ export function createAgentManager(
         });
       }
       void setStatus(task, 'error');
-      return false;
+      return { ok: false, outcome: 'red-checks' };
     }
 
-    return true;
+    return { ok: true };
   }
 
   type QueueKind = 'phase' | 'fix';
@@ -1740,6 +1754,203 @@ export function createAgentManager(
     };
   }
 
+  // Drives one idea through its unchecked phases, its Fixes, and the final checks —
+  // shared by single run-all and (IDEA-321) the batch loop, which calls this once per
+  // queued idea instead of re-implementing run-all's state machine.
+  async function runIdea(
+    task: AgentTask,
+    plan: PlanEntry,
+    opts: {
+      runProjectChecks?: () => Promise<FailingCheck[]>;
+      getBaselineChecks?: () => Promise<FailingCheck[]>;
+      adapter: AgentAdapter;
+      model: string | undefined;
+      effort: string | undefined;
+    },
+  ): Promise<RunIdeaOutcome> {
+    const { runProjectChecks, getBaselineChecks, adapter, model, effort } = opts;
+    // A manual item is a person's task, not an agent's — the loop steps past it to
+    // the next agent item and, if only manual items remain, finishes done.
+    const runnablePhases = plan.phases
+      .map((phase, i) => ({ item: phase, i }))
+      .filter(({ item }) => !item.done && item.source !== 'manual');
+    const runnableFixes = (plan.fixes ?? [])
+      .map((fix, i) => ({ item: fix, i }))
+      .filter(({ item }) => !item.done && item.source !== 'manual');
+
+    // Failures from here on either left the tree alone (failed-clean) or left behind
+    // edits the next idea in a batch would commit over (failed-dirty).
+    const isTreeDirty = async (): Promise<boolean> =>
+      snapshotWorkingTree ? (await snapshotWorkingTree()).length > 0 : false;
+
+    try {
+      if (await refuseIfStale(task)) return 'failed-clean';
+      if (onRunStart) await onRunStart(plan);
+      if (isSuperseded(task)) {
+        finalizeSuperseded(task);
+        return 'superseded';
+      }
+
+      pushLine(task, '[baseline] running project checks before the first phase');
+      const stopped = new Promise<'stopped'>((resolve) => {
+        task.onStop = () => resolve('stopped');
+      });
+      const baseline = await Promise.race([
+        readBaseline(task, getBaselineChecks ?? runProjectChecks),
+        stopped,
+      ]);
+      task.onStop = undefined;
+      if (isSuperseded(task)) {
+        finalizeSuperseded(task);
+        return 'superseded';
+      }
+      if (baseline === 'stopped') {
+        pushLine(task, 'Stopped before the first phase');
+        void setStatus(task, 'done');
+        return 'stopped';
+      }
+      let toleratedRed = baseline;
+
+      const phaseResult = await runQueue(
+        task,
+        plan,
+        'phase',
+        runnablePhases,
+        plan.phases.length,
+        adapter,
+        model,
+        effort,
+        toleratedRed,
+        undefined,
+      );
+      toleratedRed = phaseResult.toleratedRed;
+
+      if (phaseResult.exit === 'superseded') {
+        finalizeSuperseded(task);
+        return 'superseded';
+      }
+      if (phaseResult.exit === 'stopping') {
+        pushLine(task, `Stopped after ${phaseResult.completed} phase(s) completed`);
+        void setStatus(task, 'done');
+        return 'stopped';
+      }
+      if (phaseResult.exit === 'paused') {
+        pushLine(
+          task,
+          `Run stopped after ${phaseResult.completed} phase(s) completed — the rest needs a human`,
+        );
+        void setStatus(task, 'done');
+        return 'needs-human';
+      }
+
+      // Fixes only start once every phase has landed clean — a plan mid-build
+      // never jumps ahead to post-build follow-ups.
+      let fixResult: Awaited<ReturnType<typeof runQueue>> = {
+        completed: 0,
+        failed: 0,
+        toleratedRed,
+        sessionId: phaseResult.sessionId,
+        exit: 'ran',
+      };
+      if (phaseResult.failed === 0 && runnableFixes.length > 0) {
+        fixResult = await runQueue(
+          task,
+          plan,
+          'fix',
+          runnableFixes,
+          (plan.fixes ?? []).length,
+          adapter,
+          model,
+          effort,
+          toleratedRed,
+          phaseResult.sessionId,
+        );
+
+        if (fixResult.exit === 'superseded') {
+          finalizeSuperseded(task);
+          return 'superseded';
+        }
+        if (fixResult.exit === 'stopping') {
+          pushLine(
+            task,
+            `Stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed`,
+          );
+          void setStatus(task, 'done');
+          return 'stopped';
+        }
+        if (fixResult.exit === 'paused') {
+          pushLine(
+            task,
+            `Run stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed — the rest needs a human`,
+          );
+          void setStatus(task, 'done');
+          return 'needs-human';
+        }
+      }
+
+      const failed = phaseResult.failed + fixResult.failed;
+      const summary = [
+        runnablePhases.length > 0 || runnableFixes.length === 0
+          ? `${phaseResult.completed} phase(s)`
+          : undefined,
+        runnableFixes.length > 0 ? `${fixResult.completed} fix(es)` : undefined,
+      ]
+        .filter(Boolean)
+        .join(' and ');
+
+      if (failed > 0) {
+        pushLine(task, `Run stopped after ${summary} completed, 1 failed`);
+        // A blocker already tagged the task 'question' via escalateToLog; setStatus
+        // only needs to decide auth vs a plain failure for everything else.
+        const parkedOnQuestion = task.errorKind === 'question';
+        await setStatus(task, 'error');
+        if (parkedOnQuestion) return 'needs-you';
+        if (task.errorKind === 'auth') return 'auth';
+        return (await isTreeDirty()) ? 'failed-dirty' : 'failed-clean';
+      }
+
+      pushLine(task, `All ${summary} completed`);
+
+      if (runProjectChecks) {
+        const verified = await verifyAndFix(
+          task,
+          plan,
+          adapter,
+          model,
+          effort,
+          toleratedRed,
+          fixResult.sessionId,
+          runProjectChecks,
+          'run',
+          'all phases',
+          'Run-all',
+        );
+        if (!verified.ok) return verified.outcome;
+      }
+
+      if (onRunComplete) {
+        try {
+          pushLine(task, '[review] setting plan status to review');
+          await onRunComplete(plan);
+        } catch (err) {
+          pushLine(task, `Warning: could not set plan status to review: ${(err as Error).message}`);
+        }
+      }
+      void setStatus(task, 'done');
+      return 'review';
+    } catch (err) {
+      if (isSuperseded(task)) {
+        if (!isTaskDone(task)) finalizeSuperseded(task);
+        return 'superseded';
+      }
+      task.errorReason ??= (err as Error).message;
+      pushLine(task, `Run all phases failed: ${(err as Error).message}`);
+      await setStatus(task, 'error');
+      if (task.errorKind === 'auth') return 'auth';
+      return (await isTreeDirty()) ? 'failed-dirty' : 'failed-clean';
+    }
+  }
+
   function startRunAllPhases(
     plan: PlanEntry,
     runProjectChecks?: () => Promise<FailingCheck[]>,
@@ -1758,11 +1969,6 @@ export function createAgentManager(
       return { ok: false, error: 'No unchecked phases to run' };
     }
 
-    // A manual item is a person's task, not an agent's — the loop steps past it to
-    // the next agent item and, if only manual items remain, finishes done.
-    const runnablePhases = unchecked.filter(({ item }) => item.source !== 'manual');
-    const runnableFixes = uncheckedFixes.filter(({ item }) => item.source !== 'manual');
-
     const task = startOrchestrated('run-all', plan);
     const { adapter, model, effort } = resolveAgent({
       agentId: plan.agent,
@@ -1770,169 +1976,7 @@ export function createAgentManager(
       taskKind: 'run-all',
     });
 
-    (async () => {
-      try {
-        if (await refuseIfStale(task)) return;
-        if (onRunStart) await onRunStart(plan);
-        if (isSuperseded(task)) {
-          finalizeSuperseded(task);
-          return;
-        }
-
-        pushLine(task, '[baseline] running project checks before the first phase');
-        const stopped = new Promise<'stopped'>((resolve) => {
-          task.onStop = () => resolve('stopped');
-        });
-        const baseline = await Promise.race([
-          readBaseline(task, getBaselineChecks ?? runProjectChecks),
-          stopped,
-        ]);
-        task.onStop = undefined;
-        if (isSuperseded(task)) {
-          finalizeSuperseded(task);
-          return;
-        }
-        if (baseline === 'stopped') {
-          pushLine(task, 'Stopped before the first phase');
-          void setStatus(task, 'done');
-          return;
-        }
-        let toleratedRed = baseline;
-
-        const phaseResult = await runQueue(
-          task,
-          plan,
-          'phase',
-          runnablePhases,
-          plan.phases.length,
-          adapter,
-          model,
-          effort,
-          toleratedRed,
-          undefined,
-        );
-        toleratedRed = phaseResult.toleratedRed;
-
-        if (phaseResult.exit === 'superseded') {
-          finalizeSuperseded(task);
-          return;
-        }
-        if (phaseResult.exit === 'stopping') {
-          pushLine(task, `Stopped after ${phaseResult.completed} phase(s) completed`);
-          void setStatus(task, 'done');
-          return;
-        }
-        if (phaseResult.exit === 'paused') {
-          pushLine(
-            task,
-            `Run stopped after ${phaseResult.completed} phase(s) completed — the rest needs a human`,
-          );
-          void setStatus(task, 'done');
-          return;
-        }
-
-        // Fixes only start once every phase has landed clean — a plan mid-build
-        // never jumps ahead to post-build follow-ups.
-        let fixResult: Awaited<ReturnType<typeof runQueue>> = {
-          completed: 0,
-          failed: 0,
-          toleratedRed,
-          sessionId: phaseResult.sessionId,
-          exit: 'ran',
-        };
-        if (phaseResult.failed === 0 && runnableFixes.length > 0) {
-          fixResult = await runQueue(
-            task,
-            plan,
-            'fix',
-            runnableFixes,
-            (plan.fixes ?? []).length,
-            adapter,
-            model,
-            effort,
-            toleratedRed,
-            phaseResult.sessionId,
-          );
-
-          if (fixResult.exit === 'superseded') {
-            finalizeSuperseded(task);
-            return;
-          }
-          if (fixResult.exit === 'stopping') {
-            pushLine(
-              task,
-              `Stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed`,
-            );
-            void setStatus(task, 'done');
-            return;
-          }
-          if (fixResult.exit === 'paused') {
-            pushLine(
-              task,
-              `Run stopped after ${phaseResult.completed} phase(s) and ${fixResult.completed} fix(es) completed — the rest needs a human`,
-            );
-            void setStatus(task, 'done');
-            return;
-          }
-        }
-
-        const failed = phaseResult.failed + fixResult.failed;
-        const summary = [
-          runnablePhases.length > 0 || runnableFixes.length === 0
-            ? `${phaseResult.completed} phase(s)`
-            : undefined,
-          runnableFixes.length > 0 ? `${fixResult.completed} fix(es)` : undefined,
-        ]
-          .filter(Boolean)
-          .join(' and ');
-
-        if (failed > 0) {
-          pushLine(task, `Run stopped after ${summary} completed, 1 failed`);
-          void setStatus(task, 'error');
-          return;
-        }
-
-        pushLine(task, `All ${summary} completed`);
-
-        if (runProjectChecks) {
-          const ok = await verifyAndFix(
-            task,
-            plan,
-            adapter,
-            model,
-            effort,
-            toleratedRed,
-            fixResult.sessionId,
-            runProjectChecks,
-            'run',
-            'all phases',
-            'Run-all',
-          );
-          if (!ok) return;
-        }
-
-        if (onRunComplete) {
-          try {
-            pushLine(task, '[review] setting plan status to review');
-            await onRunComplete(plan);
-          } catch (err) {
-            pushLine(
-              task,
-              `Warning: could not set plan status to review: ${(err as Error).message}`,
-            );
-          }
-        }
-        void setStatus(task, 'done');
-      } catch (err) {
-        if (isSuperseded(task)) {
-          if (!isTaskDone(task)) finalizeSuperseded(task);
-        } else {
-          task.errorReason ??= (err as Error).message;
-          pushLine(task, `Run all phases failed: ${(err as Error).message}`);
-          void setStatus(task, 'error');
-        }
-      }
-    })();
+    void runIdea(task, plan, { runProjectChecks, getBaselineChecks, adapter, model, effort });
 
     return { ok: true };
   }

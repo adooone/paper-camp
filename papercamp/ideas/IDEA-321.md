@@ -267,8 +267,9 @@ phase.
 - [x] Readiness predicate and preview route
       `batchReadiness` in `src/core/` combining needs, manual-only, open question, stale base and agent checks; `GET /api/batch/preview` with reasons, phase counts, cost estimate, capacity and git preflight; tests per reason.
       run: 8m44s · 172 in · 33.2k out · sonnet-5 · sess:c5f24bae-3d1f-4acd-be5d-2962018c40d9
-- [ ] Extract `runIdea` from run-all
+- [x] Extract `runIdea` from run-all
       Move the body of `startRunAllPhases` into a `runIdea(task, plan, opts)` that returns a typed outcome (review, needs-you, needs-human, failed-clean, failed-dirty, red-checks, auth); single run-all calls it unchanged.
+      run: 5m13s · 74 in · 27k out · sonnet-5 · sess:9ee0026b-2fd4-4b30-9e5f-50ec4db8c986
 - [ ] `batch-run` task with stop rules and persisted state
       New `BatchKind` with exclusive write set; sequential loop over the queue with re-check before each idea, pick-up of newly unblocked ideas, capacity gate (wait for reset or stop), clock, count and cost limits, stop/skip controls, and `papercamp/.local/batch.json` with resume after restart.
 - [ ] Git sync between ideas
