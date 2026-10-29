@@ -4,6 +4,7 @@ import { lstat, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { branchName } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse/parser';
+import { todayDateString } from '@/core/serialize';
 import type {
   BranchHygieneStatus,
   FileDiffEntry,
@@ -952,6 +953,58 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
       : { stage: 'reconcile' };
   }
 
+  // Protects a resolve-conflict run's duplicate-commit drop: `refs/backup/<branch>-<date>`
+  // points at HEAD before the agent rewrites anything, so the drop is always undoable.
+  async function createBackupRef(): Promise<string> {
+    const ref = `refs/backup/${getCurrentBranch()}-${todayDateString()}`;
+    await runGit(['update-ref', ref, 'HEAD']);
+    return ref;
+  }
+
+  // No existing check tells a rebase mid-conflict apart from a landed one — needed
+  // after a resolve-conflict agent exits, since an aborted rebase can still exit 0.
+  async function isRebaseInProgress(): Promise<boolean> {
+    for (const name of ['rebase-merge', 'rebase-apply']) {
+      const path = (await runGit(['rev-parse', '--git-path', name])).trim();
+      const full = path.startsWith('/') ? path : join(root, path);
+      try {
+        await lstat(full);
+        return true;
+      } catch {}
+    }
+    return false;
+  }
+
+  // The repo state, not the resolve-conflict agent's own exit code, decides success —
+  // the reflog can show `rebase --continue` then `rebase --abort` while the process
+  // still exits 0 (IDEA-319).
+  async function verifyResolveConflictOutcome(): Promise<
+    { ok: true } | { ok: false; reason: string }
+  > {
+    if (await isRebaseInProgress()) {
+      return {
+        ok: false,
+        reason:
+          'A rebase is still in progress — run `git rebase --continue` or `git rebase --abort`.',
+      };
+    }
+    const dirty = await runGitStatus({ untrackedFiles: 'all' });
+    if (dirty.length > 0) {
+      return {
+        ok: false,
+        reason: `Working tree is not clean: ${dirty.map((entry) => entry.path).join(', ')}`,
+      };
+    }
+    const snapshot = await getStatusSnapshot();
+    if (snapshot.hasUpstream && snapshot.behind > 0) {
+      return {
+        ok: false,
+        reason: `Branch is ${snapshot.behind} commit(s) behind its upstream — the rebase was not landed.`,
+      };
+    }
+    return { ok: true };
+  }
+
   async function runGitSync(): Promise<GitSyncResult> {
     // Fetch first: recognizing already-in-main local edits needs to know what's incoming.
     await runGit(['fetch', '--prune']).catch(() => {});
@@ -1146,5 +1199,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     runGitSync,
     runGitPull,
     fixDivergence,
+    createBackupRef,
+    verifyResolveConflictOutcome,
   };
 }

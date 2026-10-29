@@ -150,6 +150,15 @@ export function createAgentHooks(root: string, git: GitManager) {
     });
   }
 
+  // After a resolve-conflict agent exits, the repo state decides success, not the
+  // agent's own exit code — an aborted rebase can still exit 0 (IDEA-319).
+  async function settleResolveConflict(): Promise<{ ok: true } | { ok: false; reason: string }> {
+    const outcome = await git.verifyResolveConflictOutcome();
+    if (!outcome.ok) return outcome;
+    await git.push();
+    return { ok: true };
+  }
+
   return {
     stampAuditDate,
     commitPhase,
@@ -160,5 +169,6 @@ export function createAgentHooks(root: string, git: GitManager) {
     annotateFixRun: annotatePhaseRun,
     snapshotWorkingTree,
     ensureUpToDate,
+    settleResolveConflict,
   };
 }

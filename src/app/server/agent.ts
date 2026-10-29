@@ -403,6 +403,7 @@ export function createAgentManager(
     commitBookkeeping: onCommitBookkeeping,
     snapshotWorkingTree,
     ensureUpToDate,
+    settleResolveConflict: onSettleResolveConflict,
   } = hooks;
   const { onCorpusChanged, state: passedState, isMachineBusy, publish } = options;
   // No state handed in means a fresh process or (under the daemon) this project's
@@ -666,6 +667,20 @@ export function createAgentManager(
     task.finishing = true;
     if (error) {
       void setStatus(task, 'error');
+      return;
+    }
+    if (task.taskKind === 'resolve-conflict') {
+      const outcome = onSettleResolveConflict
+        ? await onSettleResolveConflict()
+        : { ok: true as const };
+      if (!outcome.ok) {
+        task.errorReason = outcome.reason;
+        pushLine(task, `[resolve-conflict] ${outcome.reason}`);
+        void setStatus(task, 'error');
+        return;
+      }
+      pushLine(task, '[resolve-conflict] repo settled and pushed');
+      void setStatus(task, 'done');
       return;
     }
     if (task.taskKind === 'fix-review') {

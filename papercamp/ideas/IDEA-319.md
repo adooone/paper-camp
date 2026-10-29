@@ -105,7 +105,8 @@ run that aborts records `error`, not `done`.
 - [x] Rule-based merge for `papercamp/` files inside `reconcileOnto`
       Autostash dirty `papercamp/` files; resolve frontmatter, phase checkboxes, `run:` lines, thread entries and logs by rule; hand only code conflicts to the agent.
       run: 7m57s · 74 in · 38.8k out · sonnet-5 · sess:04c7f083-f31a-4203-b856-4f9387ea3e93
-- [ ] Verified `resolve-conflict` outcome with backup ref and push
+- [x] Verified `resolve-conflict` outcome with backup ref and push
       Create a backup ref first, let the prompt drop code already contained upstream, check repo state after the agent exits, then record done and push, or error with the reason.
+      run: 3m59s · 124 in · 27.8k out · sonnet-5 · sess:160d6429-ba30-443d-b81a-68c93d18ebdd
 - [ ] Sync and fix-divergence from chat
       Route git requests in idea and project chat to the git card's actions, with the same confirmation.

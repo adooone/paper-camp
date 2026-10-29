@@ -30,11 +30,12 @@ ${filesBlock}
 Domain judgement to apply while resolving markers:
 - \`papercamp/run-order.md\` lists in-flight plan ids, one per line. Keep the union of every line still relevant, but drop lines for plans that are already finished (done/dropped) rather than keeping stale entries.
 - Any append-only log (e.g. \`papercamp/tasks.log\`) should keep both sides' entries — union them, don't pick one side over the other.
+- If a local commit's changes to code are already fully contained in \`${ref}\` (the same files, and its version is a superset by intent — e.g. the same feature built twice), drop that commit's code changes during the rebase, keeping only its bookkeeping. A backup ref already points at this branch's pre-rebase tip, so dropping it is safe to undo if you're wrong.
 - For anything else, keep both real changes' intent where possible; if genuinely irreconcilable, leave it unresolved and explain the tradeoff instead of guessing.
 
 Task:
 1. Run \`git rebase '${ref}'\` yourself — it will hit the same conflict.
-2. Resolve the markers in each conflicted file above, applying the judgement above.
+2. Resolve the markers in each conflicted file above, applying the judgement above — including dropping a commit's code change if it duplicates work already in \`${ref}\`.
 3. \`git add\` the resolved files.
 4. \`git rebase --continue\`. If a later commit in the same rebase hits another conflict, keep resolving it the same way until the rebase finishes.
 5. If you cannot confidently resolve a conflict, run \`git rebase --abort\` to leave the repo clean and explain why instead of guessing.`;
