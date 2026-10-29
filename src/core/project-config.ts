@@ -90,3 +90,13 @@ export function readProjectConfig(root: string): ProjectConfig {
     subjects: readSubjects(root),
   };
 }
+
+const DEFAULT_ASSET_MAX_FILE_SIZE_MB = 5;
+
+export function assetMaxFileSizeMb(root: string): number {
+  return readProjectConfig(root).raw?.assets?.maxFileSizeMb ?? DEFAULT_ASSET_MAX_FILE_SIZE_MB;
+}
+
+export function assetMaxBytes(root: string): number {
+  return assetMaxFileSizeMb(root) * 1024 * 1024;
+}

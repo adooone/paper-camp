@@ -52,9 +52,8 @@ export const DOCTOR_CHECKS: DoctorCheck[] = [
 
 const DEFAULT_ASSET_MAX_FILE_SIZE_MB = 5;
 
-// Mirrors core/assets.ts's own folder-per-idea listing, but doctor already loaded
-// config.json for other checks, so it reads the folder tree directly rather than
-// pulling in that module's project-config dependency a second time.
+// Mirrors core/assets.ts's folder-per-idea listing, but doctor already loaded
+// config.json for other checks, so it reads the folder tree directly here.
 async function readAssetFolders(paperCampDir: string): Promise<DoctorAssetFolder[]> {
   const assetsDir = join(paperCampDir, 'assets');
   const names = await readdirOptional(assetsDir);

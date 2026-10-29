@@ -1,7 +1,6 @@
 import { readdir, stat } from 'node:fs/promises';
 import { basename, extname, join } from 'node:path';
 import type { AssetEntry } from '../types/index';
-import { readProjectConfig } from './project-config';
 
 const MIME_BY_EXT: Record<string, string> = {
   png: 'image/png',
@@ -22,9 +21,8 @@ const MIME_BY_EXT: Record<string, string> = {
 
 const DEFAULT_MIME = 'application/octet-stream';
 
-// Served with Content-Security-Policy: sandbox allow-scripts (no allow-same-origin),
-// so a mockup an agent wrote can run its own script but can't call the daemon's
-// API as the user (IDEA-322).
+// Served with CSP sandbox allow-scripts (no allow-same-origin), so a mockup an
+// agent wrote can run its own script but can't call the daemon's API (IDEA-322).
 const SANDBOXED_MIMES = new Set(['text/html', 'image/svg+xml']);
 
 export function mimeForAssetName(name: string): string {
@@ -40,16 +38,6 @@ export function sandboxCspForMime(mime: string): string | undefined {
  * both would otherwise escape `papercamp/assets/<id>/` (IDEA-322). */
 export function isSafeAssetName(name: string): boolean {
   return name.length > 0 && name !== '.' && name !== '..' && name === basename(name);
-}
-
-const DEFAULT_MAX_FILE_SIZE_MB = 5;
-
-export function assetMaxFileSizeMb(root: string): number {
-  return readProjectConfig(root).raw?.assets?.maxFileSizeMb ?? DEFAULT_MAX_FILE_SIZE_MB;
-}
-
-export function assetMaxBytes(root: string): number {
-  return assetMaxFileSizeMb(root) * 1024 * 1024;
 }
 
 export function ideaAssetsDir(assetsDir: string, id: string): string {

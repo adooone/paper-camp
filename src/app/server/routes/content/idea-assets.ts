@@ -1,14 +1,13 @@
 import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  assetMaxBytes,
-  assetMaxFileSizeMb,
   isSafeAssetName,
   listIdeaAssets,
   mimeForAssetName,
   sandboxCspForMime,
 } from '@/core/assets';
 import { resolveEntityFilePath } from '@/core/corpus';
+import { assetMaxBytes, assetMaxFileSizeMb } from '@/core/project-config';
 import type { AssetEntry } from '@/types/index';
 import { planFile } from '../../helpers';
 import { readJson, requestUrl, sendJson } from '../../http';
