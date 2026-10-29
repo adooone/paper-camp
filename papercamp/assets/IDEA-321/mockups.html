@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run queue mockups</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{--surface-0:#f5f4ef;--surface-1:#efede6;--surface-2:#fff;--text-primary:#1f1e1c;--text-secondary:#5f5e5a;--text-muted:#888780;--border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.22);--bg-success:#eaf3de;--text-success:#27500a;--bg-warning:#faeeda;--text-warning:#633806;--border-warning:#ef9f27;--bg-danger:#fcebeb;--text-danger:#a32d2d;--bg-accent:#e6f1fb;--text-accent:#0c447c;--border-accent:#85b7eb;--fill-accent:#185fa5;--on-accent:#fff;--radius:8px;--font-mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root{--surface-0:#1a1a19;--surface-1:#242422;--surface-2:#2c2c2a;--text-primary:#f1efe8;--text-secondary:#b4b2a9;--text-muted:#888780;--border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.24);--bg-success:#27500a;--text-success:#c0dd97;--bg-warning:#633806;--text-warning:#fac775;--border-warning:#854f0b;--bg-danger:#791f1f;--text-danger:#f7c1c1;--bg-accent:#0c447c;--text-accent:#b5d4f4;--border-accent:#185fa5;--fill-accent:#378add}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-0);color:var(--text-primary);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:16px;font-weight:500;margin:40px 0 4px}
+p.sub{color:var(--text-secondary);margin:0 0 12px;font-size:14px}
+button{font:inherit;font-size:13px;color:var(--text-primary);background:transparent;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;cursor:pointer}
+button.primary{background:var(--fill-accent);color:var(--on-accent);border-color:transparent}
+.mk{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:16px 20px}
+.row{display:grid;grid-template-columns:18px 22px 20px 74px minmax(0,1fr) 62px 44px 140px;align-items:center;gap:8px;padding:8px 4px;border-top:0.5px solid var(--border);font-size:13px}
+@media (max-width:640px){.row{grid-template-columns:18px 22px 70px minmax(0,1fr);}.row .hide{display:none}}
+.pill{font-size:11px;padding:2px 8px;border-radius:var(--radius);white-space:nowrap;justify-self:start}
+.ok{background:var(--bg-success);color:var(--text-success)}.wait{background:var(--bg-warning);color:var(--text-warning)}.no{background:var(--surface-1);color:var(--text-secondary)}.run{background:var(--bg-accent);color:var(--text-accent)}
+.id{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)}
+.cap{font-size:12px;color:var(--text-secondary)}
+.bar{height:6px;border-radius:3px;background:var(--surface-1);overflow:hidden}.bar>i{display:block;height:100%;background:var(--fill-accent)}
+.tile{background:var(--surface-1);border-radius:var(--radius);padding:8px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.line{display:flex;gap:8px;align-items:center;padding:7px 0;border-top:0.5px solid var(--border);font-size:13px}
+.phones{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:16px;background:var(--surface-1);border-radius:12px}
+.ph{width:260px;border:0.5px solid var(--border-strong);border-radius:28px;background:var(--surface-2);padding:14px 12px 10px;display:flex;flex-direction:column;gap:8px;min-height:500px}
+.r{display:flex;align-items:center;gap:8px;padding:8px 6px;border-top:0.5px solid var(--border);font-size:13px}
+.tabs{margin-top:auto;display:flex;justify-content:space-around;border:0.5px solid var(--border);border-radius:20px;padding:8px;color:var(--text-secondary);font-size:18px}
+</style>
+</head>
+<body>
+<main>
+<h1>Run the queue: UI mockups</h1>
+<p class="sub">Companion to IDEA-321. These are sketches, not the final styling: the real screens use folk-ui on web and the kraft-paper UI kit on mobile.</p>
+
+<h2>1. Batch sheet</h2>
+<p class="sub">Opened from "Run queue (2 ready)" in the plans toolbar, or "Run queue…" in the worklist menu. The ticks are live.</p>
+<div style="background:rgba(0,0,0,.35);border-radius:12px;padding:20px">
+<div class="mk">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:16px;font-weight:500">Run queue · paper-camp</span><i class="ti ti-x" style="font-size:18px;color:var(--text-secondary)"></i></div>
+ <div class="grid" style="margin-bottom:12px">
+  <div class="tile"><div class="cap"><i class="ti ti-git-branch"></i> Git</div><div style="font-size:13px;color:var(--text-success)">Level with origin/main</div></div>
+  <div class="tile"><div class="cap">5h window · 32%</div><div class="bar"><i style="width:32%"></i></div></div>
+  <div class="tile"><div class="cap">7-day window · 41%</div><div class="bar"><i style="width:41%"></i></div></div>
+ </div>
+ <div id="q">
+  <div class="row"><i class="ti ti-grip-vertical hide" style="color:var(--text-muted)"></i><input type="checkbox" checked data-p="5" data-c="4"><span class="cap hide">1</span><span class="id">IDEA-319</span><span>Git that heals itself</span><span class="cap hide">5 phases</span><span class="cap hide">~$4</span><span class="pill ok hide">Ready</span></div>
+  <div class="row"><i class="ti ti-grip-vertical hide" style="color:var(--text-muted)"></i><input type="checkbox" checked data-p="3" data-c="3"><span class="cap hide">2</span><span class="id">IDEA-320</span><span>One home for local state</span><span class="cap hide">3 phases</span><span class="cap hide">~$3</span><span class="pill ok hide">Ready</span></div>
+  <div class="row"><i class="ti ti-grip-vertical hide" style="color:var(--text-muted)"></i><input type="checkbox" data-p="2" data-c="2"><span class="cap hide">3</span><span class="id">IDEA-305</span><span>Toolbar on mobile</span><span class="cap hide">2 phases</span><span class="cap hide">~$2</span><span class="pill no hide">Manual steps only</span></div>
+  <div class="row" style="opacity:.6"><i class="ti ti-grip-vertical hide" style="color:var(--text-muted)"></i><input type="checkbox" disabled><span class="cap hide">4</span><span class="id">IDEA-321</span><span>Run the queue</span><span class="cap hide">6 phases</span><span class="cap hide"></span><span class="pill wait hide">Waits for IDEA-319</span></div>
+  <div class="row" style="opacity:.6"><i class="ti ti-grip-vertical hide" style="color:var(--text-muted)"></i><input type="checkbox" disabled><span class="cap hide">5</span><span class="id">IDEA-298</span><span>Push digests</span><span class="cap hide">4 phases</span><span class="cap hide"></span><span class="pill wait hide">Waiting on you <i class="ti ti-arrow-right"></i></span></div>
+ </div>
+ <details style="border-top:0.5px solid var(--border);padding-top:10px;font-size:13px">
+  <summary style="cursor:pointer;color:var(--text-secondary)">Rules · 5h 80% then wait · 7d 70% · stop by 07:00 · at most $20</summary>
+  <div class="grid" style="margin-top:8px;color:var(--text-secondary)"><span>5h above 80%: wait for reset</span><span>7-day above 70%: stop</span><span>Stop by 07:00 · at most 4 ideas</span><span><input type="checkbox" checked> Pick up newly unblocked ideas</span></div>
+ </details>
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap"><button>Prioritise</button><button id="go" class="primary"><i class="ti ti-player-play"></i> Run 2 ideas · 8 phases · ~$7</button></div>
+</div></div>
+
+<h2>2. Live card</h2>
+<p class="sub">Replaces the single-task card in the stack panel while the batch runs.</p>
+<div class="mk">
+ <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px"><span style="font-weight:500">Running queue · 2 of 4 ideas</span><span class="cap">34 min · $5.10</span></div>
+ <div style="font-size:13px;display:grid;gap:6px">
+  <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-circle-check" style="color:var(--text-success)"></i><span class="id">IDEA-319</span><span style="flex:1">Git that heals itself</span><span class="pill ok">Review · 5/5</span></div>
+  <div style="display:flex;gap:8px;align-items:center"><i class="ti ti-loader-2" style="color:var(--text-accent)"></i><span class="id">IDEA-320</span><span style="flex:1">One home for local state</span><span class="pill run">Phase 2 of 3</span></div>
+  <div style="margin-left:24px;font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">› moving tasks.log into papercamp/.local/</div>
+  <div style="display:flex;gap:8px;align-items:center;color:var(--text-secondary)"><i class="ti ti-circle"></i><span class="id">IDEA-321</span><span style="flex:1">Run the queue</span><span class="pill no">Added: IDEA-319 finished</span></div>
+ </div>
+ <div class="cap" style="margin:12px 0 4px">5h window 61% · resets 14:20</div><div class="bar"><i style="width:61%"></i></div>
+ <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px"><button>Stop after phase</button><button>Stop after idea</button><button>Skip idea</button><button style="color:var(--text-danger)">Stop now</button></div>
+</div>
+
+<h2>3. Paused: recovery banner</h2>
+<p class="sub">Shown where the progress was, with one main action.</p>
+<div style="background:var(--bg-warning);border:0.5px solid var(--border-warning);border-radius:12px;padding:12px 16px">
+ <div style="display:flex;gap:10px;align-items:flex-start;color:var(--text-warning)"><i class="ti ti-git-merge" style="font-size:20px"></i>
+  <div style="flex:1;font-size:13px"><div style="font-weight:500;font-size:14px">Paused: conflict in src/app/server/agent.ts after IDEA-320</div>The papercamp/ files merged by rule. One code file needs a decision.</div></div>
+ <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap"><button>End batch</button><button>Open git</button><button class="primary">Resolve with agent</button></div>
+</div>
+<p class="cap" style="margin-top:6px">Other pauses use the same banner: waiting for the 5h reset [Resume now] · IDEA-298 needs your decision [Answer] · checks red [Fix with agent] · daemon restarted [Resume] · signed out [Sign in]</p>
+
+<h2>4. Summary</h2>
+<p class="sub">Stays until dismissed and is kept in Activity.</p>
+<div class="mk">
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:12px">
+  <div class="tile"><div class="cap">Ran</div><div style="font-size:20px;font-weight:500">3</div></div>
+  <div class="tile"><div class="cap">Time</div><div style="font-size:20px;font-weight:500">1h 52m</div></div>
+  <div class="tile"><div class="cap">Cost</div><div style="font-size:20px;font-weight:500">$11.40</div></div>
+  <div class="tile"><div class="cap">Commits pushed</div><div style="font-size:20px;font-weight:500">14</div></div>
+ </div>
+ <div class="line"><i class="ti ti-circle-check" style="color:var(--text-success)"></i><span class="id">IDEA-319</span><span style="flex:1">Ready for review · 5 phases · $3.80</span><button>Review</button></div>
+ <div class="line"><i class="ti ti-circle-check" style="color:var(--text-success)"></i><span class="id">IDEA-320</span><span style="flex:1">Ready for review · 3 phases · $2.95</span><button>Review</button></div>
+ <div class="line"><i class="ti ti-hand-stop" style="color:var(--text-warning)"></i><span class="id">IDEA-305</span><span style="flex:1">Needs a human: phase 2 is a visual check</span><button>Open</button></div>
+ <div class="line" style="color:var(--text-secondary)"><i class="ti ti-player-stop"></i><span class="id">IDEA-321</span><span style="flex:1">Not started: 7-day window reached 71%</span></div>
+</div>
+
+<h2>5. Mobile</h2>
+<p class="sub">paper-camp-mobile, against the same endpoints. Built as its own idea there.</p>
+<div class="phones">
+ <div><div class="cap" style="text-align:center;margin-bottom:6px">Ideas tab while running</div>
+ <div class="ph">
+  <div style="font-size:18px;font-weight:500">Ideas</div>
+  <div style="border:0.5px solid var(--border-accent);background:var(--bg-accent);border-radius:12px;padding:10px;color:var(--text-accent)">
+   <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500"><span><i class="ti ti-loader-2"></i> Queue · 2 of 4</span><i class="ti ti-chevron-right"></i></div>
+   <div style="font-size:12px;margin:4px 0 6px">IDEA-320 · phase 2 of 3</div><div class="bar"><i style="width:61%"></i></div><div style="font-size:11px;margin-top:4px">5h 61% · resets 14:20</div>
+  </div>
+  <div class="cap" style="margin-top:4px">In progress</div>
+  <div class="r"><span style="flex:1">One home for local state</span><span class="pill run">running</span></div>
+  <div class="cap">Planned</div>
+  <div class="r"><span style="flex:1">Run the queue</span><span class="pill ok">queued #3</span></div>
+  <div class="r"><span style="flex:1">Push digests</span><span class="pill wait">question</span></div>
+  <div class="tabs"><i class="ti ti-folders"></i><i class="ti ti-bulb" style="color:var(--text-accent)"></i><i class="ti ti-message"></i><i class="ti ti-list"></i><i class="ti ti-git-branch"></i></div>
+ </div></div>
+ <div><div class="cap" style="text-align:center;margin-bottom:6px">Run queue sheet</div>
+ <div class="ph" style="background:var(--surface-1);padding:0;overflow:hidden;justify-content:flex-end">
+  <div style="background:var(--surface-2);border-radius:20px 20px 0 0;border-top:0.5px solid var(--border-strong);padding:10px 12px 14px">
+   <div style="width:36px;height:4px;border-radius:2px;background:var(--border-strong);margin:0 auto 10px"></div>
+   <div style="font-size:15px;font-weight:500">Run queue</div>
+   <div class="cap" style="margin-bottom:6px"><i class="ti ti-check"></i> Git level · 5h 32% · 7d 41%</div>
+   <div class="r"><i class="ti ti-square-check" style="color:var(--text-accent);font-size:18px"></i><span style="flex:1">Git that heals itself<br><span class="cap">5 phases · ~$4</span></span><i class="ti ti-grip-horizontal" style="color:var(--text-muted)"></i></div>
+   <div class="r"><i class="ti ti-square-check" style="color:var(--text-accent);font-size:18px"></i><span style="flex:1">One home for local state<br><span class="cap">3 phases · ~$3</span></span><i class="ti ti-grip-horizontal" style="color:var(--text-muted)"></i></div>
+   <div class="cap" style="margin-top:8px">Not ready</div>
+   <div class="r" style="color:var(--text-secondary)"><span style="flex:1">Run the queue</span><span class="pill wait">waits 319</span></div>
+   <div class="r" style="color:var(--text-secondary)"><span style="flex:1">Push digests</span><span class="pill wait">answer</span></div>
+   <div class="r" style="color:var(--text-secondary)"><span style="flex:1">Rules</span><span class="cap">80% · 07:00 · $20</span><i class="ti ti-chevron-right"></i></div>
+   <button class="primary" style="width:100%;margin-top:10px">Run 2 ideas</button>
+  </div>
+ </div></div>
+ <div><div class="cap" style="text-align:center;margin-bottom:6px">Pause push and action</div>
+ <div class="ph" style="background:var(--surface-1)">
+  <div style="text-align:center;font-size:40px;font-weight:500;margin-top:16px">14:02</div>
+  <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:14px;padding:10px;margin-top:12px">
+   <div class="cap"><i class="ti ti-bell"></i> Paper Camp · now</div>
+   <div style="font-size:13px;font-weight:500;margin-top:2px">Queue paused: conflict</div>
+   <div style="font-size:12px;color:var(--text-secondary)">src/app/server/agent.ts after IDEA-320. Idea notes merged.</div>
+   <div style="display:flex;gap:6px;margin-top:8px"><button style="flex:1;font-size:12px">Open git</button><button style="flex:1;font-size:12px">Resolve</button></div>
+  </div>
+  <div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:14px;padding:10px">
+   <div class="cap"><i class="ti ti-bell"></i> Paper Camp · 1h ago</div>
+   <div style="font-size:13px;font-weight:500;margin-top:2px">IDEA-298 needs your decision</div>
+   <div style="font-size:12px;color:var(--text-secondary)">Queue moved on. Answer to run it next.</div>
+  </div>
+ </div></div>
+</div>
+</main>
+<script>
+const q=document.getElementById('q'),go=document.getElementById('go');
+q.addEventListener('change',()=>{let n=0,p=0,c=0;q.querySelectorAll('input:checked').forEach(b=>{n++;p+=+b.dataset.p;c+=+b.dataset.c});go.innerHTML='<i class="ti ti-player-play"></i> Run '+n+' idea'+(n===1?'':'s')+' · '+p+' phases · ~$'+c;});
+</script>
+</body>
+</html>
