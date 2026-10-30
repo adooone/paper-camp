@@ -1695,7 +1695,11 @@ describe('git sync between ideas (IDEA-321)', () => {
       try { execSync('git rebase @{u}', { stdio: 'ignore' }); } catch {}
       require('node:fs').writeFileSync('CONFLICT.md', 'resolved\\n');
       execSync('git add CONFLICT.md');
-      execSync('git rebase --continue', { stdio: 'ignore' });
+      // CI has no editor; without one \`rebase --continue\` fails on the commit message.
+      execSync('git rebase --continue', {
+        stdio: 'ignore',
+        env: { ...process.env, GIT_EDITOR: 'true' },
+      });
     `;
     const launched = manager.launch(
       'resolve-conflict',

@@ -36,7 +36,7 @@ jobs:
         if: steps.release.outputs.pr
         uses: actions/checkout@v7
         with:
-          ref: ${{ fromJson(steps.release.outputs.pr).headBranchName }}
+          ref: ${{ steps.release.outputs.pr && fromJson(steps.release.outputs.pr).headBranchName || '' }}
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
@@ -71,7 +71,7 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          PR_NUMBER: ${{ fromJson(steps.release.outputs.pr).number }}
+          PR_NUMBER: ${{ steps.release.outputs.pr && fromJson(steps.release.outputs.pr).number || '' }}
         run: |
           VERSION=$(grep -m1 -oP '(?<=\.\.\.)v[0-9]+\.[0-9]+\.[0-9]+(?=\))' CHANGELOG.md)
           pnpm cli release-notes "$VERSION" --write | tee /tmp/release-notes.md
