@@ -4,45 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [0.45.0](https://github.com/adooone/paper-camp/compare/v0.44.0...v0.45.0) (2026-10-30)
 
-
 ### Features
 
-* **app:** `batch-run` task with stop rules and persisted state ([dea70fb](https://github.com/adooone/paper-camp/commit/dea70fb0bd930b462e677dcca714310dc187480e))
-* **app:** Agent prompts, skill and doctor ([7fa82ae](https://github.com/adooone/paper-camp/commit/7fa82aee8f602fc69c5be7e28ad6f328884fec80))
-* **app:** Asset links in idea markdown ([c39255c](https://github.com/adooone/paper-camp/commit/c39255c42d26c8257d7ed4e98f28e5106cd885f0))
-* **app:** Assets on the corpus and the serving routes ([65340bc](https://github.com/adooone/paper-camp/commit/65340bc8f1d66b420dac9ac3498b35fd3894dc9c))
-* **app:** Extract `runIdea` from run-all ([33dbd1f](https://github.com/adooone/paper-camp/commit/33dbd1ffe9da347b33a7188b8f455145dab9b1b9))
-* **app:** Files section in the web idea view ([f17af4d](https://github.com/adooone/paper-camp/commit/f17af4d50771952bc2c846f37c09e5a61bc9076c))
-* **app:** Git sync between ideas ([1ee90fb](https://github.com/adooone/paper-camp/commit/1ee90fbc4ef4c164998257a23b9916e110132ca0))
-* **app:** Machine-wide queue and the mobile contract ([13ecd4b](https://github.com/adooone/paper-camp/commit/13ecd4b3ef82886eb2be7f53ec2f95bd809f787a))
-* **app:** Readiness predicate and preview route ([5cefa82](https://github.com/adooone/paper-camp/commit/5cefa82e18abeaed75a343989a0f9c96302dae29))
-* **app:** Web batch sheet, live card, recovery banner and summary ([b7acddf](https://github.com/adooone/paper-camp/commit/b7acddf687a61c8e1ec2bf977c8e9958441d0ca9))
-* **ci:** Regroup the release PR from the workflow ([9277ff1](https://github.com/adooone/paper-camp/commit/9277ff1d63fd2573305f4176cc9cc6baf03518d5))
-* **ci:** The review stamp as a docs commit ([46e2d6f](https://github.com/adooone/paper-camp/commit/46e2d6f95e4f8fcf5f3c1d56281b4a21b572f844))
-* **ci:** Write the grouped section in place ([01c50d3](https://github.com/adooone/paper-camp/commit/01c50d36ff507a1fe8c785e90de9090521cf2496))
-* **ideas:** Add IDEA-321 run queue mockups and new idea notes ([22a845b](https://github.com/adooone/paper-camp/commit/22a845bdce67794758e448fae2c7ef60bfee17bb))
-
+- **Release notes grouped by idea** (IDEA-317)
+- Add IDEA-321 run queue mockups and new idea notes
+- **Files on an idea** (IDEA-322)
+- **Run the queue** (IDEA-321)
 
 ### Bug Fixes
 
-* **app:** Capacity keeps last reading and release notes range fixes ([fe7e600](https://github.com/adooone/paper-camp/commit/fe7e6001df3937dee9fce0b4ab1fa9c8b6ba2d82))
-* **app:** Explain an empty run queue and show ideas not in it yet ([cf8d7a0](https://github.com/adooone/paper-camp/commit/cf8d7a0bff8854546ac0cbd7c8928a673e0b9dfc))
-* **app:** Fetch before every run ([e3ccaec](https://github.com/adooone/paper-camp/commit/e3ccaec824543af7e7bc5fc66e052956f29670d1))
-* **app:** Keep plans-list grouping after opening a plan ([f6fd1aa](https://github.com/adooone/paper-camp/commit/f6fd1aa23ae725248ab01763adf033dfc25ed084))
-* **app:** Keep the reading on failure ([a6d05f7](https://github.com/adooone/paper-camp/commit/a6d05f7300c1b98ab7722ae886c39c8070c878bf))
-* **app:** lint ([c0e1bb5](https://github.com/adooone/paper-camp/commit/c0e1bb545633bb373b3f200f79f08b6637d0f2a0))
-* **app:** lint ([ff0daa0](https://github.com/adooone/paper-camp/commit/ff0daa02420c49594d8694167cda239713fc30a6))
-* **app:** lint, Consistency ([896f786](https://github.com/adooone/paper-camp/commit/896f78697f77a9f333ad77f671cf89b2dce8615b))
-* **app:** One bookkeeping commit per run ([9d23d7f](https://github.com/adooone/paper-camp/commit/9d23d7f95bffa29dbf6dca9fe205ef55d96704ef))
-* **app:** Outdated and no-reading states ([6154150](https://github.com/adooone/paper-camp/commit/615415019e668eb05d8ff6bb3d2c4f097658d038))
-* **app:** Render Markdown tables in ideas and docs ([3225aaf](https://github.com/adooone/paper-camp/commit/3225aaf4049b56f2fb5e7731e00b0a34cd8e2741))
-* **app:** Rule-based merge for `papercamp/` files inside `reconcileOnto` ([a30f3f5](https://github.com/adooone/paper-camp/commit/a30f3f5981702be0560bbd5c1f913cb027a1073b))
-* **app:** Sync and fix-divergence from chat ([e001877](https://github.com/adooone/paper-camp/commit/e001877a4dc7bd30299a569e116168372b085553))
-* **app:** Type vite HMR and plans search param explicitly ([5eb176c](https://github.com/adooone/paper-camp/commit/5eb176c37094e65c8fce07e2eb245ff025177c43))
-* **app:** Verified `resolve-conflict` outcome with backup ref and push ([bef6419](https://github.com/adooone/paper-camp/commit/bef6419597f393946dc131ac53a7fefff767a448))
-* **ci:** Guard release PR output and git rebase in CI test ([15cb4e4](https://github.com/adooone/paper-camp/commit/15cb4e40d7ad2cc102e8329d312c02a5b4398e25))
-* **stack:** lint, test, Consistency ([6cf648b](https://github.com/adooone/paper-camp/commit/6cf648b63636b9eb4031d8487823974e9afddca2))
-* **stack:** Untrack local state already committed under papercamp/.local ([abd4c17](https://github.com/adooone/paper-camp/commit/abd4c170ed1d5d5dfc7f01e1b4760467c5086739))
+- Type vite HMR and plans search param explicitly
+- **Capacity keeps its last reading** (IDEA-318)
+- Capacity keeps last reading and release notes range fixes
+- **Git that heals itself from the app** (IDEA-319)
+- Keep plans-list grouping after opening a plan
+- Render Markdown tables in ideas and docs
+- Explain an empty run queue and show ideas not in it yet
+- Untrack local state already committed under papercamp/.local
+- Guard release PR output and git rebase in CI test
 
 ## [0.44.0](https://github.com/adooone/paper-camp/compare/v0.43.0...v0.44.0) (2026-10-24)
 
