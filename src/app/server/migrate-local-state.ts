@@ -196,6 +196,13 @@ export async function migrateLocalState(root: string): Promise<MigrationResult> 
   const toUntrack: string[] = [];
   let movedAnything = false;
 
+  // Every mount, not only when an old file moves: a checkout whose .local/ was
+  // created by a newer writer would otherwise never get its .gitignore, and a file
+  // already committed under .local/ would stay tracked for good.
+  if (await pathExists(campDir)) await ensureLocalGitignore(campDir);
+  const relLocalDir = join('papercamp', '.local');
+  if (await isTracked(root, relLocalDir)) toUntrack.push(relLocalDir);
+
   for (const { old, local } of RENAMED_LOCAL_FILES) {
     const relOld = join('papercamp', old);
     if (await isTracked(root, relOld)) toUntrack.push(relOld);

@@ -76,6 +76,34 @@ describe('migrateLocalState', () => {
     expect(git(root, 'status', '--porcelain')).toBe('');
   });
 
+  it('untracks a file already committed under .local/ and makes .local/ ignore itself', async () => {
+    const root = await initRepo();
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(join(root, 'papercamp', '.local', 'pr-map.json'), '{}\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'commit local state by mistake');
+
+    const result = await migrateLocalState(root);
+    expect(result.status).toBe('migrated');
+
+    expect(git(root, 'ls-files', 'papercamp/.local')).toBe('');
+    await expect(readFile(join(root, 'papercamp', '.local', 'pr-map.json'), 'utf-8')).resolves.toBe(
+      '{}\n',
+    );
+    await writeFile(join(root, 'papercamp', '.local', 'pr-map.json'), '{"changed":true}\n');
+    expect(git(root, 'status', '--porcelain')).toBe('');
+  });
+
+  it('creates the .local/ ignore file on a checkout with nothing to move', async () => {
+    const root = await initRepo();
+    await migrateLocalState(root);
+    await expect(readFile(join(root, 'papercamp', '.local', '.gitignore'), 'utf-8')).resolves.toBe(
+      '*\n',
+    );
+    await writeFile(join(root, 'papercamp', '.local', 'tasks.log'), 'x\n');
+    expect(git(root, 'status', '--porcelain')).toBe('');
+  });
+
   it('drops the matching .gitignore line and comment, leaving others alone', async () => {
     const root = await initRepo();
     await writeFile(
