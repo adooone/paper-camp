@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.0](https://github.com/adooone/paper-camp/compare/v0.44.0...v0.45.0) (2026-10-30)
+
+### Features
+
+- **Release notes grouped by idea** (IDEA-317)
+- Add IDEA-321 run queue mockups and new idea notes
+- **Files on an idea** (IDEA-322)
+- **Run the queue** (IDEA-321)
+
+### Bug Fixes
+
+- Type vite HMR and plans search param explicitly
+- **Capacity keeps its last reading** (IDEA-318)
+- Capacity keeps last reading and release notes range fixes
+- **Git that heals itself from the app** (IDEA-319)
+- Keep plans-list grouping after opening a plan
+- Render Markdown tables in ideas and docs
+- Explain an empty run queue and show ideas not in it yet
+- Untrack local state already committed under papercamp/.local
+- Guard release PR output and git rebase in CI test
+
 ## [0.44.0](https://github.com/adooone/paper-camp/compare/v0.43.0...v0.44.0) (2026-10-24)
 
 
