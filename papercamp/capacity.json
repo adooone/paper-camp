@@ -2,19 +2,19 @@
   "snapshot": {
     "status": "allowed",
     "rateLimitType": "five_hour",
-    "resetsAt": 1793317200,
+    "resetsAt": 1793358000,
     "overage": false,
     "unifiedWindows": {
       "five_hour": {
-        "utilization": 0.29,
-        "resetsAt": 1793317200
+        "utilization": 0.02,
+        "resetsAt": 1793358000
       },
       "seven_day": {
-        "utilization": 0.23,
+        "utilization": 0.24,
         "resetsAt": 1793606400
       }
     }
   },
-  "capturedAt": "2026-10-29T21:44:30.848Z",
-  "source": "run"
+  "capturedAt": "2026-10-30T07:15:38.957Z",
+  "source": "probe"
 }

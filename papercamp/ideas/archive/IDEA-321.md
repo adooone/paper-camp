@@ -2,9 +2,9 @@
 id: IDEA-321
 title: Run the queue
 type: feat
-status: review
+status: done
 created: 2026-10-29
-updated: 2026-10-29
+updated: 2026-10-30
 tags:
   - run
   - app

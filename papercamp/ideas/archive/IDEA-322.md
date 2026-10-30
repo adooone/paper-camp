@@ -2,7 +2,7 @@
 id: IDEA-322
 title: Files on an idea
 type: feat
-status: review
+status: done
 created: 2026-10-29
 updated: 2026-10-29
 tags:
