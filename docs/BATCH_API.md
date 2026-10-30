@@ -20,6 +20,7 @@ rows are ready to tick.
     costEstimateUsd: number | null
   }>
   readyCount: number
+  backlog: Array<{ id: string; title: string; hasPhases: boolean }>  // derived status `idea`, oldest first
   costEstimate: { perPhaseUsd: number | null }
   capacity: CapacityRecord | null   // ~/.config/paper-camp/capacity.json (src/core/capacity.ts)
   git: { level: 'clean' | 'behind' | 'diverged' | 'dirty'; behind: number; diverged: boolean; dirty: boolean }
@@ -28,6 +29,11 @@ rows are ready to tick.
 
 `BatchReadinessReason` is `'needs' | 'manual-only' | 'open-question' | 'stale-base' | 'no-agent'`
 (`src/core/batch-readiness.ts`) — the `message` is the one line to show next to a greyed row.
+
+`backlog` lists ideas that aren't in the queue yet. One with `hasPhases: false` needs a plan:
+draft it with `POST /api/agent/launch-draft-all` (`{ ids }`). One with `hasPhases: true` has a
+stored `status: idea` the derivation couldn't promote, so `PATCH /api/entities?id=…` with
+`{ status: 'planned' }` puts it in the queue.
 
 **`GET /api/batch/status`**
 The live batch, if one is running, paused or interrupted on this project.

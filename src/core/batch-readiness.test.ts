@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PhaseItem, ResolvedNeed, ThreadMessage } from '../types/index';
-import { batchReadiness } from './batch-readiness';
+import { batchReadiness, selectBatchBacklog } from './batch-readiness';
 
 const phase = (overrides: Partial<PhaseItem>): PhaseItem => ({
   done: false,
@@ -125,5 +125,24 @@ describe('batchReadiness', () => {
     expect(
       batchReadiness({ ...base, resolvedNeeds, phases: [phase({ source: 'manual' })] }),
     ).toMatchObject({ reason: 'needs' });
+  });
+});
+
+describe('selectBatchBacklog', () => {
+  it('lists idea-status entries oldest first and flags whether they have phases', () => {
+    const classified = [
+      { id: 'IDEA-3', title: 'Newer', created: '2026-03-01', status: 'idea' },
+      { id: 'IDEA-1', title: 'Planned', created: '2026-01-01', status: 'planned' },
+      { id: 'IDEA-2', title: 'Older', created: '2026-02-01', status: 'idea' },
+    ];
+    const entries = [
+      { id: 'IDEA-1', phases: [phase({})] },
+      { id: 'IDEA-2', phases: [phase({})] },
+      { id: 'IDEA-3', phases: [] },
+    ];
+    expect(selectBatchBacklog(classified, entries)).toEqual([
+      { id: 'IDEA-2', title: 'Older', hasPhases: true },
+      { id: 'IDEA-3', title: 'Newer', hasPhases: false },
+    ]);
   });
 });

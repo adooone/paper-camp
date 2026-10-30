@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { batchReadiness } from '@/core/batch-readiness';
+import { batchReadiness, selectBatchBacklog } from '@/core/batch-readiness';
 import { type BatchRunRules, readBatchRunState } from '@/core/batch-run';
 import { readCapacity } from '@/core/capacity';
 import { readCorpus } from '@/core/corpus';
@@ -99,6 +99,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
         sendJson(res, 200, {
           order: items,
           readyCount: items.filter((item) => item.readiness.ready).length,
+          backlog: selectBatchBacklog(classified, entries),
           costEstimate: { perPhaseUsd: perPhaseUsd ?? null },
           capacity,
           git: { level, behind, diverged, dirty },

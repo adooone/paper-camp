@@ -112,6 +112,17 @@ describe('GET /api/batch/preview', () => {
     ]);
   });
 
+  it('lists a backlog idea with no phases outside the queue', async () => {
+    const root = await makeProject();
+    await writeIdea(root, { id: 'IDEA-1', title: 'Just an idea', status: 'idea' });
+    const { res, json } = fakeRes();
+    await route({ root, git: fakeGit() }).handle(fakeReq(), res);
+    const body = json() as { order: unknown[]; readyCount: number; backlog: unknown[] };
+    expect(body.order).toEqual([]);
+    expect(body.readyCount).toBe(0);
+    expect(body.backlog).toEqual([{ id: 'IDEA-1', title: 'Just an idea', hasPhases: false }]);
+  });
+
   it('reports a blocking need', async () => {
     const root = await makeProject();
     await writeIdea(root, { id: 'IDEA-1', title: 'Needed', phases: [{ done: false, text: 'x' }] });

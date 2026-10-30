@@ -7,6 +7,7 @@ import { patchEntity } from '@/app/services/content';
 import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import type { BatchBacklogItem } from '@/core/batch-readiness';
 import type { BatchRunPauseReason, BatchRunRules } from '@/core/batch-run';
 import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import {
@@ -102,6 +103,72 @@ const PreviewRow = ({
         {item.readiness.message}
       </Stamp>
     )}
+  </div>
+);
+
+const BacklogSection = ({
+  backlog,
+  busy,
+  onDraft,
+  onMarkPlanned,
+}: {
+  backlog: BatchBacklogItem[];
+  busy: boolean;
+  onDraft: (ids: string[]) => void;
+  onMarkPlanned: (id: string) => void;
+}) => {
+  const unplanned = backlog.filter((item) => !item.hasPhases);
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm opacity-80">Not in the queue yet</span>
+        {unplanned.length > 0 && (
+          <Button
+            size="small"
+            disabled={busy}
+            onClick={() => onDraft(unplanned.map((item) => item.id))}
+          >
+            Draft {unplanned.length} idea{unplanned.length === 1 ? '' : 's'}
+          </Button>
+        )}
+      </div>
+      <div className="flex max-h-[12rem] flex-col overflow-y-auto">
+        {backlog.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center gap-2 border-ink-100 border-b py-2 opacity-70 last:border-b-0"
+          >
+            <span className="min-w-0 flex-1 truncate font-handwritten text-sm">
+              {item.id} — {item.title}
+            </span>
+            {item.hasPhases ? (
+              <Button
+                variant="link"
+                size="tiny"
+                disabled={busy}
+                onClick={() => onMarkPlanned(item.id)}
+              >
+                Mark planned
+              </Button>
+            ) : (
+              <Stamp size="small" variant="muted">
+                needs a plan
+              </Stamp>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const EmptyQueue = () => (
+  <div className="flex flex-col gap-1 py-4 text-sm opacity-80">
+    <span>Nothing to run.</span>
+    <span>
+      The queue takes every idea that has phases and is planned, in progress or in review. Draft a
+      plan for an idea and it joins the queue.
+    </span>
   </div>
 );
 
@@ -446,6 +513,7 @@ export const BatchSheet = () => {
   const batchStatus = useAppStore((s) => s.batchStatus);
   const loadBatchStatus = useAppStore((s) => s.loadBatchStatus);
   const startBatch = useAppStore((s) => s.startBatch);
+  const launchBatchDraft = useAppStore((s) => s.launchBatchDraft);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { handlePull, handleFixDivergence, pulling, fixingDivergence } = useBranchSync();
@@ -453,6 +521,7 @@ export const BatchSheet = () => {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [rules, setRules] = useState<Partial<BatchRunRules>>({});
   const [starting, setStarting] = useState(false);
+  const [backlogBusy, setBacklogBusy] = useState(false);
 
   const batch = batchStatus?.batch;
   const isLive =
@@ -499,6 +568,46 @@ export const BatchSheet = () => {
       });
     }
   };
+
+  const draftBacklog = async (ids: string[]) => {
+    setBacklogBusy(true);
+    try {
+      await launchBatchDraft(ids);
+      toast({
+        title: `Drafting ${ids.length} idea${ids.length === 1 ? '' : 's'}`,
+        description: 'Each one joins the queue once it has phases.',
+        variant: 'success',
+      });
+      close();
+    } catch (err) {
+      toast({
+        title: 'Could not start drafting',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    } finally {
+      setBacklogBusy(false);
+    }
+  };
+
+  const markPlanned = async (id: string) => {
+    setBacklogBusy(true);
+    try {
+      await patchEntity(id, { status: 'planned' });
+      await Promise.all([refreshPlans(), loadBatchPreview()]);
+    } catch (err) {
+      toast({
+        title: 'Could not mark planned',
+        description: oneLineErrorSummary((err as Error).message),
+        variant: 'error',
+      });
+    } finally {
+      setBacklogBusy(false);
+    }
+  };
+
+  const backlog = preview?.backlog ?? [];
+  const queueEmpty = preview?.order.length === 0;
 
   const orderedChecked = (preview?.order ?? []).filter((item) => checked.has(item.id));
   const totalPhases = orderedChecked.reduce((sum, item) => sum + item.phaseCount, 0);
@@ -559,7 +668,16 @@ export const BatchSheet = () => {
                   onDrop={(draggedId) => reorder(draggedId, index)}
                 />
               ))}
+              {queueEmpty && <EmptyQueue />}
             </div>
+            {backlog.length > 0 && (
+              <BacklogSection
+                backlog={backlog}
+                busy={backlogBusy}
+                onDraft={draftBacklog}
+                onMarkPlanned={markPlanned}
+              />
+            )}
             <RulesSection rules={rules} onChange={(next) => setRules((r) => ({ ...r, ...next }))} />
             <div className="flex items-center justify-between gap-2">
               <span className="font-handwritten text-sm opacity-80">

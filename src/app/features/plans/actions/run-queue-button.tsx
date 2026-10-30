@@ -14,13 +14,7 @@ export const RunQueueButton = () => {
   const readyCount = preview?.readyCount ?? 0;
 
   return (
-    <Button
-      variant="primary"
-      icon={<RunIcon size={16} />}
-      size="small"
-      onClick={openBatchSheet}
-      disabled={readyCount === 0}
-    >
+    <Button variant="primary" icon={<RunIcon size={16} />} size="small" onClick={openBatchSheet}>
       Run queue ({readyCount})
     </Button>
   );

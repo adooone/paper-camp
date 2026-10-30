@@ -1,4 +1,4 @@
-import type { BatchReadiness } from '@/core/batch-readiness';
+import type { BatchBacklogItem, BatchReadiness } from '@/core/batch-readiness';
 import type { BatchRunRules, BatchRunState } from '@/core/batch-run';
 import type { AgentTaskState } from '@/types/index';
 import { apiFetch, apiUrl } from './api-base';
@@ -14,6 +14,7 @@ export interface BatchPreviewItem {
 export interface BatchPreview {
   order: BatchPreviewItem[];
   readyCount: number;
+  backlog: BatchBacklogItem[];
   costEstimate: { perPhaseUsd: number | null };
   capacity: unknown;
   git: {

@@ -59,3 +59,28 @@ export function batchReadiness(entity: {
 
   return { ready: true };
 }
+
+export interface BatchBacklogItem {
+  id: string;
+  title: string;
+  hasPhases: boolean;
+}
+
+/** Ideas that can't join the queue yet because their derived status is still `idea`:
+ * either no phases (draft them first) or phases under a stored `idea` status that
+ * the derivation couldn't promote (mark them planned). Oldest first, like the run
+ * order's own append rule. */
+export function selectBatchBacklog(
+  classified: { id: string; title: string; created: string; status?: string }[],
+  entries: { id: string; phases: PhaseItem[] }[],
+): BatchBacklogItem[] {
+  const phasesById = new Map(entries.map((e) => [e.id, e.phases]));
+  return classified
+    .filter((e) => e.status === 'idea')
+    .sort((a, b) => a.created.localeCompare(b.created))
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      hasPhases: (phasesById.get(e.id)?.length ?? 0) > 0,
+    }));
+}
