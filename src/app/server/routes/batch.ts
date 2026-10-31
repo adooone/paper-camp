@@ -47,7 +47,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
       path: '/api/batch/preview',
       handle: async (_req, res) => {
         const [{ entries, work }, list, taskLogRaw, snapshot, capacity] = await Promise.all([
-          readCorpus(root),
+          readCorpus(root, { live: true }),
           readRunOrderFile(root),
           readFile(localFile(root, 'tasks.log'), 'utf-8').catch(() => ''),
           git.getStatusSnapshot(),

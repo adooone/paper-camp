@@ -2379,7 +2379,7 @@ export function createAgentManager(
   // The same order and readiness the preview route shows, minus the UI's per-run
   // ticks — the machine-wide driver (IDEA-321) takes every ready idea in run order.
   async function computeReadyBatchIds(): Promise<string[]> {
-    const { entries, work } = await readCorpus(root);
+    const { entries, work } = await readCorpus(root, { live: true });
     const list = await readRunOrderFile(root);
     const order = normalizeRunOrder(list, classifyRunOrderEntries(entries, work));
     const defaultAgents = readProjectConfig(root).defaultAgents;
