@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.1](https://github.com/adooone/paper-camp/compare/v0.45.0...v0.45.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **app:** Count the run queue from live PR state ([462eff2](https://github.com/adooone/paper-camp/commit/462eff281a8737e8ea0dffd564d73f0b2478c7ff))
+
 ## [0.45.0](https://github.com/adooone/paper-camp/compare/v0.44.0...v0.45.0) (2026-10-30)
 
 ### Features
