@@ -57,12 +57,40 @@ jobs:
       #   tailscale funnel --bg --https=8443 --set-path /api/machine/update http://localhost:4333/api/machine/update
       # Skipped, not failed, until the token secret exists: an unset secret is an
       # unconfigured hook, and the release itself has already shipped.
+      # npm accepts a publish before it serves it ("may take a few minutes"), and the
+      # daemon gets one shot: hooked too early, its install fails with ETARGET.
+      - name: Wait for the registry
+        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' }}
+        continue-on-error: true
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for i in $(seq 1 60); do
+            if [ "$(npm view "@dendelion/paper-camp@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+              echo "npm serves $VERSION"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::npm did not serve $VERSION within 10 minutes"
+          exit 1
+
+      # Fails the step (not the job: the release has shipped) when the daemon reports a
+      # failed install, so a green step means the daemon actually took the version.
       - name: Hook the daemon
         if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' }}
         continue-on-error: true
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          curl --fail --silent --show-error \
+          response=$(curl --fail --silent --show-error \
             -X POST "https://deimos.pitta-ray.ts.net:8443/api/machine/update" \
             -H "Authorization: Bearer $PAPER_CAMP_UPDATE_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"version\":\"${{ steps.version.outputs.version }}\"}"
+            -d "{\"version\":\"$VERSION\"}")
+          echo "$response"
+          outcome=$(node -p 'JSON.parse(process.argv[1]).outcome' "$response")
+          if [ "$outcome" = "failed" ]; then
+            echo "::error::the daemon could not install $VERSION"
+            exit 1
+          fi
