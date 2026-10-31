@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.2](https://github.com/adooone/paper-camp/compare/v0.45.1...v0.45.2) (2026-10-31)
+
+
+### Bug Fixes
+
+* **ci:** Wait for npm to serve a release before hooking the daemon ([6a3d7b1](https://github.com/adooone/paper-camp/commit/6a3d7b18f2a8e2c73389c3e4b7a0abe43266d50e))
+
 ## [0.45.1](https://github.com/adooone/paper-camp/compare/v0.45.0...v0.45.1) (2026-10-31)
 
 ### Bug Fixes
