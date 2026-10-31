@@ -998,6 +998,11 @@ Plan body.
 
     it('sweeps the fix pass into one bookkeeping commit instead of leaving it dirty (IDEA-319)', async () => {
       const { root, plan } = await makeGitRoot(PLAN_PHASES_DONE_TWO_FIXES);
+      // A mounted checkout's papercamp/.local/ ignores itself (IDEA-320). Without that,
+      // the bookkeeping commit tracks the run's own task log, and a line written after
+      // the commit leaves it dirty — a race that failed this test on CI now and then.
+      await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+      await writeFile(join(root, 'papercamp', '.local', '.gitignore'), '*\n', 'utf-8');
       agentScript.current = FLIP_NEXT_CHECKBOX;
       const git = createGitManager(root);
       const hooks = createAgentHooks(root, git);
@@ -1015,15 +1020,8 @@ Plan body.
       const { stdout: log } = await run('git', ['log', '--oneline'], { cwd: root });
       expect(log.trim().split('\n')).toHaveLength(2);
 
-      // tasks.log/notifications.log live under papercamp/.local/, which ignores itself
-      // (IDEA-320); the test fixture has no .gitignore, so filter the two
-      // logTaskCompletion left dirty.
       const { stdout: status } = await run('git', ['status', '--porcelain'], { cwd: root });
-      const meaningfulStatus = status
-        .split('\n')
-        .filter((line) => line && !/papercamp\/\.local\/(tasks|notifications)\.log/.test(line))
-        .join('\n');
-      expect(meaningfulStatus).toBe('');
+      expect(status.trim()).toBe('');
 
       const after = parseEntityFile(
         await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8'),
