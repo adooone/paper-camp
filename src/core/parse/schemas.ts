@@ -271,14 +271,10 @@ export const paperCampConfigSchema = z.object({
   defaultAgent: z.enum(AGENT_IDS).optional(),
   defaultAgents: z
     .object({
-      phase: agentConfigSchema,
-      planDraft: agentConfigSchema,
-      ideaExtend: agentConfigSchema,
-      commitSuggest: agentConfigSchema,
-      feedback: agentConfigSchema,
-      codeReview: agentConfigSchema,
-      deskDiscovery: agentConfigSchema,
-      nightShift: agentConfigSchema,
+      build: agentConfigSchema,
+      plan: agentConfigSchema,
+      chat: agentConfigSchema,
+      quick: agentConfigSchema,
     })
     .optional(),
   desk: deskConfigSchema.optional(),

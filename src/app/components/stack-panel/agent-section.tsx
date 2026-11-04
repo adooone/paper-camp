@@ -37,6 +37,7 @@ import {
   formatLastRun,
   groupLabelClassName,
 } from './shared';
+import { SignedOutCard } from './signed-out-card';
 
 const MAX_VISIBLE_TASKS = 1;
 
@@ -433,6 +434,7 @@ export const AgentSection = () => {
       <div
         className={`flex shrink-0 flex-col justify-start gap-2 overflow-y-auto pt-2 ${TASK_STACK_MIN_HEIGHT_CLASS}`}
       >
+        <SignedOutCard />
         {showBatchCard ? (
           <BatchTaskCard />
         ) : visibleTasks.length > 0 ? (

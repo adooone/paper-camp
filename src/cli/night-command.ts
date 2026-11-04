@@ -31,7 +31,6 @@ import { readTaskLog } from '../core/parse';
 import { todayDateString } from '../core/serialize';
 import {
   type ChunkHealth,
-  DEFAULT_AGENTS,
   DEFAULT_NIGHT_CONFIG,
   type MachineNightGateResponse,
   type NightChunkPassResult,
@@ -41,7 +40,7 @@ import {
   type NightHealthMap,
   type NightReportGroup,
   type NightSuggestionEntry,
-  coerceAgentConfig,
+  coerceDefaultAgents,
 } from '../types/index';
 import { runNightChunkPass } from './night-pass';
 
@@ -314,10 +313,10 @@ export async function runNightPass(
     return false;
   }
 
-  const rawAgentConfig = await readFile(planFile(project.path, 'config.json'), 'utf-8')
-    .then((raw) => (JSON.parse(raw) as { defaultAgents?: { nightShift?: unknown } }).defaultAgents)
+  const rawConfig = await readFile(planFile(project.path, 'config.json'), 'utf-8')
+    .then((raw) => JSON.parse(raw) as { defaultAgents?: unknown; defaultAgent?: unknown })
     .catch(() => undefined);
-  const agentConfig = coerceAgentConfig(rawAgentConfig?.nightShift ?? DEFAULT_AGENTS.nightShift);
+  const agentConfig = coerceDefaultAgents(rawConfig?.defaultAgents, rawConfig?.defaultAgent).plan;
 
   const sinceCommit = await readLastReviewedCommit(project.path, chunkPath);
 

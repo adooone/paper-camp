@@ -293,7 +293,7 @@ describe('runNight("run", chunk)', () => {
       join(projectDir, 'papercamp', 'config.json'),
       JSON.stringify({
         night: { maxTurns: 5, maxCostUsd: 0.25 },
-        defaultAgents: { nightShift: { agent: 'claude-code', model: 'opus', effort: 'high' } },
+        defaultAgents: { plan: { agent: 'claude-code', model: 'opus', effort: 'high' } },
       }),
       'utf-8',
     );

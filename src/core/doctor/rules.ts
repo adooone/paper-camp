@@ -133,6 +133,13 @@ export const DOCTOR_RULES = [
       'papercamp/.local/.gitignore is missing, so nothing under papercamp/.local/ is protected from being committed — run `paper-camp doctor --fix` to create it.',
   },
   {
+    id: 'local-state-missing-gitignore-block',
+    category: 'local-state',
+    severity: 'warning',
+    summary:
+      '.gitignore has no paper-camp managed block for the paths older versions wrote local state to (pr-map.json, tasks.log, …), so an older copy of paper-camp in node_modules, on another machine or in CI shows them as changes — run `paper-camp doctor --fix` to add it.',
+  },
+  {
     id: 'local-state-missing-gitattributes-block',
     category: 'local-state',
     severity: 'warning',

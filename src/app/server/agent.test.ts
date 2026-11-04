@@ -16,6 +16,12 @@ import {
   createAgentManager,
 } from './agent';
 import { createAgentHooks } from './agent-hooks';
+import {
+  SIGNED_OUT_ERROR,
+  getAgentSignIn,
+  markAgentSignedIn,
+  resetAgentSignInForTests,
+} from './agent-signin';
 import { createGitManager } from './git';
 
 // These are IDEA-191's sanctioned end-to-end tests: they spawn a real agent process
@@ -65,6 +71,10 @@ vi.mock('./agents', () => {
     parseLine: (line: string) => {
       const text = line.trim();
       if (!text) return null;
+      if (text.startsWith('RESULT-ERROR:')) {
+        const reason = text.slice('RESULT-ERROR:'.length).trim();
+        return { text: reason, done: true, error: true, reason };
+      }
       if (text.startsWith('PERMISSION-DENIED:')) {
         const reason = text.slice('PERMISSION-DENIED:'.length).trim();
         return { text: reason, error: true, reason };
@@ -157,6 +167,7 @@ beforeEach(() => {
   agentScript.buildArgs = undefined;
   agentScript.readOnlyCommand = undefined;
   authStatus.current = null;
+  resetAgentSignInForTests();
 });
 
 const run = promisify(execFile);
@@ -1739,6 +1750,7 @@ describe('resumeAuthParkedTasks', () => {
     expect(currentStatus(manager)?.errorKind).toBe('auth');
 
     agentScript.current = FLIP_NEXT_CHECKBOX;
+    markAgentSignedIn();
     const { resumed } = await manager.resumeAuthParkedTasks();
     expect(resumed).toEqual(['IDEA-1']);
 
@@ -1762,6 +1774,7 @@ describe('resumeAuthParkedTasks', () => {
     expect(currentStatus(manager)?.errorKind).toBe('auth');
 
     agentScript.current = FLIP_NEXT_CHECKBOX;
+    markAgentSignedIn();
     const { resumed } = await manager.resumeAuthParkedTasks();
     expect(resumed).toEqual(['IDEA-1']);
 
@@ -1780,6 +1793,7 @@ describe('resumeAuthParkedTasks', () => {
     manager.start(plan, 0);
     expect(await waitForStatus(manager, settled)).toBe('error');
 
+    markAgentSignedIn();
     const { resumed } = await manager.resumeAuthParkedTasks();
     expect(resumed).toEqual([]);
     expect(currentStatus(manager)?.status).toBe('error');
@@ -1797,6 +1811,7 @@ describe('resumeAuthParkedTasks', () => {
 
     manager.start(plan1, 0);
     await waitForStatus(manager, settled);
+    markAgentSignedIn();
     manager.startRunAllPhases(plan2);
     await waitForStatus(manager, settled);
 
@@ -1807,6 +1822,7 @@ describe('resumeAuthParkedTasks', () => {
 
     // Both plans use the exclusive 'worktree' write-set scope, so relaunching the
     // first blocks the second's relaunch within the same resumeAuthParkedTasks pass.
+    markAgentSignedIn();
     const { resumed } = await manager.resumeAuthParkedTasks();
     expect(resumed).toEqual([plan1.id]);
     // The blocked task must stay 'auth'-tagged so a later pass can still pick it up.
@@ -2724,5 +2740,117 @@ Plan body.
     agentScript.current = FLIP_NEXT_CHECKBOX;
     manager.start(plan, 0);
     expect(manager.getReconcileQueue()).toBeNull();
+  });
+});
+
+describe('signed-out runs', () => {
+  const FAILS_SIGNED_OUT = `console.log('RESULT-ERROR: Failed to authenticate: OAuth session expired and could not be refreshed'); process.exit(1);`;
+
+  async function readNotificationKinds(root: string): Promise<string[]> {
+    const raw = await readFile(
+      join(root, 'papercamp', '.local', 'notifications.log'),
+      'utf-8',
+    ).catch(() => '');
+    return raw
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => (JSON.parse(line) as { kind: string }).kind);
+  }
+
+  async function addSecondIdea(root: string): Promise<void> {
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-2.md'),
+      PLAN_TWO_PHASES.replace('id: IDEA-1', 'id: IDEA-2').replace('Test plan', 'Second plan'),
+    );
+  }
+
+  it('classifies an expired session as auth, notifies once and refuses the next launch', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FAILS_SIGNED_OUT;
+    authStatus.current = { loggedIn: true, authMethod: 'claude.ai', apiProvider: null };
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+    expect(getAgentSignIn().signedOut).toBe(true);
+    expect(manager.startRunAllPhases(plan)).toEqual({
+      ok: false,
+      error: SIGNED_OUT_ERROR,
+      kind: 'auth',
+    });
+
+    let kinds: string[] = [];
+    for (let i = 0; i < 50 && kinds.length === 0; i++) {
+      kinds = await readNotificationKinds(root);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    expect(kinds).toEqual(['agent-signed-out']);
+  });
+
+  it('does not park a failed final result as a question', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = FAILS_SIGNED_OUT;
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    expect(currentStatus(manager)?.errorKind).toBe('auth');
+    const idea = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(idea).not.toContain('[question]');
+    const chat = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8').catch(() => '');
+    expect(chat).not.toContain('[question]');
+  });
+
+  it('still parks a permission denial streamed mid-run as a question', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    agentScript.current = `console.log('PERMISSION-DENIED: grep denied by permission ask'); process.exit(1);`;
+    const manager = createAgentManager(root);
+
+    expect(manager.startRunAllPhases(plan)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+
+    expect(currentStatus(manager)?.errorKind).toBe('question');
+  });
+
+  it('pauses the batch on the first idea and keeps the rest queued', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    await addSecondIdea(root);
+    agentScript.current = FAILS_SIGNED_OUT;
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchRun(['IDEA-1', 'IDEA-2'])).toEqual({ ok: true });
+    const paused = await waitForBatchStatus(root, (status) => status === 'paused');
+
+    expect(paused.pause).toEqual({ kind: 'auth', id: 'IDEA-1' });
+    expect(paused.items).toEqual([
+      expect.objectContaining({ id: 'IDEA-1', outcome: 'auth' }),
+      expect.objectContaining({ id: 'IDEA-2', outcome: 'queued' }),
+    ]);
+    expect(manager.getStatus().filter((t) => t.taskKind === 'run-all')).toHaveLength(1);
+    expect(await readNotificationKinds(root)).not.toContain('batch-paused');
+  });
+
+  it('resumes the paused batch with the signed-out idea requeued after sign-in', async () => {
+    const { root } = await makeRoot(PLAN_TWO_PHASES);
+    await addSecondIdea(root);
+    agentScript.current = FAILS_SIGNED_OUT;
+    const manager = createAgentManager(root);
+
+    expect(manager.startBatchRun(['IDEA-1', 'IDEA-2'])).toEqual({ ok: true });
+    await waitForBatchStatus(root, (status) => status === 'paused');
+
+    agentScript.current = 'process.exit(0)';
+    markAgentSignedIn();
+    await manager.resumeAfterSignIn();
+
+    const resumed = await waitForBatchStatus(root, (status) => status === 'done');
+    expect(resumed.items.map((item) => item.id)).toEqual(['IDEA-1', 'IDEA-2']);
+    expect(
+      resumed.items.every((item) => item.outcome !== 'auth' && item.outcome !== 'queued'),
+    ).toBe(true);
   });
 });

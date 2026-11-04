@@ -17,6 +17,7 @@ import {
   updateEntity,
 } from './corpus';
 import { clearPrCache } from './git-pr/pr';
+import { LEGACY_LOCAL_PATHS } from './local-paths';
 import * as readers from './readers';
 import { readEntities } from './readers';
 import { formatEntityFile } from './serialize/entity-file';
@@ -841,7 +842,7 @@ function gitRoot(): string {
 }
 
 describe('readLocalStateDrift', () => {
-  it('flags a tracked file outside the plan, a missing .local/.gitignore, and a missing .gitattributes block', async () => {
+  it('flags a tracked file outside the plan and each missing marker', async () => {
     const root = gitRoot();
     writeFileSync(join(root, 'papercamp', 'capacity.json'), '{}\n');
     git(root, 'add', '.');
@@ -852,10 +853,11 @@ describe('readLocalStateDrift', () => {
     expect(drift?.trackedOutsidePlan).toEqual(['papercamp/capacity.json']);
     expect(drift?.hasLocalGitignore).toBe(false);
     expect(drift?.hasGitattributesBlock).toBe(false);
-    expect(localStateDriftCount(drift)).toBe(3);
+    expect(drift?.hasGitignoreBlock).toBe(false);
+    expect(localStateDriftCount(drift)).toBe(4);
   });
 
-  it('reports no drift once the plan files are all that is tracked and both markers exist', async () => {
+  it('reports no drift once the plan files are all that is tracked and every marker exists', async () => {
     const root = gitRoot();
     mkdirSync(join(root, 'papercamp', '.local'), { recursive: true });
     writeFileSync(join(root, 'papercamp', '.local', '.gitignore'), '*\n');
@@ -863,7 +865,11 @@ describe('readLocalStateDrift', () => {
       join(root, '.gitattributes'),
       '# paper-camp:start\npapercamp/chat.md merge=union\n# paper-camp:end\n',
     );
-    git(root, 'add', 'papercamp/config.json', '.gitattributes');
+    writeFileSync(
+      join(root, '.gitignore'),
+      `# paper-camp:start\n${LEGACY_LOCAL_PATHS.join('\n')}\n# paper-camp:end\n`,
+    );
+    git(root, 'add', 'papercamp/config.json', '.gitattributes', '.gitignore');
     git(root, 'commit', '-m', 'seed');
 
     const drift = await readLocalStateDrift(root);
@@ -872,6 +878,7 @@ describe('readLocalStateDrift', () => {
       trackedOutsidePlan: [],
       hasLocalGitignore: true,
       hasGitattributesBlock: true,
+      hasGitignoreBlock: true,
     });
     expect(localStateDriftCount(drift)).toBe(0);
   });

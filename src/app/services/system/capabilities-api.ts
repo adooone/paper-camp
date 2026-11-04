@@ -62,6 +62,17 @@ export const fetchAgentStatusAt = async (baseUrl: string): Promise<AgentTaskStat
   }
 };
 
+export interface SignInCheck {
+  signedIn: boolean | null;
+  reason?: string;
+}
+
+export const checkAgentSignIn = async (): Promise<SignInCheck> => {
+  const response = await fetch(apiUrl('/api/agent/auth-check'), { method: 'POST' });
+  if (!response.ok) throw new Error(`Sign-in check failed: ${response.status}`);
+  return (await response.json()) as SignInCheck;
+};
+
 export const fetchAgentAuthStatus = async (): Promise<AgentAuthStatus | null> => {
   const response = await fetch(apiUrl('/api/agent/auth-status'));
   if (!response.ok) return null;

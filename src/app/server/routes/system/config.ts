@@ -13,7 +13,7 @@ import {
   TOOLBAR_SEGMENT_IDS,
   type ToolbarSegmentId,
   agentConfigsEqual,
-  coerceAgentConfig,
+  coerceDefaultAgents,
 } from '@/types/index';
 import { readMaybe } from '../../helpers';
 import { readJson, requestUrl, sendJson } from '../../http';
@@ -104,15 +104,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           return;
         }
         if (rawDefaultAgents !== undefined) {
-          for (const key of [
-            'phase',
-            'planDraft',
-            'ideaExtend',
-            'commitSuggest',
-            'feedback',
-            'codeReview',
-          ] as const) {
-            const val = rawDefaultAgents[key];
+          for (const [key, val] of Object.entries(rawDefaultAgents)) {
             const agentId =
               typeof val === 'string' ? val : (val as Record<string, unknown> | undefined)?.agent;
             if (!agentId || !AGENT_IDS.includes(agentId as AgentId)) {
@@ -120,11 +112,10 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
               return;
             }
           }
-          const newPhase = coerceAgentConfig(rawDefaultAgents.phase);
-          const newCodeReview = coerceAgentConfig(rawDefaultAgents.codeReview);
-          if (agentConfigsEqual(newCodeReview, newPhase)) {
+          const proposed = coerceDefaultAgents(rawDefaultAgents);
+          if (agentConfigsEqual(proposed.chat, proposed.build)) {
             sendJson(res, 400, {
-              error: 'defaultAgents.codeReview must use a different model than defaultAgents.phase',
+              error: 'defaultAgents.chat must use a different model than defaultAgents.build',
             });
             return;
           }
@@ -191,32 +182,10 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
           return;
         }
         const config = JSON.parse(raw) as PaperCampConfig;
-        const defaultAgents: DefaultAgentsMap | undefined = rawDefaultAgents
-          ? {
-              phase: coerceAgentConfig(rawDefaultAgents.phase),
-              planDraft: coerceAgentConfig(rawDefaultAgents.planDraft),
-              ideaExtend: coerceAgentConfig(rawDefaultAgents.ideaExtend),
-              commitSuggest: coerceAgentConfig(rawDefaultAgents.commitSuggest),
-              feedback: coerceAgentConfig(rawDefaultAgents.feedback),
-              codeReview: coerceAgentConfig(rawDefaultAgents.codeReview),
-              deskDiscovery: coerceAgentConfig(rawDefaultAgents.deskDiscovery),
-              nightShift: coerceAgentConfig(rawDefaultAgents.nightShift),
-            }
-          : undefined;
         const resolvedDefaultAgents: DefaultAgentsMap | undefined =
-          defaultAgents ??
-          (defaultAgent !== undefined
-            ? {
-                phase: { agent: defaultAgent },
-                planDraft: { agent: defaultAgent },
-                ideaExtend: { agent: defaultAgent },
-                commitSuggest: { agent: defaultAgent },
-                feedback: { agent: defaultAgent },
-                codeReview: { agent: defaultAgent },
-                deskDiscovery: { agent: defaultAgent },
-                nightShift: { agent: defaultAgent },
-              }
-            : undefined);
+          rawDefaultAgents !== undefined || defaultAgent !== undefined
+            ? coerceDefaultAgents(rawDefaultAgents, defaultAgent)
+            : undefined;
         const configWithOld = config as PaperCampConfig & { defaultAgent?: AgentId };
         const { defaultAgent: _oldAgent, ...configRest } = configWithOld;
         const resolvedIntegration: IntegrationConfig | undefined = integration

@@ -10,7 +10,8 @@ import {
   PLAN_NAMES,
   localFile,
 } from '@/core/corpus';
-import { DAEMON_GITIGNORE_ENTRIES, ensureLocalGitignore } from '@/core/scaffold/scaffold';
+import { LEGACY_LOCAL_PATHS, withManagedBlock, withoutManagedBlock } from '@/core/local-paths';
+import { ensureLocalGitignore } from '@/core/scaffold/scaffold';
 import type { LocalStateMigrationResult } from '@/types/index';
 import { savePairingState } from './pairing';
 
@@ -106,20 +107,19 @@ async function moveIntoLocal(oldPath: string, newPath: string): Promise<void> {
   await rename(oldPath, newPath);
 }
 
-// A plan file must never be gitignored (chat.md needs to stay committed), and
-// every pre-.local entry in DAEMON_GITIGNORE_ENTRIES is now redundant.
-async function cleanGitignore(root: string): Promise<boolean> {
+// A plan file must never be gitignored (chat.md needs to stay committed). The legacy
+// local-state paths live in one managed block, so loose copies of them are dropped.
+async function syncGitignore(root: string): Promise<boolean> {
   const path = join(root, '.gitignore');
-  const content = await readFile(path, 'utf-8').catch(() => null);
-  if (content === null) return false;
+  const content = await readFile(path, 'utf-8').catch(() => '');
 
   const targets = new Set<string>([
-    ...DAEMON_GITIGNORE_ENTRIES,
+    ...LEGACY_LOCAL_PATHS,
     ...[...PLAN_NAMES].map((name) => `papercamp/${name}`),
   ]);
 
   const kept: string[] = [];
-  for (const line of content.split('\n')) {
+  for (const line of withoutManagedBlock(content).split('\n')) {
     if (targets.has(line.trim())) {
       while (kept.length > 0 && kept[kept.length - 1].trim().startsWith('#')) {
         kept.pop();
@@ -129,7 +129,7 @@ async function cleanGitignore(root: string): Promise<boolean> {
     kept.push(line);
   }
 
-  const next = kept.join('\n');
+  const next = withManagedBlock(kept.join('\n'), LEGACY_LOCAL_PATHS.join('\n'));
   if (next === content) return false;
   await writeFile(path, next, 'utf-8');
   return true;
@@ -163,7 +163,7 @@ async function ensureGitattributesBlock(root: string): Promise<boolean> {
 
 /** Runs once on a project's first mount under the upgraded daemon: moves every
  * daemon-local file onto its papercamp/.local/ home, untracks whatever of that was
- * committed, cleans the file list this replaces out of .gitignore, writes the
+ * committed, keeps the pre-.local paths ignored in a managed .gitignore block, writes the
  * .gitattributes union block for chat.md, and makes one commit. Skips (for a retry
  * on the next mount) a project that's mid-rebase or has staged changes, since either
  * would make `git rm --cached` and the commit land on the wrong thing. */
@@ -252,14 +252,14 @@ export async function migrateLocalState(root: string): Promise<MigrationResult> 
 
   for (const relPath of toUntrack) await untrack(root, relPath);
 
-  const gitignoreChanged = await cleanGitignore(root);
+  const gitignoreChanged = await syncGitignore(root);
   const gitattributesChanged = await ensureGitattributesBlock(root);
 
   if (!movedAnything && toUntrack.length === 0 && !gitignoreChanged && !gitattributesChanged) {
     return { status: 'no-op', rotatedPairingToken, adoptedCapacity };
   }
 
-  if (gitignoreChanged && (await pathExists(join(root, '.gitignore')))) {
+  if (gitignoreChanged) {
     await runGit(root, ['add', '--', '.gitignore']);
   }
   if (gitattributesChanged) {

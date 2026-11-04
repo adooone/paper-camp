@@ -4,8 +4,9 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
+import { LEGACY_LOCAL_PATHS } from '../local-paths';
 import { addProject, loadRegistry } from '../machine-registry';
-import { DAEMON_GITIGNORE_ENTRIES, PAPER_CAMP_VERSION, initProject } from './scaffold';
+import { PAPER_CAMP_VERSION, initProject } from './scaffold';
 
 const dirs: string[] = [];
 
@@ -221,10 +222,11 @@ describe('initProject machine registry', () => {
   });
 });
 
-describe('DAEMON_GITIGNORE_ENTRIES', () => {
-  it('lists the pre-.local gitignore lines the migration will drop from existing projects', () => {
-    expect(DAEMON_GITIGNORE_ENTRIES).toContain('papercamp/tasks.log');
-    expect(DAEMON_GITIGNORE_ENTRIES).toContain('papercamp/.pairing.json');
+describe('LEGACY_LOCAL_PATHS', () => {
+  it('lists the pre-.local paths an older paper-camp still writes', () => {
+    expect(LEGACY_LOCAL_PATHS).toContain('papercamp/pr-map.json');
+    expect(LEGACY_LOCAL_PATHS).toContain('papercamp/tasks.log');
+    expect(LEGACY_LOCAL_PATHS).toContain('papercamp/.pairing.json');
   });
 });
 

@@ -311,7 +311,8 @@ export type StoredNotificationKind =
   | 'night-review-findings'
   | 'service-stopped'
   | 'batch-paused'
-  | 'batch-finished';
+  | 'batch-finished'
+  | 'agent-signed-out';
 
 export interface StoredNotification {
   id: string;
@@ -338,6 +339,7 @@ export const NOTIFICATION_SETTING_KINDS = [
   'reply-posted',
   'batch-paused',
   'batch-finished',
+  'agent-signed-out',
 ] as const;
 
 export type NotificationSettingKind = (typeof NOTIFICATION_SETTING_KINDS)[number];
@@ -354,6 +356,7 @@ export const DEFAULT_NOTIFICATION_KINDS: Record<NotificationSettingKind, boolean
   'reply-posted': false,
   'batch-paused': true,
   'batch-finished': true,
+  'agent-signed-out': true,
 };
 
 export interface NotificationsConfig {
@@ -677,27 +680,47 @@ export function coerceAgentConfig(v: unknown): AgentConfig {
   };
 }
 
-export interface DefaultAgentsMap {
-  phase: AgentConfig;
-  planDraft: AgentConfig;
-  ideaExtend: AgentConfig;
-  commitSuggest: AgentConfig;
-  feedback: AgentConfig;
-  codeReview: AgentConfig;
-  deskDiscovery: AgentConfig;
-  nightShift: AgentConfig;
-}
+export const DEFAULT_AGENT_KEYS = ['build', 'plan', 'chat', 'quick'] as const;
+
+export type DefaultAgentKey = (typeof DEFAULT_AGENT_KEYS)[number];
+
+export type DefaultAgentsMap = Record<DefaultAgentKey, AgentConfig>;
 
 export const DEFAULT_AGENTS: DefaultAgentsMap = {
-  phase: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
-  planDraft: { agent: 'claude-code' },
-  ideaExtend: { agent: 'claude-code' },
-  commitSuggest: { agent: 'claude-code' },
-  feedback: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
-  codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
-  deskDiscovery: { agent: 'claude-code' },
-  nightShift: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
+  build: { agent: 'claude-code', model: 'opus', effort: 'medium' },
+  plan: { agent: 'claude-code', model: 'opus', effort: 'high' },
+  chat: { agent: 'claude-code', model: 'fable', effort: 'high' },
+  quick: { agent: 'claude-code', model: 'sonnet', effort: 'low' },
 };
+
+/** The per-task keys a config.json carried before the four groups, in priority order:
+ *  `codeReview` leads `chat` because its model is the one IDEA-170 keeps off `build`. */
+const LEGACY_AGENT_KEYS: Record<DefaultAgentKey, readonly string[]> = {
+  build: ['phase'],
+  plan: ['planDraft', 'ideaExtend', 'deskDiscovery', 'nightShift'],
+  chat: ['codeReview', 'feedback'],
+  quick: ['commitSuggest'],
+};
+
+export function coerceDefaultAgents(rawAgents: unknown, defaultAgent?: unknown): DefaultAgentsMap {
+  const agents = (rawAgents ?? {}) as Record<string, unknown>;
+  const fallbackAgent = AGENT_IDS.includes(defaultAgent as AgentId)
+    ? (defaultAgent as AgentId)
+    : undefined;
+  const pick = (key: DefaultAgentKey): AgentConfig => {
+    const value = [key, ...LEGACY_AGENT_KEYS[key]]
+      .map((name) => agents[name])
+      .find((entry) => entry !== undefined);
+    if (value !== undefined) return coerceAgentConfig(value);
+    return fallbackAgent ? { agent: fallbackAgent } : DEFAULT_AGENTS[key];
+  };
+  return {
+    build: pick('build'),
+    plan: pick('plan'),
+    chat: pick('chat'),
+    quick: pick('quick'),
+  };
+}
 
 /** A reviewer must not use the same model as the task that wrote the code (IDEA-170) — self-review rubber-stamps. */
 export function agentConfigsEqual(a: AgentConfig, b: AgentConfig): boolean {
@@ -1039,6 +1062,8 @@ export interface AgentAuthStatus {
   loggedIn: boolean | null;
   authMethod: string | null;
   apiProvider: string | null;
+  /** The CLI's own message when a run found the sign-in expired. */
+  reason?: string;
 }
 
 export type LoginRelayPhase =

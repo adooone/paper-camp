@@ -3,8 +3,13 @@ import { rm } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { CheckName } from '@/types/index';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  getAgentSignIn,
+  markAgentSignedOut,
+  onAgentSignedIn,
+  resetAgentSignInForTests,
+} from '../agent-signin';
 import { agentRoutes } from './agent';
 import type { RouteContext } from './types';
 
@@ -106,8 +111,8 @@ describe('POST /api/agent/login-relay/start', () => {
   });
 });
 
-describe('POST /api/agent/login-relay/start resuming parked runs', () => {
-  it('resumes auth-parked tasks once `claude auth status` confirms loggedIn', async () => {
+describe('POST /api/agent/login-relay/start marking sign-in', () => {
+  it('clears the sign-out and wakes sign-in listeners once `claude auth status` confirms loggedIn', async () => {
     installClaude(
       `if [ "$1" = "auth" ] && [ "$2" = "login" ]; then
          echo 'visit: https://claude.com/cai/oauth/authorize?code=true'; sleep 0.1; exit 0
@@ -115,20 +120,17 @@ describe('POST /api/agent/login-relay/start resuming parked runs', () => {
          echo '{"loggedIn": true, "authMethod": "oauth", "apiProvider": null}'; exit 0
        fi`,
     );
-    const runChecksAndWait = vi.fn(async () => [] as CheckName[]);
-    const resumeAuthParkedTasks = vi.fn(async (_runProjectChecks?: () => Promise<CheckName[]>) => ({
-      resumed: [] as string[],
-    }));
-    const { res } = fakeRes();
-    await route('/api/agent/login-relay/start', {
-      agent: { resumeAuthParkedTasks } as unknown as RouteContext['agent'],
-      checks: { runChecksAndWait } as unknown as RouteContext['checks'],
-    }).handle(fakeReq(), res);
+    resetAgentSignInForTests();
+    markAgentSignedOut('Failed to authenticate: OAuth session expired');
+    const onSignedIn = vi.fn();
+    onAgentSignedIn(onSignedIn);
 
-    await waitFor(async () => resumeAuthParkedTasks.mock.calls.length > 0);
-    const runProjectChecks = resumeAuthParkedTasks.mock.calls[0][0] as () => Promise<unknown>;
-    await runProjectChecks();
-    expect(runChecksAndWait).toHaveBeenCalledOnce();
+    const { res } = fakeRes();
+    await route('/api/agent/login-relay/start').handle(fakeReq(), res);
+
+    await waitFor(async () => onSignedIn.mock.calls.length > 0);
+    expect(getAgentSignIn().signedOut).toBe(false);
+    resetAgentSignInForTests();
   });
 });
 

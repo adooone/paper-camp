@@ -35,8 +35,22 @@ const checkMissingGitattributesBlock: DoctorCheck = ({ localStateDrift }) =>
       ]
     : [];
 
+const checkMissingGitignoreBlock: DoctorCheck = ({ localStateDrift }) =>
+  localStateDrift && !localStateDrift.hasGitignoreBlock
+    ? [
+        {
+          file: '.gitignore',
+          line: 1,
+          rule: 'local-state-missing-gitignore-block',
+          message:
+            'missing the paper-camp managed block — an older paper-camp writing papercamp/pr-map.json, tasks.log and the like shows them as changes; run `paper-camp doctor --fix` to add it.',
+        },
+      ]
+    : [];
+
 export const localStateChecks: DoctorCheck[] = [
   checkTrackedOutsidePlan,
   checkMissingLocalGitignore,
   checkMissingGitattributesBlock,
+  checkMissingGitignoreBlock,
 ];

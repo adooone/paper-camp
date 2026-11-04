@@ -32,12 +32,14 @@ import type {
   PrReviewStatus,
   ThreadMessage,
 } from '@/types/index';
+import { getAgentSignIn, markAgentSignedIn, markAgentSignedOut } from '../agent-signin';
 import { resolveAgent } from '../agents';
 import {
   clearAgentAuthStatusCache,
   clearCapabilitiesCache,
   probeAgentAuthStatus,
 } from '../capabilities';
+import { probeSignIn } from '../capacity-probe';
 import {
   addsOpenFix,
   applyFeedbackEdit,
@@ -317,7 +319,7 @@ async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | u
   return entity ? toIdeaEntry(entity) : undefined;
 }
 
-type ActionResult = { ok: true } | { ok: false; error: string; status?: number };
+type ActionResult = { ok: true } | { ok: false; error: string; status?: number; kind?: 'auth' };
 
 export function agentRoutes({ root, git, checks, agent, activity }: RouteContext): Route[] {
   async function resolvePlan(
@@ -354,7 +356,10 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         }
         const result = await run(body);
         if (!result.ok) {
-          sendJson(res, result.status ?? 409, { error: result.error });
+          sendJson(res, result.status ?? 409, {
+            error: result.error,
+            ...(result.kind && { kind: result.kind }),
+          });
           return;
         }
         sendJson(res, 202, { ok: true });
@@ -378,7 +383,29 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         if (requestUrl(req).searchParams.has('recheck')) clearAgentAuthStatusCache(root);
         const defaultAgents = readProjectConfig(root).defaultAgents;
         const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
-        sendJson(res, 200, await probeAgentAuthStatus(id, root));
+        const status = await probeAgentAuthStatus(id, root);
+        const signIn = getAgentSignIn(id);
+        sendJson(
+          res,
+          200,
+          signIn.signedOut ? { ...status, loggedIn: false, reason: signIn.reason } : status,
+        );
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/agent/auth-check',
+      handle: async (_req, res) => {
+        const probe = await probeSignIn(root);
+        if (probe.signedIn) {
+          clearCapabilitiesCache(root);
+          clearAgentAuthStatusCache(root);
+          markAgentSignedIn();
+        } else if (probe.signedIn === false) {
+          markAgentSignedOut(probe.reason ?? 'Claude is signed out');
+        }
+        sendJson(res, 200, probe);
       },
     },
 
@@ -390,14 +417,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           onLoginConfirmed: () => {
             clearCapabilitiesCache(root);
             clearAgentAuthStatusCache(root);
-            agent
-              .resumeAuthParkedTasks(
-                () => checks.runChecksAndWait(),
-                () => checks.getCachedOrRunChecks(),
-              )
-              .catch((err) => {
-                console.error('Failed to resume auth-parked tasks after sign-in', err);
-              });
+            markAgentSignedIn();
           },
         });
         sendJson(res, 200, handle.getState());

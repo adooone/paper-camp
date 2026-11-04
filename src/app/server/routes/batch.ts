@@ -146,7 +146,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
           () => checks.getCachedOrRunChecks(),
         );
         if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
+          sendJson(res, 409, { error: result.error, ...(result.kind && { kind: result.kind }) });
           return;
         }
         sendJson(res, 202, { ok: true });
@@ -169,7 +169,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
         }
         const result = agent.controlBatchRun(action);
         if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
+          sendJson(res, 409, { error: result.error, ...(result.kind && { kind: result.kind }) });
           return;
         }
         sendJson(res, 202, { ok: true });
@@ -182,7 +182,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
       handle: async (_req, res) => {
         const result = await agent.resumeBatchRun(() => checks.runChecksAndWait());
         if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
+          sendJson(res, 409, { error: result.error, ...(result.kind && { kind: result.kind }) });
           return;
         }
         sendJson(res, 202, { ok: true });
@@ -195,7 +195,7 @@ export function batchRoutes({ root, git, agent, checks }: RouteContext): Route[]
       handle: async (_req, res) => {
         const result = await agent.endPausedBatch();
         if (!result.ok) {
-          sendJson(res, 409, { error: result.error });
+          sendJson(res, 409, { error: result.error, ...(result.kind && { kind: result.kind }) });
           return;
         }
         sendJson(res, 200, { ok: true });

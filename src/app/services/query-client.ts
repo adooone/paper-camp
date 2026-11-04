@@ -208,6 +208,10 @@ export function refreshCapacity(): Promise<void> {
 // opens a real EventSource. `onChanged` is passed in rather than importing the store, to avoid a query-client <-> app-store import cycle.
 export function subscribeProjectToActivityStream(onChanged?: () => void): () => void {
   return subscribeToActivityStream((payload) => {
+    if (payload.type === 'agent-auth') {
+      void refreshAgentAuthStatus();
+      return;
+    }
     if (payload.message !== 'changed') return;
     const { runtimeUrl } = getRuntimeConnection();
     queryClient.invalidateQueries({

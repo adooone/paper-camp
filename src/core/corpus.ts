@@ -15,7 +15,13 @@ import { assertCorpusWritable } from './corpus-format';
 import { entityToIdea, entityToPlan } from './entity-view';
 import { resolveIdsWithMainActivity, runGit } from './git-log';
 import { getPrMapFetchedAt, resolvePrsByEntity } from './git-pr/pr-lookup';
-import { GITATTRIBUTES_BLOCK_START, PLAN_NAMES, planFile } from './local-paths';
+import {
+  GITATTRIBUTES_BLOCK_START,
+  LEGACY_LOCAL_PATHS,
+  PLAN_NAMES,
+  hasManagedBlock,
+  planFile,
+} from './local-paths';
 import { type EntriesByRoot, attachResolvedNeeds } from './needs';
 import { parseEntityFile } from './parse/parser';
 import { readEntities } from './readers';
@@ -207,6 +213,8 @@ export interface LocalStateDrift {
   trackedOutsidePlan: string[];
   hasLocalGitignore: boolean;
   hasGitattributesBlock: boolean;
+  /** `.gitignore` keeps the pre-`.local` paths ignored in the paper-camp managed block. */
+  hasGitignoreBlock: boolean;
 }
 
 export function localStateDriftCount(drift: LocalStateDrift | null): number {
@@ -214,7 +222,8 @@ export function localStateDriftCount(drift: LocalStateDrift | null): number {
   return (
     drift.trackedOutsidePlan.length +
     (drift.hasLocalGitignore ? 0 : 1) +
-    (drift.hasGitattributesBlock ? 0 : 1)
+    (drift.hasGitattributesBlock ? 0 : 1) +
+    (drift.hasGitignoreBlock ? 0 : 1)
   );
 }
 
@@ -240,7 +249,12 @@ export async function readLocalStateDrift(root: string): Promise<LocalStateDrift
   const gitattributes = await readFile(join(root, '.gitattributes'), 'utf-8').catch(() => '');
   const hasGitattributesBlock = gitattributes.includes(GITATTRIBUTES_BLOCK_START);
 
-  return { trackedOutsidePlan, hasLocalGitignore, hasGitattributesBlock };
+  const gitignore = await readFile(join(root, '.gitignore'), 'utf-8').catch(() => '');
+  const ignoredLines = new Set(gitignore.split('\n').map((line) => line.trim()));
+  const hasGitignoreBlock =
+    hasManagedBlock(gitignore) && LEGACY_LOCAL_PATHS.every((path) => ignoredLines.has(path));
+
+  return { trackedOutsidePlan, hasLocalGitignore, hasGitattributesBlock, hasGitignoreBlock };
 }
 
 export type EntityFileInput = Parameters<typeof formatEntityFile>[0];

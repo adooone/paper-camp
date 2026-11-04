@@ -5,6 +5,7 @@ import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
+import { onAgentSignInChange, onAgentSignedIn } from './agent-signin';
 import {
   type DeskCheckManager,
   type DeskCheckManagerState,
@@ -213,6 +214,15 @@ export function createApiMiddleware(
     state: agentState,
     isMachineBusy,
     publish,
+  });
+  onAgentSignInChange(() => activity.publish({ type: 'agent-auth' }));
+  onAgentSignedIn(() => {
+    agent
+      .resumeAfterSignIn(
+        () => checks.runChecksAndWait(),
+        () => checks.getCachedOrRunChecks(),
+      )
+      .catch((err) => console.error('papercamp: could not resume after sign-in:', err));
   });
 
   const routes = buildRoutes({

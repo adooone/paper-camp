@@ -56,11 +56,10 @@ import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
-  DEFAULT_AGENTS,
   type LogEntry,
   PLAN_KINDS,
   type PlanEntry,
-  coerceAgentConfig,
+  coerceDefaultAgents,
 } from '../types/index';
 import {
   DEFAULT_LOG_LINES,
@@ -655,27 +654,7 @@ export async function runAudit(root: string): Promise<boolean> {
     console.error('Invalid papercamp/config.json');
     return false;
   }
-  const rawAgents = config.defaultAgents;
-  const defaultAgents = rawAgents
-    ? {
-        phase: coerceAgentConfig(rawAgents.phase),
-        planDraft: coerceAgentConfig(rawAgents.planDraft),
-        ideaExtend: coerceAgentConfig(rawAgents.ideaExtend),
-        commitSuggest: coerceAgentConfig(rawAgents.commitSuggest),
-        feedback: rawAgents.feedback
-          ? coerceAgentConfig(rawAgents.feedback)
-          : DEFAULT_AGENTS.feedback,
-        codeReview: rawAgents.codeReview
-          ? coerceAgentConfig(rawAgents.codeReview)
-          : DEFAULT_AGENTS.codeReview,
-        deskDiscovery: rawAgents.deskDiscovery
-          ? coerceAgentConfig(rawAgents.deskDiscovery)
-          : DEFAULT_AGENTS.deskDiscovery,
-        nightShift: rawAgents.nightShift
-          ? coerceAgentConfig(rawAgents.nightShift)
-          : DEFAULT_AGENTS.nightShift,
-      }
-    : DEFAULT_AGENTS;
+  const defaultAgents = coerceDefaultAgents(config.defaultAgents, config.defaultAgent);
   const { adapter, model, effort } = resolveAgent({ defaultAgents, taskKind: 'audit' });
 
   console.log(`Auditing ${candidates.length} plan(s):\n`);
@@ -834,6 +813,7 @@ program
       'local-state-tracked-outside-plan',
       'local-state-missing-local-gitignore',
       'local-state-missing-gitattributes-block',
+      'local-state-missing-gitignore-block',
     ]);
     const localStateFindings = findings.filter((f) => localStateRuleIds.has(f.rule));
     const otherFindings = findings.filter((f) => !localStateRuleIds.has(f.rule));

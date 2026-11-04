@@ -4,7 +4,7 @@ import { fetchAgentAuthStatus } from '@/app/services/system';
 import type { AgentAuthStatus } from '@/types/index';
 import { useQuery } from '@tanstack/react-query';
 
-function useAgentAuthStatus(): AgentAuthStatus | null {
+export function useAgentAuthStatus(): AgentAuthStatus | null {
   const { runtimeUrl } = useRuntimeConnection();
   const { data } = useQuery({
     queryKey: agentAuthStatusQueryKey(runtimeUrl),

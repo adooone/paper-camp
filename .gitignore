@@ -4,3 +4,16 @@ coverage
 *.tsbuildinfo
 *.timestamp-*.mjs
 public/img/doodles/
+
+# paper-camp:start
+papercamp/.pairing.json
+papercamp/.task-logs/
+papercamp/tasks.log
+papercamp/notifications.log
+papercamp/pr-reviews.json
+papercamp/pr-map.json
+papercamp/night.json
+papercamp/run-order.md
+papercamp/capacity.json
+papercamp/batch.json
+# paper-camp:end

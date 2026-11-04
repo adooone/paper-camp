@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readCapacity } from '@/core/capacity';
+import { LEGACY_LOCAL_PATHS } from '@/core/local-paths';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { migrateLocalState } from './migrate-local-state';
 import { loadPairingState } from './pairing';
@@ -47,6 +48,8 @@ async function initRepo(): Promise<string> {
   git(root, 'commit', '-m', 'initial commit');
   return root;
 }
+
+const LEGACY_BLOCK = `# paper-camp:start\n${LEGACY_LOCAL_PATHS.join('\n')}\n# paper-camp:end\n`;
 
 describe('migrateLocalState', () => {
   it('is a no-op on the second run, once the first has landed its commit', async () => {
@@ -104,7 +107,7 @@ describe('migrateLocalState', () => {
     expect(git(root, 'status', '--porcelain')).toBe('');
   });
 
-  it('drops the matching .gitignore line and comment, leaving others alone', async () => {
+  it('folds the matching .gitignore lines and comment into the managed block', async () => {
     const root = await initRepo();
     await writeFile(
       join(root, '.gitignore'),
@@ -117,7 +120,21 @@ describe('migrateLocalState', () => {
     await migrateLocalState(root);
 
     const gitignore = await readFile(join(root, '.gitignore'), 'utf-8');
-    expect(gitignore).toBe('node_modules\n');
+    expect(gitignore).toBe(`node_modules\n\n${LEGACY_BLOCK}`);
+  });
+
+  it('keeps a stray file from an older paper-camp out of git status, idempotently', async () => {
+    const root = await initRepo();
+    await migrateLocalState(root);
+    const before = await readFile(join(root, '.gitignore'), 'utf-8');
+    expect(before).toBe(LEGACY_BLOCK);
+
+    await writeFile(join(root, 'papercamp', 'pr-map.json'), '{"fetchedAt":0,"prs":{}}\n');
+    expect(git(root, 'status', '--porcelain')).toBe('');
+
+    await rm(join(root, 'papercamp', 'pr-map.json'));
+    expect((await migrateLocalState(root)).status).toBe('no-op');
+    expect(await readFile(join(root, '.gitignore'), 'utf-8')).toBe(before);
   });
 
   it('writes the chat.md merge=union block into .gitattributes, once', async () => {
@@ -133,7 +150,7 @@ describe('migrateLocalState', () => {
     expect(after).toBe(before);
   });
 
-  it('removes a plan file name from .gitignore even outside DAEMON_GITIGNORE_ENTRIES', async () => {
+  it('removes a plan file name from .gitignore', async () => {
     const root = await initRepo();
     await writeFile(join(root, '.gitignore'), 'node_modules\npapercamp/chat.md\n');
     git(root, 'add', '.');
@@ -142,7 +159,7 @@ describe('migrateLocalState', () => {
     await migrateLocalState(root);
 
     const gitignore = await readFile(join(root, '.gitignore'), 'utf-8');
-    expect(gitignore).toBe('node_modules\n');
+    expect(gitignore).toBe(`node_modules\n\n${LEGACY_BLOCK}`);
   });
 
   it('skips a project mid-rebase, leaving the working tree untouched', async () => {

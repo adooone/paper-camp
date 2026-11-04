@@ -34,20 +34,48 @@ describe('readProjectConfig', () => {
     expect(config.subjects).toEqual([]);
   });
 
-  it('coerces per-bucket defaultAgents, filling unset buckets from the defaults', async () => {
+  it('coerces per-group defaultAgents, filling unset groups from the defaults', async () => {
     const root = await makeRoot({
-      defaultAgents: { phase: 'opencode' },
+      defaultAgents: { build: 'opencode' },
     });
     const config = readProjectConfig(root);
-    expect(config.defaultAgents.phase).toEqual({ agent: 'opencode' });
-    expect(config.defaultAgents.feedback).toEqual(DEFAULT_AGENTS.feedback);
+    expect(config.defaultAgents.build).toEqual({ agent: 'opencode' });
+    expect(config.defaultAgents.chat).toEqual(DEFAULT_AGENTS.chat);
   });
 
-  it('expands a legacy single defaultAgent into every bucket', async () => {
+  it('folds the per-task keys of an older config into the four groups', async () => {
+    const root = await makeRoot({
+      defaultAgents: {
+        phase: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
+        planDraft: { agent: 'claude-code', model: 'opus', effort: 'high' },
+        ideaExtend: { agent: 'opencode' },
+        commitSuggest: { agent: 'claude-code', model: 'haiku' },
+        feedback: { agent: 'claude-code', model: 'sonnet' },
+        codeReview: { agent: 'claude-code', model: 'opus', effort: 'high' },
+        nightShift: { agent: 'opencode' },
+      },
+    });
+    const config = readProjectConfig(root);
+    expect(config.defaultAgents).toEqual({
+      build: { agent: 'claude-code', model: 'sonnet', effort: 'medium' },
+      plan: { agent: 'claude-code', model: 'opus', effort: 'high' },
+      chat: { agent: 'claude-code', model: 'opus', effort: 'high' },
+      quick: { agent: 'claude-code', model: 'haiku' },
+    });
+  });
+
+  it('prefers a group key over the per-task keys it replaced', async () => {
+    const root = await makeRoot({
+      defaultAgents: { plan: { agent: 'opencode' }, planDraft: { agent: 'claude-code' } },
+    });
+    expect(readProjectConfig(root).defaultAgents.plan).toEqual({ agent: 'opencode' });
+  });
+
+  it('expands a legacy single defaultAgent into every group', async () => {
     const root = await makeRoot({ defaultAgent: 'opencode' });
     const config = readProjectConfig(root);
-    expect(config.defaultAgents.phase).toEqual({ agent: 'opencode' });
-    expect(config.defaultAgents.nightShift).toEqual({ agent: 'opencode' });
+    expect(config.defaultAgents.build).toEqual({ agent: 'opencode' });
+    expect(config.defaultAgents.quick).toEqual({ agent: 'opencode' });
   });
 
   it('drops a malformed desk manifest instead of throwing', async () => {

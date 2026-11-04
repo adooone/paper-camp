@@ -126,19 +126,6 @@ async function registerInMachineRegistry(targetDir: string, projectName: string)
   }
 }
 
-// Superseded by papercamp/.local/.gitignore; kept so the migration can find and
-// drop these hand-inserted lines from projects that still have them.
-export const DAEMON_GITIGNORE_ENTRIES = [
-  'papercamp/.pairing.json',
-  'papercamp/.task-logs/',
-  'papercamp/tasks.log',
-  'papercamp/notifications.log',
-  'papercamp/pr-reviews.json',
-  'papercamp/pr-map.json',
-  'papercamp/night.json',
-  'papercamp/run-order.md',
-] as const;
-
 // Ignores the whole folder from inside itself, so a new local-state file is safe
 // just by living under here. Exported so the migration can create it on upgrade too.
 export async function ensureLocalGitignore(campDir: string): Promise<void> {

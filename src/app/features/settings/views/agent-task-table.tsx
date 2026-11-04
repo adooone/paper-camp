@@ -6,20 +6,22 @@ import {
   type AgentConfig,
   type AgentId,
   DEFAULT_AGENTS,
+  DEFAULT_AGENT_KEYS,
+  type DefaultAgentKey,
   type DefaultAgentsMap,
 } from '@/types/index';
 import { Input, Table } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
-import { TASK_TYPE_KEYS, TASK_TYPE_LABELS, type TaskTypeKey } from '../constants';
+import { TASK_TYPE_LABELS } from '../constants';
 
 interface AgentTaskTableRow {
-  taskKey: TaskTypeKey;
+  taskKey: DefaultAgentKey;
   agentConfig: AgentConfig;
-  // The code-authoring task's config — codeReview's model must never match it (IDEA-170).
+  // The code-authoring group's config — chat reviews PRs, so its model must never match it (IDEA-170).
   authorConfig?: AgentConfig;
 }
 
-type OnSaveAgentConfig = (key: TaskTypeKey, config: AgentConfig) => Promise<void>;
+type OnSaveAgentConfig = (key: DefaultAgentKey, config: AgentConfig) => Promise<void>;
 
 interface AgentTaskTableProps {
   defaultAgents: DefaultAgentsMap | undefined;
@@ -47,7 +49,7 @@ const AgentCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAgen
 
   return (
     <InlineSelect
-      ariaLabel={`Agent for ${TASK_TYPE_LABELS[row.taskKey]}`}
+      ariaLabel={`Agent for ${TASK_TYPE_LABELS[row.taskKey].label}`}
       value={row.agentConfig.agent}
       onChange={handleAgentChange}
       options={AGENT_IDS.map((id) => ({ value: id, label: AGENT_LABELS[id] }))}
@@ -74,7 +76,7 @@ const ModelCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAgen
   if (Array.isArray(modelOpts)) {
     return (
       <InlineSelect
-        ariaLabel={`Model for ${TASK_TYPE_LABELS[row.taskKey]}`}
+        ariaLabel={`Model for ${TASK_TYPE_LABELS[row.taskKey].label}`}
         value={row.agentConfig.model ?? ''}
         onChange={(v) => onSave(row.taskKey, { ...row.agentConfig, model: v || undefined })}
         options={[
@@ -107,7 +109,7 @@ const EffortCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAge
 
   return (
     <InlineSelect
-      ariaLabel={`Effort for ${TASK_TYPE_LABELS[row.taskKey]}`}
+      ariaLabel={`Effort for ${TASK_TYPE_LABELS[row.taskKey].label}`}
       value={row.agentConfig.effort ?? ''}
       onChange={(v) => onSave(row.taskKey, { ...row.agentConfig, effort: v || undefined })}
       options={[
@@ -119,11 +121,10 @@ const EffortCell = ({ row, onSave }: { row: AgentTaskTableRow; onSave: OnSaveAge
 };
 
 export const AgentTaskTable = ({ defaultAgents, onSave }: AgentTaskTableProps) => {
-  const rows: AgentTaskTableRow[] = TASK_TYPE_KEYS.map((taskKey) => ({
+  const rows: AgentTaskTableRow[] = DEFAULT_AGENT_KEYS.map((taskKey) => ({
     taskKey,
     agentConfig: defaultAgents?.[taskKey] ?? DEFAULT_AGENTS[taskKey],
-    authorConfig:
-      taskKey === 'codeReview' ? (defaultAgents?.phase ?? DEFAULT_AGENTS.phase) : undefined,
+    authorConfig: taskKey === 'chat' ? (defaultAgents?.build ?? DEFAULT_AGENTS.build) : undefined,
   }));
 
   return (
@@ -136,7 +137,10 @@ export const AgentTaskTable = ({ defaultAgents, onSave }: AgentTaskTableProps) =
           key: 'task',
           header: 'Task',
           cell: (row) => (
-            <span className="text-sm opacity-[0.65]">{TASK_TYPE_LABELS[row.taskKey]}</span>
+            <span className="flex flex-col">
+              <span className="text-sm opacity-[0.65]">{TASK_TYPE_LABELS[row.taskKey].label}</span>
+              <span className="text-xs opacity-[0.45]">{TASK_TYPE_LABELS[row.taskKey].detail}</span>
+            </span>
           ),
         },
         {

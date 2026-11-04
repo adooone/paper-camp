@@ -56,6 +56,12 @@ import type {
 import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
+import {
+  SIGNED_OUT_ERROR,
+  getAgentSignIn,
+  isAuthFailure,
+  markAgentSignedOut,
+} from './agent-signin';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import {
@@ -263,7 +269,7 @@ export interface AgentTask {
   currentIdeaTaskId?: string;
 }
 
-type Result = { ok: true } | { ok: false; error: string };
+type Result = { ok: true } | { ok: false; error: string; kind?: 'auth' };
 
 // What one idea's run-all attempt settled into — the batch loop (IDEA-321) acts on
 // this instead of re-deriving it from task state.
@@ -588,6 +594,24 @@ export function createAgentManager(
     }
   }
 
+  async function isSignedOutFailure(task: AgentTask): Promise<boolean> {
+    if (task.agentId !== 'claude-code') return false;
+    if (isAuthFailure(task.errorReason)) return true;
+    return (await claudeAuthStatus(root))?.loggedIn === false;
+  }
+
+  // One notification per sign-out for the whole machine, not one per failed run.
+  function noteSignedOut(task: AgentTask): void {
+    if (!markAgentSignedOut(task.errorReason ?? SIGNED_OUT_ERROR)) return;
+    void appendNotification(root, {
+      id: randomUUID(),
+      kind: 'agent-signed-out',
+      entityId: task.planId ?? task.ideaId ?? task.id,
+      entityTitle: task.notificationTitle ?? task.planTitle,
+      text: SIGNED_OUT_ERROR,
+    });
+  }
+
   async function setStatus(task: AgentTask, status: AgentTaskStatus): Promise<void> {
     // Settle the repo before the task is visible as done/error — otherwise the UI
     // can show success while a fix item's edits are still sitting uncommitted (IDEA-319).
@@ -603,11 +627,9 @@ export function createAgentManager(
       }
     }
     task.status = status;
-    // Ask the CLI instead of matching a message it may no longer print — the same
-    // probe the login relay uses; a 'question' tag from escalateToLog is left alone.
     if (status === 'error' && task.errorKind !== 'question' && task.errorKind !== 'conflict') {
-      const authStatus = task.agentId === 'claude-code' ? await claudeAuthStatus(root) : null;
-      task.errorKind = authStatus?.loggedIn === false ? 'auth' : undefined;
+      task.errorKind = (await isSignedOutFailure(task)) ? 'auth' : undefined;
+      if (task.errorKind === 'auth') noteSignedOut(task);
     }
     broadcast(`agent: ${status}`, task.id);
     if (status === 'done' || status === 'error' || status === 'superseded') {
@@ -621,6 +643,7 @@ export function createAgentManager(
     if (
       (status === 'done' || status === 'error') &&
       entityId &&
+      task.errorKind !== 'auth' &&
       !UNLOGGED_TASK_KINDS.has(task.taskKind)
     ) {
       void appendNotification(root, {
@@ -928,7 +951,9 @@ export function createAgentManager(
         }
         if (parsed?.reason) {
           task.errorReason = parsed.reason;
-          if (opts.trackBlocker) task.blocker = { question: parsed.reason };
+          // A reason on the final result line is the CLI failing (expired sign-in, an
+          // API outage), not a permission the run is waiting on — it must not park.
+          if (opts.trackBlocker && !parsed.done) task.blocker = { question: parsed.reason };
         }
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
@@ -1033,6 +1058,13 @@ export function createAgentManager(
   }
 
   function admit(taskKind: TaskKind, entityId?: string): Result | null {
+    const { id: agentId } = resolveAgent({
+      defaultAgents: readProjectConfig(root).defaultAgents,
+      taskKind,
+    });
+    if (getAgentSignIn(agentId).signedOut) {
+      return { ok: false, error: SIGNED_OUT_ERROR, kind: 'auth' };
+    }
     if (isMachineBusy?.()) {
       return { ok: false, error: 'An agent task is already running on this machine' };
     }
@@ -2138,6 +2170,7 @@ export function createAgentManager(
       const text = describeBatchPause(reason);
       pushLine(task, `[batch] paused — ${text}`);
       void setStatus(task, 'error');
+      if (reason.kind === 'auth') return;
       void appendNotification(root, {
         id: randomUUID(),
         kind: 'batch-paused',
@@ -2192,6 +2225,10 @@ export function createAgentManager(
 
         const next = await pickNextBatchIdea(batch, processed, allowIds);
         if (!next) break;
+        if (getAgentSignIn().signedOut) {
+          await pauseBatch({ kind: 'auth', id: next.id });
+          return;
+        }
         processed.add(next.id);
 
         markBatchItem(batch, next.id, { outcome: 'running', title: next.plan.title });
@@ -2429,8 +2466,13 @@ export function createAgentManager(
     const checks = runProjectChecks ?? batchProjectChecks;
     batchProjectChecks = checks;
     const task = newBatchRunTask();
+    // The idea that met the sign-out never got to do its work, so it runs again.
+    const authId = persisted.pause?.kind === 'auth' ? persisted.pause.id : undefined;
     const batch: BatchRunState = {
       ...persisted,
+      items: persisted.items.map((item) =>
+        item.id === authId ? { id: item.id, title: item.title, outcome: 'queued' } : item,
+      ),
       taskId: task.id,
       status: 'running',
       pause: undefined,
@@ -2503,6 +2545,9 @@ export function createAgentManager(
       defaultAgents,
       taskKind,
     });
+    if (getAgentSignIn(agentId).signedOut) {
+      return Promise.reject(readOnlyPromptError(SIGNED_OUT_ERROR, 'auth'));
+    }
 
     const isClaude = agentId === 'claude-code';
     const args = adapter.buildReadOnlyArgs({ model, effort });
@@ -2680,11 +2725,14 @@ export function createAgentManager(
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ): Promise<{ resumed: string[] }> {
+    const batch = await readBatchRunState(root);
+    const batchTaskIds = new Set(batch?.items.map((item) => item.taskId) ?? []);
     const parked = [...tasks.values()].filter(
       (task) =>
         task.status === 'error' &&
         task.errorKind === 'auth' &&
         task.planId &&
+        !batchTaskIds.has(task.id) &&
         (task.taskKind === 'run-all' || task.taskKind === 'phase'),
     );
 
@@ -2705,6 +2753,17 @@ export function createAgentManager(
       }
     }
     return { resumed };
+  }
+
+  async function resumeAfterSignIn(
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ): Promise<void> {
+    await resumeAuthParkedTasks(runProjectChecks, getBaselineChecks);
+    const batch = await readBatchRunState(root);
+    if (batch?.status === 'paused' && batch.pause?.kind === 'auth') {
+      await resumeBatchRun(runProjectChecks);
+    }
   }
 
   // Re-launches a run-all parked with errorKind 'question' once the Feedback chat's
@@ -2745,6 +2804,7 @@ export function createAgentManager(
     getFixReviewResult,
     consumeFixReviewResult,
     resumeAuthParkedTasks,
+    resumeAfterSignIn,
     resumeQuestionParkedTasks,
     stop,
     getStatus,
@@ -2848,6 +2908,10 @@ export interface AgentManager {
     runProjectChecks?: () => Promise<FailingCheck[]>,
     getBaselineChecks?: () => Promise<FailingCheck[]>,
   ) => Promise<{ resumed: string[] }>;
+  resumeAfterSignIn: (
+    runProjectChecks?: () => Promise<FailingCheck[]>,
+    getBaselineChecks?: () => Promise<FailingCheck[]>,
+  ) => Promise<void>;
   resumeQuestionParkedTasks: (
     planId: string,
     runProjectChecks?: () => Promise<FailingCheck[]>,

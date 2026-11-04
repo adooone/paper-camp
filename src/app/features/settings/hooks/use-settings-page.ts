@@ -6,6 +6,7 @@ import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
 import {
   type AgentConfig,
   DEFAULT_AGENTS,
+  type DefaultAgentKey,
   type DefaultAgentsMap,
   type PaperCampConfig,
   agentConfigsEqual,
@@ -13,7 +14,6 @@ import {
 import { useToast } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import type { TaskTypeKey } from '../constants';
 
 export const useSettingsPage = () => {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -43,23 +43,16 @@ export const useSettingsPage = () => {
     });
   }, []);
 
-  const handleSaveAgentConfig = async (key: TaskTypeKey, newEntry: AgentConfig) => {
+  const handleSaveAgentConfig = async (key: DefaultAgentKey, newEntry: AgentConfig) => {
     const current = config?.defaultAgents;
     const updated: DefaultAgentsMap = {
-      phase: current?.phase ?? DEFAULT_AGENTS.phase,
-      planDraft: current?.planDraft ?? DEFAULT_AGENTS.planDraft,
-      ideaExtend: current?.ideaExtend ?? DEFAULT_AGENTS.ideaExtend,
-      commitSuggest: current?.commitSuggest ?? DEFAULT_AGENTS.commitSuggest,
-      feedback: current?.feedback ?? DEFAULT_AGENTS.feedback,
-      codeReview: current?.codeReview ?? DEFAULT_AGENTS.codeReview,
-      deskDiscovery: current?.deskDiscovery ?? DEFAULT_AGENTS.deskDiscovery,
-      nightShift: current?.nightShift ?? DEFAULT_AGENTS.nightShift,
+      ...(config?.defaultAgents ?? DEFAULT_AGENTS),
       [key]: newEntry,
     };
-    if (key === 'codeReview' && agentConfigsEqual(newEntry, updated.phase)) {
+    if (key === 'chat' && agentConfigsEqual(newEntry, updated.build)) {
       toast({
         title: 'Failed to save',
-        description: 'Code review must use a different model than Phase run.',
+        description: 'Chat reviews pull requests, so it must use a different model than Build.',
         variant: 'error',
       });
       return;

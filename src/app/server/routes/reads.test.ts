@@ -75,12 +75,12 @@ describe('GET /api/config', () => {
   it('coerces defaultAgents and fills in subjects from the roadmap', async () => {
     const root = await makeRoot({
       projectName: 'demo',
-      defaultAgents: { phase: 'opencode' },
+      defaultAgents: { build: 'opencode' },
     });
     const { res, json } = fakeRes();
     await route(root, '/api/config').handle({} as IncomingMessage, res);
-    const body = json() as { projectName: string; defaultAgents: { phase: { agent: string } } };
+    const body = json() as { projectName: string; defaultAgents: { build: { agent: string } } };
     expect(body.projectName).toBe('demo');
-    expect(body.defaultAgents.phase).toEqual({ agent: 'opencode' });
+    expect(body.defaultAgents.build).toEqual({ agent: 'opencode' });
   });
 });

@@ -70,7 +70,7 @@ function runDraftPr(
     files: [],
     config: {
       nextId: { idea: 1 },
-      defaultAgents: { phase: { agent: 'claude-code' } },
+      defaultAgents: { build: { agent: 'claude-code' } },
       desk: draftPr === undefined ? undefined : { ci: { repo: 'a/b', draftPr } },
     } as never,
     draftPrWorkflowContent,

@@ -1,27 +1,11 @@
-import type { CapabilityStatus, NotificationSettingKind } from '@/types/index';
+import type { CapabilityStatus, DefaultAgentKey, NotificationSettingKind } from '@/types/index';
 import { color, colors, withAlpha } from '@dendelion/folk-ui/tokens';
 
-export const TASK_TYPE_KEYS = [
-  'phase',
-  'planDraft',
-  'ideaExtend',
-  'commitSuggest',
-  'feedback',
-  'codeReview',
-  'deskDiscovery',
-  'nightShift',
-] as const;
-export type TaskTypeKey = (typeof TASK_TYPE_KEYS)[number];
-
-export const TASK_TYPE_LABELS: Record<TaskTypeKey, string> = {
-  phase: 'Phase run',
-  planDraft: 'Plan draft',
-  ideaExtend: 'Idea extend',
-  commitSuggest: 'Commit suggest',
-  feedback: 'Scout chat',
-  codeReview: 'Code review',
-  deskDiscovery: 'Desk discovery',
-  nightShift: 'Review passes',
+export const TASK_TYPE_LABELS: Record<DefaultAgentKey, { label: string; detail: string }> = {
+  build: { label: 'Build', detail: 'Phase runs, fixes and conflicts' },
+  plan: { label: 'Plan', detail: 'Plan drafts, idea extends, desk discovery, review passes' },
+  chat: { label: 'Chat', detail: 'Scout chat and PR code review' },
+  quick: { label: 'Quick', detail: 'Commit messages, overlap checks, prioritising' },
 };
 
 export const CAPABILITY_STATUS_STAMP: Record<
@@ -60,6 +44,7 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationSettingKind, string> =
   'reply-posted': 'Reply posted',
   'batch-paused': 'Queue paused',
   'batch-finished': 'Queue finished',
+  'agent-signed-out': 'Claude signed out',
 };
 
 export const PERMISSION_STAMP: Record<

@@ -134,7 +134,7 @@ describe('no-default-agents', () => {
     expect(without).toContainEqual(expect.objectContaining({ rule: 'no-default-agents' }));
     const withAgents = runDoctorChecks({
       ...base,
-      config: { nextId: { idea: 1 }, defaultAgents: { phase: { agent: 'claude-code' } } },
+      config: { nextId: { idea: 1 }, defaultAgents: { build: { agent: 'claude-code' } } },
     } as never);
     expect(withAgents).not.toContainEqual(expect.objectContaining({ rule: 'no-default-agents' }));
   });
