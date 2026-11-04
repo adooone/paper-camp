@@ -53,7 +53,7 @@ jobs:
         id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      # The machine publishes only this path through its Cloudflare tunnel
+      # The machine publishes only this path through its Cloudflare tunnel on api.adoo.one
       # (/etc/cloudflared/config.yml, `path: ^/api/machine/update$`, Host header
       # rewritten to localhost so the daemon's host check passes). Not Funnel: Funnel
       # puts the machine's ts.net name in public DNS, and iPhones on the tailnet then
@@ -87,7 +87,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           response=$(curl --fail --silent --show-error --retry 3 --retry-all-errors \
-            -X POST "https://update.adoo.one/api/machine/update" \
+            -X POST "https://api.adoo.one/api/machine/update" \
             -H "Authorization: Bearer $PAPER_CAMP_UPDATE_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"version\":\"$VERSION\"}")
