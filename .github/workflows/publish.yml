@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PAPER_CAMP_UPDATE_TOKEN: ${{ secrets.PAPER_CAMP_UPDATE_TOKEN }}
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -53,14 +54,16 @@ jobs:
         id: version
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      # The daemon publishes only this path through Tailscale Funnel on 8443:
-      #   tailscale funnel --bg --https=8443 --set-path /api/machine/update http://localhost:4333/api/machine/update
-      # Skipped, not failed, until the token secret exists: an unset secret is an
-      # unconfigured hook, and the release itself has already shipped.
+      # The daemon is reachable only on the tailnet (tailscale serve, no Funnel): Funnel
+      # publishes the machine's ts.net name in public DNS, and iPhones then resolve it to
+      # Funnel's relays and can't reach the daemon. So the runner joins the tailnet as an
+      # ephemeral tag:ci node and calls the private URL.
+      # Skipped, not failed, until the token and Tailscale secrets exist: an unset secret
+      # is an unconfigured hook, and the release itself has already shipped.
       # npm accepts a publish before it serves it ("may take a few minutes"), and the
       # daemon gets one shot: hooked too early, its install fails with ETARGET.
       - name: Wait for the registry
-        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' }}
+        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' && env.TS_OAUTH_CLIENT_ID != '' }}
         continue-on-error: true
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -75,16 +78,26 @@ jobs:
           echo "::error::npm did not serve $VERSION within 10 minutes"
           exit 1
 
+      - name: Join the tailnet
+        id: tailnet
+        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' && env.TS_OAUTH_CLIENT_ID != '' }}
+        continue-on-error: true
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
       # Fails the step (not the job: the release has shipped) when the daemon reports a
       # failed install, so a green step means the daemon actually took the version.
       - name: Hook the daemon
-        if: ${{ env.PAPER_CAMP_UPDATE_TOKEN != '' }}
+        if: ${{ steps.tailnet.outcome == 'success' }}
         continue-on-error: true
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          response=$(curl --fail --silent --show-error \
-            -X POST "https://deimos.pitta-ray.ts.net:8443/api/machine/update" \
+          response=$(curl --fail --silent --show-error --retry 3 --retry-all-errors \
+            -X POST "https://deimos.pitta-ray.ts.net/api/machine/update" \
             -H "Authorization: Bearer $PAPER_CAMP_UPDATE_TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"version\":\"$VERSION\"}")
