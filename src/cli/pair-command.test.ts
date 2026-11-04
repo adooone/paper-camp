@@ -16,7 +16,7 @@ import { writeDaemonState } from '../core/daemon-state';
 import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import { MACHINE_PROJECTS_PATH } from '../types/index';
 import { createMachinePairCodeHandler } from './daemon-server';
-import { formatPairCode, pairQrLink, runPair } from './pair-command';
+import { formatPairBanner, formatPairCode, pairQrLink, runPair } from './pair-command';
 
 const TAILNET: TailnetStatus = {
   selfDnsName: 'deimos.pitta-ray.ts.net',
@@ -39,6 +39,29 @@ function waitFor(predicate: () => boolean, timeoutMs = 5000): Promise<void> {
 describe('formatPairCode', () => {
   it('splits the eight characters into two groups of four', () => {
     expect(formatPairCode('7KQ4M9XZ')).toBe('7KQ4-M9XZ');
+  });
+});
+
+describe('formatPairBanner', () => {
+  const input = {
+    machine: 'deimos.pitta-ray.ts.net',
+    code: '7KQ4-M9XZ',
+    link: 'https://paper.adoo.one/#pair=7KQ4-M9XZ@deimos.pitta-ray.ts.net',
+  };
+
+  it('shows the machine and code as plain text without color', () => {
+    const banner = formatPairBanner({ ...input, color: false });
+    expect(banner).toContain('Pair a device');
+    expect(banner).toContain('Machine  deimos.pitta-ray.ts.net');
+    expect(banner).toContain('Code     7KQ4-M9XZ');
+  });
+
+  it('indents every line of the QR code the same', () => {
+    const qrLines = formatPairBanner({ ...input, color: false })
+      .split('\n')
+      .filter((line) => /[█▀▄]/.test(line));
+    expect(qrLines.length).toBeGreaterThan(10);
+    for (const line of qrLines) expect(line.startsWith('  \x1b[')).toBe(true);
   });
 });
 

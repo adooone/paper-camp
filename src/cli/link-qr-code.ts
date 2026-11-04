@@ -1,14 +1,35 @@
 import QRCode from 'qrcode';
 
-// The terminal renderer has no I/O, so passing a callback (instead of relying
-// on the promise overload) runs it synchronously — the banner is built sync.
-export function formatLinkQrCode(link: string): string {
-  let code = '';
-  let failure: Error | null = null;
-  QRCode.toString(link, { type: 'terminal', small: true }, (error, qr) => {
-    failure = error ?? null;
-    code = qr;
-  });
-  if (failure) throw failure;
-  return code;
+// Two modules per character cell (▀ top, ▄ bottom) keep the code square on a
+// terminal grid. Bright white on black, not ANSI 47 "white", which most dark
+// themes draw as grey and phone cameras read poorly.
+const LIGHT_ON_DARK = '\x1b[97;40m';
+const RESET = '\x1b[0m';
+const QUIET_ZONE = 2;
+
+const CELL: Record<string, string> = {
+  '00': '█', // both light
+  '01': '▀', // light top, dark bottom
+  '10': '▄', // dark top, light bottom
+  '11': ' ', // both dark
+};
+
+/** Renders `link` as a terminal QR code, each line prefixed with `indent`.
+ *  Low error correction keeps the code small: it is read off a screen, never
+ *  printed or damaged. Throws when the link is too long for any QR version. */
+export function formatLinkQrCode(link: string, indent = ''): string {
+  const { modules } = QRCode.create(link, { errorCorrectionLevel: 'L' });
+  const size = modules.size;
+  const dark = (row: number, col: number): number =>
+    row >= 0 && row < size && col >= 0 && col < size && modules.get(row, col) ? 1 : 0;
+
+  const lines: string[] = [];
+  for (let row = -QUIET_ZONE; row < size + QUIET_ZONE; row += 2) {
+    let line = '';
+    for (let col = -QUIET_ZONE; col < size + QUIET_ZONE; col++) {
+      line += CELL[`${dark(row, col)}${dark(row + 1, col)}`];
+    }
+    lines.push(`${indent}${LIGHT_ON_DARK}${line}${RESET}`);
+  }
+  return lines.join('\n');
 }
