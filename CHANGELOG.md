@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.46.0](https://github.com/adooone/paper-camp/compare/v0.45.2...v0.46.0) (2026-11-04)
+
+### Features
+
+- A styled pair screen with a compact, square QR code
+
+### Bug Fixes
+
+- Reach the daemon over the tailnet instead of Funnel
+- Hook the daemon through its Cloudflare tunnel
+- Hook the daemon at api.adoo.one
+- Keep the QR renderer's comment within the two-line cap
+
 ## [0.45.2](https://github.com/adooone/paper-camp/compare/v0.45.1...v0.45.2) (2026-10-31)
 
 ### Bug Fixes
