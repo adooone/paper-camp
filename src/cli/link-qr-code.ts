@@ -1,8 +1,7 @@
 import QRCode from 'qrcode';
 
-// Two modules per character cell (▀ top, ▄ bottom) keep the code square on a
-// terminal grid. Bright white on black, not ANSI 47 "white", which most dark
-// themes draw as grey and phone cameras read poorly.
+// Two modules per cell (▀ top, ▄ bottom) keep the code square. Bright white, not
+// ANSI 47, which dark themes draw as grey and cameras read poorly.
 const LIGHT_ON_DARK = '\x1b[97;40m';
 const RESET = '\x1b[0m';
 const QUIET_ZONE = 2;
