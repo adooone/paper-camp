@@ -773,6 +773,84 @@ describe('fixDivergence', () => {
     expect(await readFile(join(root, 'feature.txt'), 'utf-8')).toBe('feature work\n');
   });
 
+  async function divergeFromOrigin(): Promise<void> {
+    await addOrigin(root);
+    await commitFile(root, 'remote.txt', 'from remote\n', 'remote-only change');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+  }
+
+  async function dirtyPapercamp(): Promise<void> {
+    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'new idea\n');
+    git(root, 'add', 'papercamp/ideas/IDEA-9.md');
+    await writeFile(join(root, 'papercamp', 'chat.md'), 'untracked\n');
+  }
+
+  it('fast-forwards over staged work and a dirty papercamp/ without touching either', async () => {
+    await divergeFromOrigin();
+    await dirtyPapercamp();
+    await writeFile(join(root, 'src.ts'), 'staged work\n');
+    git(root, 'add', 'src.ts');
+
+    expect(await manager.fixDivergence()).toEqual({ ok: true });
+
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(git(root, 'status', '--porcelain', '-uall')).toBe(
+      'A  papercamp/ideas/IDEA-9.md\nA  src.ts\n?? papercamp/chat.md',
+    );
+    expect(git(root, 'stash', 'list')).toBe('');
+  });
+
+  it('carries a dirty papercamp/ through a rebase with its staged state intact', async () => {
+    await divergeFromOrigin();
+    await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
+    await dirtyPapercamp();
+
+    expect(await manager.fixDivergence()).toEqual({ ok: true });
+
+    expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
+    expect(git(root, 'status', '--porcelain', '-uall')).toBe(
+      'A  papercamp/ideas/IDEA-9.md\n?? papercamp/chat.md',
+    );
+    expect(git(root, 'stash', 'list')).toBe('');
+  });
+
+  it('refuses a rebase over work outside papercamp/ without stashing anything', async () => {
+    await divergeFromOrigin();
+    await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
+    await dirtyPapercamp();
+    await writeFile(join(root, 'src.ts'), 'staged work\n');
+    git(root, 'add', 'src.ts');
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toMatchObject({ ok: false, stashPending: false });
+    expect(git(root, 'status', '--porcelain', '-uall')).toBe(
+      'A  papercamp/ideas/IDEA-9.md\nA  src.ts\n?? papercamp/chat.md',
+    );
+    expect(git(root, 'stash', 'list')).toBe('');
+  });
+
+  it('reports the stash as pending when papercamp/ changes cannot go back after a rebase', async () => {
+    await addOrigin(root);
+    await mkdir(join(root, 'papercamp'), { recursive: true });
+    await commitFile(root, 'papercamp/config.json', 'base\n', 'base config');
+    git(root, 'push', 'origin', 'main');
+    await commitFile(root, 'papercamp/config.json', 'remote\n', 'remote config');
+    git(root, 'push', 'origin', 'main');
+    git(root, 'reset', '--hard', 'HEAD~1');
+    await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
+    await writeFile(join(root, 'papercamp', 'config.json'), 'local edit\n');
+
+    const result = await manager.fixDivergence();
+
+    expect(result).toMatchObject({ ok: false, stashPending: true });
+    expect((result as { message: string }).message).toContain('git stash pop --index');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-reconcile');
+    expect(git(root, 'show', 'stash@{0}:papercamp/config.json')).toBe('local edit');
+  });
+
   it('swallows a failed fetch by default, reconciling against whatever refs are already known', async () => {
     git(root, 'remote', 'add', 'origin', 'file:///nonexistent-papercamp-origin');
     // A fresh manager: the shared one's mainRef() cache may already be resolved to

@@ -612,12 +612,15 @@ export function createAgentManager(
     });
   }
 
+  const refusedBeforeWork = new WeakSet<AgentTask>();
+
   async function setStatus(task: AgentTask, status: AgentTaskStatus): Promise<void> {
     // Settle the repo before the task is visible as done/error — otherwise the UI
     // can show success while a fix item's edits are still sitting uncommitted (IDEA-319).
     if (
       (status === 'done' || status === 'error') &&
       (task.taskKind === 'phase' || task.taskKind === 'run-all') &&
+      !refusedBeforeWork.has(task) &&
       onCommitBookkeeping
     ) {
       try {
@@ -680,6 +683,9 @@ export function createAgentManager(
         task.conflictPrompt = freshness.conflictPrompt;
       }
       pushLine(task, `[fetch] refused to start — ${freshness.message}`);
+      // Nothing of the run's to commit, and a failed sync can leave the tree half
+      // restored — a sweep then would commit someone else's work under this idea.
+      refusedBeforeWork.add(task);
       void setStatus(task, 'error');
       return true;
     }

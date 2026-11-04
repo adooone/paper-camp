@@ -62,6 +62,16 @@ export interface StatusSnapshot {
   entries: GitStatusEntry[];
 }
 
+// Thrown by reconcileOnto when it moved onto `ref` but could not put the local
+// changes back — they are still whole in `git stash`, and nothing may sweep the tree.
+class StashPendingError extends Error {
+  constructor(ref: string) {
+    super(
+      `Moved onto ${ref}, but your local changes could not be restored — they are kept in \`git stash\` (papercamp-reconcile); restore them with \`git stash pop --index\``,
+    );
+  }
+}
+
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 class RebaseConflictError extends Error {
@@ -810,22 +820,16 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
-  // The daemon rewrites papercamp/ on its own schedule, independent of any rebase —
-  // stashed around the rebase so that churn can never block it from starting.
+  // The daemon rewrites papercamp/ on its own schedule, so its churn is stashed around a
+  // rebase. Work outside papercamp/ is someone's own and is never stashed: the rebase
+  // refuses instead. No `-- papercamp` pathspec either — a pathspec stash still records
+  // the entire index, so `pop --index` fails when anything outside it is staged.
   async function stashDirtyPapercamp(): Promise<boolean> {
-    const dirty = (await runGitStatus({ untrackedFiles: 'all' })).some((entry) =>
-      entry.path.startsWith('papercamp/'),
-    );
-    if (!dirty) return false;
-    await runGit([
-      'stash',
-      'push',
-      '--include-untracked',
-      '-m',
-      'papercamp-reconcile',
-      '--',
-      'papercamp',
-    ]);
+    const dirty = await runGitStatus({ untrackedFiles: 'all' });
+    if (dirty.length === 0 || dirty.some((entry) => !entry.path.startsWith('papercamp/'))) {
+      return false;
+    }
+    await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-reconcile']);
     return true;
   }
 
@@ -913,6 +917,12 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   async function reconcileOnto(ref: string): Promise<void> {
+    // A fast-forward runs over a dirty tree unless the incoming commits touch it,
+    // so local work is only stashed when a rebase is actually needed.
+    try {
+      await runGit(['merge', '--ff-only', ref]);
+      return;
+    } catch {}
     const stashed = await stashDirtyPapercamp();
     let outcome: { ok: true } | { ok: false; err: unknown };
     try {
@@ -932,10 +942,10 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     if (stashed) {
       try {
         await runGit(['stash', 'pop', '--index']);
-      } catch (popErr) {
+      } catch {
         // The rebase's own failure already explains what's wrong; don't bury it under
         // a secondary stash-pop error that only matters once the rebase itself succeeded.
-        if (outcome.ok) outcome = { ok: false, err: popErr };
+        if (outcome.ok) outcome = { ok: false, err: new StashPendingError(ref) };
       }
     }
     if (!outcome.ok) throw outcome.err;
@@ -1148,13 +1158,14 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     } catch (err) {
       const message = (err as Error).message;
       const failureFields = reconcileFailureFields(err);
+      const stashPending = err instanceof StashPendingError;
       return {
         ok: false,
         message,
-        stashPending: false,
+        stashPending,
         ...failureFields,
         recoveryPrompt: buildGitSyncRecoveryPrompt(
-          { ...failureFields, message, stashPending: false },
+          { ...failureFields, message, stashPending },
           branch,
           await runGitStatus(),
         ),

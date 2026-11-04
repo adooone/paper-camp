@@ -1622,6 +1622,25 @@ describe('fetch before run (IDEA-319)', () => {
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(planFile).toContain('- [ ] First phase');
   });
+
+  it('commits no bookkeeping for a run refused before it started', async () => {
+    const { root, plan } = await makeGitRoot(PLAN_TWO_PHASES);
+    const commitBookkeeping = vi.fn(async () => {});
+    const manager = createAgentManager(root, {
+      ensureUpToDate: async () =>
+        ({
+          ok: false,
+          stage: 'reconcile',
+          message: 'kept in git stash',
+          stashPending: true,
+        }) as never,
+      commitBookkeeping,
+    });
+
+    expect(manager.start(plan, 0)).toEqual({ ok: true });
+    expect(await waitForStatus(manager, settled)).toBe('error');
+    expect(commitBookkeeping).not.toHaveBeenCalled();
+  });
 });
 
 async function waitForBatchStatus(
