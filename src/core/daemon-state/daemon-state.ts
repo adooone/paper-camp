@@ -134,18 +134,45 @@ export async function fetchMachineNightGate(
   }
 }
 
+type ProbeOutcome = 'answered' | 'gone' | 'slow';
+
+async function probeDaemon(port: number, timeoutMs: number): Promise<ProbeOutcome> {
+  try {
+    const response = await fetch(`http://localhost:${port}${MACHINE_PROJECTS_PATH}`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    await response.body?.cancel();
+    return response.ok ? 'answered' : 'gone';
+  } catch (error) {
+    return (error as Error).name === 'TimeoutError' ? 'slow' : 'gone';
+  }
+}
+
+export interface DaemonProbeTimeouts {
+  first: number;
+  retry: number;
+}
+
+const DEFAULT_PROBE_TIMEOUTS: DaemonProbeTimeouts = { first: PROBE_TIMEOUT_MS, retry: 10_000 };
+
 /** The one truth every lifecycle command reads: a state file, a live pid, and
- * a daemon answering on its port. Anything less is stale, so this prunes the
- * file before reporting not-running. */
-export async function readRunningDaemonState(path: string): Promise<DaemonState | null> {
+ * a daemon answering on its port. A dead pid or a refused port is stale, so the
+ * file is pruned; a daemon too busy to answer in time keeps its file — deleting
+ * it would orphan a live daemon from every CLI and MCP client. */
+export async function readRunningDaemonState(
+  path: string,
+  timeouts: DaemonProbeTimeouts = DEFAULT_PROBE_TIMEOUTS,
+): Promise<DaemonState | null> {
   const state = await loadDaemonState(path);
-  const alive =
-    state !== undefined && isProcessAlive(state.pid) && (await probeMachineEndpoint(state.port));
-  if (!alive) {
+  if (state === undefined || !isProcessAlive(state.pid)) {
     await removeDaemonState(path);
     return null;
   }
-  return state;
+  let outcome = await probeDaemon(state.port, timeouts.first);
+  if (outcome === 'slow') outcome = await probeDaemon(state.port, timeouts.retry);
+  if (outcome === 'answered') return state;
+  if (outcome === 'gone') await removeDaemonState(path);
+  return null;
 }
 
 export function formatDaemonStatusLine(state: DaemonState): string {

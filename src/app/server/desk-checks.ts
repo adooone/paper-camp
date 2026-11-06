@@ -6,7 +6,7 @@ import { loadDeskConfig } from '@/core/desk-config';
 import { findConsistencyIssues } from '@/core/parse';
 import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { CheckStatus, DeskCheckState, FailingCheck } from '../../types';
-import { BIOME_FIX_COMMAND } from './biome-fix';
+import { runBiomeFix } from './biome-fix';
 import { readMaybe } from './helpers';
 
 export interface CheckFingerprint {
@@ -210,11 +210,7 @@ export function createDeskCheckManager(
   // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
   // nits can't hard-fail an autonomous run-all phase; always runs every check.
   async function runChecksAndWait(): Promise<FailingCheck[]> {
-    await new Promise<void>((resolve, reject) => {
-      const fix = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });
-      fix.once('close', () => resolve());
-      fix.once('error', reject);
-    });
+    await runBiomeFix(root);
 
     const names = (loadDeskConfig(root).checks ?? []).map((c) => c.name);
     const hasVitest = repoHasVitest(root);

@@ -3,7 +3,6 @@ import { isDefaultStatusFilter } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
 import { Input } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
-import { NewIdeaButton, RunQueueButton, WorklistActionsMenu } from '../actions';
 import type { GroupMode } from '../helpers';
 import { GroupSelect } from './group-select';
 
@@ -45,10 +44,6 @@ export const PlansToolbar = ({ group, onGroupChange, multiProject }: PlansToolba
             Clear filters
           </SidebarAction>
         )}
-        <span className="flex-1" />
-        <RunQueueButton />
-        <NewIdeaButton />
-        <WorklistActionsMenu />
       </PageToolbarRow>
     </PageToolbar>
   );

@@ -1,16 +1,19 @@
 import { spawn } from 'node:child_process';
 
-// Shared by the "Fix" action, the run-all verification gate's pre-check, and the
-// per-phase commit hook.
-export const BIOME_FIX_COMMAND = 'npx biome check . --write';
+const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 const BIOME_FIX_TIMEOUT_MS = 60_000;
 
 // Best-effort: resolves even on non-zero exit since real failures surface via
-// check-types; a hung process is killed after the timeout to not stall commits.
-export function runBiomeFix(root: string): Promise<void> {
+// check-types. The command runs in its own process group so a timeout kills npx's
+// whole chain — killing the shell alone leaves biome running for good.
+export function runBiomeFix(
+  root: string,
+  command = BIOME_FIX_COMMAND,
+  timeoutMs = BIOME_FIX_TIMEOUT_MS,
+): Promise<void> {
   return new Promise((resolve) => {
-    const proc = spawn(BIOME_FIX_COMMAND, { cwd: root, stdio: 'ignore', shell: true });
+    const proc = spawn(command, { cwd: root, stdio: 'ignore', shell: true, detached: true });
     let settled = false;
     const done = () => {
       if (settled) return;
@@ -19,9 +22,11 @@ export function runBiomeFix(root: string): Promise<void> {
       resolve();
     };
     const timer = setTimeout(() => {
-      proc.kill('SIGKILL');
+      try {
+        if (proc.pid) process.kill(-proc.pid, 'SIGKILL');
+      } catch {}
       done();
-    }, BIOME_FIX_TIMEOUT_MS);
+    }, timeoutMs);
     proc.on('close', done);
     proc.on('error', done);
   });

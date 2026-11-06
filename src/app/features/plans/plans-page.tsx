@@ -1,6 +1,7 @@
 import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { useScope } from '@/app/features/scope';
 import { Card, EmptyState, PageTitle } from '@dendelion/folk-ui';
+import { NewIdeaButton, RunQueueButton, WorklistActionsMenu } from './actions';
 import { selectWorklistRows, sortWorklistRows } from './helpers';
 import { usePlansPage, useScopeWorklist } from './hooks';
 import { PromoteSuggestionModal } from './modals';
@@ -116,7 +117,16 @@ export const PlansPage = () => {
         </div>
       ) : (
         <div>
-          <PlansHeader count={rows.length} />
+          <PlansHeader
+            count={rows.length}
+            actions={
+              <>
+                <RunQueueButton />
+                <NewIdeaButton />
+                <WorklistActionsMenu />
+              </>
+            }
+          />
           <PlansToolbar
             group={group}
             onGroupChange={handleGroupChange}

@@ -156,6 +156,29 @@ describe('readRunningDaemonState', () => {
     await expect(access(path)).rejects.toThrow();
   });
 
+  it('keeps the file when the pid is alive but the daemon is too busy to answer in time', async () => {
+    const path = await makeStatePath();
+    const port = await listenOnFreePort(() => {});
+    await writeDaemonState(path, { ...baseState, pid: process.pid, port });
+
+    expect(await readRunningDaemonState(path, { first: 50, retry: 100 })).toBeNull();
+    await expect(access(path)).resolves.toBeUndefined();
+  });
+
+  it('resolves the state when a slow daemon answers the longer retry probe', async () => {
+    const path = await makeStatePath();
+    const port = await listenOnFreePort((_req, res) => {
+      setTimeout(() => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ projects: [] }));
+      }, 150);
+    });
+    const state: DaemonState = { ...baseState, pid: process.pid, port };
+    await writeDaemonState(path, state);
+
+    expect(await readRunningDaemonState(path, { first: 50, retry: 2000 })).toEqual(state);
+  });
+
   it('resolves the state and keeps the file when the pid is alive and the endpoint answers', async () => {
     const path = await makeStatePath();
     const port = await listenOnFreePort((req, res) => {
