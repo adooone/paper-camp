@@ -2,7 +2,7 @@
 id: IDEA-329
 title: The chat ack comes before the work
 type: fix
-status: idea
+status: review
 created: 2026-11-08
 updated: 2026-11-08
 tags:
