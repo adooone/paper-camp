@@ -2,7 +2,7 @@
 id: IDEA-328
 title: Daemon reads with no per-request work
 type: feat
-status: in-progress
+status: review
 created: 2026-11-08
 updated: 2026-11-08
 tags:
@@ -123,8 +123,9 @@ they are cached, and no request to fonts.googleapis.com.
 - [x] Hosted client first paint
       Immutable `Cache-Control` for `/assets/*` in `vercel.json`; Cormorant Garamond and Caveat self-hosted under `public/fonts` in the weights the compiled CSS uses, `@font-face` with `font-display: swap` in the global stylesheet, Google Fonts links removed from `index.html`; `manualChunks` in `vite.app.config.ts` for react, `@tanstack/*` and `@dendelion/folk-ui`. `pnpm build:app` output lists the vendor chunks.
       run: 1m29s · 14 in · 3.6k out · sonnet-5-5 · sess:12ca07c6-b69e-4885-9e5f-85c6b2ee0d1a
-- [ ] White subisland on Ideas view
+- [x] White subisland on Ideas view
       Change the Ideas view subisland background from kraft to white, using the same paper-ui token the chat subisland uses so the two match.
+      run: 58s · 40 in · 5.8k out · sonnet-5-5 · sess:12ca07c6-b69e-4885-9e5f-85c6b2ee0d1a
 
 ### Thread
 - [x] 2026-11-08 [chat] i want to change subisland background from ideas view from kraft to white the same as in chat subisland

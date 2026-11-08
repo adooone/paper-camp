@@ -12,6 +12,7 @@ import {
   Text,
   Tooltip,
 } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
@@ -148,7 +149,7 @@ export const WorklistRows = ({
       <div className={PLAN_ROW_HOST}>
         <Row
           surface="card"
-          texture="kraft"
+          texture={surface.card}
           columns={PLAN_ROW_COLUMNS}
           className="h-8"
           id={
