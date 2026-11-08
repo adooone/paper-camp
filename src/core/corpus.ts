@@ -128,6 +128,33 @@ const snapshotCache = new Map<string, SnapshotCacheEntry>();
 // without evicting every other open project's cache.
 export function invalidateCorpus(root: string): void {
   snapshotCache.delete(root);
+  keyCache.delete(root);
+}
+
+interface KeyCacheEntry {
+  at: number;
+  promise: Promise<{
+    fingerprint: string;
+    prs: Map<string, PrInfo> | undefined;
+    mainActivityIds: Set<string>;
+    key: string;
+  }>;
+}
+
+const keyCache = new Map<string, KeyCacheEntry>();
+
+function resolveCorpusKey(root: string, ideasDir: string, live: boolean) {
+  const ttlMs = live ? undefined : Number.POSITIVE_INFINITY;
+  return (async () => {
+    const [fingerprint, prs, mainActivity] = await Promise.all([
+      corpusFingerprint(ideasDir),
+      resolvePrsByEntity(root, ttlMs),
+      resolveIdsWithMainActivity(root),
+    ]);
+    const { ids: mainActivityIds, sha: mainSha } = mainActivity;
+    const fetchedAt = (await getPrMapFetchedAt(root)) ?? 0;
+    return { fingerprint, prs, mainActivityIds, key: `${fingerprint}:${fetchedAt}:${mainSha}` };
+  })();
 }
 
 // One promise chain per root, so a hook and a dashboard write landing close
@@ -151,21 +178,21 @@ function serializeWrite<T>(root: string, run: () => Promise<T>): Promise<T> {
  * whatever's cached/persisted, for file-watcher-driven reads that aren't a human ask. */
 export async function readCorpus(
   root: string,
-  opts: { live?: boolean } = {},
+  opts: { live?: boolean; reuseKeyMs?: number } = {},
 ): Promise<CorpusSnapshot> {
-  const { live = false } = opts;
+  const { live = false, reuseKeyMs = 0 } = opts;
   const ideasDir = join(root, 'papercamp', 'ideas');
-  const ttlMs = live ? undefined : Number.POSITIVE_INFINITY;
 
-  const [fingerprint, prs, mainActivity] = await Promise.all([
-    corpusFingerprint(ideasDir),
-    resolvePrsByEntity(root, ttlMs),
-    resolveIdsWithMainActivity(root),
-  ]);
-  const { ids: mainActivityIds, sha: mainSha } = mainActivity;
+  let keyed = keyCache.get(root);
+  if (!keyed || Date.now() - keyed.at >= reuseKeyMs) {
+    keyed = { at: Date.now(), promise: resolveCorpusKey(root, ideasDir, live) };
+    keyCache.set(root, keyed);
+    keyed.promise.catch(() => {
+      if (keyCache.get(root) === keyed) keyCache.delete(root);
+    });
+  }
+  const { fingerprint, prs, mainActivityIds, key } = await keyed.promise;
   const resolved = prs !== undefined;
-  const fetchedAt = (await getPrMapFetchedAt(root)) ?? 0;
-  const key = `${fingerprint}:${fetchedAt}:${mainSha}`;
 
   const hit = snapshotCache.get(root);
   if (hit && hit.key === key) return hit.promise;

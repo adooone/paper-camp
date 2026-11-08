@@ -1,9 +1,30 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { EntityEntry, ParseResult, ParseWarning } from '../types/index';
+import type { EntityEntry, ParseResult, ParseWarning, WorklistEntry } from '../types/index';
 import { listIdeaAssets } from './assets';
 import { parseEntityFile } from './parse/parser';
 import { parseRunOrderFile } from './run-order-file';
+
+export function toWorklistEntry(e: EntityEntry, active = false): WorklistEntry {
+  return {
+    id: e.id,
+    title: e.title,
+    type: e.type,
+    kind: e.kind,
+    status: e.status ?? 'idea',
+    subject: e.subject,
+    tags: e.tags,
+    order: e.order,
+    created: e.created,
+    updated: e.updated,
+    parent: e.idea,
+    needs: e.needs,
+    phasesDone: e.phases.filter((p) => p.done).length,
+    phasesTotal: e.phases.length,
+    active,
+    archived: e.archived,
+  };
+}
 
 export { entityToIdea, entityToPlan } from './entity-view';
 

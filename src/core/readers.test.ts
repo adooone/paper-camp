@@ -2,7 +2,8 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { readEntities } from './readers';
+import type { EntityEntry } from '../types/index';
+import { readEntities, toWorklistEntry } from './readers';
 import { formatEntityFile } from './serialize/entity-file';
 
 function tmpIdeas(): string {
@@ -126,5 +127,27 @@ describe('readEntities', () => {
     const { entries, warnings } = await readEntities(dir);
     expect(warnings.length).toBeGreaterThan(0);
     expect(entries.map((e) => e.id).sort()).toEqual(['IDEA-1', 'IDEA-2', 'IDEA-3']);
+  });
+});
+
+describe('toWorklistEntry', () => {
+  it('keeps row fields and counts phases without carrying text', () => {
+    const entry = {
+      id: 'IDEA-1',
+      title: 'T',
+      idea: 'IDEA-0',
+      created: '2026-01-01',
+      tags: ['a'],
+      needs: [],
+      body: 'long body',
+      phases: [
+        { done: true, text: 'one' },
+        { done: false, text: 'two' },
+      ],
+    } as EntityEntry;
+    const row = toWorklistEntry(entry, true);
+    expect(row).toMatchObject({ parent: 'IDEA-0', phasesDone: 1, phasesTotal: 2, active: true });
+    expect(row).not.toHaveProperty('body');
+    expect(row).not.toHaveProperty('phases');
   });
 });

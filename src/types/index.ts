@@ -537,6 +537,26 @@ export interface EntityEntry {
   assets?: AssetEntry[];
 }
 
+/** The row-shaped slice of an entity the Ideas list renders — no body, thread or phase text. */
+export interface WorklistEntry {
+  id: string;
+  title: string;
+  type?: EntityType;
+  kind?: EntityKind;
+  status: EntityStatus;
+  subject?: string;
+  tags: string[];
+  order?: number;
+  created: string;
+  updated?: string;
+  parent?: string;
+  needs: string[];
+  phasesDone: number;
+  phasesTotal: number;
+  active: boolean;
+  archived?: boolean;
+}
+
 /** One file under `papercamp/assets/<id>/` (IDEA-322) — listed by readEntities,
  * served by the `/api/ideas/assets` routes. */
 export interface AssetEntry {

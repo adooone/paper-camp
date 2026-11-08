@@ -4,6 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { readRoutes } from './reads';
+
+const IDEA =
+  '---\nid: IDEA-1\ntitle: First idea\nstatus: idea\ncreated: 2026-01-01\n---\n\nBody text.\n';
 import type { RouteContext } from './types';
 
 const roots: string[] = [];
@@ -28,11 +31,21 @@ function route(root: string, path: string) {
   return found;
 }
 
-function fakeRes(): { res: ServerResponse; status: () => number; json: () => unknown } {
+function fakeRes(ifNoneMatch?: string): {
+  res: ServerResponse;
+  status: () => number;
+  json: () => unknown;
+  headers: Record<string, string>;
+} {
+  const headers: Record<string, string> = {};
   let statusCode = 0;
   let body = '';
   const res = {
-    setHeader: () => {},
+    req: { headers: ifNoneMatch ? { 'if-none-match': ifNoneMatch } : {} },
+    setHeader: (name: string, value: string) => {
+      headers[name.toLowerCase()] = value;
+    },
+    removeHeader: () => {},
     end: (chunk?: string) => {
       body = chunk ?? '';
     },
@@ -43,7 +56,7 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
       return statusCode;
     },
   } as unknown as ServerResponse;
-  return { res, status: () => statusCode, json: () => JSON.parse(body) };
+  return { res, status: () => statusCode, json: () => JSON.parse(body), headers };
 }
 
 describe('readRoutes', () => {
@@ -82,5 +95,54 @@ describe('GET /api/config', () => {
     const body = json() as { projectName: string; defaultAgents: { build: { agent: string } } };
     expect(body.projectName).toBe('demo');
     expect(body.defaultAgents.build).toEqual({ agent: 'opencode' });
+  });
+});
+
+function reqFor(url: string): IncomingMessage {
+  return { url, headers: { host: 'localhost' } } as unknown as IncomingMessage;
+}
+
+describe('GET /api/worklist and /api/entities', () => {
+  async function seededRoot(): Promise<string> {
+    const root = await makeRoot();
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), IDEA, 'utf-8');
+    return root;
+  }
+
+  it('lists row-shaped entries without bodies', async () => {
+    const root = await seededRoot();
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/worklist').handle(reqFor('/api/worklist'), res);
+    expect(status()).toBe(200);
+    const rows = json() as Record<string, unknown>[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ id: 'IDEA-1', title: 'First idea', active: false });
+    expect(rows[0]).not.toHaveProperty('body');
+  });
+
+  it('serves one full entity by id', async () => {
+    const root = await seededRoot();
+    const { res, json } = fakeRes();
+    await route(root, '/api/entities').handle(reqFor('/api/entities?id=IDEA-1'), res);
+    expect(json()).toMatchObject({ id: 'IDEA-1', body: expect.stringContaining('Body text') });
+  });
+
+  it('throws a 404 for an unknown id', async () => {
+    const root = await seededRoot();
+    const { res } = fakeRes();
+    await expect(
+      route(root, '/api/entities').handle(reqFor('/api/entities?id=IDEA-99'), res),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('answers 304 when If-None-Match matches the ETag', async () => {
+    const root = await seededRoot();
+    const first = fakeRes();
+    await route(root, '/api/worklist').handle(reqFor('/api/worklist'), first.res);
+    const etag = first.headers.etag;
+    expect(etag).toBeTruthy();
+    const second = fakeRes(etag);
+    await route(root, '/api/worklist').handle(reqFor('/api/worklist'), second.res);
+    expect(second.status()).toBe(304);
   });
 });

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { promisify } from 'node:util';
 import { gzip } from 'node:zlib';
@@ -10,6 +11,17 @@ export function sendJson(res: ServerResponse, statusCode: number, data: unknown)
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json');
   const body = JSON.stringify(data);
+  if (statusCode === 200) {
+    const etag = `"${createHash('sha1').update(body).digest('base64url')}"`;
+    res.setHeader('ETag', etag);
+    const ifNoneMatch = [res.req?.headers['if-none-match'] ?? ''].flat().join(',');
+    if (ifNoneMatch.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag)) {
+      res.statusCode = 304;
+      res.removeHeader('Content-Type');
+      res.end();
+      return;
+    }
+  }
   const acceptEncoding = [res.req?.headers['accept-encoding'] ?? ''].flat().join(',');
   if (Buffer.byteLength(body) <= GZIP_THRESHOLD_BYTES || !acceptEncoding.includes('gzip')) {
     res.end(body);

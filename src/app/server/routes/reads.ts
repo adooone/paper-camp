@@ -1,3 +1,4 @@
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { readCorpus } from '@/core/corpus';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
@@ -7,12 +8,13 @@ import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
 import { findConsistencyIssues, parseSuggestions, readTaskLog } from '@/core/parse';
 import { readProjectConfig } from '@/core/project-config';
+import { toWorklistEntry } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
 import { computeProjectStats } from '@/core/stats';
 import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
 import { localFile, planFile, readMaybe } from '../helpers';
-import { sendJson } from '../http';
+import { HttpError, requestUrl, sendJson } from '../http';
 import { readNotifications } from '../notification-log';
 import type { Route, RouteContext } from './types';
 
@@ -164,12 +166,58 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
   },
 ];
 
-export function readRoutes({ root }: RouteContext): Route[] {
-  return READS.map(({ path, handler }) => ({
-    method: 'GET' as const,
-    path,
-    handle: async (_req, res) => {
-      sendJson(res, 200, await handler(root));
+const KEY_REUSE_MS = 1000;
+
+function activeEntityIds({ agent }: RouteContext): Set<string> {
+  const ids = new Set<string>();
+  for (const task of agent?.getStatus() ?? []) {
+    if (task.status !== 'starting' && task.status !== 'running') continue;
+    const id = task.planId ?? task.ideaId;
+    if (id) ids.add(id);
+  }
+  return ids;
+}
+
+function snapshotRoutes(ctx: RouteContext): Route[] {
+  const { root } = ctx;
+  return [
+    {
+      method: 'GET',
+      path: '/api/worklist',
+      handle: async (_req, res) => {
+        const { entries } = await readCorpus(root, { live: true, reuseKeyMs: KEY_REUSE_MS });
+        const active = activeEntityIds(ctx);
+        sendJson(
+          res,
+          200,
+          entries.map((e) => toWorklistEntry(e, active.has(e.id))),
+        );
+      },
     },
-  }));
+    {
+      method: 'GET',
+      path: '/api/entities',
+      handle: async (req, res) => {
+        const id = requestUrl(req).searchParams.get('id');
+        const { entries } = await readCorpus(root, { live: true, reuseKeyMs: KEY_REUSE_MS });
+        const entry = id ? entries.find((e) => e.id === id) : undefined;
+        if (!entry) throw new HttpError(404, `Unknown entity: ${id ?? ''}`);
+        sendJson(res, 200, entry);
+      },
+    },
+  ];
+}
+
+export function readRoutes(ctx: RouteContext): Route[] {
+  const { root } = ctx;
+  return [
+    ...READS.map(({ path, handler }) => ({
+      method: 'GET' as const,
+      path,
+      handle: async (_req: IncomingMessage, res: ServerResponse) => {
+        sendJson(res, 200, await handler(root));
+      },
+    })),
+    ...snapshotRoutes(ctx),
+  ];
 }

@@ -4,7 +4,7 @@ title: A lean data flow for the Ideas page
 type: feat
 status: planned
 created: 2026-11-07
-updated: 2026-11-07
+updated: 2026-11-08
 tags:
   - app
   - server
@@ -114,8 +114,9 @@ grouping and order do not change on the way. An idle page with seven
 projects in scope issues at most eight requests per 5 s.
 
 ### Phases
-- [ ] Worklist and entity reads with ETags on the daemon
+- [x] Worklist and entity reads with ETags on the daemon
       Add `WorklistEntry` to `src/types/index.ts` and `toWorklistEntry` in `src/core/readers.ts`; serve `GET /api/worklist` and `GET /api/entities?id=` from `src/app/server/routes/reads.ts` (404 for an unknown id). In `sendJson` hash the body, send `ETag`, answer 304 when `If-None-Match` matches. Reuse a `corpusFingerprint` result for one second per root so a burst of requests spawns git once. Route and core tests, including the 304 path.
+      run: 2m · 28 in · 8.5k out · sonnet-5-5 · sess:9e2b57f6-4a4b-49df-b9d9-51a95f704253
 - [ ] The list and the detail view read the worklist
       Add `worklistQueryKey`, `entityQueryKey`, `useWorklist` and `useEntity` next to `use-plans.ts`; `selectWorklistRows` and `sortWorklistRows` take `WorklistEntry` rows; `useScopeWorklist` fetches `/api/worklist` and `/api/ideas` per other project; PlansPage and ListView render from rows; `EntityDetail` and `NoteDetail` read `useEntity(id)` with `placeholderData` from the matching row and derive their other-plans links from the worklist. `persistOptions` keeps only `worklist`, `ideas` and `config` keys, and the cache buster is bumped so stale `plans` entries drop.
 - [ ] Subjects validated per project
