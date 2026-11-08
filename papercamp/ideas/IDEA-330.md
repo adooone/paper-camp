@@ -40,3 +40,13 @@ entity; a client can show "Scout is thinking…" from the event alone, no
 polling; with streaming on, partial reply text arrives before the
 thread carries the full message, and a client that ignores chunks still
 ends with the identical thread.
+
+### Phases
+- [ ] Publish feedback stages from the pipeline
+      `runFeedbackPipeline` emits `reading`/`thinking`/`replying` on the existing `type: 'feedback'` event (beside today's `done`/`failed`), with a test asserting order and entity id on the stream.
+- [ ] Show the live stage under the newest bubble
+      Toolbar `scout-thread.tsx` and the feedback view read the stage from `subscribeToActivityStream` instead of the local `sending` flag.
+- [ ] Stream partial reply text from read-only runs
+      `runReadOnlyPrompt` takes an `onText` callback (stream-json for claude-code, text parts for opencode); `replyToFeedback` extracts the growing `reply` string and publishes `feedback` chunk events.
+- [ ] Type the streamed reply into the thread
+      Clients render chunk text as a provisional bubble that the thread write replaces, falling back cleanly when chunks never arrive.
