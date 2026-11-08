@@ -5,7 +5,8 @@ import {
   fetchRuntimeVersionAt,
 } from '@/app/services/system';
 import type { AgentTaskState, AgentTaskStatus } from '@/types/index';
-import { useEffect, useRef, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
+import { useSlowKeys } from './use-slow-keys';
 
 export interface ProjectLiveState {
   reach: MachineReachState;
@@ -23,78 +24,68 @@ const LOADING: ProjectLiveState = {
 
 const ACTIVE_TASK_STATUSES: AgentTaskStatus[] = ['starting', 'running', 'stopping'];
 const STATUS_POLL_MS = 5_000;
-/** `waiting` is a request still open past the point a healthy one answers — on
- * Chrome that is the local-network permission prompt the page cannot see. */
-const WAITING_AFTER_MS = 4_000;
 
 function activeTask(tasks: AgentTaskState[] | null): AgentTaskState | null {
   return tasks?.find((task) => ACTIVE_TASK_STATUSES.includes(task.status)) ?? null;
 }
 
-async function fetchOne(runtimeUrl: string): Promise<ProjectLiveState> {
-  const [packageName, remoteVersion, tasks] = await Promise.all([
-    fetchPackageNameAt(runtimeUrl),
-    fetchRuntimeVersionAt(runtimeUrl),
-    fetchAgentStatusAt(runtimeUrl),
-  ]);
-  if (remoteVersion === null) return { ...LOADING, reach: 'unreachable' };
-  const task = activeTask(tasks);
-  return {
-    reach: 'ready',
-    packageName,
-    remoteVersion,
-    runState: {
-      missing: false,
-      running: task !== null,
-      runningIdeaId: task?.ideaId ?? null,
-      interruptedCount: 0,
-    },
-  };
-}
+const STATUS_POLL = { refetchInterval: STATUS_POLL_MS, staleTime: STATUS_POLL_MS } as const;
 
-/** Polls every chosen project's own runtime for its package name, version, and
- * whether an agent task is in flight — a solo project (dialled directly, with
- * no daemon of its own) reads its `reach` from here; a daemon-served one is
- * covered by the machine's own report instead. */
+const retryWhileNull = (query: { state: { data: unknown } }) =>
+  query.state.data === null ? STATUS_POLL_MS : false;
+
+/** Each chosen project's own runtime: package name and version are asked once
+ * (and again only while they came back empty), the agent status is the one
+ * request per project that polls. Every `useHubMachines` consumer shares these
+ * queries, so the page issues each request once however many mount. */
 export function useHubProjectStates(runtimeUrls: string[]): Record<string, ProjectLiveState> {
-  const [states, setStates] = useState<Record<string, ProjectLiveState>>({});
-  const mounted = useRef(true);
-  const urls = runtimeUrls.join('\n');
+  const queries = useQueries({
+    queries: runtimeUrls.flatMap((url) => [
+      {
+        queryKey: ['hub', 'package-name', url],
+        queryFn: () => fetchPackageNameAt(url),
+        staleTime: Number.POSITIVE_INFINITY,
+        refetchInterval: retryWhileNull,
+      },
+      {
+        queryKey: ['hub', 'runtime-version', url],
+        queryFn: () => fetchRuntimeVersionAt(url),
+        staleTime: Number.POSITIVE_INFINITY,
+        refetchInterval: retryWhileNull,
+      },
+      {
+        queryKey: ['hub', 'agent-status', url],
+        queryFn: () => fetchAgentStatusAt(url),
+        ...STATUS_POLL,
+      },
+    ]),
+  });
+  const loadingUrls = runtimeUrls.filter((_url, index) => queries[index * 3 + 1]?.isPending);
+  const slow = useSlowKeys(loadingUrls);
 
-  useEffect(() => {
-    mounted.current = true;
-    const list = urls === '' ? [] : urls.split('\n');
-
-    const pollOnce = () => {
-      for (const url of list) {
-        fetchOne(url).then((result) => {
-          if (mounted.current) setStates((current) => ({ ...current, [url]: result }));
-        });
-      }
-    };
-
-    for (const url of list) {
-      setStates((current) => ({ ...current, [url]: current[url] ?? LOADING }));
-      const slow = setTimeout(() => {
-        if (!mounted.current) return;
-        setStates((current) =>
-          current[url]?.reach === 'loading'
-            ? { ...current, [url]: { ...current[url], reach: 'waiting' } }
-            : current,
-        );
-      }, WAITING_AFTER_MS);
-      fetchOne(url).then((result) => {
-        clearTimeout(slow);
-        if (mounted.current) setStates((current) => ({ ...current, [url]: result }));
-      });
+  const states: Record<string, ProjectLiveState> = {};
+  runtimeUrls.forEach((url, index) => {
+    const [packageName, version, status] = queries.slice(index * 3, index * 3 + 3);
+    if (version?.isPending) {
+      states[url] = { ...LOADING, reach: slow.has(url) ? 'waiting' : 'loading' };
+      return;
     }
-
-    const timer = list.length === 0 ? undefined : setInterval(pollOnce, STATUS_POLL_MS);
-    return () => {
-      mounted.current = false;
-      if (timer) clearInterval(timer);
+    if (!version || version.data == null) {
+      states[url] = { ...LOADING, reach: 'unreachable' };
+      return;
+    }
+    const task = activeTask((status?.data as AgentTaskState[] | null | undefined) ?? null);
+    states[url] = {
+      reach: 'ready',
+      packageName: (packageName?.data as string | null | undefined) ?? null,
+      remoteVersion: version.data as string,
+      runState: {
+        missing: false,
+        running: task !== null,
+        runningIdeaId: task?.ideaId ?? null,
+        interruptedCount: 0,
+      },
     };
-  }, [urls]);
-
+  });
   return states;
 }

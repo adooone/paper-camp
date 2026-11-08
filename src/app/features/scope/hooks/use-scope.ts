@@ -1,6 +1,10 @@
 import { useHubMachines } from '@/app/features/hub/hooks/use-hub-machines';
 import { useProjectIdentity } from '@/app/hooks';
+import { fetchChat, fetchChatAt } from '@/app/services/content/chat-api';
+import { fetchWorklist, fetchWorklistAt } from '@/app/services/content/entities-api';
+import { fetchNotifications, fetchNotificationsAt } from '@/app/services/content/notifications-api';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
+import { chatQueryKey, notificationsQueryKey, worklistQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import {
   type ScopeKey,
@@ -15,37 +19,53 @@ import {
   unreadActivityCount,
 } from '@/app/services/scope-counts';
 import { lastScopeFor, rememberScope } from '@/app/services/scope-store';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { resolveCurrentProject } from '../current-project';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
 export type ScopeCountKind = 'ideas' | 'activity' | 'chat' | null;
 
-export async function loadScopeCounts(
+function useScopeCounts(
   urls: string[],
-  countKind: Exclude<ScopeCountKind, null>,
+  countKind: ScopeCountKind,
   currentRuntimeUrl: string,
-  fetchers: {
-    openIdeasCount: (url: string, isCurrent: boolean) => Promise<number | null>;
-    unansweredChatCount: (url: string, isCurrent: boolean) => Promise<number | null>;
-    unreadActivityCount: (url: string, isCurrent: boolean) => Promise<number | null>;
-  },
-): Promise<Record<string, number | null>> {
-  const entries = await Promise.all(
-    urls.map(async (url) => {
+): { counts: Record<string, number | null>; pending: Set<string> } {
+  const active = countKind === null ? [] : urls;
+  const queries = useQueries({
+    queries: active.map((url) => {
       const isCurrent = url === currentRuntimeUrl;
-      const count =
-        countKind === 'ideas'
-          ? await fetchers.openIdeasCount(url, isCurrent)
-          : countKind === 'chat'
-            ? await fetchers.unansweredChatCount(url, isCurrent)
-            : await fetchers.unreadActivityCount(url, isCurrent);
-      return [url, count] as const;
+      if (countKind === 'ideas') {
+        return {
+          queryKey: worklistQueryKey(url),
+          queryFn: () => (isCurrent ? fetchWorklist() : fetchWorklistAt(url)),
+          select: openIdeasCount,
+        };
+      }
+      if (countKind === 'chat') {
+        return {
+          queryKey: chatQueryKey(url),
+          queryFn: () => (isCurrent ? fetchChat() : fetchChatAt(url)),
+          select: unansweredChatCount,
+        };
+      }
+      return {
+        queryKey: notificationsQueryKey(url),
+        queryFn: () => (isCurrent ? fetchNotifications() : fetchNotificationsAt(url)),
+        select: unreadActivityCount,
+      };
     }),
-  );
-  return Object.fromEntries(entries);
+  });
+  const counts: Record<string, number | null> = {};
+  const pending = new Set<string>();
+  active.forEach((url, index) => {
+    const query = queries[index];
+    counts[url] = (query?.data as number | null | undefined) ?? null;
+    if (query?.isPending) pending.add(url);
+  });
+  return { counts, pending };
 }
 
 export interface ScopeRow {
@@ -142,28 +162,8 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
         ),
     [allMachines],
   );
-  const urlsKey = reachableUrls.join('\n');
-  const reachableUrlSet = useMemo(() => new Set(reachableUrls), [reachableUrls]);
 
-  const [counts, setCounts] = useState<Record<string, number | null>>({});
-  useEffect(() => {
-    if (!countKind) return;
-    let cancelled = false;
-    const load = () => {
-      const urls = urlsKey === '' ? [] : urlsKey.split('\n');
-      loadScopeCounts(urls, countKind, currentRuntimeUrl, {
-        openIdeasCount,
-        unansweredChatCount,
-        unreadActivityCount,
-      }).then((entries) => {
-        if (!cancelled) setCounts(entries);
-      });
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [urlsKey, countKind, currentRuntimeUrl]);
+  const { counts, pending } = useScopeCounts(reachableUrls, countKind, currentRuntimeUrl);
 
   // Alphabetical, not the hub's recency order, so switching project never reshuffles the list.
   const groups: ScopeGroup[] = [...allMachines]
@@ -183,10 +183,7 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
             isCurrent: project.runtimeUrl === currentRuntimeUrl,
             checked: scopeSet.has(key),
             count: counts[project.runtimeUrl] ?? null,
-            countLoading:
-              countKind !== null &&
-              reachableUrlSet.has(project.runtimeUrl) &&
-              !(project.runtimeUrl in counts),
+            countLoading: countKind !== null && pending.has(project.runtimeUrl),
             machineUrl: machine.machineUrl,
             project,
           };
