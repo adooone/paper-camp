@@ -37,3 +37,10 @@ is in the thread on the first refetch after the ack; Scout's reply still
 lands as before; a pipeline failure is visible on the thread or as a
 notification rather than only in an HTTP response nobody is waiting on.
 The phone's timed-out-equals-sent heuristic becomes dead code.
+
+### Phases
+- [ ] Ack feedback-message once the message is filed
+      Split `applyFeedbackMessage` into a filing step the route awaits and a detached pipeline serialized per entity that re-reads the thread before each write; the 200 body becomes `{ ok: true }`, and outcomes publish as a `feedback` activity event (`done` with `undo`, `failed` with `error`, the type IDEA-330's stages extend) with failures also appended to the thread as an agent message — `chat.ts` keeps awaiting the full result.
+- [ ] Move the web send hook onto the feedback event
+      `useSendFeedbackMessage` and `postFeedbackMessage` stop reading `error`/`undo` from the response and take them from `feedback` events for `plan.id`, on both the desk and the toolbar mount.
+- [ ] [manual] Delete the phone's timed-out-equals-sent heuristic in paper-camp-mobile
