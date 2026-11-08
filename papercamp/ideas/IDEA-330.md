@@ -48,7 +48,8 @@ ends with the identical thread.
 - [x] Show the live stage under the newest bubble
       Toolbar `scout-thread.tsx` and the feedback view read the stage from `subscribeToActivityStream` instead of the local `sending` flag.
       run: 49s · 32 in · 6k out · sonnet-5-5 · sess:fdfbd2e1-c2d0-4b8a-9db0-53050afe657c
-- [ ] Stream partial reply text from read-only runs
+- [x] Stream partial reply text from read-only runs
       `runReadOnlyPrompt` takes an `onText` callback (stream-json for claude-code, text parts for opencode); `replyToFeedback` extracts the growing `reply` string and publishes `feedback` chunk events.
+      run: 1m5s · 46 in · 11k out · sonnet-5-5 · sess:fdfbd2e1-c2d0-4b8a-9db0-53050afe657c
 - [ ] Type the streamed reply into the thread
       Clients render chunk text as a provisional bubble that the thread write replaces, falling back cleanly when chunks never arrive.

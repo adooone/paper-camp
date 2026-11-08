@@ -22,7 +22,7 @@ export function useFeedbackStage(planId: string | undefined, active: boolean): s
     setStage(null);
     if (!active || !planId) return;
     return subscribeToActivityStream((payload) => {
-      if (payload.type !== 'feedback' || payload.planId !== planId) return;
+      if (payload.type !== 'feedback' || payload.planId !== planId || !payload.stage) return;
       setStage(isLiveStage(payload.stage) ? payload.stage : null);
     });
   }, [active, planId]);

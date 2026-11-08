@@ -146,8 +146,12 @@ async function runFeedbackPipeline(
     const result = await replyToFeedback(
       plan,
       otherEntities,
-      (prompt, planTitle) => agent.runReadOnlyPrompt('feedback', prompt, planTitle),
+      (prompt, planTitle, onText) =>
+        agent.runReadOnlyPrompt('feedback', prompt, planTitle, { onText }),
       context,
+      activity
+        ? (chunk) => activity.publish({ type: 'feedback', planId: entity.id, chunk })
+        : undefined,
     );
     const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
     const { spawnFix, ...overrides } = editResult;

@@ -54,6 +54,34 @@ function extractJsonBlock(output: string): string | null {
   return resultText.match(/\{[\s\S]*\}/)?.[0] ?? null;
 }
 
+const JSON_ESCAPES: Record<string, string> = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f' };
+
+export function extractPartialReply(text: string): string | null {
+  const start = text.match(/"reply"\s*:\s*"/);
+  if (!start || start.index === undefined) return null;
+  let out = '';
+  for (let i = start.index + start[0].length; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') return out;
+    if (ch !== '\\') {
+      out += ch;
+      continue;
+    }
+    const next = text[i + 1];
+    if (next === undefined) return out;
+    if (next === 'u') {
+      const hex = text.slice(i + 2, i + 6);
+      if (!/^[0-9a-fA-F]{4}$/.test(hex)) return out;
+      out += String.fromCharCode(Number.parseInt(hex, 16));
+      i += 5;
+    } else {
+      out += JSON_ESCAPES[next] ?? next;
+      i += 1;
+    }
+  }
+  return out;
+}
+
 /** One-shot, read-only agent call, independent of the long-running phase/task system in
  * agent.ts — never blocked by, and never blocks, a running phase/reconcile/etc. Never
  * edits a file itself; the caller applies the returned edit via applyFeedbackEdit below.
@@ -61,11 +89,26 @@ function extractJsonBlock(output: string): string | null {
 export async function replyToFeedback(
   plan: PlanEntry,
   otherEntities: EntityEntry[],
-  runPrompt: (prompt: string, planTitle: string) => Promise<string>,
+  runPrompt: (
+    prompt: string,
+    planTitle: string,
+    onText?: (textSoFar: string) => void,
+  ) => Promise<string>,
   context?: MountContext,
+  onReplyText?: (replySoFar: string) => void,
 ): Promise<FeedbackReplyResult> {
   const prompt = buildFeedbackReplyPrompt(plan, otherEntities, context);
-  const output = await runPrompt(prompt, plan.title);
+  let published = '';
+  const onText = onReplyText
+    ? (textSoFar: string) => {
+        const partial = extractPartialReply(textSoFar);
+        if (partial && partial !== published) {
+          published = partial;
+          onReplyText(partial);
+        }
+      }
+    : undefined;
+  const output = await runPrompt(prompt, plan.title, onText);
 
   const jsonBlock = extractJsonBlock(output);
   if (!jsonBlock) throw new Error('Agent did not return a reply');

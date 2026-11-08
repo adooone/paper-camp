@@ -6,6 +6,7 @@ export type ActivityMessage = {
   area?: string;
   planId?: string;
   stage?: string;
+  chunk?: string;
   error?: string;
   undo?: { commitSha: string };
 };

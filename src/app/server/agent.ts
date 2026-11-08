@@ -144,6 +144,27 @@ function resultErrorFromStdout(stdout: string): string | undefined {
   return undefined;
 }
 
+function streamedTextDelta(line: string, isClaude: boolean): string | null {
+  try {
+    const evt = JSON.parse(line);
+    if (isClaude) {
+      const delta = evt?.type === 'stream_event' ? evt.event?.delta : null;
+      return delta?.type === 'text_delta' && typeof delta.text === 'string' ? delta.text : null;
+    }
+    return evt?.type === 'text' && typeof evt.part?.text === 'string' ? evt.part.text : null;
+  } catch {
+    return null;
+  }
+}
+
+function finalClaudeResultLine(stdout: string): string {
+  const line = stdout
+    .split('\n')
+    .reverse()
+    .find((candidate) => candidate.includes('"type":"result"'));
+  return line ?? stdout;
+}
+
 function extractFailureText(stdout: string, stderr: string, fallback: string): string {
   return resultErrorFromStdout(stdout) ?? stripPermissionsNotice(stderr) ?? fallback;
 }
@@ -2536,6 +2557,7 @@ export function createAgentManager(
       // False when the caller may retry on this result — the task stays 'running'
       // until the caller finalizes it via finalizeReadOnlyTask.
       autoSettle?: boolean;
+      onText?: (textSoFar: string) => void;
     },
   ): Promise<string> {
     if (Buffer.byteLength(prompt, 'utf-8') > STDIN_MAX_BYTES) {
@@ -2556,7 +2578,15 @@ export function createAgentManager(
     }
 
     const isClaude = agentId === 'claude-code';
-    const args = adapter.buildReadOnlyArgs({ model, effort });
+    const onText = opts?.onText;
+    const streamClaude = isClaude && !!onText;
+    const args = streamClaude
+      ? adapter
+          .buildReadOnlyArgs({ model, effort })
+          .flatMap((arg) =>
+            arg === 'json' ? ['stream-json', '--verbose', '--include-partial-messages'] : [arg],
+          )
+      : adapter.buildReadOnlyArgs({ model, effort });
 
     return new Promise((resolve, reject) => {
       const proc = spawn(adapter.command, args, {
@@ -2601,8 +2631,23 @@ export function createAgentManager(
 
       let stdout = '';
       let stderr = '';
+      let pendingLine = '';
+      let streamedText = '';
+      const feedStream = (chunk: string) => {
+        if (!onText) return;
+        const lines = (pendingLine + chunk).split('\n');
+        pendingLine = lines.pop() ?? '';
+        for (const line of lines) {
+          const delta = streamedTextDelta(line, isClaude);
+          if (delta === null) continue;
+          streamedText = isClaude ? streamedText + delta : delta;
+          onText(streamedText);
+        }
+      };
       proc.stdout?.on('data', (d: Buffer) => {
-        stdout += d.toString();
+        const chunk = d.toString();
+        stdout += chunk;
+        feedStream(chunk);
       });
       proc.stderr?.on('data', (d: Buffer) => {
         stderr += d.toString();
@@ -2612,7 +2657,9 @@ export function createAgentManager(
           if (code === 0) {
             // opencode outputs JSON events; extract the text parts for the response.
             const result = isClaude
-              ? stdout
+              ? streamClaude
+                ? finalClaudeResultLine(stdout)
+                : stdout
               : stdout
                   .split('\n')
                   .map((line) => {
@@ -2941,6 +2988,7 @@ export interface AgentManager {
       onTask?: (task: AgentTask) => void;
       retryReason?: string;
       autoSettle?: boolean;
+      onText?: (textSoFar: string) => void;
     },
   ) => Promise<string>;
   finalizeReadOnlyTask: (task: AgentTask, status: 'done' | 'error') => Promise<void>;
