@@ -3,6 +3,12 @@
   "buildCommand": "pnpm build:app",
   "outputDirectory": "dist/app",
   "framework": null,
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [
     { "source": "/((?!api/|assets/|img/|fonts/|manifest.json).*)", "destination": "/index.html" }
   ]

@@ -250,6 +250,15 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
       },
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
+          if (id.includes('/@tanstack/')) return 'tanstack';
+          if (id.includes('/@dendelion/folk-ui/')) return 'folk-ui';
+          return undefined;
+        },
+      },
     },
   },
   resolve: {

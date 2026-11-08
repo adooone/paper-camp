@@ -2,7 +2,7 @@
 id: IDEA-328
 title: Daemon reads with no per-request work
 type: feat
-status: planned
+status: in-progress
 created: 2026-11-08
 updated: 2026-11-08
 tags:
@@ -128,3 +128,7 @@ they are cached, and no request to fonts.googleapis.com.
 ### Thread
 - [x] 2026-11-08 [chat] i want to change subisland background from ideas view from kraft to white the same as in chat subisland
 - [x] 2026-11-08 [chat] [agent] Added that as a fix here — switch the Ideas view subisland background from kraft to white, matching the chat subisland. All four existing phases are checked or queued for other work, so this goes in as a new phase.
+- [ ] 2026-11-08 [question] [agent] Run-all parked on phase 4 ("Hosted client first paint") — the agent needs a decision: May I download the Cormorant Garamond and Caveat woff2 files from Google Fonts into public/fonts?
+      option: Allow the download — I fetch the woff2 files, add @font-face with swap, drop the Google links, finish the phase
+      option: You add the font files — I write @font-face and edit index.html once the files are in public/fonts
+      context: The Google Fonts request was blocked by the permission classifier, and no copy of these fonts is in the repo or node_modules. The immutable cache header and the chunk split are done.
