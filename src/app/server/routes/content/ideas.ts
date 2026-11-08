@@ -84,7 +84,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           kind: isNote ? 'note' : kind === 'board' ? 'board' : undefined,
           status: isNote ? 'open' : 'idea',
         });
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -118,7 +118,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           created: todayDateString(),
         });
         await writeFile(join(ideasDir, `${newId}.md`), `${entityContent}\n`, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -146,7 +146,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           content: suggestion.description,
         });
         await writeFile(suggestionsPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -196,7 +196,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           : raw;
         const updated = linkRoadmapItem(withoutCandidate, horizonTitle, item.name, newId);
         await writeFile(roadmapPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -349,7 +349,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           renamedSubjects = affected.length;
         }
 
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true, renamedSubjects });
       },
     },
@@ -378,7 +378,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           return;
         }
         await writeFile(roadmapPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -410,7 +410,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           return;
         }
         await writeFile(roadmapPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -433,7 +433,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           return;
         }
         await writeFile(suggestionsPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -461,7 +461,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           content: nightFindingBody(finding),
         });
         await writeFile(suggestionsPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 201, { ok: true, id: newId });
       },
     },
@@ -485,7 +485,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           return;
         }
         await writeFile(suggestionsPath, updated, 'utf-8');
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -511,7 +511,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
           archived.push(id);
         }
 
-        if (archived.length > 0) activity.notifyChanged();
+        if (archived.length > 0) activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true, archived });
       },
     },
@@ -561,7 +561,7 @@ export function ideaRoutes({ root, agent, activity }: RouteContext): Route[] {
             prioritiseTask = undefined;
           }
           const { moved, annotated, annotationError } = await applyPrioritiseVerdict(root, verdict);
-          if (moved.length > 0 || annotated.length > 0) activity.notifyChanged();
+          if (moved.length > 0 || annotated.length > 0) activity.notifyChanged('corpus');
           sendJson(res, 200, {
             ok: true,
             moved,

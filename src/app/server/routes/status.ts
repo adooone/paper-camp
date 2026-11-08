@@ -50,7 +50,7 @@ export function statusRoutes({ root, activity }: RouteContext): Route[] {
             }
           }
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },

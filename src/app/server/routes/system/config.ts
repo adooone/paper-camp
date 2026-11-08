@@ -232,7 +232,7 @@ export function configRoutes({ root, activity }: RouteContext): Route[] {
         if (updated.desk?.ci?.draftPr) {
           await scaffoldDraftPrIntegration(root);
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },

@@ -1,6 +1,5 @@
 import { useHubMachines } from '@/app/features/hub/hooks/use-hub-machines';
 import { useProjectIdentity } from '@/app/hooks';
-import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import {
@@ -161,12 +160,8 @@ export function useScope(countKind: ScopeCountKind): UseScopeResult {
       });
     };
     load();
-    const unsubscribe = subscribeToActivityStream((payload) => {
-      if (payload.message === 'changed') load();
-    });
     return () => {
       cancelled = true;
-      unsubscribe();
     };
   }, [urlsKey, countKind, currentRuntimeUrl]);
 

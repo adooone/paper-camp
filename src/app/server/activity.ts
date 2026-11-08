@@ -1,9 +1,8 @@
 import type { ServerResponse } from 'node:http';
 import { invalidateCorpus } from '@/core/corpus';
+import type { ChangeArea } from '@/types/index';
 import { runRunOrderPass } from './run-order-pass';
 
-// Consumers route on `payload.type`; a bare `changed` message is the generic
-// "something on disk moved, reload broadly" signal.
 export type ActivityManager = ReturnType<typeof createActivityManager>;
 
 export interface ActivityManagerState {
@@ -22,7 +21,7 @@ export function createActivityManager(
 ) {
   const { clients } = state;
   let runPassTimer: ReturnType<typeof setTimeout> | null = null;
-  let broadcastTimer: ReturnType<typeof setTimeout> | null = null;
+  const broadcastTimers = new Map<ChangeArea, ReturnType<typeof setTimeout>>();
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
 
@@ -37,20 +36,25 @@ export function createActivityManager(
     }
   }
 
-  function broadcast() {
+  function broadcast(area: ChangeArea) {
     writeToClients({
       message: 'changed',
+      area,
       timestamp: new Date().toISOString(),
       type: 'activity',
     });
   }
 
-  function scheduleBroadcast() {
-    if (broadcastTimer) clearTimeout(broadcastTimer);
-    broadcastTimer = setTimeout(() => {
-      broadcastTimer = null;
-      broadcast();
-    }, 100);
+  function scheduleBroadcast(area: ChangeArea) {
+    const pending = broadcastTimers.get(area);
+    if (pending) clearTimeout(pending);
+    broadcastTimers.set(
+      area,
+      setTimeout(() => {
+        broadcastTimers.delete(area);
+        broadcast(area);
+      }, 100),
+    );
   }
 
   // Serializes passes: an event arriving while one is in flight queues a rerun
@@ -62,7 +66,7 @@ export function createActivityManager(
     }
     inFlight = runRunOrderPass(root)
       .then((changed) => {
-        if (changed.length > 0) broadcast();
+        if (changed.length > 0) broadcast('corpus');
       })
       .catch((err) => {
         console.error('run-order pass failed:', err);
@@ -85,12 +89,13 @@ export function createActivityManager(
   }
 
   return {
-    // Called by every write path in place of a papercamp/ watcher — the daemon
-    // knows its own writes, so it invalidates and re-broadcasts right there.
-    notifyChanged() {
-      invalidateCorpus(root);
-      scheduleBroadcast();
-      scheduleRunPass();
+    notifyChanged(area: ChangeArea | ChangeArea[]) {
+      const areas = Array.isArray(area) ? area : [area];
+      for (const each of areas) scheduleBroadcast(each);
+      if (areas.includes('corpus')) {
+        invalidateCorpus(root);
+        scheduleRunPass();
+      }
     },
     publish(payload: { type: string } & Record<string, unknown>) {
       writeToClients(payload);
@@ -101,7 +106,7 @@ export function createActivityManager(
     subscribe(res: ServerResponse) {
       clients.add(res);
       const hello = JSON.stringify({
-        message: 'changed',
+        message: 'hello',
         type: 'activity',
         timestamp: new Date().toISOString(),
       });

@@ -111,7 +111,7 @@ export function ideaAssetRoutes({ root, activity }: RouteContext): Route[] {
           type: mimeForAssetName(name),
           modified: stats.mtime.toISOString(),
         };
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true, asset });
       },
     },
@@ -137,7 +137,7 @@ export function ideaAssetRoutes({ root, activity }: RouteContext): Route[] {
           sendJson(res, 404, { error: 'asset not found' });
           return;
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },

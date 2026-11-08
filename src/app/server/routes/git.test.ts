@@ -62,7 +62,10 @@ function initGitRepo(commitCount: number): string {
 function route(
   root: string,
   path: string,
-  overrides: { git?: RouteContext['git']; activity?: { notifyChanged: () => void } } = {},
+  overrides: {
+    git?: RouteContext['git'];
+    activity?: { notifyChanged: (area: unknown) => void };
+  } = {},
 ) {
   const found = gitRoutes({
     root,

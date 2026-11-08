@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-type ActivityPayload = { message?: string; type?: string };
+type ActivityPayload = { message?: string; type?: string; area?: string };
 let activityListener: ((payload: ActivityPayload) => void) | undefined;
 
 const refreshProjectState = vi.fn();
@@ -28,14 +28,37 @@ describe('subscribeProjectToActivityStream', () => {
     expect(activityListener).toBeTypeOf('function');
   });
 
-  it('invalidates every project query and refreshes store state on a "changed" message', () => {
+  it('invalidates only the keys of the named area and leaves project state alone for corpus', () => {
     const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
-    activityListener?.({ message: 'changed' });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['project', 'http://localhost:1234'],
-      refetchType: 'all',
-    });
-    expect(refreshProjectState).toHaveBeenCalled();
+    refreshProjectState.mockClear();
+    activityListener?.({ message: 'changed', area: 'chat' });
+    expect(invalidateSpy).toHaveBeenCalledOnce();
+    const { predicate } = invalidateSpy.mock.calls[0]?.[0] ?? {};
+    const matches = (resource: string) =>
+      predicate?.({ queryKey: ['project', 'http://localhost:1234', resource] } as never) ?? false;
+    expect(matches('chat')).toBe(true);
+    expect(matches('worklist')).toBe(false);
+    expect(refreshProjectState).not.toHaveBeenCalled();
+  });
+
+  it('refreshes project state for git and services', () => {
+    refreshProjectState.mockClear();
+    activityListener?.({ message: 'changed', area: 'git' });
+    activityListener?.({ message: 'changed', area: 'services' });
+    expect(refreshProjectState).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a hello', () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    invalidateSpy.mockClear();
+    refreshProjectState.mockClear();
+    activityListener?.({ message: 'hello' });
+    expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(refreshProjectState).not.toHaveBeenCalled();
+  });
+
+  it('does not refetch on window focus', () => {
+    expect(mod.queryClient.getDefaultOptions().queries?.refetchOnWindowFocus).toBe(false);
   });
 
   it('ignores a message that is not "changed"', () => {

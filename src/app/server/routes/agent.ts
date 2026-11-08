@@ -777,7 +777,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
             `Refs: ${parent.id}`,
             { noVerify: true },
           );
-          activity.notifyChanged();
+          activity.notifyChanged('corpus');
           sendJson(res, 200, { promotedTo: parent.id, kind: 'append' });
           return;
         }
@@ -817,7 +817,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           );
         }
 
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { promotedTo: spawnedId, kind: parent ? 'fix' : 'idea' });
       },
     },
@@ -880,7 +880,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, {
           ok: true,
           ...(result.error ? { error: result.error } : {}),
@@ -926,7 +926,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -963,7 +963,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         await updateEntity(root, planId, () => ({
           thread: promoteThreadMessage(thread, index, target, note?.trim() || undefined),
         }));
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -1000,7 +1000,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           await updateEntity(root, planId, (current) => ({
             thread: [...(current.thread ?? []), agentThreadMessage(summary)],
           }));
-          activity.notifyChanged();
+          activity.notifyChanged('corpus');
           sendJson(res, 200, { ok: true, summary });
         } catch (err) {
           sendJson(res, 500, { error: (err as Error).message });

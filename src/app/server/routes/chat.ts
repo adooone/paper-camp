@@ -59,7 +59,7 @@ async function runChatReply(
     publishStage({ stage: 'failed', error });
   }
 
-  activity.notifyChanged();
+  activity.notifyChanged(['chat', 'corpus']);
   return { error };
 }
 
@@ -101,7 +101,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
               nowMinuteString(),
             ),
           );
-          activity.notifyChanged();
+          activity.notifyChanged('chat');
           sendJson(res, 200, { ok: true });
           return;
         }
@@ -126,7 +126,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       path: '/api/chat',
       handle: async (_req, res) => {
         await clearChatFile(root);
-        activity.notifyChanged();
+        activity.notifyChanged('chat');
         sendJson(res, 200, { ok: true });
       },
     },

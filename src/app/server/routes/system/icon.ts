@@ -61,7 +61,7 @@ export function iconRoutes({ root, activity }: RouteContext): Route[] {
             .map((e) => unlink(join(assetsDir, `icon.${e}`)).catch(() => {})),
         );
         await writeFile(join(assetsDir, `icon.${ext}`), buffer);
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },

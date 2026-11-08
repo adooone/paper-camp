@@ -24,12 +24,12 @@ function fakeClient(): { res: ServerResponse; writes: string[]; close: () => voi
 }
 
 describe('createActivityManager', () => {
-  it('sends a changed hello on connect so a redialled client resyncs', () => {
+  it('sends a hello, not a change, on connect', () => {
     const activity = createActivityManager('/tmp/papercamp-activity-test');
     const a = fakeClient();
     activity.subscribe(a.res);
 
-    expect(a.writes[0]).toContain('"message":"changed"');
+    expect(a.writes[0]).toContain('"message":"hello"');
     expect(a.writes[0]).toContain('"type":"activity"');
   });
 
@@ -123,13 +123,43 @@ describe('createActivityManager', () => {
       const a = fakeClient();
       activity.subscribe(a.res);
 
-      activity.notifyChanged();
+      activity.notifyChanged('corpus');
       expect(invalidateCorpus).toHaveBeenCalledWith('/tmp/papercamp-activity-test');
       expect(a.writes).toHaveLength(1); // only the hello
 
       vi.advanceTimersByTime(100);
       expect(a.writes).toHaveLength(2);
       expect(a.writes.at(-1)).toContain('"message":"changed"');
+      expect(a.writes.at(-1)).toContain('"area":"corpus"');
+    });
+
+    it('debounces per area and leaves the corpus cache alone for other areas', () => {
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged('chat');
+      activity.notifyChanged('chat');
+      activity.notifyChanged('git');
+      expect(invalidateCorpus).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(100);
+      expect(a.writes).toHaveLength(3);
+      expect(a.writes.filter((w) => w.includes('"area":"chat"'))).toHaveLength(1);
+      expect(a.writes.filter((w) => w.includes('"area":"git"'))).toHaveLength(1);
+    });
+
+    it('broadcasts each area of a multi-area change', () => {
+      const activity = createActivityManager('/tmp/papercamp-activity-test');
+      const a = fakeClient();
+      activity.subscribe(a.res);
+
+      activity.notifyChanged(['chat', 'corpus']);
+      expect(invalidateCorpus).toHaveBeenCalledOnce();
+
+      vi.advanceTimersByTime(100);
+      expect(a.writes.some((w) => w.includes('"area":"chat"'))).toBe(true);
+      expect(a.writes.some((w) => w.includes('"area":"corpus"'))).toBe(true);
     });
 
     it('broadcasts a second tick only once the run-order pass actually changed the list', async () => {
@@ -138,7 +168,7 @@ describe('createActivityManager', () => {
       const a = fakeClient();
       activity.subscribe(a.res);
 
-      activity.notifyChanged();
+      activity.notifyChanged('corpus');
       await vi.advanceTimersByTimeAsync(100); // debounced broadcast
       await vi.advanceTimersByTimeAsync(300); // run-order pass fires
       expect(a.writes).toHaveLength(3); // hello + debounced broadcast + pass broadcast
@@ -149,7 +179,7 @@ describe('createActivityManager', () => {
       const a = fakeClient();
       activity.subscribe(a.res);
 
-      activity.notifyChanged();
+      activity.notifyChanged('corpus');
       await vi.advanceTimersByTimeAsync(100);
       await vi.advanceTimersByTimeAsync(300);
       expect(a.writes).toHaveLength(2); // hello + debounced broadcast only
@@ -162,7 +192,7 @@ describe('createActivityManager', () => {
       const a = fakeClient();
       activity.subscribe(a.res);
 
-      activity.notifyChanged();
+      activity.notifyChanged('corpus');
       await vi.advanceTimersByTimeAsync(100);
       await vi.advanceTimersByTimeAsync(300);
       expect(consoleError).toHaveBeenCalledTimes(1);

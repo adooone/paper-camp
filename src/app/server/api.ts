@@ -197,7 +197,7 @@ export function createApiMiddleware(
     pairCode,
   } = options;
   const activity = createActivityManager(root, activityState);
-  const git = createGitManager(root, () => activity.notifyChanged());
+  const git = createGitManager(root, () => activity.notifyChanged(['git', 'corpus']));
   const publish = (payload: { type: string } & Record<string, unknown>) =>
     activity.publish(payload);
   const services = createDeskServiceManager(root, publish, serviceState);
@@ -210,7 +210,7 @@ export function createApiMiddleware(
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(root, hooks, {
-    onCorpusChanged: () => activity.notifyChanged(),
+    onCorpusChanged: () => activity.notifyChanged(['corpus', 'tasks']),
     state: agentState,
     isMachineBusy,
     publish,

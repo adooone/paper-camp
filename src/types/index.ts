@@ -2,6 +2,9 @@
 // client sending this header and a server checking it can't drift apart.
 export const PAIRING_TOKEN_HEADER = 'x-pairing-token' as const;
 
+export const CHANGE_AREAS = ['corpus', 'tasks', 'chat', 'services', 'git', 'ci'] as const;
+export type ChangeArea = (typeof CHANGE_AREAS)[number];
+
 export type PlanStatus = 'idea' | 'planned' | 'in-progress' | 'review' | 'done' | 'dropped';
 
 export const PLAN_STATUSES: PlanStatus[] = [

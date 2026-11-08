@@ -83,7 +83,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           const warning = await git.ensureBranch(entityToPlan(entity));
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, { ok: true, branch: git.getCurrentBranch(), warning });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -126,19 +126,19 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 409, { error: merge.message });
             return;
           }
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           // The PR merged upstream at this point, so a failure below is reported as
           // merged-but-unfinished rather than rolled into the generic 409 catch below.
           try {
             const { remoteDeleted } = await git.returnToMain();
-            activity.notifyChanged();
+            activity.notifyChanged(['git', 'corpus']);
             sendJson(res, 200, {
               ok: true,
               branch: git.getCurrentBranch(),
               remoteDeleted,
             });
           } catch (error) {
-            activity.notifyChanged();
+            activity.notifyChanged(['git', 'corpus']);
             sendJson(res, 200, {
               ok: true,
               merged: true,
@@ -176,7 +176,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       handle: async (_req, res) => {
         try {
           await git.push();
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -200,7 +200,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           await git.commit(files ?? [], title.trim(), message?.trim());
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -219,7 +219,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           await git.stagePath(path);
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -233,7 +233,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       handle: async (_req, res) => {
         try {
           await git.stageAll();
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -247,7 +247,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       handle: async (_req, res) => {
         try {
           await git.unstageAll();
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -266,7 +266,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           await git.unstagePath(path);
-          activity.notifyChanged();
+          activity.notifyChanged('git');
           sendJson(res, 200, { ok: true });
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });
@@ -284,7 +284,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -320,7 +320,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       handle: async (_req, res) => {
         try {
           await git.runGitPull();
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           if (error instanceof FetchFailedError) {
@@ -344,7 +344,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             sendJson(res, 202, syncFailurePayload(result, agent));
             return;
           }
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, { ok: true, state: await git.getLiveState() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -365,7 +365,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
             return;
           }
           await git.checkoutBranch(branch);
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, { ok: true, branch: git.getCurrentBranch() });
         } catch (error) {
           sendJson(res, 409, { error: (error as Error).message });
@@ -453,7 +453,7 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
       handle: async (_req, res) => {
         try {
           const result = await migrateLocalState(root);
-          activity.notifyChanged();
+          activity.notifyChanged(['git', 'corpus']);
           sendJson(res, 200, result);
         } catch (error) {
           sendJson(res, 400, { error: (error as Error).message });

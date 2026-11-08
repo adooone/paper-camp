@@ -1,4 +1,4 @@
-import type { IdeaEntry, ParseResult, PlanEntry } from '@/types/index';
+import type { ChangeArea, IdeaEntry, ParseResult, PlanEntry } from '@/types/index';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
@@ -18,6 +18,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: STALE_TIME_MS,
       gcTime: MAX_AGE_MS,
+      refetchOnWindowFocus: false,
     },
   },
 });
@@ -225,6 +226,32 @@ export function refreshCapacity(): Promise<void> {
   });
 }
 
+const AREA_RESOURCES: Record<ChangeArea, string[]> = {
+  corpus: [
+    'plans',
+    'ideas',
+    'worklist',
+    'entity',
+    'suggestions',
+    'night-report',
+    'config',
+    'package-name',
+  ],
+  tasks: ['parked-questions', 'notifications', 'capacity'],
+  chat: ['chat'],
+  services: ['services', 'capabilities'],
+  git: [],
+  ci: ['ci'],
+};
+
+const ALL_AREAS = Object.keys(AREA_RESOURCES) as ChangeArea[];
+
+const PROJECT_STATE_AREAS: ChangeArea[] = ['git', 'services'];
+
+function isChangeArea(value: unknown): value is ChangeArea {
+  return typeof value === 'string' && value in AREA_RESOURCES;
+}
+
 // Called once from main.tsx, not at module scope, so importing this module in a test never
 // opens a real EventSource. `onChanged` is passed in rather than importing the store, to avoid a query-client <-> app-store import cycle.
 export function subscribeProjectToActivityStream(onChanged?: () => void): () => void {
@@ -234,11 +261,9 @@ export function subscribeProjectToActivityStream(onChanged?: () => void): () => 
       return;
     }
     if (payload.message !== 'changed') return;
-    const { runtimeUrl } = getRuntimeConnection();
-    queryClient.invalidateQueries({
-      queryKey: [PROJECT_QUERY_PREFIX, runtimeUrl],
-      refetchType: 'all',
-    });
-    onChanged?.();
+    const areas = isChangeArea(payload.area) ? [payload.area] : ALL_AREAS;
+    const resources = areas.flatMap((area) => AREA_RESOURCES[area]);
+    if (resources.length > 0) void refreshResources(resources);
+    if (areas.some((area) => PROJECT_STATE_AREAS.includes(area))) onChanged?.();
   });
 }

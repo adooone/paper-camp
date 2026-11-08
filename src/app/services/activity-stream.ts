@@ -1,6 +1,6 @@
 import { apiUrl } from './api-base';
 
-export type ActivityMessage = { message?: string; type?: string };
+export type ActivityMessage = { message?: string; type?: string; area?: string };
 export type ActivityListener = (payload: ActivityMessage) => void;
 
 const MIN_RECONNECT_DELAY_MS = 1000;

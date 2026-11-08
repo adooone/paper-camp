@@ -40,7 +40,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           return;
         }
         const newId = await createIdea(root, { ...input, title: input.title.trim() });
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         const unresolvedNeeds = input.needs
           ? (await resolveNeedsRefs(root, input.needs, readCorpus))
               .filter((r) => !r.found)
@@ -198,7 +198,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           });
         }
 
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         const unresolvedNeeds = updates.needs
           ? (await resolveNeedsRefs(root, updates.needs, readCorpus))
               .filter((r) => !r.found)
@@ -234,7 +234,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           }
           throw error;
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -278,7 +278,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           }
           throw error;
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },
@@ -304,7 +304,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           }
           throw error;
         }
-        activity.notifyChanged();
+        activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
       },
     },

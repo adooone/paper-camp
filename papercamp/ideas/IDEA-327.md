@@ -123,8 +123,9 @@ projects in scope issues at most eight requests per 5 s.
 - [x] Subjects validated per project
       Replace `useSubjectVocabulary`'s local fetch with a `configQueryKey(runtimeUrl)` query; `useWorklistRows` builds a `Map<runtimeUrl, Set<subject>>` from the config of every scoped project and `groupRowsBySubject` checks each row against its own project's set. Rows of a project whose config has not arrived keep their subject. Selector tests for the mixed-project case.
       run: 1m7s · 18 in · 3.8k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1
-- [ ] Change messages that name their area
+- [x] Change messages that name their area
       `notifyChanged(area)` in `src/app/server/activity.ts` with `corpus`, `tasks`, `chat`, `services`, `git` and `ci`, debounced per area; every caller names its area; the subscribe hello becomes `{ message: 'hello' }`. In `query-client.ts`, `subscribeProjectToActivityStream` maps an area to its keys and `refreshProjectState` runs only for `git` and `services`; `refetchOnWindowFocus: false` in the defaults; `useScope` stops reloading counts on `changed`. Tests on both sides.
+      run: 2m27s · 44 in · 13.5k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1
 - [ ] One hub poll and counts from the cache
       Move `useHubProjectStates` and `useHubMachineReports` onto `useQuery`/`useQueries` with `refetchInterval: 5_000`: one `/api/machine/projects` query per machine and one agent-status query per project, shared by every `useHubMachines` consumer. `loadScopeCounts` for ideas becomes a `select` over the cached worklist queries; chat and activity counts become queries on the same keys the pages use. Delete the `/api/stats` path from `scope-counts.ts`.
 - [ ] Project switch as a key change
