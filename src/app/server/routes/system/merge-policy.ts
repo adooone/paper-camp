@@ -1,15 +1,31 @@
 import type { MergePolicy } from '@/types/index';
-import { readJson, sendJson } from '../../http';
+import { readJson, requestUrl, sendJson } from '../../http';
 import { applyMergePolicy, getMergePolicy } from '../../merge-policy';
+import { cachedProbe, clearProbe } from '../../probe-cache';
 import type { Route, RouteContext } from '../types';
 
-export function mergePolicyRoutes({ root }: RouteContext): Route[] {
+const MERGE_POLICY_TTL_MS = 5 * 60_000;
+
+export function mergePolicyRoutes({ root, activity }: RouteContext): Route[] {
   return [
     {
       method: 'GET',
       path: '/api/merge-policy',
-      handle: async (_req, res) => {
-        sendJson(res, 200, await getMergePolicy(root));
+      handle: async (req, res) => {
+        const fresh = requestUrl(req).searchParams.get('fresh') === '1';
+        sendJson(
+          res,
+          200,
+          await cachedProbe(
+            `merge-policy:${root}`,
+            MERGE_POLICY_TTL_MS,
+            () => getMergePolicy(root),
+            {
+              fresh,
+              onChange: () => activity.notifyChanged('services'),
+            },
+          ),
+        );
       },
     },
     {
@@ -26,11 +42,9 @@ export function mergePolicyRoutes({ root }: RouteContext): Route[] {
           sendJson(res, 400, { error: 'body must be a JSON object' });
           return;
         }
-        sendJson(
-          res,
-          200,
-          await applyMergePolicy(root, parsed as Partial<MergePolicy> | undefined),
-        );
+        const result = await applyMergePolicy(root, parsed as Partial<MergePolicy> | undefined);
+        clearProbe(`merge-policy:${root}`);
+        sendJson(res, 200, result);
       },
     },
   ];

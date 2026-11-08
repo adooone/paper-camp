@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { readRoutes } from './reads';
 
 const IDEA =
@@ -144,5 +144,19 @@ describe('GET /api/worklist and /api/entities', () => {
     const second = fakeRes(etag);
     await route(root, '/api/worklist').handle(reqFor('/api/worklist'), second.res);
     expect(second.status()).toBe(304);
+  });
+});
+
+describe('GET /api/stats', () => {
+  it('serves the stored result without computing on the request', async () => {
+    const stored = { generatedAt: 'then' };
+    const get = vi.fn(async () => stored);
+    const found = readRoutes({ root: '/x', stats: { get } } as unknown as RouteContext).find(
+      (r) => r.path === '/api/stats',
+    );
+    const out = fakeRes();
+    await found?.handle({} as never, out.res);
+    expect(out.json()).toEqual(stored);
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });

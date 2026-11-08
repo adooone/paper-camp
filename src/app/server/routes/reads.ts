@@ -10,7 +10,6 @@ import { findConsistencyIssues, parseSuggestions, readTaskLog } from '@/core/par
 import { readProjectConfig } from '@/core/project-config';
 import { toWorklistEntry } from '@/core/readers';
 import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/roadmap';
-import { computeProjectStats } from '@/core/stats';
 import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
 import type { EntityDetailEntry } from '@/types/index';
@@ -112,10 +111,6 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
   {
     path: '/api/doctor',
     handler: async (root) => describeFindings(await runDoctor(join(root, 'papercamp'))),
-  },
-  {
-    path: '/api/stats',
-    handler: async (root) => computeProjectStats(root),
   },
   {
     path: '/api/config',
@@ -226,6 +221,13 @@ export function readRoutes(ctx: RouteContext): Route[] {
         sendJson(res, 200, await handler(root));
       },
     })),
+    {
+      method: 'GET' as const,
+      path: '/api/stats',
+      handle: async (_req: IncomingMessage, res: ServerResponse) => {
+        sendJson(res, 200, await ctx.stats.get());
+      },
+    },
     ...snapshotRoutes(ctx),
   ];
 }

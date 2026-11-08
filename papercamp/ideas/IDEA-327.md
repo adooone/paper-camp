@@ -132,3 +132,7 @@ projects in scope issues at most eight requests per 5 s.
 - [x] Project switch as a key change
       `openProject` navigates as soon as the runtime is switched and runs `pairWithToken` and `checkRuntimeReachable` after; remove `resetProjectState` and the slices it reset by moving status, consistency, git, agent status, task log, roadmap and docs loads onto queries keyed by `runtimeUrl`, with the Stack panel and settings reading them. A switch to a project already seen renders from cache with no loading state.
       run: 2m23s · 82 in · 34.5k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1
+
+### Thread
+- [x] 2026-11-08 [chat] test
+- [x] 2026-11-08 [chat] [agent] Got it, test received. Nothing to change on IDEA-327: all six phases are checked and it's in review. Say what you want adjusted if anything looks off.

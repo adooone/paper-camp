@@ -21,6 +21,8 @@ import { createGitManager } from './git';
 import { HttpError, sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
+import { cachedProbe } from './probe-cache';
+import { createProjectStatsStore } from './project-stats';
 import { buildRoutes } from './routes/index';
 
 export interface ApiMiddleware {
@@ -146,6 +148,8 @@ export function isForbiddenRequest(
   return !pairingToken || token !== pairingToken;
 }
 
+const DRIFT_TTL_MS = 30_000;
+
 const CORS_METHODS = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 
 /** Lets a hosted https client read /api responses. Reflects the request's own
@@ -198,8 +202,12 @@ export function createApiMiddleware(
     isMachineBusy,
     pairCode,
   } = options;
-  const closeWatcher = watchCorpus(root, () => invalidateCorpus(root));
   const activity = createActivityManager(root, activityState);
+  const stats = createProjectStatsStore(root);
+  const closeWatcher = watchCorpus(root, () => {
+    invalidateCorpus(root);
+    stats.schedule();
+  });
   const git = createGitManager(root, () => activity.notifyChanged(['git', 'corpus']));
   const publish = (payload: { type: string } & Record<string, unknown>) =>
     activity.publish(payload);
@@ -213,7 +221,10 @@ export function createApiMiddleware(
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);
   const agent = createAgentManager(root, hooks, {
-    onCorpusChanged: () => activity.notifyChanged(['corpus', 'tasks']),
+    onCorpusChanged: () => {
+      activity.notifyChanged(['corpus', 'tasks']);
+      stats.schedule();
+    },
     state: agentState,
     isMachineBusy,
     publish,
@@ -237,6 +248,7 @@ export function createApiMiddleware(
     checks,
     pairing,
     pairCode,
+    stats,
   });
 
   let lastRequestAt: number | null = null;
@@ -292,8 +304,16 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).getPairingState = pairing.getState;
   (handler as ApiMiddleware).getActivityState = activity.getState;
   (handler as ApiMiddleware).getLastRequestAt = () => lastRequestAt;
-  (handler as ApiMiddleware).getLocalStateDriftCount = async () =>
-    localStateDriftCount(await readLocalStateDrift(root));
-  (handler as ApiMiddleware).close = closeWatcher;
+  (handler as ApiMiddleware).getLocalStateDriftCount = () =>
+    cachedProbe(
+      `drift:${root}`,
+      DRIFT_TTL_MS,
+      async () => localStateDriftCount(await readLocalStateDrift(root)),
+      { onChange: () => activity.notifyChanged('git') },
+    );
+  (handler as ApiMiddleware).close = () => {
+    closeWatcher();
+    stats.close();
+  };
   return handler as ApiMiddleware;
 }

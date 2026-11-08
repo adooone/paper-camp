@@ -114,8 +114,9 @@ they are cached, and no request to fonts.googleapis.com.
 - [x] The corpus snapshot invalidated by a watcher
       Add `watchCorpus(root, onChange)` in `src/core/corpus-watch.ts` (recursive `fs.watch` on `papercamp/ideas`, plus `.local/run-order.md`, `.git/HEAD`, `.git/refs/heads`), started per mount in `src/app/server/api.ts` and closed on unmount; `readCorpus` skips key resolution while a watcher is registered for the root and re-fingerprints at most every 30 s; replace the ten `readEntities` calls in `agent.ts`, `routes/agent.ts`, `routes/chat.ts` and `routes/content/entities.ts` with snapshot reads. Tests for invalidation on write and for the 30 s fallback.
       run: 1m33s · 20 in · 6.7k out · sonnet-5-5 · sess:77d2e4ff-9157-4c01-9b2c-c000513abb8e
-- [ ] Probes and stats answer from cache
+- [x] Probes and stats answer from cache
       `src/app/server/probe-cache.ts` with `cachedProbe` (stale-while-revalidate, first call awaits, forced reload on `?fresh`/`?recheck`); route `getMergePolicy`, `fetchCiReleaseState`, `probeCapabilities`, `probeConnections` and the per-mount drift count through it, publishing `services` or `git` when a value changes; `computeProjectStats` runs at mount and on a debounced corpus change, with `/api/stats` serving the stored result. Tests on the helper and on the stats route.
+      run: 1m58s · 40 in · 17.8k out · sonnet-5-5 · sess:77d2e4ff-9157-4c01-9b2c-c000513abb8e
 - [ ] Payloads shaped for their readers
       `RoadmapItemRef` in `src/types/index.ts`; `resolveRoadmap` and `/api/roadmap` return refs in horizons, standing concerns and `unfiled`; the roadmap feature and `useRoadmapItemNames` read them. `/api/agent/status` omits `lines` on finished tasks. `MachineProjectSummary.active` from the agent manager's running task in `readMachineProjectSummaries`. Route tests for all three shapes.
 - [ ] Hosted client first paint
