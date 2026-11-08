@@ -243,6 +243,7 @@ export function createProjectMounter(
       const stale = mounted.get(slug);
       if (stale) {
         mounted.delete(slug);
+        stale.close();
         await stale.agent.killCurrent();
         await stale.services.killAll();
       }

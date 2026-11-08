@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
-import { localStateDriftCount, readLocalStateDrift } from '@/core/corpus';
+import { invalidateCorpus, localStateDriftCount, readLocalStateDrift } from '@/core/corpus';
+import { watchCorpus } from '@/core/corpus-watch';
 import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
@@ -34,6 +35,7 @@ export interface ApiMiddleware {
   getActivityState: () => ActivityManagerState;
   getLastRequestAt: () => number | null;
   getLocalStateDriftCount: () => Promise<number>;
+  close: () => void;
 }
 
 // Trusted because a DNS-rebinding attacker controls their own public domain,
@@ -196,6 +198,7 @@ export function createApiMiddleware(
     isMachineBusy,
     pairCode,
   } = options;
+  const closeWatcher = watchCorpus(root, () => invalidateCorpus(root));
   const activity = createActivityManager(root, activityState);
   const git = createGitManager(root, () => activity.notifyChanged(['git', 'corpus']));
   const publish = (payload: { type: string } & Record<string, unknown>) =>
@@ -291,5 +294,6 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).getLastRequestAt = () => lastRequestAt;
   (handler as ApiMiddleware).getLocalStateDriftCount = async () =>
     localStateDriftCount(await readLocalStateDrift(root));
+  (handler as ApiMiddleware).close = closeWatcher;
   return handler as ApiMiddleware;
 }

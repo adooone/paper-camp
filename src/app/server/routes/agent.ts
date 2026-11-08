@@ -16,7 +16,7 @@ import { fetchPrDiff, fetchUnresolvedThreads, resolvePrsByEntity } from '@/core/
 import { checkNeedsForRun } from '@/core/needs';
 import { parseSuggestions } from '@/core/parse';
 import { readProjectConfig } from '@/core/project-config';
-import { entityToPlan, readEntities } from '@/core/readers';
+import { entityToPlan } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
@@ -61,7 +61,7 @@ async function resolveFeedbackEntity(
   planId: string,
 ): Promise<{ entries: EntityEntry[]; entity: EntityEntry; targetFile: string } | null> {
   const ideasDir = planFile(root, 'ideas');
-  const { entries } = await readEntities(ideasDir);
+  const { entries } = await readCorpus(root);
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
   if (!entity) return null;
   const targetFile =
@@ -297,7 +297,7 @@ function applyKnownRenames(content: string): { content: string; changed: boolean
 }
 
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
-  const { entries } = await readEntities(planFile(root, 'ideas'));
+  const { entries } = await readCorpus(root);
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
   return entity ? entityToPlan(entity) : undefined;
 }
@@ -314,7 +314,7 @@ function toIdeaEntry(e: EntityEntry): IdeaEntry {
 }
 
 async function findIdeaById(root: string, ideaId: string): Promise<IdeaEntry | undefined> {
-  const { entries } = await readEntities(planFile(root, 'ideas'));
+  const { entries } = await readCorpus(root);
   const entity = entries.find((e) => e.id === ideaId);
   return entity ? toIdeaEntry(entity) : undefined;
 }

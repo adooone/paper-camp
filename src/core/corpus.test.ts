@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CorpusError,
+  WATCHED_RECHECK_MS,
   appendThread,
   corpusFingerprint,
   createIdea,
@@ -16,6 +17,7 @@ import {
   readLocalStateDrift,
   updateEntity,
 } from './corpus';
+import { watchCorpus } from './corpus-watch';
 import { clearPrCache } from './git-pr/pr';
 import { LEGACY_LOCAL_PATHS } from './local-paths';
 import * as readers from './readers';
@@ -887,5 +889,55 @@ describe('readLocalStateDrift', () => {
     const root = tmpRoot();
     expect(await readLocalStateDrift(root)).toBeNull();
     expect(localStateDriftCount(await readLocalStateDrift(root))).toBe(0);
+  });
+});
+
+describe('readCorpus — watched root', () => {
+  let close: (() => void) | undefined;
+
+  afterEach(() => {
+    close?.();
+    close = undefined;
+    vi.useRealTimers();
+  });
+
+  it('serves the cached snapshot without spawning git while a watcher is registered', async () => {
+    const root = makeCorpus();
+    close = watchCorpus(root, () => invalidateCorpus(root));
+    const first = await readCorpus(root);
+    spawnMock.mockClear();
+    const second = await readCorpus(root);
+    expect(second).toBe(first);
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it('rebuilds on the next read after a file write', async () => {
+    const root = makeCorpus();
+    close = watchCorpus(root, () => invalidateCorpus(root));
+    const first = await readCorpus(root);
+    write(root, { id: 'IDEA-9', title: 'Fresh', status: 'idea', created: '2026-07-03', body: 'x' });
+    await vi.waitFor(async () => {
+      const next = await readCorpus(root);
+      expect(next.entries.map((e) => e.id)).toContain('IDEA-9');
+    });
+    expect(first.entries.map((e) => e.id)).not.toContain('IDEA-9');
+  });
+
+  it('re-fingerprints after 30 seconds when the watcher missed an event', async () => {
+    const root = makeCorpus();
+    close = watchCorpus(root, () => undefined);
+    await readCorpus(root);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    write(root, {
+      id: 'IDEA-8',
+      title: 'Missed',
+      status: 'idea',
+      created: '2026-07-03',
+      body: 'x',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect((await readCorpus(root)).entries.map((e) => e.id)).not.toContain('IDEA-8');
+    vi.setSystemTime(Date.now() + WATCHED_RECHECK_MS + 1);
+    expect((await readCorpus(root)).entries.map((e) => e.id)).toContain('IDEA-8');
   });
 });

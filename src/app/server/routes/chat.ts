@@ -1,7 +1,6 @@
-import { createIdea, localFile, planFile } from '@/core/corpus';
+import { createIdea, localFile, planFile, readCorpus } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { readTaskLog } from '@/core/parse';
-import { readEntities } from '@/core/readers';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
 import type { ThreadMessage } from '@/types/index';
 import { replyToChat } from '../chat-reply';
@@ -27,7 +26,7 @@ async function runChatReply(
   let error: string | undefined;
   try {
     const [{ entries }, taskLogRaw] = await Promise.all([
-      readEntities(planFile(root, 'ideas')),
+      readCorpus(root),
       readMaybe(localFile(root, 'tasks.log')),
     ]);
     const taskLog = readTaskLog(taskLogRaw);
@@ -69,10 +68,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       method: 'GET',
       path: '/api/chat',
       handle: async (_req, res) => {
-        const [thread, { entries }] = await Promise.all([
-          readChatFile(root),
-          readEntities(planFile(root, 'ideas')),
-        ]);
+        const [thread, { entries }] = await Promise.all([readChatFile(root), readCorpus(root)]);
         sendJson(res, 200, { thread: resolveClosedIdeaQuestions(thread, entries) });
       },
     },

@@ -8,7 +8,6 @@ import {
   updateEntity,
 } from '@/core/corpus';
 import { computeNeedsBlockedIds, resolveNeedsRefs } from '@/core/needs';
-import { readEntities } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { agentThreadMessage } from '@/core/serialize';
 import { promoteThreadMessage, replaceThreadKinds } from '@/core/thread';
@@ -87,7 +86,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         }
 
         const ideasDir = planFile(root, 'ideas');
-        const { entries } = await readEntities(ideasDir);
+        const { entries } = await readCorpus(root);
         // order is the one field notes can carry too — the up/down worklist
         // controls need to reorder a note against its plan/idea neighbours.
         const target = entries.find((e) => e.id === id.trim());

@@ -12,6 +12,7 @@ import type {
   ThreadMessage,
 } from '../types/index';
 import { assertCorpusWritable } from './corpus-format';
+import { isCorpusWatched } from './corpus-watch';
 import { entityToIdea, entityToPlan } from './entity-view';
 import { resolveIdsWithMainActivity, runGit } from './git-log';
 import { getPrMapFetchedAt, resolvePrsByEntity } from './git-pr/pr-lookup';
@@ -117,8 +118,11 @@ async function buildSnapshot(
   return { entries, work, notes, warnings, prs, resolved, mainActivityIds, fingerprint };
 }
 
+export const WATCHED_RECHECK_MS = 30_000;
+
 interface SnapshotCacheEntry {
   key: string;
+  verifiedAt: number;
   promise: Promise<CorpusSnapshot>;
 }
 
@@ -183,6 +187,11 @@ export async function readCorpus(
   const { live = false, reuseKeyMs = 0 } = opts;
   const ideasDir = join(root, 'papercamp', 'ideas');
 
+  const cached = snapshotCache.get(root);
+  if (cached && isCorpusWatched(root) && Date.now() - cached.verifiedAt < WATCHED_RECHECK_MS) {
+    return cached.promise;
+  }
+
   let keyed = keyCache.get(root);
   if (!keyed || Date.now() - keyed.at >= reuseKeyMs) {
     keyed = { at: Date.now(), promise: resolveCorpusKey(root, ideasDir, live) };
@@ -195,7 +204,10 @@ export async function readCorpus(
   const resolved = prs !== undefined;
 
   const hit = snapshotCache.get(root);
-  if (hit && hit.key === key) return hit.promise;
+  if (hit && hit.key === key) {
+    hit.verifiedAt = Date.now();
+    return hit.promise;
+  }
 
   const promise = buildSnapshot(root, ideasDir, fingerprint, prs, resolved, mainActivityIds).catch(
     (err) => {
@@ -203,7 +215,7 @@ export async function readCorpus(
       throw err;
     },
   );
-  snapshotCache.set(root, { key, promise });
+  snapshotCache.set(root, { key, verifiedAt: Date.now(), promise });
   return promise;
 }
 

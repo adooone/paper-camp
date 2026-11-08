@@ -28,7 +28,7 @@ import { readCorpus } from '@/core/corpus';
 import { parseEntityFile, parsePlanFile, parseSuggestions } from '@/core/parse';
 import { advanceAnchor } from '@/core/phase-progress';
 import { readProjectConfig } from '@/core/project-config';
-import { entityToIdea, entityToPlan, readEntities } from '@/core/readers';
+import { entityToIdea, entityToPlan } from '@/core/readers';
 import { classifyRunOrderEntries, normalizeRunOrder } from '@/core/run-order';
 import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/core/serialize';
 import { logFromThread } from '@/core/thread';
@@ -695,7 +695,7 @@ export function createAgentManager(
   async function didTaskProgress(task: AgentTask): Promise<boolean | null> {
     try {
       if (task.taskKind === 'extend') {
-        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const { entries } = await readCorpus(root);
         const idea = entries.find((e) => e.id === task.ideaId);
         if (!idea) return null;
         if (task.ideaLogBaseline === undefined) return null;
@@ -709,7 +709,7 @@ export function createAgentManager(
         return true;
       }
       if (task.taskKind === 'reconcile') {
-        const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+        const { entries } = await readCorpus(root);
         const plan = entries.find((e) => e.id === task.planId && e.kind !== 'note');
         if (!plan || task.reconcileBaseline === undefined) return null;
         return (
@@ -722,7 +722,7 @@ export function createAgentManager(
         const suggestions = parseSuggestions(await readMaybe(planFile(root, 'suggestions.md')));
         return suggestions.length > task.suggestBaseline;
       }
-      const { entries } = await readEntities(join(root, 'papercamp', 'ideas'));
+      const { entries } = await readCorpus(root);
       if (task.ideaId !== undefined) {
         const target = entries.find((e) => e.id === task.ideaId);
         return target ? target.phases.length > 0 : null;
@@ -1141,7 +1141,7 @@ export function createAgentManager(
   }
 
   async function findPlanById(planId: string): Promise<PlanEntry | undefined> {
-    const { entries } = await readEntities(planFile(root, 'ideas'));
+    const { entries } = await readCorpus(root);
     const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
     return entity ? entityToPlan(entity) : undefined;
   }
