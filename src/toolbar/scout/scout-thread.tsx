@@ -1,5 +1,5 @@
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
-import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
+import { useSendFeedbackMessage, useStreamedReply } from '@/app/features/plans/hooks';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/folk-ui';
 import type { CSSProperties } from 'react';
@@ -69,15 +69,17 @@ const emptyStateStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
 
 const noopReload = async () => {};
 
-const ThreadMessages = ({ messages }: { messages: ThreadMessage[] }) => {
+const ThreadMessages = ({ planId, messages }: { planId?: string; messages: ThreadMessage[] }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const streamed = useStreamedReply(planId, messages.length);
+  const streamedLength = streamed?.length ?? 0;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length is the rescroll trigger, not read in the body.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length and streamedLength are the rescroll triggers, not read in the body.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages.length]);
+  }, [messages.length, streamedLength]);
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !streamed) {
     return <span style={emptyThreadStyle}>No messages yet — say hello.</span>;
   }
 
@@ -102,6 +104,15 @@ const ThreadMessages = ({ messages }: { messages: ThreadMessage[] }) => {
           </div>
         );
       })}
+      {streamed && (
+        <div style={bubbleColumnStyle(true)}>
+          <div style={bubbleWrapStyle}>
+            <Card size="small">
+              <span style={bubbleTextStyle}>{streamed}</span>
+            </Card>
+          </div>
+        </div>
+      )}
       <div ref={bottomRef} />
     </>
   );
@@ -189,7 +200,7 @@ export const ScoutThread = ({ focusPlan, openQuestions, onRefresh }: ScoutThread
         <span style={questionCountStyle}>{remainingQuestionCount} more open question(s)</span>
       )}
       <div style={threadStyle}>
-        <ThreadMessages messages={activePlan.thread ?? []} />
+        <ThreadMessages planId={activePlan.id} messages={activePlan.thread ?? []} />
       </div>
       <ReplyBox
         plan={activePlan}

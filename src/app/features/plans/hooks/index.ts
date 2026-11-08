@@ -12,5 +12,6 @@ export * from './use-promote-thread-message';
 export * from './use-running-phase-fill';
 export * from './use-scope-worklist';
 export * from './use-send-feedback-message';
+export * from './use-streamed-reply';
 export * from './use-trail';
 export * from './use-worklist-rows';
