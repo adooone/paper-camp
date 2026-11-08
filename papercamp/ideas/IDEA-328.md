@@ -121,3 +121,9 @@ they are cached, and no request to fonts.googleapis.com.
       `RoadmapItemRef` in `src/types/index.ts`; `resolveRoadmap` and `/api/roadmap` return refs in horizons, standing concerns and `unfiled`; the roadmap feature and `useRoadmapItemNames` read them. `/api/agent/status` omits `lines` on finished tasks. `MachineProjectSummary.active` from the agent manager's running task in `readMachineProjectSummaries`. Route tests for all three shapes.
 - [ ] Hosted client first paint
       Immutable `Cache-Control` for `/assets/*` in `vercel.json`; Cormorant Garamond and Caveat self-hosted under `public/fonts` in the weights the compiled CSS uses, `@font-face` with `font-display: swap` in the global stylesheet, Google Fonts links removed from `index.html`; `manualChunks` in `vite.app.config.ts` for react, `@tanstack/*` and `@dendelion/folk-ui`. `pnpm build:app` output lists the vendor chunks.
+- [ ] White subisland on Ideas view
+      Change the Ideas view subisland background from kraft to white, using the same paper-ui token the chat subisland uses so the two match.
+
+### Thread
+- [x] 2026-11-08 [chat] i want to change subisland background from ideas view from kraft to white the same as in chat subisland
+- [x] 2026-11-08 [chat] [agent] Added that as a fix here — switch the Ideas view subisland background from kraft to white, matching the chat subisland. All four existing phases are checked or queued for other work, so this goes in as a new phase.
