@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.47.0](https://github.com/adooone/paper-camp/compare/v0.46.0...v0.47.0) (2026-11-08)
+
+### Features
+
+- **A lean data flow for the Ideas page** (IDEA-327)
+- **Daemon reads with no per-request work** (IDEA-328)
+
 ## [0.46.0](https://github.com/adooone/paper-camp/compare/v0.45.2...v0.46.0) (2026-11-04)
 
 ### Features
