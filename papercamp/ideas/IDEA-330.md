@@ -1,0 +1,42 @@
+---
+id: IDEA-330
+title: Scout's status rides the activity stream
+type: feat
+status: idea
+created: 2026-11-08
+updated: 2026-11-08
+tags:
+  - server
+  - chat
+subject: Infrastructure
+---
+
+Clients can only infer what Scout is doing. The web toolbar shows
+"Scout replying…" because it posted a message and nothing came back
+yet; the phone now does the same. The activity hub
+(`src/app/server/activity.ts`) already carries typed events through
+`publish()` — the tests exercise `service`, `check` and `agent` types —
+but the feedback pipeline never publishes a stage, so the one honest
+signal clients get is the debounced `changed` bell.
+
+**The feedback pipeline narrates itself.** At the points
+`applyFeedbackMessage` (`src/app/server/routes/agent.ts`) already
+passes through, publish a scout-stage event with the entity id: the
+message filed ("reading"), the Scout call started ("thinking"), the
+reply being written ("replying"), and done. Clients subscribed to
+`/api/activity/stream` render the stage under the newest bubble within
+a second of it changing; clients that ignore the new event type lose
+nothing.
+
+**Then the reply itself streams.** A second step feeds Scout's partial
+reply text through the same hub as it generates, so the web and the
+phone can type the answer word by word before the thread write lands.
+Chunk events are additive — the thread write stays the source of truth
+and late or dropped chunks only degrade back to today's behavior.
+
+**Acceptance.** Subscribing to `/api/activity/stream` while a feedback
+message is processed shows the stage events in order for the right
+entity; a client can show "Scout is thinking…" from the event alone, no
+polling; with streaming on, partial reply text arrives before the
+thread carries the full message, and a client that ignores chunks still
+ends with the identical thread.
