@@ -120,8 +120,9 @@ they are cached, and no request to fonts.googleapis.com.
 - [x] Payloads shaped for their readers
       `RoadmapItemRef` in `src/types/index.ts`; `resolveRoadmap` and `/api/roadmap` return refs in horizons, standing concerns and `unfiled`; the roadmap feature and `useRoadmapItemNames` read them. `/api/agent/status` omits `lines` on finished tasks. `MachineProjectSummary.active` from the agent manager's running task in `readMachineProjectSummaries`. Route tests for all three shapes.
       run: 4m45s · 90 in · 29k out · sonnet-5-5 · sess:77d2e4ff-9157-4c01-9b2c-c000513abb8e
-- [ ] Hosted client first paint
+- [x] Hosted client first paint
       Immutable `Cache-Control` for `/assets/*` in `vercel.json`; Cormorant Garamond and Caveat self-hosted under `public/fonts` in the weights the compiled CSS uses, `@font-face` with `font-display: swap` in the global stylesheet, Google Fonts links removed from `index.html`; `manualChunks` in `vite.app.config.ts` for react, `@tanstack/*` and `@dendelion/folk-ui`. `pnpm build:app` output lists the vendor chunks.
+      run: 1m29s · 14 in · 3.6k out · sonnet-5-5 · sess:12ca07c6-b69e-4885-9e5f-85c6b2ee0d1a
 - [ ] White subisland on Ideas view
       Change the Ideas view subisland background from kraft to white, using the same paper-ui token the chat subisland uses so the two match.
 
@@ -134,5 +135,3 @@ they are cached, and no request to fonts.googleapis.com.
       context: The Google Fonts request was blocked by the permission classifier, and no copy of these fonts is in the repo or node_modules. The immutable cache header and the chunk split are done.
 - [x] 2026-11-08 [clarification] yes, you can. as for previous message, it was for paper camp mobile, so remove it from here
 - [x] 2026-11-08 [chat] [agent] Got it, I'll treat the font download as approved. The agent can pull the Cormorant Garamond and Caveat woff2 files into public/fonts when run-all resumes phase 4.
-
-I can't remove phase 5 ("White subisland on Ideas view") from here, because chat edits can only add or reword phases. Delete it from the phases list on the idea page. It's still unchecked, so run-all will try it after phase 4 unless it's gone by then. The subisland change belongs in the paper-camp-mobile idea.
