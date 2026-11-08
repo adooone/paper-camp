@@ -1,7 +1,6 @@
 import type { ScopeRow } from '@/app/features/scope';
-import { fetchPlansAt } from '@/app/services/content/entities-api';
-import { fetchIdeasAt } from '@/app/services/content/ideas-api';
-import { ideasQueryKey, plansQueryKey } from '@/app/services/query-client';
+import { fetchWorklistAt } from '@/app/services/content/entities-api';
+import { worklistQueryKey } from '@/app/services/query-client';
 import { useQueries } from '@tanstack/react-query';
 import { type PlanListFilters, type WorklistRow, selectWorklistRows } from '../helpers';
 
@@ -18,29 +17,20 @@ export const useScopeWorklist = (
   otherProjects: ScopeRow[],
   filters: PlanListFilters,
 ): ScopeWorklistResult => {
-  const plansQueries = useQueries({
+  const queries = useQueries({
     queries: otherProjects.map((project) => ({
-      queryKey: plansQueryKey(project.runtimeUrl),
-      queryFn: async () => (await fetchPlansAt(project.runtimeUrl)) ?? { entries: [] },
-    })),
-  });
-  const ideasQueries = useQueries({
-    queries: otherProjects.map((project) => ({
-      queryKey: ideasQueryKey(project.runtimeUrl),
-      queryFn: async () => (await fetchIdeasAt(project.runtimeUrl))?.entries ?? [],
+      queryKey: worklistQueryKey(project.runtimeUrl),
+      queryFn: () => fetchWorklistAt(project.runtimeUrl),
     })),
   });
 
   const rows = otherProjects.flatMap((project, index) => {
-    const plans = plansQueries[index]?.data;
-    const ideas = ideasQueries[index]?.data;
-    if (!plans || !ideas) return [];
-    const { rows: projectRows } = selectWorklistRows(plans.entries, ideas, filters);
+    const worklist = queries[index]?.data;
+    if (!worklist) return [];
+    const { rows: projectRows } = selectWorklistRows(worklist, filters);
     return projectRows.map((row) => ({ ...row, project }));
   });
-  const pendingProjects = otherProjects.filter(
-    (_project, index) => !plansQueries[index]?.data || !ideasQueries[index]?.data,
-  );
+  const pendingProjects = otherProjects.filter((_project, index) => !queries[index]?.data);
 
   return { rows, pendingProjects };
 };

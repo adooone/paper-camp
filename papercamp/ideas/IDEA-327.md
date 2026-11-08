@@ -117,8 +117,9 @@ projects in scope issues at most eight requests per 5 s.
 - [x] Worklist and entity reads with ETags on the daemon
       Add `WorklistEntry` to `src/types/index.ts` and `toWorklistEntry` in `src/core/readers.ts`; serve `GET /api/worklist` and `GET /api/entities?id=` from `src/app/server/routes/reads.ts` (404 for an unknown id). In `sendJson` hash the body, send `ETag`, answer 304 when `If-None-Match` matches. Reuse a `corpusFingerprint` result for one second per root so a burst of requests spawns git once. Route and core tests, including the 304 path.
       run: 2m · 28 in · 8.5k out · sonnet-5-5 · sess:9e2b57f6-4a4b-49df-b9d9-51a95f704253
-- [ ] The list and the detail view read the worklist
+- [x] The list and the detail view read the worklist
       Add `worklistQueryKey`, `entityQueryKey`, `useWorklist` and `useEntity` next to `use-plans.ts`; `selectWorklistRows` and `sortWorklistRows` take `WorklistEntry` rows; `useScopeWorklist` fetches `/api/worklist` and `/api/ideas` per other project; PlansPage and ListView render from rows; `EntityDetail` and `NoteDetail` read `useEntity(id)` with `placeholderData` from the matching row and derive their other-plans links from the worklist. `persistOptions` keeps only `worklist`, `ideas` and `config` keys, and the cache buster is bumped so stale `plans` entries drop.
+      run: 4m49s · 76 in · 39.8k out · sonnet-5-5 · sess:9e2b57f6-4a4b-49df-b9d9-51a95f704253
 - [ ] Subjects validated per project
       Replace `useSubjectVocabulary`'s local fetch with a `configQueryKey(runtimeUrl)` query; `useWorklistRows` builds a `Map<runtimeUrl, Set<subject>>` from the config of every scoped project and `groupRowsBySubject` checks each row against its own project's set. Rows of a project whose config has not arrived keep their subject. Selector tests for the mixed-project case.
 - [ ] Change messages that name their area

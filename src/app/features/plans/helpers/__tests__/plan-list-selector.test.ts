@@ -1,4 +1,4 @@
-import type { IdeaEntry, PlanEntry } from '@/types/index';
+import type { WorklistEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PLAN_LIST_FILTERS,
@@ -9,29 +9,30 @@ import {
   selectWorklistRows,
 } from '../plan-list-selector';
 
-const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({
+let nextId = 1;
+
+const plan = (overrides: Partial<WorklistEntry>): WorklistEntry => ({
+  id: `IDEA-${nextId++}`,
   title: 'Untitled',
   status: 'planned',
   created: '2026-01-01',
   tags: [],
   needs: [],
-  body: '',
-  phases: [],
+  phasesDone: 0,
+  phasesTotal: 0,
+  active: false,
   ...overrides,
 });
 
-const idea = (overrides: Partial<IdeaEntry>): IdeaEntry => ({
-  id: null,
-  title: 'Untitled idea',
-  body: '',
-  ...overrides,
-});
+const note = (overrides: Partial<WorklistEntry>): WorklistEntry =>
+  plan({ kind: 'note', status: 'open', title: 'Untitled note', ...overrides });
 
-const rowTitle = (row: WorklistRow): string => {
-  if (row.type === 'plan') return row.plan.title;
-  if (row.type === 'fix') return row.fix.title;
-  return row.idea.title;
-};
+const rowTitle = (row: WorklistRow): string => row.entry.title;
+
+const asRow = (entry: WorklistEntry, type: WorklistRow['type'] = 'plan'): WorklistRow => ({
+  type,
+  entry,
+});
 
 describe('selectPlanRows', () => {
   it('excludes done/dropped by default', () => {
@@ -66,12 +67,12 @@ describe('selectPlanRows', () => {
     ]);
   });
 
-  it('filters by search across title and body', () => {
+  it('filters by search across title and id', () => {
     const entries = [
-      plan({ title: 'Filter plans', status: 'planned', body: 'add chips' }),
-      plan({ title: 'Other', status: 'planned', body: 'unrelated' }),
+      plan({ title: 'Filter plans', status: 'planned' }),
+      plan({ title: 'Other', status: 'planned' }),
     ];
-    const { rows } = selectPlanRows(entries, { ...DEFAULT_PLAN_LIST_FILTERS, search: 'chips' });
+    const { rows } = selectPlanRows(entries, { ...DEFAULT_PLAN_LIST_FILTERS, search: 'filter' });
     expect(rows.map((p) => p.title)).toEqual(['Filter plans']);
   });
 
@@ -175,49 +176,33 @@ describe('deriveChildrenSummary', () => {
 });
 
 describe('selectWorklistRows', () => {
-  it('renders a plan as a plain row even when it carries an idea: backlink', () => {
-    const ideas = [idea({ id: 'IDEA-1', title: 'Group idea' })];
-    const plans = [plan({ title: 'Child plan', status: 'in-progress', idea: 'IDEA-1' })];
-    const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows).toEqual([{ type: 'plan', plan: plans[0] }]);
+  it('renders a plan as a plain row even when it carries a parent backlink', () => {
+    const entries = [plan({ title: 'Child plan', status: 'in-progress', parent: 'IDEA-1' })];
+    const { rows } = selectWorklistRows(entries);
+    expect(rows).toEqual([{ type: 'plan', entry: entries[0] }]);
   });
 
-  it('keeps a plan without a matching idea backlink top-level', () => {
-    const plans = [plan({ title: 'Orphan', status: 'in-progress' })];
-    const { rows } = selectWorklistRows(plans, []);
-    expect(rows).toEqual([{ type: 'plan', plan: plans[0] }]);
-  });
-
-  it('produces no row for a kind !== note idea with no plans', () => {
-    const ideas = [idea({ id: 'IDEA-2', title: 'Undrafted idea' })];
-    const { rows } = selectWorklistRows([], ideas);
+  it('drops a plan filtered out by status', () => {
+    const { rows } = selectWorklistRows([plan({ title: 'Done child', status: 'done' })]);
     expect(rows).toEqual([]);
   });
 
-  it('drops a plan filtered out by status, regardless of its idea backlink', () => {
-    const ideas = [idea({ id: 'IDEA-3', title: 'Done idea' })];
-    const plans = [plan({ title: 'Done child', status: 'done', idea: 'IDEA-3' })];
-    const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows).toEqual([]);
-  });
-
-  it('surfaces kind: note ideas as their own rows, gated by noteStatuses', () => {
-    const ideas = [
-      idea({ id: 'IDEA-4', title: 'Open note', kind: 'note', status: 'open' }),
-      idea({ id: 'IDEA-5', title: 'Done note', kind: 'note', status: 'done' }),
+  it('surfaces notes as their own rows, gated by noteStatuses', () => {
+    const entries = [
+      note({ title: 'Open note', status: 'open' }),
+      note({ title: 'Done note', status: 'done' }),
     ];
-    const { rows, noteStatusCounts } = selectWorklistRows([], ideas);
-    expect(rows).toEqual([{ type: 'note', idea: ideas[0] }]);
+    const { rows, noteStatusCounts } = selectWorklistRows(entries);
+    expect(rows).toEqual([{ type: 'note', entry: entries[0] }]);
     expect(noteStatusCounts).toEqual({ open: 1, done: 1, dropped: 0 });
   });
 
-  it('sorts plan rows normally alongside an unrelated kind !== note idea', () => {
-    const ideas = [idea({ id: 'IDEA-6', title: 'Grouped idea' })];
-    const plans = [
-      plan({ title: 'Group child', status: 'planned', idea: 'IDEA-6', updated: '2026-01-01' }),
+  it('sorts plan rows normally alongside notes', () => {
+    const entries = [
+      plan({ title: 'Group child', status: 'planned', updated: '2026-01-01' }),
       plan({ title: 'Top plan', status: 'in-progress', updated: '2026-01-01' }),
     ];
-    const { rows } = selectWorklistRows(plans, ideas, {
+    const { rows } = selectWorklistRows(entries, {
       ...DEFAULT_PLAN_LIST_FILTERS,
       sortKey: 'status',
       statuses: ['in-progress', 'planned'],
@@ -225,65 +210,45 @@ describe('selectWorklistRows', () => {
     expect(rows.map(rowTitle)).toEqual(['Top plan', 'Group child']);
   });
 
-  it('sorts by order by default, taking a note row order from the idea itself', () => {
-    const ideas = [idea({ id: 'IDEA-8', title: 'Note', kind: 'note', order: 1 })];
-    const plans = [plan({ title: 'Orphan plan', idea: undefined, order: 3 })];
-    const { rows } = selectWorklistRows(plans, ideas);
+  it('sorts by order by default, taking a note row order from the note itself', () => {
+    const entries = [note({ title: 'Note', order: 1 }), plan({ title: 'Orphan plan', order: 3 })];
+    const { rows } = selectWorklistRows(entries);
     expect(rows.map(rowTitle)).toEqual(['Note', 'Orphan plan']);
   });
 
   it('filters notes by subject too', () => {
-    const ideas = [
-      idea({ title: 'Matching note', kind: 'note', subject: 'Mobile control desk' }),
-      idea({ title: 'Other note', kind: 'note', subject: 'Other subject' }),
+    const entries = [
+      note({ title: 'Matching note', subject: 'Mobile control desk' }),
+      note({ title: 'Other note', subject: 'Other subject' }),
     ];
-    const { rows } = selectWorklistRows([], ideas, {
+    const { rows } = selectWorklistRows(entries, {
       ...DEFAULT_PLAN_LIST_FILTERS,
       subject: 'Mobile control desk',
     });
     expect(rows.map(rowTitle)).toEqual(['Matching note']);
   });
 
-  it("renders a fix entity as its own row, inheriting its parent's subject rather than nesting", () => {
-    const plans = [
-      plan({
-        id: 'IDEA-20',
-        title: 'Shipped idea',
-        status: 'done',
-        subject: 'Run & monitor',
-      }),
-      plan({
-        id: 'IDEA-21',
-        title: 'A fix',
-        status: 'planned',
-        entityKind: 'fix',
-        idea: 'IDEA-20',
-      }),
+  it("renders a fix as its own row, inheriting its parent's subject rather than nesting", () => {
+    const entries = [
+      plan({ id: 'IDEA-20', title: 'Shipped idea', status: 'done', subject: 'Run & monitor' }),
+      plan({ id: 'IDEA-21', title: 'A fix', kind: 'fix', parent: 'IDEA-20' }),
     ];
-    const { rows } = selectWorklistRows(plans, [], {
+    const { rows } = selectWorklistRows(entries, {
       ...DEFAULT_PLAN_LIST_FILTERS,
       statuses: ['planned', 'done'],
     });
-    const fixRow = rows.find((r) => r.type === 'fix');
-    expect(fixRow).toEqual({
+    expect(rows.find((r) => r.type === 'fix')).toEqual({
       type: 'fix',
-      fix: { ...plans[1], subject: 'Run & monitor' },
+      entry: { ...entries[1], subject: 'Run & monitor' },
     });
   });
 
-  it('renders a fix as its own row even when its parent idea is still open', () => {
-    const ideas = [idea({ id: 'IDEA-22', title: 'Open idea' })];
-    const plans = [plan({ id: 'IDEA-23', title: 'A fix', entityKind: 'fix', idea: 'IDEA-22' })];
-    const { rows } = selectWorklistRows(plans, ideas);
-    expect(rows).toContainEqual({ type: 'fix', fix: plans[0] });
-  });
-
   it('never renders a ticket as a row — only its board owns that list', () => {
-    const plans = [
-      plan({ id: 'IDEA-24', title: 'A board', entityKind: 'board' }),
-      plan({ id: 'TICKET-1', title: 'A ticket', entityKind: 'ticket', idea: 'IDEA-24' }),
+    const entries = [
+      plan({ id: 'IDEA-24', title: 'A board', kind: 'board' }),
+      plan({ id: 'TICKET-1', title: 'A ticket', kind: 'ticket', parent: 'IDEA-24' }),
     ];
-    const { rows } = selectWorklistRows(plans, []);
+    const { rows } = selectWorklistRows(entries);
     expect(rows.map(rowTitle)).toEqual(['A board']);
   });
 });
@@ -291,9 +256,9 @@ describe('selectWorklistRows', () => {
 describe('groupRowsBySubject', () => {
   it('groups plan and note rows by subject, keeping each row in its group', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
-      { type: 'note' as const, idea: idea({ title: 'B', subject: 'Frontend' }) },
-      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend' }) },
+      asRow(plan({ title: 'A', subject: 'Backend' })),
+      asRow(note({ title: 'B', subject: 'Frontend' }), 'note'),
+      asRow(plan({ title: 'C', subject: 'Backend' })),
     ];
     const groups = groupRowsBySubject(rows);
     expect(groups.find((g) => g.subject === 'Backend')?.rows).toEqual([rows[0], rows[2]]);
@@ -302,49 +267,43 @@ describe('groupRowsBySubject', () => {
 
   it('orders named groups by the best run-order rank among their rows', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 3 }) },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 1 }) },
-      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend', order: 5 }) },
+      asRow(plan({ title: 'A', subject: 'Backend', order: 3 })),
+      asRow(plan({ title: 'B', subject: 'Frontend', order: 1 })),
+      asRow(plan({ title: 'C', subject: 'Backend', order: 5 })),
     ];
     expect(groupRowsBySubject(rows).map((g) => g.subject)).toEqual(['Frontend', 'Backend']);
   });
 
   it('reverses ranked group order when sortDirection is desc', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 1 }) },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 2 }) },
+      asRow(plan({ title: 'A', subject: 'Backend', order: 1 })),
+      asRow(plan({ title: 'B', subject: 'Frontend', order: 2 })),
     ];
     expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Frontend', 'Backend']);
   });
 
   it('leads a desc-sorted group by its highest rank, not its lowest', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend', order: 1 }) },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Frontend', order: 3 }) },
-      { type: 'plan' as const, plan: plan({ title: 'C', subject: 'Backend', order: 5 }) },
+      asRow(plan({ title: 'A', subject: 'Backend', order: 1 })),
+      asRow(plan({ title: 'B', subject: 'Frontend', order: 3 })),
+      asRow(plan({ title: 'C', subject: 'Backend', order: 5 })),
     ];
     expect(groupRowsBySubject(rows, 'desc').map((g) => g.subject)).toEqual(['Backend', 'Frontend']);
   });
 
   it('orders unranked groups after ranked ones, newest-updated first', () => {
     const rows = [
-      {
-        type: 'plan' as const,
-        plan: plan({ title: 'A', subject: 'Stale', updated: '2026-01-01' }),
-      },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Ranked', order: 1 }) },
-      {
-        type: 'plan' as const,
-        plan: plan({ title: 'C', subject: 'Fresh', updated: '2026-02-01' }),
-      },
+      asRow(plan({ title: 'A', subject: 'Stale', updated: '2026-01-01' })),
+      asRow(plan({ title: 'B', subject: 'Ranked', order: 1 })),
+      asRow(plan({ title: 'C', subject: 'Fresh', updated: '2026-02-01' })),
     ];
     expect(groupRowsBySubject(rows).map((g) => g.subject)).toEqual(['Ranked', 'Fresh', 'Stale']);
   });
 
   it('collects subjectless rows into a virtual "No subject" group, ordered last', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'No subject plan' }) },
-      { type: 'plan' as const, plan: plan({ title: 'Subject plan', subject: 'Backend' }) },
+      asRow(plan({ title: 'No subject plan' })),
+      asRow(plan({ title: 'Subject plan', subject: 'Backend' })),
     ];
     expect(groupRowsBySubject(rows)).toEqual([
       { subject: 'Backend', rows: [rows[1]] },
@@ -356,14 +315,40 @@ describe('groupRowsBySubject', () => {
     expect(groupRowsBySubject([])).toEqual([]);
   });
 
-  it('demotes a row whose subject is not in validSubjects to "No subject"', () => {
+  it('demotes a row whose subject is not in its own project vocabulary', () => {
     const rows = [
-      { type: 'plan' as const, plan: plan({ title: 'A', subject: 'Backend' }) },
-      { type: 'plan' as const, plan: plan({ title: 'B', subject: 'Deleted subject' }) },
+      asRow(plan({ title: 'A', subject: 'Backend' })),
+      asRow(plan({ title: 'B', subject: 'Deleted subject' })),
     ];
-    expect(groupRowsBySubject(rows, 'asc', ['Backend'])).toEqual([
+    expect(groupRowsBySubject(rows, 'asc', new Map([['', new Set(['Backend'])]]))).toEqual([
       { subject: 'Backend', rows: [rows[0]] },
       { subject: null, rows: [rows[1]] },
+    ]);
+  });
+
+  it('checks each row against its own project, and keeps subjects of a project without a vocabulary', () => {
+    const project = { runtimeUrl: 'http://other' } as WorklistRow['project'];
+    const own = asRow(plan({ title: 'Own', subject: 'Backend' }));
+    const foreign: WorklistRow = {
+      ...asRow(plan({ title: 'Foreign', subject: 'Elsewhere' })),
+      project,
+    };
+    const unknown: WorklistRow = {
+      ...asRow(plan({ title: 'Unknown', subject: 'Elsewhere' })),
+      project: { runtimeUrl: 'http://unknown' } as WorklistRow['project'],
+    };
+    const groups = groupRowsBySubject(
+      [own, foreign, unknown],
+      'asc',
+      new Map([
+        ['', new Set(['Backend'])],
+        ['http://other', new Set(['Other'])],
+      ]),
+    );
+    expect(groups).toEqual([
+      { subject: 'Backend', rows: [own] },
+      { subject: 'Elsewhere', rows: [unknown] },
+      { subject: null, rows: [foreign] },
     ]);
   });
 });

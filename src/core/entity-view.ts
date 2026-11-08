@@ -1,4 +1,5 @@
 import type {
+  EntityDetailEntry,
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
@@ -67,6 +68,43 @@ export function entityToIdea(e: EntityEntry): IdeaEntry {
     order: e.order,
     created: e.created,
     log: logFromThread(e.thread),
+    assets: e.assets,
+  };
+}
+
+/** The detail view's `PlanEntry`, built from the entity the daemon already derived
+ * a status for — it must not run `deriveStatus` again without the PR it lacks here. */
+export function detailToPlan(e: EntityDetailEntry): PlanEntry {
+  return {
+    title: e.title,
+    status: (e.status ?? 'idea') as PlanStatus,
+    statusFallback: e.statusFallback,
+    kind: e.type,
+    entityKind: e.kind === 'note' ? undefined : e.kind,
+    id: e.id,
+    idea: e.idea,
+    agent: e.agent,
+    created: e.created,
+    updated: e.updated,
+    audited: e.audited,
+    auditedHash: e.auditedHash,
+    released: e.released,
+    tags: e.tags,
+    needs: e.needs,
+    resolvedNeeds: e.resolvedNeeds,
+    subject: e.subject,
+    order: e.order,
+    issueSource: e.issueSource,
+    body: e.body,
+    phases: e.phases,
+    fixes: e.fixes,
+    log: logFromThread(e.thread),
+    clarifications: clarificationsFromThread(e.thread),
+    notes: notesFromThread(e.thread),
+    review: reviewFromThread(e.thread),
+    thread: e.thread,
+    archived: e.archived,
+    pr: e.pr,
     assets: e.assets,
   };
 }

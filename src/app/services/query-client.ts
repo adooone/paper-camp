@@ -33,13 +33,17 @@ const persister = createAsyncStoragePersister({
   throttleTime: WRITE_THROTTLE_MS,
 });
 
+const PERSISTED_RESOURCES = new Set(['worklist', 'ideas', 'config']);
+
 export const persistOptions: PersistQueryClientOptions = {
   queryClient,
   persister,
   maxAge: MAX_AGE_MS,
-  buster: CLIENT_VERSION,
+  buster: `${CLIENT_VERSION}:worklist-v1`,
   dehydrateOptions: {
-    shouldDehydrateQuery: (query) => query.queryKey[0] === PROJECT_QUERY_PREFIX,
+    shouldDehydrateQuery: (query) =>
+      query.queryKey[0] === PROJECT_QUERY_PREFIX &&
+      PERSISTED_RESOURCES.has(String(query.queryKey[2])),
   },
 };
 
@@ -49,6 +53,14 @@ export function projectQueryKey(runtimeUrl: string, resource: string) {
 
 export function plansQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'plans');
+}
+
+export function worklistQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'worklist');
+}
+
+export function entityQueryKey(runtimeUrl: string, id: string) {
+  return [...projectQueryKey(runtimeUrl, 'entity'), id] as const;
 }
 
 export function ideasQueryKey(runtimeUrl: string) {
@@ -120,18 +132,23 @@ export function getPlansError(): string | null {
 
 // `refetchType: 'all'` so a refresh triggered while the plans/ideas list isn't
 // mounted (e.g. from the Stack panel) still re-fetches, not just marks stale.
-export function refreshPlans(): Promise<void> {
+function refreshResources(resources: string[]): Promise<void> {
+  const { runtimeUrl } = getRuntimeConnection();
   return queryClient.invalidateQueries({
-    queryKey: plansQueryKey(getRuntimeConnection().runtimeUrl),
+    predicate: (query) =>
+      query.queryKey[0] === PROJECT_QUERY_PREFIX &&
+      query.queryKey[1] === runtimeUrl &&
+      resources.includes(String(query.queryKey[2])),
     refetchType: 'all',
   });
 }
 
+export function refreshPlans(): Promise<void> {
+  return refreshResources(['plans', 'worklist', 'entity']);
+}
+
 export function refreshIdeas(): Promise<void> {
-  return queryClient.invalidateQueries({
-    queryKey: ideasQueryKey(getRuntimeConnection().runtimeUrl),
-    refetchType: 'all',
-  });
+  return refreshResources(['ideas', 'worklist', 'entity']);
 }
 
 export function refreshSuggestions(): Promise<void> {

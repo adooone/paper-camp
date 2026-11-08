@@ -1,5 +1,6 @@
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { useSubjectVocabulary } from '@/app/hooks';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -28,11 +29,15 @@ export const useWorklistRows = (rows: WorklistRow[]) => {
     else setPlanSortKey(key);
   };
 
-  const groups = groupRowsBySubject(
-    rows,
-    sortDirection,
-    subjectsLoading || !subjectsAvailable ? undefined : validSubjects,
-  );
+  const { runtimeUrl } = useRuntimeConnection();
+  const vocabularies =
+    subjectsLoading || !subjectsAvailable
+      ? undefined
+      : new Map([
+          ['', new Set(validSubjects)],
+          [runtimeUrl, new Set(validSubjects)],
+        ]);
+  const groups = groupRowsBySubject(rows, sortDirection, vocabularies);
   const showSubjectHeaders = group === 'subject' && groups.length > 1;
 
   const projectGroups = groupRowsByProject(rows);

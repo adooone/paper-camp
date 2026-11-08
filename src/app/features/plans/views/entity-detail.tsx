@@ -4,7 +4,7 @@ import {
   useRunningPhaseFill,
   useSendFeedbackMessage,
 } from '@/app/features/plans/hooks';
-import { usePlans } from '@/app/hooks';
+import { useWorklist } from '@/app/hooks';
 import { refreshPlans } from '@/app/services/query-client';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { rollupUsage } from '@/core/phase-run';
@@ -22,6 +22,7 @@ import {
   rollupProgress,
   runningPrReviewForPlan,
   runningTaskForPlan,
+  worklistEntryToPlan,
 } from '../helpers';
 import { AssetPreviewModal } from '../modals';
 import { ClarificationsSection } from './clarifications-section';
@@ -42,7 +43,7 @@ interface EntityDetailProps {
 }
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
-  const { plans: allPlans } = usePlans();
+  const { worklist } = useWorklist();
   const { toast } = useToast();
   const { patch: patchById, updating } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
@@ -65,7 +66,9 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     body: plan.body,
     log: plan.log,
   };
-  const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
+  const otherPlans = (worklist ?? [])
+    .filter((entry) => entry.kind !== 'note' && entry.id !== plan.id)
+    .map(worklistEntryToPlan);
   const {
     assets,
     uploading,

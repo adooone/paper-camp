@@ -4,7 +4,9 @@ import type {
   AssetEntry,
   PhaseItem,
   PlanEntry,
+  PlanStatus,
   ThreadMessage,
+  WorklistEntry,
 } from '@/types/index';
 
 // Phases and post-build fixes share one table; fixes are appended and tinted
@@ -212,3 +214,26 @@ export const findFocusPlan = (
   }
   return plans.find((p) => p.status === 'in-progress' || p.status === 'review');
 };
+
+/** A body-less `PlanEntry` for a worklist row: enough for row rendering and for
+ * listing related plans, with phases reduced to their done/total counts. */
+export const worklistEntryToPlan = (entry: WorklistEntry): PlanEntry => ({
+  title: entry.title,
+  status: entry.status as PlanStatus,
+  kind: entry.type,
+  entityKind: entry.kind === 'note' ? undefined : entry.kind,
+  id: entry.id,
+  idea: entry.parent,
+  created: entry.created,
+  updated: entry.updated,
+  tags: entry.tags,
+  needs: entry.needs,
+  subject: entry.subject,
+  order: entry.order,
+  body: '',
+  phases: Array.from({ length: entry.phasesTotal }, (_, index) => ({
+    done: index < entry.phasesDone,
+    text: '',
+  })),
+  archived: entry.archived,
+});

@@ -13,6 +13,7 @@ import { deriveSubjectVocabulary, parseRoadmap, resolveRoadmap } from '@/core/ro
 import { computeProjectStats } from '@/core/stats';
 import { isArchivable } from '@/core/status';
 import { resolveReleaseRanges } from '@/core/trail';
+import type { EntityDetailEntry } from '@/types/index';
 import { localFile, planFile, readMaybe } from '../helpers';
 import { HttpError, requestUrl, sendJson } from '../http';
 import { readNotifications } from '../notification-log';
@@ -199,10 +200,17 @@ function snapshotRoutes(ctx: RouteContext): Route[] {
       path: '/api/entities',
       handle: async (req, res) => {
         const id = requestUrl(req).searchParams.get('id');
-        const { entries } = await readCorpus(root, { live: true, reuseKeyMs: KEY_REUSE_MS });
+        const { entries, work } = await readCorpus(root, { live: true, reuseKeyMs: KEY_REUSE_MS });
         const entry = id ? entries.find((e) => e.id === id) : undefined;
         if (!entry) throw new HttpError(404, `Unknown entity: ${id ?? ''}`);
-        sendJson(res, 200, entry);
+        const plan = work.find((p) => p.id === id);
+        const detail: EntityDetailEntry = {
+          ...entry,
+          pr: plan?.pr,
+          resolvedNeeds: plan?.resolvedNeeds,
+          statusFallback: plan?.statusFallback,
+        };
+        sendJson(res, 200, detail);
       },
     },
   ];

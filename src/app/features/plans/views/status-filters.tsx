@@ -1,20 +1,23 @@
 import { SidebarAction, SidebarSection } from '@/app/components';
 import { CheckboxFilterRow } from '@/app/components';
-import { usePlans } from '@/app/hooks';
+import { useWorklist } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { SidebarLabel } from '@dendelion/folk-ui';
 import { STATUS_LABEL } from '../constants';
 import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
 
 export const StatusFilters = () => {
-  const { plans } = usePlans();
+  const { worklist } = useWorklist();
   const filters = useAppStore((s) => s.planFilters);
   const togglePlanStatus = useAppStore((s) => s.togglePlanStatus);
   const clearPlanStatusFilter = useAppStore((s) => s.clearPlanStatusFilter);
 
-  if (!plans) return null;
+  if (!worklist) return null;
 
-  const { statusCounts } = selectPlanRows(plans.entries, filters);
+  const { statusCounts } = selectPlanRows(
+    worklist.filter((entry) => entry.kind !== 'note'),
+    filters,
+  );
   const activeStatuses = new Set(filters.statuses);
   const hasActiveFilters = !isDefaultStatusFilter(filters.statuses);
 

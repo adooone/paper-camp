@@ -537,6 +537,14 @@ export interface EntityEntry {
   assets?: AssetEntry[];
 }
 
+/** One full entity as the detail view reads it: the stored entry plus the PR and need
+ * resolution the corpus read derives for work entities. */
+export interface EntityDetailEntry extends EntityEntry {
+  pr?: PrInfo;
+  resolvedNeeds?: ResolvedNeed[];
+  statusFallback?: boolean;
+}
+
 /** The row-shaped slice of an entity the Ideas list renders — no body, thread or phase text. */
 export interface WorklistEntry {
   id: string;

@@ -1,13 +1,6 @@
 import type { ScopeRow } from '@/app/features/scope';
-import {
-  type IdeaEntry,
-  type IdeaStatus,
-  PLAN_STATUSES,
-  type PlanEntry,
-  type PlanStatus,
-} from '@/types/index';
+import { type IdeaStatus, PLAN_STATUSES, type PlanStatus, type WorklistEntry } from '@/types/index';
 import { DEFAULT_GROUP_MODE, type GroupMode } from './group-mode';
-import { phasePercentage } from './helpers';
 
 export type PlanSortKey = 'status' | 'updated' | 'title' | 'id' | 'progress' | 'order';
 export type SortDirection = 'asc' | 'desc';
@@ -67,48 +60,51 @@ const STATUS_ORDER: Record<PlanStatus, number> = {
 };
 
 export interface PlanListResult {
-  rows: PlanEntry[];
+  rows: WorklistEntry[];
   statusCounts: Record<PlanStatus, number>;
   tagCounts: Record<string, number>;
 }
 
-const updatedTimestamp = (plan: PlanEntry): number => {
-  const parsed = new Date(plan.updated ?? plan.created).getTime();
+const updatedTimestamp = (entry: WorklistEntry): number => {
+  const parsed = new Date(entry.updated ?? entry.created).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-const createdTimestamp = (plan: PlanEntry): number => {
-  const parsed = new Date(plan.created).getTime();
+const createdTimestamp = (entry: WorklistEntry): number => {
+  const parsed = new Date(entry.created).getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
-const idNumber = (plan: PlanEntry): number => {
-  const match = plan.id?.match(/(\d+)\s*$/);
+const idNumber = (entry: WorklistEntry): number => {
+  const match = entry.id.match(/(\d+)\s*$/);
   return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
 };
 
-const matchesSearch = (plan: PlanEntry, search: string): boolean => {
+const phasePct = (entry: WorklistEntry): number | null =>
+  entry.phasesTotal === 0 ? null : Math.round((entry.phasesDone / entry.phasesTotal) * 100);
+
+const matchesSearch = (entry: WorklistEntry, search: string): boolean => {
   const needle = search.trim().toLowerCase();
   if (!needle) return true;
-  return plan.title.toLowerCase().includes(needle) || plan.body.toLowerCase().includes(needle);
+  return entry.title.toLowerCase().includes(needle) || entry.id.toLowerCase().includes(needle);
 };
 
-const matchesTags = (plan: PlanEntry, tags: Set<string>): boolean => {
+const matchesTags = (entry: WorklistEntry, tags: Set<string>): boolean => {
   if (tags.size === 0) return true;
-  return plan.tags.some((tag) => tags.has(tag));
+  return entry.tags.some((tag) => tags.has(tag));
 };
 
 const matchesSubject = (subject: string | undefined, filterSubject: string | null): boolean =>
   filterSubject === null || subject === filterSubject;
 
-const activeRank = (plan: PlanEntry): number =>
-  plan.status === 'in-progress' || plan.status === 'review' ? 0 : 1;
+const planStatus = (entry: WorklistEntry): PlanStatus => entry.status as PlanStatus;
 
-/** sortDirection flips the sign except for `order` (unordered rows always last)
- * and the active pin below (always first), regardless of key or direction. */
-const comparePlans = (
-  a: PlanEntry,
-  b: PlanEntry,
+const activeRank = (entry: WorklistEntry): number =>
+  entry.status === 'in-progress' || entry.status === 'review' ? 0 : 1;
+
+const compareEntries = (
+  a: WorklistEntry,
+  b: WorklistEntry,
   key: PlanSortKey,
   direction: SortDirection = 'asc',
 ): number => {
@@ -126,7 +122,7 @@ const comparePlans = (
   const cmp = (() => {
     switch (key) {
       case 'status': {
-        const byStatus = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+        const byStatus = STATUS_ORDER[planStatus(a)] - STATUS_ORDER[planStatus(b)];
         if (byStatus !== 0) return byStatus;
         return updatedTimestamp(b) - updatedTimestamp(a);
       }
@@ -137,7 +133,7 @@ const comparePlans = (
       case 'id':
         return idNumber(a) - idNumber(b);
       case 'progress':
-        return (phasePercentage(b) ?? -1) - (phasePercentage(a) ?? -1);
+        return (phasePct(b) ?? -1) - (phasePct(a) ?? -1);
       default:
         return 0;
     }
@@ -159,119 +155,91 @@ const countBy = <Entry, Value>(
 };
 
 export const selectPlanRows = (
-  entries: PlanEntry[],
+  entries: WorklistEntry[],
   filters: PlanListFilters = DEFAULT_PLAN_LIST_FILTERS,
 ): PlanListResult => {
   const tagSet = new Set(filters.tags);
-  const statusSet = new Set(filters.statuses);
+  const statusSet = new Set<string>(filters.statuses);
 
-  // Status/tag counts reflect every other active filter dimension (so a chip
-  // shows the count it would have if you enabled it), but not themselves.
   const statusCounts = countBy(
     entries.filter(
-      (plan) =>
-        matchesTags(plan, tagSet) &&
-        matchesSearch(plan, filters.search) &&
-        matchesSubject(plan.subject, filters.subject),
+      (entry) =>
+        matchesTags(entry, tagSet) &&
+        matchesSearch(entry, filters.search) &&
+        matchesSubject(entry.subject, filters.subject),
     ),
-    (plan) => [plan.status],
+    (entry) => [entry.status],
   ) as Record<PlanStatus, number>;
   for (const status of PLAN_STATUSES) statusCounts[status] ??= 0;
 
   const tagCounts = countBy(
     entries.filter(
-      (plan) =>
-        statusSet.has(plan.status) &&
-        matchesSearch(plan, filters.search) &&
-        matchesSubject(plan.subject, filters.subject),
+      (entry) =>
+        statusSet.has(entry.status) &&
+        matchesSearch(entry, filters.search) &&
+        matchesSubject(entry.subject, filters.subject),
     ),
-    (plan) => plan.tags,
+    (entry) => entry.tags,
   );
 
   const rows = entries
     .filter(
-      (plan) =>
-        statusSet.has(plan.status) &&
-        matchesTags(plan, tagSet) &&
-        matchesSearch(plan, filters.search) &&
-        matchesSubject(plan.subject, filters.subject),
+      (entry) =>
+        statusSet.has(entry.status) &&
+        matchesTags(entry, tagSet) &&
+        matchesSearch(entry, filters.search) &&
+        matchesSubject(entry.subject, filters.subject),
     )
-    .sort((a, b) => comparePlans(a, b, filters.sortKey, filters.sortDirection));
+    .sort((a, b) => compareEntries(a, b, filters.sortKey, filters.sortDirection));
 
   return { rows, statusCounts, tagCounts };
 };
 
 const IDEA_STATUSES: IdeaStatus[] = ['open', 'done', 'dropped'];
 
-/** Maps a note's own lifecycle onto PlanStatus tiers so the merged worklist
- * sort can reuse a single STATUS_ORDER instead of a parallel one for notes. */
 const NOTE_STATUS_TIER: Record<IdeaStatus, PlanStatus> = {
   open: 'idea',
   done: 'done',
   dropped: 'dropped',
 };
 
-const matchesIdeaSearch = (idea: IdeaEntry, search: string): boolean => {
-  const needle = search.trim().toLowerCase();
-  if (!needle) return true;
-  return idea.title.toLowerCase().includes(needle) || idea.body.toLowerCase().includes(needle);
-};
+const noteStatus = (entry: WorklistEntry): IdeaStatus =>
+  entry.status === 'done' || entry.status === 'dropped' ? entry.status : 'open';
 
 export interface NoteRow {
   type: 'note';
-  idea: IdeaEntry;
-  /** Set by the scope merge when more than one project is in view (IDEA-291). */
+  entry: WorklistEntry;
   project?: ScopeRow;
 }
 
-interface PlanRow {
+export interface PlanRow {
   type: 'plan';
-  plan: PlanEntry;
+  entry: WorklistEntry;
   project?: ScopeRow;
 }
 
 export interface FixRow {
   type: 'fix';
-  /** Its `subject` is the parent's, resolved by `selectWorklistRows` — a fix never
-   * stores its own, so it can't drift from the idea it fixes. */
-  fix: PlanEntry;
+  entry: WorklistEntry;
   project?: ScopeRow;
 }
 
 export type WorklistRow = NoteRow | PlanRow | FixRow;
 
 export interface SubjectGroup {
-  /** null is the virtual "No subject" group. */
   subject: string | null;
   rows: WorklistRow[];
 }
 
-const subjectOf = (row: WorklistRow): string | undefined => {
-  if (row.type === 'plan') return row.plan.subject;
-  if (row.type === 'fix') return row.fix.subject;
-  return row.idea.subject;
-};
-
-const rowOrder = (row: WorklistRow): number | undefined => {
-  if (row.type === 'plan') return row.plan.order;
-  if (row.type === 'fix') return row.fix.order;
-  return row.idea.order;
-};
-
 const rowUpdatedTimestamp = (row: WorklistRow): number => {
-  const raw =
-    row.type === 'plan'
-      ? (row.plan.updated ?? row.plan.created)
-      : row.type === 'fix'
-        ? (row.fix.updated ?? row.fix.created)
-        : row.idea.created;
+  const raw = row.type === 'note' ? row.entry.created : (row.entry.updated ?? row.entry.created);
   const parsed = new Date(raw ?? '').getTime();
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 const groupOrderRank = (rows: WorklistRow[], direction: SortDirection): number | undefined =>
   rows.reduce<number | undefined>((best, row) => {
-    const rowRank = rowOrder(row);
+    const rowRank = row.entry.order;
     if (rowRank === undefined) return best;
     if (best === undefined) return rowRank;
     return direction === 'desc' ? Math.max(best, rowRank) : Math.min(best, rowRank);
@@ -280,27 +248,28 @@ const groupOrderRank = (rows: WorklistRow[], direction: SortDirection): number |
 const groupLatestUpdate = (rows: WorklistRow[]): number =>
   rows.reduce((latest, row) => Math.max(latest, rowUpdatedTimestamp(row)), 0);
 
+const projectKey = (row: WorklistRow): string => row.project?.runtimeUrl ?? '';
+
 /** Groups already-sorted worklist rows by subject, keeping each row's relative
  * order within a group; rows with no subject collect into the virtual "No subject"
- * group, last. When `validSubjects` is given, a row whose subject isn't in it (e.g.
- * removed from Settings) demotes to "No subject" without touching the idea file.
- * Named groups order by the leading run-order rank among their rows for
- * `sortDirection` — the lowest rank ascending, the highest rank descending —
- * so a group's position matches where its top-priority row would land if the
- * rows were flattened. Groups with no ranked row come after, newest-updated first.
- * The order derives from plans data alone, so it never reshuffles once vocabulary
- * arrives after first paint. */
+ * group, last. A row whose subject is not in its own project's vocabulary demotes
+ * to "No subject" without touching the idea file; a project with no vocabulary
+ * entry keeps every subject. Named groups order by the leading run-order rank
+ * among their rows, so a group's position matches where its top-priority row
+ * would land if the rows were flattened. Groups with no ranked row come after,
+ * newest-updated first. */
 export const groupRowsBySubject = (
   rows: WorklistRow[],
   sortDirection: SortDirection = 'asc',
-  validSubjects?: string[],
+  validSubjects?: Map<string, Set<string>>,
 ): SubjectGroup[] => {
   const bySubject = new Map<string, WorklistRow[]>();
   const noSubject: WorklistRow[] = [];
 
   for (const row of rows) {
-    const subject = subjectOf(row);
-    if (!subject || (validSubjects && !validSubjects.includes(subject))) {
+    const subject = row.entry.subject;
+    const vocabulary = validSubjects?.get(projectKey(row));
+    if (!subject || (vocabulary && !vocabulary.has(subject))) {
       noSubject.push(row);
       continue;
     }
@@ -329,9 +298,6 @@ export interface ProjectGroup {
   rows: WorklistRow[];
 }
 
-/** Groups already-merged worklist rows by the project tag the scope merge
- * attached — current project first, then the rest by name, so a header sort
- * reorders rows inside each group without shuffling the groups themselves. */
 export const groupRowsByProject = (rows: WorklistRow[]): ProjectGroup[] => {
   const order: string[] = [];
   const byKey = new Map<string, ProjectGroup>();
@@ -351,16 +317,24 @@ export const groupRowsByProject = (rows: WorklistRow[]): ProjectGroup[] => {
     );
 };
 
-/** Sorts already-built worklist rows the same way `selectWorklistRows` sorts its
- * own — split out so the scope merge can re-sort rows gathered from several
- * projects by the one set of filters (IDEA-291). */
+const worklistSortProxy = (row: WorklistRow): WorklistEntry =>
+  row.type === 'note'
+    ? {
+        ...row.entry,
+        status: NOTE_STATUS_TIER[noteStatus(row.entry)],
+        updated: undefined,
+        phasesDone: 0,
+        phasesTotal: 0,
+      }
+    : row.entry;
+
 export const sortWorklistRows = (
   rows: WorklistRow[],
   sortKey: PlanSortKey,
   sortDirection: SortDirection,
 ): WorklistRow[] =>
   [...rows].sort((a, b) =>
-    comparePlans(worklistSortProxy(a), worklistSortProxy(b), sortKey, sortDirection),
+    compareEntries(worklistSortProxy(a), worklistSortProxy(b), sortKey, sortDirection),
   );
 
 export interface WorklistResult {
@@ -370,74 +344,51 @@ export interface WorklistResult {
   noteStatusCounts: Record<IdeaStatus, number>;
 }
 
-/** Null before any plan is drafted, when the row shows a Draft-plan action instead. */
 export const deriveChildrenSummary = (
-  children: PlanEntry[],
+  children: WorklistEntry[],
 ): { done: number; total: number } | null => {
   if (children.length === 0) return null;
   return { done: children.filter((p) => p.status === 'done').length, total: children.length };
 };
 
-/** Title/id stay the idea's own identity; status/updated/progress fall back to
- * the note tier. */
-const worklistSortProxy = (row: WorklistRow): PlanEntry => {
-  if (row.type === 'plan') return row.plan;
-  if (row.type === 'fix') return row.fix;
-
-  return {
-    title: row.idea.title,
-    id: row.idea.id ?? undefined,
-    status: NOTE_STATUS_TIER[row.idea.status ?? 'open'],
-    created: row.idea.created ?? '',
-    tags: [],
-    needs: [],
-    body: row.idea.body,
-    phases: [],
-    order: row.idea.order,
-  };
-};
-
-/** Every plan renders as its own row; `kind: note` ideas surface alongside
- * them. A fix entity renders as its own row too, grouped under the parent's
- * subject, inherited here rather than stored, so a fix can't drift from the
- * idea it fixes. A ticket never gets a row here — it's decomposition detail
- * that only ever renders inside its board's own view (IDEA-201). */
+/** Every plan renders as its own row; notes surface alongside them. A fix renders
+ * as its own row, grouped under the parent's subject, inherited here rather than
+ * stored. A ticket never gets a row — it only renders inside its board's view. */
 export const selectWorklistRows = (
-  plans: PlanEntry[],
-  ideas: IdeaEntry[],
+  entries: WorklistEntry[],
   filters: PlanListFilters = DEFAULT_PLAN_LIST_FILTERS,
 ): WorklistResult => {
-  const nonTicketPlans = plans.filter((p) => p.entityKind !== 'ticket');
-  const subjectById = new Map(nonTicketPlans.map((p) => [p.id, p.subject] as const));
-  const withInheritedSubject = nonTicketPlans.map((p) =>
-    p.entityKind === 'fix'
-      ? { ...p, subject: (p.idea && subjectById.get(p.idea)) || undefined }
-      : p,
+  const nonTicket = entries.filter((e) => e.kind !== 'ticket');
+  const subjectById = new Map(nonTicket.map((e) => [e.id, e.subject] as const));
+  const withInheritedSubject = nonTicket.map((e) =>
+    e.kind === 'fix' ? { ...e, subject: (e.parent && subjectById.get(e.parent)) || undefined } : e,
   );
-  const fixPlans = withInheritedSubject.filter((p) => p.entityKind === 'fix');
-  const nonFixPlans = withInheritedSubject.filter((p) => p.entityKind !== 'fix');
+  const plans = withInheritedSubject.filter((e) => e.kind !== 'note');
+  const fixes = plans.filter((e) => e.kind === 'fix');
+  const nonFixPlans = plans.filter((e) => e.kind !== 'fix');
+  const notes = withInheritedSubject.filter((e) => e.kind === 'note');
 
-  const { statusCounts, tagCounts } = selectPlanRows(withInheritedSubject, filters);
-
-  const notes = ideas.filter((idea) => idea.kind === 'note');
+  const { statusCounts, tagCounts } = selectPlanRows(plans, filters);
 
   const noteStatusSet = new Set(filters.noteStatuses);
   const noteStatusCounts = countBy(
-    notes.filter((idea) => matchesIdeaSearch(idea, filters.search)),
-    (idea) => [idea.status ?? 'open'],
+    notes.filter((note) => matchesSearch(note, filters.search)),
+    (note) => [noteStatus(note)],
   ) as Record<IdeaStatus, number>;
   for (const status of IDEA_STATUSES) noteStatusCounts[status] ??= 0;
 
   const rows: WorklistRow[] = selectPlanRows(nonFixPlans, filters).rows.map(
-    (plan): PlanRow => ({ type: 'plan', plan }),
+    (entry): PlanRow => ({ type: 'plan', entry }),
   );
-  rows.push(...selectPlanRows(fixPlans, filters).rows.map((fix): FixRow => ({ type: 'fix', fix })));
+  rows.push(
+    ...selectPlanRows(fixes, filters).rows.map((entry): FixRow => ({ type: 'fix', entry })),
+  );
 
-  for (const idea of notes) {
-    if (!noteStatusSet.has(idea.status ?? 'open')) continue;
-    if (!matchesIdeaSearch(idea, filters.search)) continue;
-    if (!matchesSubject(idea.subject, filters.subject)) continue;
-    rows.push({ type: 'note', idea });
+  for (const note of notes) {
+    if (!noteStatusSet.has(noteStatus(note))) continue;
+    if (!matchesSearch(note, filters.search)) continue;
+    if (!matchesSubject(note.subject, filters.subject)) continue;
+    rows.push({ type: 'note', entry: note });
   }
 
   return {

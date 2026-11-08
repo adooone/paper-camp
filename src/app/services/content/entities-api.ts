@@ -1,5 +1,6 @@
 import type {
   AgentId,
+  EntityDetailEntry,
   EntityType,
   LogEntry,
   ParseResult,
@@ -7,6 +8,7 @@ import type {
   PlanEntry,
   PlanStatus,
   ThreadMessage,
+  WorklistEntry,
 } from '@/types/index';
 import { apiFetch, apiUrl } from '../api-base';
 
@@ -35,6 +37,36 @@ export const fetchPlansAt = async (baseUrl: string): Promise<ParseResult<PlanEnt
   } catch {
     return null;
   }
+};
+
+export const fetchWorklist = async (): Promise<WorklistEntry[]> => {
+  const response = await apiFetch(apiUrl('/api/worklist'), {
+    signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Failed to load the worklist (${response.status})`);
+  }
+  return response.json();
+};
+
+export const fetchWorklistAt = async (baseUrl: string): Promise<WorklistEntry[]> => {
+  const response = await fetch(`${baseUrl}/api/worklist`, {
+    signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`Failed to load the worklist (${response.status})`);
+  return response.json();
+};
+
+export const fetchEntity = async (id: string): Promise<EntityDetailEntry> => {
+  const response = await apiFetch(apiUrl(`/api/entities?id=${encodeURIComponent(id)}`), {
+    signal: AbortSignal.timeout(PLANS_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Failed to load ${id} (${response.status})`);
+  }
+  return response.json();
 };
 
 export const patchEntity = async (

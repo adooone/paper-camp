@@ -15,7 +15,7 @@ import {
 import type { ReactNode } from 'react';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
-import { effectiveStatus, relativeDate, runningTaskForPlan } from '../helpers';
+import { effectiveStatus, relativeDate, runningTaskForPlan, worklistEntryToPlan } from '../helpers';
 import { useWorklistRows } from '../hooks';
 import {
   PLAN_LIST_GRID,
@@ -79,8 +79,8 @@ export const WorklistRows = ({
     if (row.type === 'plan') {
       return (
         <PlanRows
-          key={row.plan.title}
-          plans={[row.plan]}
+          key={row.entry.id}
+          plans={[worklistEntryToPlan(row.entry)]}
           activePlanTitle={activePlanTitle}
           onOpen={onOpenPlan}
           project={row.project}
@@ -92,7 +92,7 @@ export const WorklistRows = ({
     if (row.type === 'note') {
       return (
         <NoteRowCard
-          key={row.idea.title}
+          key={row.entry.id}
           row={row}
           onOpen={onOpenIdea}
           onOpenCrossProject={onOpenCrossProject}
@@ -102,7 +102,7 @@ export const WorklistRows = ({
     }
     return (
       <FixRowCard
-        key={row.fix.title}
+        key={row.entry.id}
         row={row}
         activePlanTitle={activePlanTitle}
         onOpen={onOpenPlan}
@@ -218,8 +218,8 @@ interface NoteRowCardProps {
 }
 
 const NoteRowCard = ({ row, onOpen, onOpenCrossProject, showProjectChip }: NoteRowCardProps) => {
-  const idea = row.idea;
-  const status = idea.status ?? 'open';
+  const idea = row.entry;
+  const status = idea.status === 'done' || idea.status === 'dropped' ? idea.status : 'open';
   const foreign = row.project && !row.project.isCurrent ? row.project : undefined;
   const handleOpen =
     foreign && onOpenCrossProject
@@ -237,7 +237,7 @@ const NoteRowCard = ({ row, onOpen, onOpenCrossProject, showProjectChip }: NoteR
         id={
           <RowIdCell
             marker={<RowMarker order={idea.order} done={status === 'done'} status={status} />}
-            id={idea.id ? <PlanIdStamp id={idea.id} fill /> : null}
+            id={<PlanIdStamp id={idea.id} fill />}
           />
         }
         title={
@@ -286,7 +286,7 @@ const FixRowCard = ({
   showProjectChip,
 }: FixRowCardProps) => {
   const agentStatus = useAppStore((s) => s.agentStatus);
-  const fix = row.fix;
+  const fix = worklistEntryToPlan(row.entry);
   const status = effectiveStatus(fix, agentStatus);
   const foreign = row.project && !row.project.isCurrent ? row.project : undefined;
   const handleOpen =

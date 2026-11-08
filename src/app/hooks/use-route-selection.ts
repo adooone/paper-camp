@@ -1,4 +1,5 @@
 import { useAppStore } from '@/app/stores/app-store';
+import { detailToPlan, entityToIdea } from '@/core/entity-view';
 import type {
   IdeaEntry,
   NightSuggestionEntry,
@@ -6,9 +7,9 @@ import type {
   ResolvedRoadmapItem,
 } from '@/types/index';
 import { useParams } from '@tanstack/react-router';
-import { useIdeas } from './use-ideas';
+import { useEntity } from './use-entity';
 import { useNightReport } from './use-night-report';
-import { usePlans } from './use-plans';
+import { useWorklist } from './use-worklist';
 
 const DOC_SECTIONS = ['repo-docs', 'release-notes'] as const;
 type DocSection = (typeof DOC_SECTIONS)[number];
@@ -99,23 +100,33 @@ export function entityPath(entity: {
 
 export function useActivePlan(): PlanEntry | null {
   const { planId, ideaId, ticketId } = useParams({ strict: false });
-  const { plans } = usePlans();
-  if (!plans) return null;
-  if (typeof ticketId === 'string') {
-    return resolveByIdOrTitle(plans.entries, decodeURIComponent(ticketId), 'TICKET');
-  }
-  // `/ideas/:n` serves both — a plan-bearing idea resolves here, a note falls through
-  // to useActiveIdea below.
-  const param = typeof ideaId === 'string' ? ideaId : planId;
-  if (typeof param !== 'string') return null;
-  return resolveByIdOrTitle(plans.entries, decodeURIComponent(param));
+  const { worklist } = useWorklist();
+  const rows = (worklist ?? []).filter((row) => row.kind !== 'note');
+  const row = (() => {
+    if (typeof ticketId === 'string') {
+      return resolveByIdOrTitle(rows, decodeURIComponent(ticketId), 'TICKET');
+    }
+    // `/ideas/:n` serves both — a plan-bearing idea resolves here, a note falls through
+    // to useActiveIdea below.
+    const param = typeof ideaId === 'string' ? ideaId : planId;
+    return typeof param === 'string' ? resolveByIdOrTitle(rows, decodeURIComponent(param)) : null;
+  })();
+  const { data } = useEntity(row?.id);
+  return row && data ? detailToPlan(data) : null;
 }
 
 export function useActiveIdea(): IdeaEntry | null {
   const { ideaId } = useParams({ strict: false });
-  const ideaEntries = useIdeas();
-  if (typeof ideaId !== 'string') return null;
-  return resolveByIdOrTitle(ideaEntries, decodeURIComponent(ideaId));
+  const { worklist } = useWorklist();
+  const row =
+    typeof ideaId === 'string'
+      ? resolveByIdOrTitle(
+          (worklist ?? []).filter((entry) => entry.kind === 'note'),
+          decodeURIComponent(ideaId),
+        )
+      : null;
+  const { data } = useEntity(row?.id);
+  return row && data ? entityToIdea(data) : null;
 }
 
 export function chunkRouteParam(chunk: string): string {

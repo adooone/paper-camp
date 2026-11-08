@@ -10,7 +10,9 @@ export { useIdeas } from './use-ideas';
 export { markRead, useNotifications } from './use-notifications';
 export { useNightReport } from './use-night-report';
 export { useOpenEntity } from './use-open-entity';
+export { useEntity } from './use-entity';
 export { usePlans } from './use-plans';
+export { useWorklist } from './use-worklist';
 export { useProjectIdentity } from './use-project-identity';
 export { useSuggestions } from './use-suggestions';
 export {

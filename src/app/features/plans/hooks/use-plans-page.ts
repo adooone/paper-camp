@@ -4,11 +4,10 @@ import {
   useActiveIdea,
   useActiveNightChunk,
   useActivePlan,
-  useIdeas,
   useNightReport,
   useOpenEntity,
-  usePlans,
   useSuggestions,
+  useWorklist,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
@@ -18,8 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type GroupMode, isGroupMode } from '../helpers';
 
 export const usePlansPage = () => {
-  const { plans, plansError } = usePlans();
-  const ideaEntries = useIdeas();
+  const { worklist, worklistError } = useWorklist();
   const { suggestions } = useSuggestions();
   const nightReport = useNightReport();
   const setDetailView = useAppStore((s) => s.setDetailView);
@@ -76,17 +74,17 @@ export const usePlansPage = () => {
   };
 
   const handleOpenPlan = (title: string) => {
-    const id = plans?.entries.find((p) => p.title === title)?.id;
+    const id = worklist?.find((entry) => entry.kind !== 'note' && entry.title === title)?.id;
     openEntity(id, title);
   };
 
   const handleOpenIdea = (title: string) => {
-    const id = ideaEntries.find((idea) => idea.title === title)?.id;
+    const id = worklist?.find((entry) => entry.kind === 'note' && entry.title === title)?.id;
     navigate({ to: '/ideas/$ideaId', params: { ideaId: entityRouteParam(id, title) } });
   };
 
   // Archivable entities are work entities, so they route to /plans and their id is
-  // already to hand — `ideaEntries` holds only notes and would never resolve them.
+  // already to hand — the note handler resolves only notes and would never resolve them.
   const handleOpenArchivable = (idea: ArchivableIdea) => {
     openEntity(idea.id, idea.title);
   };
@@ -113,9 +111,8 @@ export const usePlansPage = () => {
   };
 
   return {
-    plans,
-    plansError,
-    ideaEntries,
+    worklist,
+    worklistError,
     suggestions,
     nightReport,
     planFilters,

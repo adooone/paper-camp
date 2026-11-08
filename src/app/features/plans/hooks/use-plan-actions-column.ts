@@ -1,11 +1,11 @@
-import { useActivePlan, usePlans, useSubjectVocabulary } from '@/app/hooks';
+import { useActivePlan, useSubjectVocabulary, useWorklist } from '@/app/hooks';
 import { verifyDirectCompletion } from '@/app/services/git-api';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { branchEntityId } from '@/app/utils/branch-entity-id';
 import type { IdeaEntry } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
-import { canMarkPlanDone, effectiveStatus, isUntouchedPlan } from '../helpers';
+import { canMarkPlanDone, effectiveStatus, isUntouchedPlan, worklistEntryToPlan } from '../helpers';
 import { usePlanStatusPatch } from './use-plan-status-patch';
 
 const NO_SUBJECT = '__no-subject__';
@@ -16,7 +16,7 @@ export const usePlanActionsColumn = () => {
   const agentStatus = useAppStore((s) => s.agentStatus);
   const gitBranch = useAppStore((s) => s.gitBranch);
   const gitStatus = useAppStore((s) => s.gitStatus);
-  const { plans: allPlans } = usePlans();
+  const { worklist } = useWorklist();
   const { patch: patchById, updating } = usePlanStatusPatch();
   const { subjects, available: subjectsAvailable } = useSubjectVocabulary();
   const detailView = useAppStore((s) => s.detailView);
@@ -67,7 +67,9 @@ export const usePlanActionsColumn = () => {
     body: plan.body,
     log: plan.log,
   };
-  const otherPlans = (allPlans?.entries ?? []).filter((p) => p.id !== plan.id);
+  const otherPlans = (worklist ?? [])
+    .filter((entry) => entry.kind !== 'note' && entry.id !== plan.id)
+    .map(worklistEntryToPlan);
 
   const patch = (updates: Parameters<typeof patchById>[1]) => {
     if (!plan.id) return Promise.resolve(false);

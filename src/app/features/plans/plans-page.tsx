@@ -21,9 +21,8 @@ import {
 
 export const PlansPage = () => {
   const {
-    plans,
-    plansError,
-    ideaEntries,
+    worklist,
+    worklistError,
     suggestions,
     nightReport,
     planFilters,
@@ -52,19 +51,19 @@ export const PlansPage = () => {
   const otherScopeProjects = multiProject ? scopeRows.filter((r) => !r.isCurrent) : [];
   const { rows: otherRows, pendingProjects } = useScopeWorklist(otherScopeProjects, planFilters);
 
-  if (plansError) {
+  if (worklistError) {
     return (
       <div>
         <PageTitle className="mb-6">Plans</PageTitle>
         <Card size="small" accent accentColor="rose">
           <p className="m-0 font-semibold">Couldn't load plans.md</p>
-          <p className="m-0 opacity-75">{plansError}</p>
+          <p className="m-0 opacity-75">{worklistError}</p>
         </Card>
       </div>
     );
   }
 
-  if (!plans) {
+  if (!worklist) {
     // A direct reload/deep-link into a plan, idea, finding, or chunk route lands here too —
     // the worklist skeleton would flash as the wrong page instead of the detail view's own state.
     if (planId || ideaId || chunk) {
@@ -86,7 +85,7 @@ export const PlansPage = () => {
     );
   }
 
-  const { rows: ownRows } = selectWorklistRows(plans.entries, ideaEntries, planFilters);
+  const { rows: ownRows } = selectWorklistRows(worklist, planFilters);
   const rows = multiProject
     ? sortWorklistRows(
         [
@@ -135,26 +134,13 @@ export const PlansPage = () => {
 
           <NightReportSection groups={nightReport} onOpenChunk={handleOpenNightChunk} />
 
-          {plans.warnings.length > 0 && (
-            <Card size="small" accent accentColor="amber">
-              <p className="m-0 font-semibold">Some entries couldn't be parsed</p>
-              <ul className="m-0 pl-5">
-                {plans.warnings.map((w) => (
-                  <li key={w.title}>
-                    {w.title}: {w.message}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
-
           {pendingProjects.length > 0 && (
             <output aria-live="polite" className="block text-sm opacity-60 mb-2">
               Loading {pendingProjects.map((p) => p.name).join(', ')}…
             </output>
           )}
 
-          {(multiProject ? rows.length === 0 : plans.entries.length === 0) ? (
+          {(multiProject ? rows.length === 0 : worklist.length === 0) ? (
             <EmptyState
               illustration={<DoodleIllustration name="empty-tray" />}
               message={
