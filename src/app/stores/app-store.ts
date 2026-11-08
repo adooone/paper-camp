@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { cachedProjectState } from './project-resources';
 import { type AgentSlice, createAgentSlice, createInitialAgentState } from './slices/agent-slice';
 import { type BatchSlice, createBatchSlice, createInitialBatchState } from './slices/batch-slice';
 import { type DiffSlice, createDiffSlice, createInitialDiffState } from './slices/diff-slice';
@@ -24,10 +25,8 @@ import {
   createTaskLogSlice,
 } from './slices/task-log-slice';
 
-type ResetSlice = {
-  // Clears everything cached from the previous project on a runtime switch; pages
-  // that need it reload on mount, same as they do today.
-  resetProjectState: () => void;
+type RestoreSlice = {
+  restoreProjectState: (runtimeUrl: string) => void;
 };
 
 export type AppStore = PlansSlice &
@@ -42,7 +41,7 @@ export type AppStore = PlansSlice &
   BatchSlice &
   DiffSlice &
   RuntimeSlice &
-  ResetSlice;
+  RestoreSlice;
 
 export const useAppStore = create<AppStore>()((set, get) => ({
   ...createPlansSlice(set),
@@ -57,7 +56,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   ...createBatchSlice(set, get),
   ...createDiffSlice(set, get),
   ...createRuntimeSlice(set),
-  resetProjectState: () =>
+  restoreProjectState: (runtimeUrl) =>
     set({
       ...createInitialAgentState(),
       ...createInitialBatchState(),
@@ -66,6 +65,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       ...createInitialDocsState(),
       ...createInitialRoadmapState(),
       ...createInitialStatusState(),
+      ...cachedProjectState(runtimeUrl),
     }),
 }));
 

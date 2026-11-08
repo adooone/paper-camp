@@ -1,5 +1,4 @@
-import { fetchRepoDocs } from '../../services/content';
-import { fetchReleaseVersions } from '../../services/release-notes-api';
+import { loadProjectResource } from '../project-resources';
 import type { GetState, SetState } from './slice-helpers';
 
 export function createInitialDocsState() {
@@ -37,20 +36,11 @@ export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
   return {
     ...createInitialDocsState(),
     loadRepoDocs: async () => {
-      set({ repoDocsLoading: true });
-      try {
-        const data = await fetchRepoDocs();
-        set({ repoDocs: data.files, repoDocsLoading: false });
-        const { activeDocTitle } = get();
-        if (!activeDocTitle) {
-          const readme = ['MAIN.md', 'README.md'].find((name) =>
-            data.files.some((f) => f.name === name),
-          );
-          if (readme) set({ activeDocTitle: readme });
-        }
-      } catch {
-        set({ repoDocs: [], repoDocsLoading: false });
-      }
+      if (!(await loadProjectResource(set, 'repo-docs'))) return;
+      const { activeDocTitle, repoDocs } = get();
+      if (activeDocTitle) return;
+      const readme = ['MAIN.md', 'README.md'].find((name) => repoDocs.some((f) => f.name === name));
+      if (readme) set({ activeDocTitle: readme });
     },
 
     setActiveDocTitle: (title) => set({ activeDocTitle: title }),
@@ -58,13 +48,7 @@ export function createDocsSlice(set: SetState, get: GetState): DocsSlice {
     setDocSearchQuery: (query) => set({ docSearchQuery: query }),
 
     loadReleaseVersions: async () => {
-      set({ releaseVersionsLoading: true });
-      try {
-        const versions = await fetchReleaseVersions();
-        set({ releaseVersions: versions, releaseVersionsLoading: false });
-      } catch {
-        set({ releaseVersions: [], releaseVersionsLoading: false });
-      }
+      await loadProjectResource(set, 'release-versions');
     },
 
     setActiveReleaseVersion: (version) => set({ activeReleaseVersion: version }),

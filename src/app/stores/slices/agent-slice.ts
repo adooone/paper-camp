@@ -3,7 +3,6 @@ import type { AgentTaskState, LoginRelayState, PlanEntry } from '@/types/index';
 import {
   cancelLoginRelay as cancelLoginRelayApi,
   consumeReconcileQueue,
-  fetchAgentStatus,
   fetchLoginRelayStatus,
   fetchReconcileQueue,
   launchAgent as launchAgentApi,
@@ -24,6 +23,7 @@ import {
   submitLoginRelayCode as submitLoginRelayCodeApi,
 } from '../../services/agent-api';
 import { runDeskCheck } from '../../services/checks-api';
+import { fetchProjectResource } from '../project-resources';
 import type { GetState, SetState } from './slice-helpers';
 import { loadSlice, withAgentPoll } from './slice-helpers';
 
@@ -98,7 +98,9 @@ export function createAgentSlice(set: SetState, get: GetState): AgentSlice {
     ...createInitialAgentState(),
     loadAgentStatus: async () => {
       try {
-        const data = await fetchAgentStatus();
+        const fetched = await fetchProjectResource('agent-status');
+        if (!fetched.current) return;
+        const data = fetched.data;
         const prev = get().agentStatus;
         set({ agentStatus: data });
 

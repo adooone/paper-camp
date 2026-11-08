@@ -1,7 +1,6 @@
 import type { TaskLogEntry } from '@/types/index';
-import { fetchTaskLog } from '../../services/content';
+import { loadProjectResource } from '../project-resources';
 import type { SetState } from './slice-helpers';
-import { loadSlice } from './slice-helpers';
 
 export function createInitialTaskLogState() {
   return {
@@ -23,13 +22,9 @@ export type TaskLogSlice = {
 export function createTaskLogSlice(set: SetState): TaskLogSlice {
   return {
     ...createInitialTaskLogState(),
-    loadTaskLog: loadSlice(
-      set,
-      fetchTaskLog,
-      (data) => ({ taskLog: data.entries }),
-      () => ({ taskLog: [] }),
-      'taskLogLoading',
-    ),
+    loadTaskLog: async () => {
+      await loadProjectResource(set, 'task-log');
+    },
 
     setActiveLogEntryTitle: (title) => set({ activeLogEntryTitle: title }),
   };

@@ -2,7 +2,7 @@
 id: IDEA-327
 title: A lean data flow for the Ideas page
 type: feat
-status: planned
+status: review
 created: 2026-11-07
 updated: 2026-11-08
 tags:
@@ -129,5 +129,6 @@ projects in scope issues at most eight requests per 5 s.
 - [x] One hub poll and counts from the cache
       Move `useHubProjectStates` and `useHubMachineReports` onto `useQuery`/`useQueries` with `refetchInterval: 5_000`: one `/api/machine/projects` query per machine and one agent-status query per project, shared by every `useHubMachines` consumer. `loadScopeCounts` for ideas becomes a `select` over the cached worklist queries; chat and activity counts become queries on the same keys the pages use. Delete the `/api/stats` path from `scope-counts.ts`.
       run: 2m6s · 64 in · 22.7k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1
-- [ ] Project switch as a key change
+- [x] Project switch as a key change
       `openProject` navigates as soon as the runtime is switched and runs `pairWithToken` and `checkRuntimeReachable` after; remove `resetProjectState` and the slices it reset by moving status, consistency, git, agent status, task log, roadmap and docs loads onto queries keyed by `runtimeUrl`, with the Stack panel and settings reading them. A switch to a project already seen renders from cache with no loading state.
+      run: 2m23s · 82 in · 34.5k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1

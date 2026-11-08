@@ -14,12 +14,11 @@ import type {
   GitStashEntry,
   GitStatusEntry,
 } from '@/types/index';
-import { fetchConsistency, fetchDoctor } from '../../services/content';
-import { commitChanges, fetchGitStatus, suggestCommitMessage } from '../../services/git-api';
+import { commitChanges, suggestCommitMessage } from '../../services/git-api';
 import type { StatusState } from '../../services/status-api';
-import { dropServerCaches, fetchStatus } from '../../services/status-api';
+import { dropServerCaches } from '../../services/status-api';
+import { loadProjectResource } from '../project-resources';
 import type { GetState, SetState } from './slice-helpers';
-import { loadSlice } from './slice-helpers';
 
 export function createInitialStatusState() {
   return {
@@ -75,7 +74,9 @@ export type StatusSlice = {
 export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
   return {
     ...createInitialStatusState(),
-    loadStatus: loadSlice(set, fetchStatus, (data) => ({ status: data })),
+    loadStatus: async () => {
+      await loadProjectResource(set, 'status');
+    },
     refreshAll: async () => {
       set({ refreshing: true });
       try {
@@ -141,27 +142,14 @@ export function createStatusSlice(set: SetState, get: GetState): StatusSlice {
       }
     },
 
-    loadConsistency: loadSlice(set, fetchConsistency, (data) => ({ consistency: data })),
-
-    loadDoctor: loadSlice(set, fetchDoctor, (data) => ({ doctor: data })),
-
-    loadGitStatus: async () => {
-      try {
-        const { branch, entries, ahead, behind, diverged, branchHygiene, stashes } =
-          await fetchGitStatus();
-        set({
-          gitStatus: entries,
-          gitBranch: branch,
-          gitAhead: ahead,
-          gitBehind: behind,
-          gitDiverged: diverged,
-          gitBranchHygiene: branchHygiene,
-          gitStashes: stashes,
-        });
-        return true;
-      } catch {
-        return false;
-      }
+    loadConsistency: async () => {
+      await loadProjectResource(set, 'consistency');
     },
+
+    loadDoctor: async () => {
+      await loadProjectResource(set, 'doctor');
+    },
+
+    loadGitStatus: () => loadProjectResource(set, 'git-status'),
   };
 }

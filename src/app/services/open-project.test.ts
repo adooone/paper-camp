@@ -16,7 +16,7 @@ function mockDeps(opts: {
 }) {
   const switchRuntime = vi.fn();
   const pairWithToken = vi.fn().mockResolvedValue(undefined);
-  const resetProjectState = vi.fn();
+  const restoreProjectState = vi.fn();
   const checkRuntimeReachable = vi.fn();
 
   vi.doMock('./runtime-connection', () => ({ switchRuntime }));
@@ -30,10 +30,10 @@ function mockDeps(opts: {
     lastRouteFor: () => opts.rememberedRoute ?? null,
   }));
   vi.doMock('@/app/stores/app-store', () => ({
-    useAppStore: { getState: () => ({ resetProjectState, checkRuntimeReachable }) },
+    useAppStore: { getState: () => ({ restoreProjectState, checkRuntimeReachable }) },
   }));
 
-  return { switchRuntime, pairWithToken, resetProjectState, checkRuntimeReachable };
+  return { switchRuntime, pairWithToken, restoreProjectState, checkRuntimeReachable };
 }
 
 afterEach(() => {
@@ -89,7 +89,7 @@ describe('openProject', () => {
     expect(deps.pairWithToken).not.toHaveBeenCalled();
   });
 
-  it('resets project state and re-probes reachability on switch', async () => {
+  it('restores cached project state, then re-probes reachability once paired', async () => {
     const deps = mockDeps({ existingProjects: [] });
     const { openProject } = await import('./open-project');
 
@@ -98,7 +98,7 @@ describe('openProject', () => {
       routeExists: () => false,
     });
 
-    expect(deps.resetProjectState).toHaveBeenCalled();
+    expect(deps.restoreProjectState).toHaveBeenCalledWith(row.runtimeUrl);
     expect(deps.checkRuntimeReachable).toHaveBeenCalled();
   });
 

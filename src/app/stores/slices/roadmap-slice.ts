@@ -3,9 +3,8 @@ import {
   type RoadmapFilters,
 } from '@/app/features/roadmap/helpers/roadmap-filters';
 import type { ResolvedRoadmap } from '@/types/index';
-import { fetchRoadmap } from '../../services/content/docs-api';
+import { loadProjectResource } from '../project-resources';
 import type { GetState, SetState } from './slice-helpers';
-import { loadSlice } from './slice-helpers';
 
 export function createInitialRoadmapState() {
   return {
@@ -32,13 +31,9 @@ export type RoadmapSlice = {
 export function createRoadmapSlice(set: SetState, _get: GetState): RoadmapSlice {
   return {
     ...createInitialRoadmapState(),
-    loadRoadmap: loadSlice(
-      set,
-      fetchRoadmap,
-      (data) => ({ roadmap: data, roadmapError: null }),
-      (err) => ({ roadmapError: String(err) }),
-      'roadmapLoading',
-    ),
+    loadRoadmap: async () => {
+      await loadProjectResource(set, 'roadmap');
+    },
 
     toggleRoadmapHorizon: (title) =>
       set((s) => ({

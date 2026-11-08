@@ -28,12 +28,12 @@ export async function openProject(
 ): Promise<void> {
   const pairingToken = pairingTokenFor(row, machineUrl);
   switchRuntime({ runtimeUrl: row.runtimeUrl, pairingToken });
-  if (pairingToken) await pairWithToken(pairingToken);
-
   const store = useAppStore.getState();
-  store.resetProjectState();
-  store.checkRuntimeReachable();
+  store.restoreProjectState(row.runtimeUrl);
 
   const destination = path || lastRouteFor(row.runtimeUrl, storage, route.routeExists) || '/';
   route.navigate({ to: destination, replace: true });
+
+  if (pairingToken) await pairWithToken(pairingToken);
+  store.checkRuntimeReachable();
 }
