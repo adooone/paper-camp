@@ -168,7 +168,7 @@ const QuestionReplyForm = ({
 }) => {
   const { toast } = useToast();
   const [input, setInput] = useState('');
-  const { sending, send, undo, undoing, undoEdit } = useSendFeedbackMessage(plan, {
+  const { sending, stageLine, send, undo, undoing, undoEdit } = useSendFeedbackMessage(plan, {
     reload,
     notify: toast,
   });
@@ -210,7 +210,7 @@ const QuestionReplyForm = ({
       />
       <div className="flex justify-end items-center gap-3">
         <span className={sending ? 'visible' : 'invisible'}>
-          <Spinner size="small" label="Agent replying…" />
+          <Spinner size="small" label={stageLine} />
         </span>
         <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
           Reply

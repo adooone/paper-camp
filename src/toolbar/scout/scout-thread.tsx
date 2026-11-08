@@ -120,7 +120,7 @@ const ReplyBox = ({
   const [error, setError] = useState<string | null>(null);
   // No <ToastProvider> inside the toolbar's shadow DOM (its portal would render
   // unstyled in the host page), so failures surface inline here instead.
-  const { sending, send } = useSendFeedbackMessage(plan, {
+  const { sending, stageLine, send } = useSendFeedbackMessage(plan, {
     reload: noopReload,
     notify: (options) => setError(options.title ?? 'Something went wrong'),
   });
@@ -145,7 +145,7 @@ const ReplyBox = ({
         disabled={sending}
       />
       <div style={footerRowStyle}>
-        {sending ? <Spinner size="small" label="Scout replying…" /> : <span />}
+        {sending ? <Spinner size="small" label={stageLine} /> : <span />}
         <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
           Send
         </Button>

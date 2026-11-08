@@ -3,6 +3,7 @@ import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { MountContext, PlanEntry } from '@/types/index';
 import type { ToastOptions } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
+import { useFeedbackStage } from './use-feedback-stage';
 
 export interface SendFeedbackMessageCallbacks {
   /** Refreshes whatever this mount uses to list plans; a toolbar mount whose
@@ -24,6 +25,7 @@ export const useSendFeedbackMessage = (
 ) => {
   const [sending, setSending] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const stageLine = useFeedbackStage(plan.id, sending);
   // Only the reply this hook instance just received carries an Undo — reloading
   // the page loses it, which is fine for a one-tap "just sent" correction.
   const [undo, setUndo] = useState<{ commitSha: string } | null>(null);
@@ -94,5 +96,5 @@ export const useSendFeedbackMessage = (
     }
   };
 
-  return { sending, send, undo, undoing, undoEdit };
+  return { sending, stageLine, send, undo, undoing, undoEdit };
 };

@@ -45,8 +45,9 @@ ends with the identical thread.
 - [x] Publish feedback stages from the pipeline
       `runFeedbackPipeline` emits `reading`/`thinking`/`replying` on the existing `type: 'feedback'` event (beside today's `done`/`failed`), with a test asserting order and entity id on the stream.
       run: 1m35s · 18 in · 3.5k out · sonnet-5-5 · sess:fdfbd2e1-c2d0-4b8a-9db0-53050afe657c
-- [ ] Show the live stage under the newest bubble
+- [x] Show the live stage under the newest bubble
       Toolbar `scout-thread.tsx` and the feedback view read the stage from `subscribeToActivityStream` instead of the local `sending` flag.
+      run: 49s · 32 in · 6k out · sonnet-5-5 · sess:fdfbd2e1-c2d0-4b8a-9db0-53050afe657c
 - [ ] Stream partial reply text from read-only runs
       `runReadOnlyPrompt` takes an `onText` callback (stream-json for claude-code, text parts for opencode); `replyToFeedback` extracts the growing `reply` string and publishes `feedback` chunk events.
 - [ ] Type the streamed reply into the thread
