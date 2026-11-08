@@ -19,6 +19,12 @@ export const fetchConfig = async (): Promise<PaperCampConfig | null> => {
   }
 };
 
+export const fetchConfigAt = async (baseUrl: string): Promise<PaperCampConfig> => {
+  const response = await fetch(`${baseUrl}/api/config`);
+  if (!response.ok) throw new Error(`Failed to load the config (${response.status})`);
+  return response.json();
+};
+
 export interface SaveConfigResult {
   ok: boolean;
   error?: string;

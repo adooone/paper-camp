@@ -1,34 +1,25 @@
-import { fetchConfig } from '@/app/services/system';
-import { useEffect, useState } from 'react';
+import { configQueryKey } from '@/app/services/query-client';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
+import { fetchConfigAt } from '@/app/services/system';
+import { useQuery } from '@tanstack/react-query';
 
 export interface SubjectVocabulary {
   subjects: string[];
   loading: boolean;
-  // False when the config fetch failed — callers must not treat `subjects: []`
-  // as an authoritative empty vocabulary in that case.
   available: boolean;
 }
 
-// Read-only: `subjects` is derived from ROADMAP.md server-side (IDEA-95), so there's
-// nothing here to add/rename/remove — edit the vocabulary via the Roadmap page.
+const NO_SUBJECTS: string[] = [];
+
 export const useSubjectVocabulary = (): SubjectVocabulary => {
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [available, setAvailable] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchConfig().then((config) => {
-      if (!cancelled) {
-        setSubjects(config?.subjects ?? []);
-        setAvailable(config !== null);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { subjects, loading, available };
+  const { runtimeUrl } = useRuntimeConnection();
+  const { data, isPending, isError } = useQuery({
+    queryKey: configQueryKey(runtimeUrl),
+    queryFn: () => fetchConfigAt(runtimeUrl),
+  });
+  return {
+    subjects: data?.subjects ?? NO_SUBJECTS,
+    loading: isPending,
+    available: !isError,
+  };
 };

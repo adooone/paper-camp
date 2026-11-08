@@ -120,8 +120,9 @@ projects in scope issues at most eight requests per 5 s.
 - [x] The list and the detail view read the worklist
       Add `worklistQueryKey`, `entityQueryKey`, `useWorklist` and `useEntity` next to `use-plans.ts`; `selectWorklistRows` and `sortWorklistRows` take `WorklistEntry` rows; `useScopeWorklist` fetches `/api/worklist` and `/api/ideas` per other project; PlansPage and ListView render from rows; `EntityDetail` and `NoteDetail` read `useEntity(id)` with `placeholderData` from the matching row and derive their other-plans links from the worklist. `persistOptions` keeps only `worklist`, `ideas` and `config` keys, and the cache buster is bumped so stale `plans` entries drop.
       run: 4m49s · 76 in · 39.8k out · sonnet-5-5 · sess:9e2b57f6-4a4b-49df-b9d9-51a95f704253
-- [ ] Subjects validated per project
+- [x] Subjects validated per project
       Replace `useSubjectVocabulary`'s local fetch with a `configQueryKey(runtimeUrl)` query; `useWorklistRows` builds a `Map<runtimeUrl, Set<subject>>` from the config of every scoped project and `groupRowsBySubject` checks each row against its own project's set. Rows of a project whose config has not arrived keep their subject. Selector tests for the mixed-project case.
+      run: 1m7s · 18 in · 3.8k out · sonnet-5-5 · sess:cb30491c-9b28-45a0-9e84-67fbd81eefc1
 - [ ] Change messages that name their area
       `notifyChanged(area)` in `src/app/server/activity.ts` with `corpus`, `tasks`, `chat`, `services`, `git` and `ci`, debounced per area; every caller names its area; the subscribe hello becomes `{ message: 'hello' }`. In `query-client.ts`, `subscribeProjectToActivityStream` maps an area to its keys and `refreshProjectState` runs only for `git` and `services`; `refetchOnWindowFocus: false` in the defaults; `useScope` stops reloading counts on `changed`. Tests on both sides.
 - [ ] One hub poll and counts from the cache

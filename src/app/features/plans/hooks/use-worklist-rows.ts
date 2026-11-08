@@ -1,7 +1,9 @@
 import { useRoadmapItemNames } from '@/app/features/roadmap';
-import { useSubjectVocabulary } from '@/app/hooks';
+import { configQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
+import { fetchConfigAt } from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import {
   type PlanSortKey,
@@ -11,11 +13,6 @@ import {
 } from '../helpers';
 
 export const useWorklistRows = (rows: WorklistRow[]) => {
-  const {
-    subjects: validSubjects,
-    loading: subjectsLoading,
-    available: subjectsAvailable,
-  } = useSubjectVocabulary();
   const roadmapItemNames = useRoadmapItemNames();
   const navigate = useNavigate();
   const group = useAppStore((s) => s.planFilters.group);
@@ -30,13 +27,23 @@ export const useWorklistRows = (rows: WorklistRow[]) => {
   };
 
   const { runtimeUrl } = useRuntimeConnection();
-  const vocabularies =
-    subjectsLoading || !subjectsAvailable
-      ? undefined
-      : new Map([
-          ['', new Set(validSubjects)],
-          [runtimeUrl, new Set(validSubjects)],
-        ]);
+  const runtimeUrls = [
+    ...new Set([runtimeUrl, ...rows.map((row) => row.project?.runtimeUrl ?? runtimeUrl)]),
+  ];
+  const configs = useQueries({
+    queries: runtimeUrls.map((url) => ({
+      queryKey: configQueryKey(url),
+      queryFn: () => fetchConfigAt(url),
+    })),
+  });
+  const vocabularies = new Map<string, Set<string>>();
+  runtimeUrls.forEach((url, index) => {
+    const subjects = configs[index]?.data?.subjects;
+    if (!subjects) return;
+    const vocabulary = new Set(subjects);
+    vocabularies.set(url, vocabulary);
+    if (url === runtimeUrl) vocabularies.set('', vocabulary);
+  });
   const groups = groupRowsBySubject(rows, sortDirection, vocabularies);
   const showSubjectHeaders = group === 'subject' && groups.length > 1;
 

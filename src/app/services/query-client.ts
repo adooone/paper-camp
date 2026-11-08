@@ -63,6 +63,10 @@ export function entityQueryKey(runtimeUrl: string, id: string) {
   return [...projectQueryKey(runtimeUrl, 'entity'), id] as const;
 }
 
+export function configQueryKey(runtimeUrl: string) {
+  return projectQueryKey(runtimeUrl, 'config');
+}
+
 export function ideasQueryKey(runtimeUrl: string) {
   return projectQueryKey(runtimeUrl, 'ideas');
 }
