@@ -100,6 +100,13 @@ export function createActivityManager(
     publish(payload: { type: string } & Record<string, unknown>) {
       writeToClients(payload);
     },
+    close() {
+      if (runPassTimer) clearTimeout(runPassTimer);
+      runPassTimer = null;
+      rerunQueued = false;
+      for (const timer of broadcastTimers.values()) clearTimeout(timer);
+      broadcastTimers.clear();
+    },
     // Handed to a hot-reloaded replacement instance so both share this exact
     // clients set instead of the new instance starting deaf.
     getState: (): ActivityManagerState => state,

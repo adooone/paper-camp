@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { createApiMiddleware } from '../app/server/api';
+import { type ApiMiddleware, createApiMiddleware } from '../app/server/api';
 import { resolveDaemonTarget } from '../core/daemon-target';
 import { registerReadTools, registerWriteTools } from './tools';
 
@@ -17,9 +17,11 @@ vi.mock('../core/daemon-target', () => ({ resolveDaemonTarget: vi.fn() }));
 const TEST_SLUG = 'test-project';
 const roots: string[] = [];
 const servers: Server[] = [];
+const middlewares: ApiMiddleware[] = [];
 
 afterAll(async () => {
-  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })));
+  for (const middleware of middlewares.splice(0)) middleware.close();
+  await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true, maxRetries: 5 })));
   await Promise.all(
     servers.splice(0).map((server) => new Promise<void>((r) => server.close(() => r()))),
   );
@@ -81,6 +83,7 @@ ${phases.join('\n')}
  * serves, and points `resolveDaemonTarget` at it so the tools under test reach it. */
 async function mountDaemon(root: string): Promise<void> {
   const middleware = createApiMiddleware(root);
+  middlewares.push(middleware);
   const server = createServer((req, res) => {
     const url = req.url ?? '/';
     const match = url.match(new RegExp(`^/p/${TEST_SLUG}(/.*)?$`));

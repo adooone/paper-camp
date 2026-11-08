@@ -286,6 +286,7 @@ describe('POST /api/chat', () => {
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
+        close: () => {},
       },
     }).handle(fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })), res);
 
@@ -337,6 +338,7 @@ describe('POST /api/chat', () => {
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
+        close: () => {},
       },
     }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
 
@@ -363,6 +365,7 @@ describe('POST /api/chat', () => {
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
+        close: () => {},
       },
     }).handle(fakeReq(JSON.stringify({ text: 'What is running?' })), res);
 
@@ -389,6 +392,7 @@ describe('POST /api/chat', () => {
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
+        close: () => {},
       },
     }).handle(fakeReq(JSON.stringify({ text: 'Hello?' })), res);
 
@@ -454,6 +458,7 @@ describe('POST /api/chat/retry', () => {
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
+        close: () => {},
       },
     }).handle(fakeReq(), res);
 

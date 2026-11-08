@@ -314,6 +314,7 @@ export function createApiMiddleware(
   (handler as ApiMiddleware).close = () => {
     closeWatcher();
     stats.close();
+    activity.close();
   };
   return handler as ApiMiddleware;
 }
