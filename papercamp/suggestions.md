@@ -42,3 +42,6 @@ as resolved.
 - night: 2026-09-29 | check=a11y | chunk=src/app | file=src/app/features/roadmap/views/add-candidate-form.tsx | line=25 | commit=15b2570c19013d5a15f1cd73d3288f6b9504ce00 | severity=normal | The candidate-name Input has no `<label>` or `aria-label`, relying solely on the placeholder "Add a thought" for its accessible name, which disappears once the user types and isn't reliably exposed by all assistive tech.
 - night: 2026-09-30 | check=tests | chunk=src/app | file=src/app/features/chat/hooks/use-chat-page.ts | line=29 | commit=f28ea8fc67f9fa141072c0fd2128cfc395edf459 | severity=normal | sendText's new return value (ok/false on error or thrown exception) has no test verifying callers receive false on failure.
  no test exists for this hook, so the propagation is unverified.
+
+## Asks from the mobile app
+- Chat replies read like receipts: the thread entry the daemon files back after a chat send is a canned one-line acknowledgement. Store the run's actual reply text, written in answer to the user's message, so the mobile chat bubble (which already renders the stored text in full) shows the agent's own words. Raised by IDEA-16 in paper-camp-mobile.
