@@ -11,6 +11,8 @@ const mock = vi.hoisted(() => ({
 }));
 
 vi.mock('../capabilities', () => ({
+  capabilitiesProbeKey: (root: string) => `capabilities:${root}`,
+  connectionsProbeKey: (root: string) => `connections:${root}`,
   clearCapabilitiesCache: (root: string) => {
     mock.cleared.push(root);
   },

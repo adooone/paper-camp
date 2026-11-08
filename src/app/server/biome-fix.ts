@@ -4,9 +4,8 @@ const BIOME_FIX_COMMAND = 'npx biome check . --write';
 
 const BIOME_FIX_TIMEOUT_MS = 60_000;
 
-// Best-effort: resolves even on non-zero exit since real failures surface via
-// check-types. The command runs in its own process group so a timeout kills npx's
-// whole chain — killing the shell alone leaves biome running for good.
+// Best-effort: non-zero exits still resolve, since real failures surface via check-types.
+// Its own process group, so a timeout kills npx's whole chain and not just the shell.
 export function runBiomeFix(
   root: string,
   command = BIOME_FIX_COMMAND,

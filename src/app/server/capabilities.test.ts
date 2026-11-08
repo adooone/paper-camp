@@ -363,35 +363,7 @@ describe('probeAgentAuthStatus', () => {
   });
 });
 
-describe('probe caching', () => {
-  it('memoises probeCapabilities for the process, ignoring a state change in between', async () => {
-    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
-    mock.bin('gh', () => mock.ok());
-    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
-  });
-
-  it('re-probes once the cache is cleared', async () => {
-    await probeCapabilities(ROOT);
-    mock.bin('gh', () => mock.ok());
-    clearCapabilitiesCache(ROOT);
-    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('warn');
-  });
-
-  it('memoises probeConnections independently of probeCapabilities', async () => {
-    expect(byConnId(await probeConnections(ROOT), 'git').authenticated).toBeNull();
-    mock.git.name = '';
-    expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('ok');
-  });
-
-  it('clears both caches after runConnect runs a command', async () => {
-    mock.git.inRepo = false;
-    await probeCapabilities(ROOT);
-    await probeConnections(ROOT);
-    await runConnect('git', ROOT);
-    expect(byId(await probeCapabilities(ROOT), 'git').status).not.toBe('missing');
-    expect(byConnId(await probeConnections(ROOT), 'git').status).not.toBe('missing');
-  });
-
+describe('agent auth status caching', () => {
   it('memoises probeAgentAuthStatus until clearAgentAuthStatusCache runs', async () => {
     expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
       loggedIn: null,
@@ -408,37 +380,6 @@ describe('probe caching', () => {
     });
     clearAgentAuthStatusCache(ROOT);
     expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBe(true);
-  });
-
-  it('keeps a separate cache per root', async () => {
-    expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
-    mock.bin('gh', () => mock.ok());
-    expect(byId(await probeCapabilities('/other-repo'), 'gh').status).toBe('warn');
-    clearCapabilitiesCache('/other-repo');
-  });
-
-  it('re-probes capabilities once the 60s TTL elapses, without clearing the cache', async () => {
-    vi.useFakeTimers();
-    try {
-      expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('missing');
-      mock.bin('gh', () => mock.ok());
-      vi.advanceTimersByTime(60_001);
-      expect(byId(await probeCapabilities(ROOT), 'gh').status).toBe('warn');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('re-probes connections once the 60s TTL elapses', async () => {
-    vi.useFakeTimers();
-    try {
-      expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('ok');
-      mock.git.name = '';
-      vi.advanceTimersByTime(60_001);
-      expect(byConnId(await probeConnections(ROOT), 'git').status).toBe('warn');
-    } finally {
-      vi.useRealTimers();
-    }
   });
 
   it('re-probes agent auth status once the 60s TTL elapses', async () => {

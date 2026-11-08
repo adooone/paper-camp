@@ -6,9 +6,8 @@ import {
   cachedClaudeAuthStatus,
   clearClaudeAuthStatusCache,
 } from './local-adapters';
+import { clearProbe } from './probe-cache';
 import { run } from './run';
-
-const PROBE_TTL_MS = 60_000;
 
 type Plugin =
   | { kind: 'external'; def: ExternalServiceDefinition }
@@ -31,31 +30,22 @@ function trustDialogState(plugin: Plugin, root: string): Promise<boolean | null>
   return plugin.def.trustDialogAccepted(root);
 }
 
-interface TtlEntry<T> {
-  value: Promise<T>;
-  expiresAt: number;
-}
-
-const capabilitiesCache = new Map<string, TtlEntry<CapabilityResult[]>>();
-const connectionsCache = new Map<string, TtlEntry<ConnectionResult[]>>();
+export const capabilitiesProbeKey = (root: string) => `capabilities:${root}`;
+export const connectionsProbeKey = (root: string) => `connections:${root}`;
 
 // A daemon holds one middleware (and root) per mounted project in the same process,
-// so every cache below is keyed by root rather than shared process-wide.
+// so the probe cache is keyed by root rather than shared process-wide.
 export function clearCapabilitiesCache(root: string): void {
-  capabilitiesCache.delete(root);
-  connectionsCache.delete(root);
+  clearProbe(capabilitiesProbeKey(root));
+  clearProbe(connectionsProbeKey(root));
 }
 
 export function clearAgentAuthStatusCache(root: string): void {
   clearClaudeAuthStatusCache(root);
 }
 
-export async function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  const cached = capabilitiesCache.get(root);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
-  const value = Promise.all(PLUGINS.map((p) => p.def.probe(root)));
-  capabilitiesCache.set(root, { value, expiresAt: Date.now() + PROBE_TTL_MS });
-  return value;
+export function probeCapabilities(root: string): Promise<CapabilityResult[]> {
+  return Promise.all(PLUGINS.map((p) => p.def.probe(root)));
 }
 
 async function toConnectionResult(
@@ -81,12 +71,8 @@ async function toConnectionResult(
   };
 }
 
-export async function probeConnections(root: string): Promise<ConnectionResult[]> {
-  const cached = connectionsCache.get(root);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
-  const value = Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
-  connectionsCache.set(root, { value, expiresAt: Date.now() + PROBE_TTL_MS });
-  return value;
+export function probeConnections(root: string): Promise<ConnectionResult[]> {
+  return Promise.all(PLUGINS.map((p) => toConnectionResult(p, root)));
 }
 
 /** Runs a plugin's connect action when it's safe to run non-interactively, then

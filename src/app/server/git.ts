@@ -820,10 +820,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
-  // The daemon rewrites papercamp/ on its own schedule, so its churn is stashed around a
-  // rebase. Work outside papercamp/ is someone's own and is never stashed: the rebase
-  // refuses instead. No `-- papercamp` pathspec either — a pathspec stash still records
-  // the entire index, so `pop --index` fails when anything outside it is staged.
+  // Only the daemon's own papercamp/ churn is stashed around a rebase; anything else dirty
+  // makes it refuse. No pathspec: a pathspec stash records the whole index, breaking `pop --index`.
   async function stashDirtyPapercamp(): Promise<boolean> {
     const dirty = await runGitStatus({ untrackedFiles: 'all' });
     if (dirty.length === 0 || dirty.some((entry) => !entry.path.startsWith('papercamp/'))) {
