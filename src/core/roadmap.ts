@@ -5,6 +5,7 @@ import type {
   ResolvedRoadmapItem,
   Roadmap,
   RoadmapItem,
+  RoadmapItemRef,
   RoadmapItemState,
   RoadmapRollup,
 } from '../types/index';
@@ -435,9 +436,13 @@ export function resolveRoadmap(
   );
 
   const subjectVocabulary = new Set(deriveSubjectVocabulary(roadmap));
-  const unfiled = entities.filter(
-    (entity) => !entity.subject || !subjectVocabulary.has(entity.subject),
-  );
+  const unfiled = entities
+    .filter((entity) => !entity.subject || !subjectVocabulary.has(entity.subject))
+    .flatMap((entity): RoadmapItemRef[] =>
+      entity.id
+        ? [{ id: entity.id, title: entity.title, status: entity.status, type: entity.kind }]
+        : [],
+    );
 
   return { goal: roadmap.goal, horizons, standingConcerns, unfiled };
 }

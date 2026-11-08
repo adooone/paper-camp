@@ -22,6 +22,7 @@ import { agentThreadMessage, todayDateString } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
 import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
 import type {
+  AgentTaskState,
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
@@ -296,6 +297,14 @@ function applyKnownRenames(content: string): { content: string; changed: boolean
   return { content: frontmatter + lines.join('\n'), changed };
 }
 
+const LIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
+
+export function withoutFinishedLines(task: AgentTaskState): AgentTaskState {
+  if (LIVE_STATUSES.has(task.status)) return task;
+  const { lines: _lines, ...rest } = task;
+  return rest as AgentTaskState;
+}
+
 async function findPlanById(root: string, planId: string): Promise<PlanEntry | undefined> {
   const { entries } = await readCorpus(root);
   const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
@@ -372,7 +381,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'GET',
       path: '/api/agent/status',
       handle: (_req, res) => {
-        sendJson(res, 200, agent.getStatus());
+        sendJson(res, 200, agent.getStatus().map(withoutFinishedLines));
       },
     },
 

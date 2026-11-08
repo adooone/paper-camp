@@ -2703,6 +2703,14 @@ export function createAgentManager(
     return runningTasks().length > 0;
   }
 
+  function getActiveEntity(): { id: string; title: string } | null {
+    for (const task of runningTasks().reverse()) {
+      const id = task.ideaId ?? task.planId;
+      if (id) return { id, title: task.notificationTitle ?? task.planTitle };
+    }
+    return null;
+  }
+
   function getReconcileQueue(): ReconcileQueueItem[] | null {
     const task = currentTask();
     if (!task || task.taskKind !== 'batch-reconcile') return null;
@@ -2815,6 +2823,7 @@ export function createAgentManager(
     stop,
     getStatus,
     hasActiveTask,
+    getActiveEntity,
     getReconcileQueue,
     consumeReconcileQueue,
     getInterruptedOnBoot: () => interruptedOnBoot,
@@ -2938,6 +2947,7 @@ export interface AgentManager {
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;
+  getActiveEntity: () => { id: string; title: string } | null;
   getReconcileQueue: () => ReconcileQueueItem[] | null;
   consumeReconcileQueue: () => void;
   getInterruptedOnBoot: () => number;

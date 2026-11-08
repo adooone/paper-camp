@@ -891,6 +891,14 @@ describe('resolveRoadmap', () => {
     expect(resolved.unfiled.map((e) => e.id)).toEqual(['IDEA-1']);
   });
 
+  it('shapes unfiled entries as id, title, status and type only', () => {
+    const entities = [plan({ id: 'IDEA-1', title: 'Stray idea', kind: 'fix', subject: undefined })];
+    const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);
+    expect(resolved.unfiled).toEqual([
+      { id: 'IDEA-1', title: 'Stray idea', status: entities[0].status, type: 'fix' },
+    ]);
+  });
+
   it('lists an entity whose subject names nothing on the map as unfiled', () => {
     const entities = [plan({ id: 'IDEA-1', title: 'Stray idea', subject: 'No such item' })];
     const resolved = resolveRoadmap(parseRoadmap(SAMPLE), entities);

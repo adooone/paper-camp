@@ -142,6 +142,7 @@ describe('createProjectMounter', () => {
       Object.assign(vi.fn(), {
         agent: { killCurrent, hasActiveTask: () => false },
         services: { killAll },
+        close: vi.fn(),
       }) as unknown as ApiMiddleware;
     const buildApi = vi.fn().mockImplementation(async () => liveApi());
     const { mount, mounted } = createProjectMounter(registryPath, buildApi);
@@ -202,7 +203,11 @@ describe('readMachineProjectSummaries', () => {
 
   const fakeApi = (active: boolean) =>
     ({
-      agent: { hasActiveTask: () => active, getInterruptedOnBoot: () => 0 },
+      agent: {
+        hasActiveTask: () => active,
+        getInterruptedOnBoot: () => 0,
+        getActiveEntity: () => (active ? { id: 'IDEA-7', title: 'Running idea' } : null),
+      },
       getLocalStateDriftCount: async () => 0,
     }) as unknown as ApiMiddleware;
 
@@ -247,6 +252,7 @@ describe('readMachineProjectSummaries', () => {
         missing: false,
         interruptedCount: 0,
         driftCount: 0,
+        active: null,
       },
     ]);
   });
@@ -271,6 +277,7 @@ describe('readMachineProjectSummaries', () => {
         missing: false,
         interruptedCount: 0,
         driftCount: 0,
+        active: { id: 'IDEA-7', title: 'Running idea' },
       },
     ]);
   });
@@ -925,7 +932,11 @@ describe('createDaemonRequestHandler', () => {
         res.end('mounted');
       }),
       {
-        agent: { hasActiveTask: () => false, getInterruptedOnBoot: () => 0 },
+        agent: {
+          hasActiveTask: () => false,
+          getInterruptedOnBoot: () => 0,
+          getActiveEntity: () => null,
+        },
         getLocalStateDriftCount: async () => 0,
       },
     ) as unknown as ApiMiddleware;
@@ -1068,6 +1079,7 @@ describe('createDaemonRequestHandler', () => {
           missing: false,
           interruptedCount: 0,
           driftCount: 0,
+          active: null,
         },
       ],
       pendingUpdateVersion: null,

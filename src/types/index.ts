@@ -656,12 +656,19 @@ export interface ResolvedRoadmapHorizon {
   rollup: RoadmapRollup;
 }
 
+export interface RoadmapItemRef {
+  id: string;
+  title: string;
+  status: PlanStatus;
+  type?: EntityType;
+}
+
 export interface ResolvedRoadmap {
   goal: string;
   horizons: ResolvedRoadmapHorizon[];
   standingConcerns: ResolvedRoadmapItem[];
   /** Every entity whose subject is missing or names nothing on the map. */
-  unfiled: PlanEntry[];
+  unfiled: RoadmapItemRef[];
 }
 
 export interface EnvEntry {
@@ -1168,6 +1175,8 @@ export interface MachineProjectSummary {
   /** Local-state drift findings (IDEA-320) — tracked-outside-plan files, a missing
    * papercamp/.local/.gitignore, a missing .gitattributes block — unset while unmounted. */
   driftCount?: number;
+  /** The entity of the project's running task — unset while unmounted, null when idle or the task names none. */
+  active?: { id: string; title: string } | null;
 }
 
 /** The full body a daemon answers `MACHINE_PROJECTS_PATH` with. `pendingUpdateVersion`
@@ -1477,6 +1486,7 @@ export interface AgentTaskState {
   fixAttemptCap?: number;
   ideaId?: string;
   agentId: AgentId;
+  /** Absent from `/api/agent/status` once the task is finished — `/api/tasks/output` serves it. */
   lines: string[];
   phaseAnchor?: PhaseMilestone;
   anchorEnteredAt?: number;

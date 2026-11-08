@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { CheckName, PlanEntry } from '@/types/index';
+import type { AgentTaskState, CheckName, PlanEntry } from '@/types/index';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { agentRoutes } from './agent';
+import { agentRoutes, withoutFinishedLines } from './agent';
 import type { RouteContext } from './types';
 
 const roots: string[] = [];
@@ -622,5 +622,22 @@ describe('POST /api/agent/launch', () => {
     expect(start).toHaveBeenCalledOnce();
     expect(status()).toBe(202);
     expect(json()).toMatchObject({ ok: true });
+  });
+});
+
+describe('withoutFinishedLines', () => {
+  const task = (status: AgentTaskState['status']) =>
+    ({ id: 't', status, lines: ['a', 'b'] }) as unknown as AgentTaskState;
+
+  it('keeps lines on tasks that are still live', () => {
+    for (const status of ['starting', 'running', 'stopping'] as const) {
+      expect(withoutFinishedLines(task(status)).lines).toEqual(['a', 'b']);
+    }
+  });
+
+  it('drops lines from finished tasks', () => {
+    for (const status of ['done', 'error', 'superseded'] as const) {
+      expect('lines' in withoutFinishedLines(task(status))).toBe(false);
+    }
   });
 });

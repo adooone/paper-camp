@@ -126,6 +126,7 @@ export async function readMachineProjectSummaries(
         missing: await isProjectMissing(path),
         interruptedCount: apiMiddleware?.agent.getInterruptedOnBoot(),
         driftCount: await apiMiddleware?.getLocalStateDriftCount(),
+        active: apiMiddleware?.agent.getActiveEntity(),
       };
     }),
   );

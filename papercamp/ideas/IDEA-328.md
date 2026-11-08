@@ -117,8 +117,9 @@ they are cached, and no request to fonts.googleapis.com.
 - [x] Probes and stats answer from cache
       `src/app/server/probe-cache.ts` with `cachedProbe` (stale-while-revalidate, first call awaits, forced reload on `?fresh`/`?recheck`); route `getMergePolicy`, `fetchCiReleaseState`, `probeCapabilities`, `probeConnections` and the per-mount drift count through it, publishing `services` or `git` when a value changes; `computeProjectStats` runs at mount and on a debounced corpus change, with `/api/stats` serving the stored result. Tests on the helper and on the stats route.
       run: 1m58s · 40 in · 17.8k out · sonnet-5-5 · sess:77d2e4ff-9157-4c01-9b2c-c000513abb8e
-- [ ] Payloads shaped for their readers
+- [x] Payloads shaped for their readers
       `RoadmapItemRef` in `src/types/index.ts`; `resolveRoadmap` and `/api/roadmap` return refs in horizons, standing concerns and `unfiled`; the roadmap feature and `useRoadmapItemNames` read them. `/api/agent/status` omits `lines` on finished tasks. `MachineProjectSummary.active` from the agent manager's running task in `readMachineProjectSummaries`. Route tests for all three shapes.
+      run: 4m45s · 90 in · 29k out · sonnet-5-5 · sess:77d2e4ff-9157-4c01-9b2c-c000513abb8e
 - [ ] Hosted client first paint
       Immutable `Cache-Control` for `/assets/*` in `vercel.json`; Cormorant Garamond and Caveat self-hosted under `public/fonts` in the weights the compiled CSS uses, `@font-face` with `font-display: swap` in the global stylesheet, Google Fonts links removed from `index.html`; `manualChunks` in `vite.app.config.ts` for react, `@tanstack/*` and `@dendelion/folk-ui`. `pnpm build:app` output lists the vendor chunks.
 - [ ] White subisland on Ideas view
