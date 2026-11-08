@@ -111,10 +111,17 @@ function fakeGit(overrides: Partial<RouteContext['git']> = {}): RouteContext['gi
   } as unknown as RouteContext['git'];
 }
 
+let published: { type: string; stage?: string }[] = [];
+
+function feedbackSettled() {
+  return vi.waitFor(() => expect(published.some((e) => e.type === 'feedback')).toBe(true));
+}
+
 function route(root: string, path: string, ctx: Partial<RouteContext> = {}) {
+  published = [];
   const found = agentRoutes({
     root,
-    activity: { notifyChanged: () => {}, publish: () => {} },
+    activity: { notifyChanged: () => {}, publish: (e: { type: string }) => published.push(e) },
     ...ctx,
   } as RouteContext).find((r) => r.path === path);
   if (!found) throw new Error(`no route registered for ${path}`);
@@ -174,11 +181,12 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
       agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: { runChecksAndWait } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
 
-    expect(resumeQuestionParkedTasks).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(resumeQuestionParkedTasks).toHaveBeenCalledOnce());
     expect(resumeQuestionParkedTasks.mock.calls[0][0]).toBe('IDEA-1');
     const runProjectChecks = resumeQuestionParkedTasks.mock.calls[0][1] as () => Promise<unknown>;
     await runProjectChecks();
@@ -206,7 +214,9 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
       agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: { runChecksAndWait: vi.fn(async () => []) } as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
+    await feedbackSettled();
 
+    await vi.waitFor(() => expect(resumeQuestionParkedTasks).toHaveBeenCalledOnce());
     const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
     expect(chatFile).toContain(
       '- [x] 2026-08-04 [question] [agent] [[IDEA-1]] which auth flow should this use?',
@@ -227,9 +237,14 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
       agent: { runReadOnlyPrompt, resumeQuestionParkedTasks } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
+    await vi.waitFor(async () => {
+      const filed = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+      expect(filed).toContain('Noted, thanks.');
+    });
     expect(resumeQuestionParkedTasks).not.toHaveBeenCalled();
 
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
@@ -249,6 +264,7 @@ describe('POST /api/agent/feedback-message reply notification', () => {
       agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],
       checks: {} as unknown as RouteContext['checks'],
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
 
@@ -300,6 +316,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       checks: { runChecksAndWait } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
@@ -331,6 +348,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'Just an aside.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(startRunAllPhases).not.toHaveBeenCalled();
@@ -359,6 +377,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       checks: { runChecksAndWait: vi.fn() } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Use OAuth.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(resumeQuestionParkedTasks).toHaveBeenCalledOnce();
@@ -386,6 +405,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       } as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
@@ -418,6 +438,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       } as unknown as RouteContext['checks'],
       git: fakeGit({ getFeatureBranchPlanId: vi.fn(() => 'IDEA-1') }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
@@ -451,6 +472,7 @@ describe('POST /api/agent/feedback-message auto-launching fixes', () => {
       } as unknown as RouteContext['checks'],
       git: fakeGit({ commit }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-2', text: 'There is a typo.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
@@ -482,6 +504,7 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
       } as unknown as RouteContext['checks'],
       git: fakeGit({ commit }),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'This regressed.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(json()).toMatchObject({ ok: true });
@@ -513,6 +536,7 @@ describe('POST /api/agent/feedback-message spawning a fix from a closed idea', (
       checks: {} as unknown as RouteContext['checks'],
       git: fakeGit(),
     }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-3', text: 'Just an aside.' })), res);
+    await feedbackSettled();
 
     expect(status()).toBe(200);
     expect(startRunAllPhases).not.toHaveBeenCalled();

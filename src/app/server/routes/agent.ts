@@ -77,37 +77,58 @@ export interface FeedbackApplyResult {
   undo?: { commitSha: string };
 }
 
-/** The feedback path: posts `text` to `planId`'s thread, runs the reply agent, and
- * applies whatever edit it proposes. Shared by /api/agent/feedback-message and the
- * project chat's "about an existing idea" move (IDEA-251) — both routes to the same
- * entity thread and undo trail. Returns null when planId doesn't resolve to an entity. */
-export async function applyFeedbackMessage(
-  { root, git, checks, agent }: Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'>,
+type FeedbackDeps = Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'>;
+
+interface FiledFeedback {
+  entity: EntityEntry;
+  entries: EntityEntry[];
+  targetFile: string;
+  text: string;
+}
+
+const feedbackQueues = new Map<string, Promise<unknown>>();
+
+function enqueueFeedback<T>(key: string, job: () => Promise<T>): Promise<T> {
+  const run = (feedbackQueues.get(key) ?? Promise.resolve()).then(job, job);
+  const tail = run.catch(() => undefined);
+  feedbackQueues.set(key, tail);
+  void tail.then(() => {
+    if (feedbackQueues.get(key) === tail) feedbackQueues.delete(key);
+  });
+  return run;
+}
+
+async function fileFeedbackMessage(
+  root: string,
   planId: string,
   text: string,
-  context?: MountContext,
-): Promise<FeedbackApplyResult | null> {
+): Promise<FiledFeedback | null> {
   const resolved = await resolveFeedbackEntity(root, planId);
   if (!resolved) return null;
-  const { entries, entity, targetFile } = resolved;
-
   const userMessage: ThreadMessage = {
     kind: 'chat',
     date: todayDateString(),
     text: text.trim(),
   };
-  const threadWithUser = [...(entity.thread ?? []), userMessage];
+  await updateEntity(root, resolved.entity.id, (entry) => ({
+    thread: [...(entry.thread ?? []), userMessage],
+  }));
+  return { ...resolved, text: text.trim() };
+}
 
-  // Written before the agent runs so the user's message survives a slow or
-  // failed run — the reply below is a second, best-effort append on top.
-  await updateEntity(root, entity.id, () => ({ thread: threadWithUser }));
+async function runFeedbackPipeline(
+  { root, git, checks, agent }: FeedbackDeps,
+  { entity: filedEntity, entries, targetFile, text }: FiledFeedback,
+  context?: MountContext,
+): Promise<FeedbackApplyResult> {
+  const entity = await updateEntity(root, filedEntity.id, () => undefined);
+  const threadWithUser = entity.thread ?? [];
 
-  // "Can you pull and push?" routes to the git card's own actions instead of the
-  // idea chat saying it has no git access (IDEA-319) — checked before the LLM reply.
-  const gitReply = await tryHandleGitChatRequest(entity.id, text.trim(), git, agent);
+  const gitReply = await tryHandleGitChatRequest(entity.id, text, git, agent);
   if (gitReply.handled) {
-    const thread = [...threadWithUser, agentThreadMessage(gitReply.reply ?? '', 'chat')];
-    await updateEntity(root, entity.id, () => ({ thread }));
+    await updateEntity(root, entity.id, (entry) => ({
+      thread: [...(entry.thread ?? []), agentThreadMessage(gitReply.reply ?? '', 'chat')],
+    }));
     return { entity, replyText: gitReply.reply };
   }
 
@@ -126,29 +147,8 @@ export async function applyFeedbackMessage(
     const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
     const { spawnFix, ...overrides } = editResult;
 
-    // Reclassify a message answering an earlier question as a clarification,
-    // and resolve that question so a run parked on it (IDEA-125) can resume below.
-    const withClarification = result.answersQuestion
-      ? threadWithUser.map((m, i) =>
-          i === threadWithUser.length - 1 ? { ...m, kind: 'clarification' as const } : m,
-        )
-      : threadWithUser;
-    const openQuestionIndex = result.answersQuestion
-      ? withClarification.findLastIndex(
-          (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
-        )
-      : -1;
-    const answeredThread =
-      openQuestionIndex === -1
-        ? withClarification
-        : withClarification.map((m, i) =>
-            i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
-          );
-
     replyText = result.reply;
 
-    // A closed idea's file stays read-only, so a phase-add edit there raises
-    // its own linked IDEA-N fix entity instead of reopening the idea (IDEA-187).
     let spawnedId: string | undefined;
     if (spawnFix?.length) {
       spawnedId = await createIdea(root, {
@@ -185,17 +185,35 @@ export async function applyFeedbackMessage(
       );
     }
 
-    // An undone Fix added to a plan under review is new work: reopen it so
-    // run-all implements it instead of it landing on a plan that looks finished.
     const reopen = addsOpenFix(entity.fixes, overrides.fixes);
     if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
-    const thread = [...answeredThread, agentThreadMessage(replyText, 'chat')];
-    await updateEntity(root, entity.id, () => ({
-      thread,
-      ...overrides,
-      ...(reopen ? { status: 'in-progress' } : {}),
-    }));
+    let openQuestionIndex = -1;
+    const written = await updateEntity(root, entity.id, (entry) => {
+      let thread = entry.thread ?? [];
+      if (result.answersQuestion) {
+        const userIndex = thread.findLastIndex((m) => m.kind === 'chat' && m.text === text);
+        if (userIndex !== -1) {
+          thread = thread.map((m, i) =>
+            i === userIndex ? { ...m, kind: 'clarification' as const } : m,
+          );
+        }
+        openQuestionIndex = thread.findLastIndex(
+          (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
+        );
+        if (openQuestionIndex !== -1) {
+          thread = thread.map((m, i) =>
+            i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
+          );
+        }
+      }
+      return {
+        thread: [...thread, agentThreadMessage(replyText ?? '', 'chat')],
+        ...overrides,
+        ...(reopen ? { status: 'in-progress' } : {}),
+      };
+    });
+    const thread = written.thread ?? [];
     void appendNotification(root, {
       id: randomUUID(),
       kind: 'reply',
@@ -204,8 +222,6 @@ export async function applyFeedbackMessage(
       text: replyText,
     });
 
-    // Re-enter a run-all parked on this question (IDEA-125), and resolve its
-    // mirror in the project chat (IDEA-251), wherever the answer came from.
     if (openQuestionIndex !== -1) {
       await resolveChatQuestion(root, entity.id);
       await agent.resumeQuestionParkedTasks(
@@ -215,8 +231,6 @@ export async function applyFeedbackMessage(
       );
     }
 
-    // Commit a plan edit on its own so an Undo revert can't sweep in unrelated
-    // dirty files, and before the auto-launch below writes phase-run changes.
     if (overrides.phases || overrides.fixes || overrides.body) {
       const relFile = relative(root, targetFile);
       await git.commit(
@@ -228,8 +242,6 @@ export async function applyFeedbackMessage(
       undo = { commitSha: await git.getHeadSha() };
     }
 
-    // Same path the "Run fixes" button uses; startRunAllPhases's own admit()
-    // guard turns away busy agents.
     if (reopen) {
       const reopenedPlan = entityToPlan({
         ...entity,
@@ -249,6 +261,22 @@ export async function applyFeedbackMessage(
   }
 
   return { entity, replyText, error, undo };
+}
+
+/** The feedback path for callers that need the outcome: files `text` on `planId`'s thread,
+ * then runs the reply pipeline and awaits it. Shared with the project chat's "about an
+ * existing idea" move (IDEA-251). Returns null when planId doesn't resolve to an entity. */
+export async function applyFeedbackMessage(
+  deps: FeedbackDeps,
+  planId: string,
+  text: string,
+  context?: MountContext,
+): Promise<FeedbackApplyResult | null> {
+  const filed = await fileFeedbackMessage(deps.root, planId, text);
+  if (!filed) return null;
+  return enqueueFeedback(`${deps.root}:${filed.entity.id}`, () =>
+    runFeedbackPipeline(deps, filed, context),
+  );
 }
 
 // Known renames from this project's own history, cheap enough to
@@ -878,22 +906,40 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        const result = await applyFeedbackMessage(
-          { root, git, checks, agent },
-          planId,
-          text,
-          context,
-        );
-        if (!result) {
+        const deps = { root, git, checks, agent };
+        const filed = await fileFeedbackMessage(root, planId, text);
+        if (!filed) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
 
         activity.notifyChanged('corpus');
-        sendJson(res, 200, {
-          ok: true,
-          ...(result.error ? { error: result.error } : {}),
-          ...(result.undo ? { undo: result.undo } : {}),
+        sendJson(res, 200, { ok: true });
+
+        void enqueueFeedback(`${root}:${filed.entity.id}`, async () => {
+          let outcome: FeedbackApplyResult;
+          try {
+            outcome = await runFeedbackPipeline(deps, filed, context);
+          } catch (err) {
+            outcome = { entity: filed.entity, error: (err as Error).message };
+          }
+          if (outcome.error) {
+            const failure = outcome.error;
+            await updateEntity(root, filed.entity.id, (entry) => ({
+              thread: [
+                ...(entry.thread ?? []),
+                agentThreadMessage(`I couldn't process that message: ${failure}`, 'chat'),
+              ],
+            })).catch(() => undefined);
+          }
+          activity.notifyChanged('corpus');
+          activity.publish({
+            type: 'feedback',
+            planId: filed.entity.id,
+            ...(outcome.error
+              ? { stage: 'failed', error: outcome.error }
+              : { stage: 'done', ...(outcome.undo ? { undo: outcome.undo } : {}) }),
+          });
         });
       },
     },
