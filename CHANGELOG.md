@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.47.0](https://github.com/adooone/paper-camp/compare/v0.46.0...v0.47.0) (2026-11-08)
+
+
+### Features
+
+* **app:** Change messages that name their area ([54142f4](https://github.com/adooone/paper-camp/commit/54142f405c94c54cf04a880fe5767d0b70ea8a96))
+* **app:** One hub poll and counts from the cache ([79c5f4a](https://github.com/adooone/paper-camp/commit/79c5f4a6d11993e7db86f455c282aca3ea7143bd))
+* **app:** Project switch as a key change ([06cd3e6](https://github.com/adooone/paper-camp/commit/06cd3e6e5242f414cfd7de197bbcacdf7d22f464))
+* **app:** Subjects validated per project ([5a0c43e](https://github.com/adooone/paper-camp/commit/5a0c43e0f83f018d37ae91e3faddc023448d9701))
+* **app:** The list and the detail view read the worklist ([02cf070](https://github.com/adooone/paper-camp/commit/02cf07024e6fb11a1ef881e208a2ec39926bf323))
+* **app:** Worklist and entity reads with ETags on the daemon ([7be069b](https://github.com/adooone/paper-camp/commit/7be069be779a2fae89bdff256194d141b07967dd))
+* **ideas:** apply feedback edit to IDEA-328 ([6b6cdef](https://github.com/adooone/paper-camp/commit/6b6cdef9819b3f0355e3d971c75c2643a0175501))
+* **server:** Hosted client first paint ([d66d399](https://github.com/adooone/paper-camp/commit/d66d39917c4b2afa015c4c717bddd147a97deb95))
+* **server:** Payloads shaped for their readers ([5f0ba6e](https://github.com/adooone/paper-camp/commit/5f0ba6e56b24f3de83b9eb48c30e855ab6569dfe))
+* **server:** Probes and stats answer from cache ([b7ce71b](https://github.com/adooone/paper-camp/commit/b7ce71bf23203c50462f5476401efa30ede250e4))
+* **server:** The corpus snapshot invalidated by a watcher ([65332ed](https://github.com/adooone/paper-camp/commit/65332ede06714e9a851142354212357b8b08372c))
+* **server:** White subisland on Ideas view ([a10270d](https://github.com/adooone/paper-camp/commit/a10270d50fd33cc2fd515e60a81e6464bb08702e))
+
+
+### Bug Fixes
+
+* **server:** Clear activity manager timers on API middleware close ([c2484fd](https://github.com/adooone/paper-camp/commit/c2484fd0013b6ecc05d03639c54c933fb7b500d3))
+
 ## [0.46.0](https://github.com/adooone/paper-camp/compare/v0.45.2...v0.46.0) (2026-11-04)
 
 ### Features
