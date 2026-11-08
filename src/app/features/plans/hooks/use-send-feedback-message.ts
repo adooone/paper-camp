@@ -44,7 +44,12 @@ export const useSendFeedbackMessage = (
         focusedIdeaId: plan.id,
         viewport: { width: window.innerWidth, height: window.innerHeight },
       };
-      const { error, undo: appliedUndo } = await postFeedbackMessage(plan.id, text, context);
+      const { error, undo: appliedUndo } = await postFeedbackMessage(
+        plan.id,
+        text,
+        context,
+        reload,
+      );
       await reload();
       if (appliedUndo) setUndo(appliedUndo);
       if (error) {

@@ -6,6 +6,7 @@ import type {
   PrReviewStatus,
   ReconcileQueueItem,
 } from '@/types/index';
+import { subscribeToActivityStream } from './activity-stream';
 import { apiFetch, apiUrl } from './api-base';
 
 const handleAgentResponse = async (
@@ -187,19 +188,53 @@ export const fetchPrReviewStatus = async (planId: string): Promise<PrReviewStatu
   }
 };
 
+const FEEDBACK_OUTCOME_TIMEOUT_MS = 10 * 60_000;
+
+export interface FeedbackOutcome {
+  error?: string;
+  undo?: { commitSha: string };
+}
+
+const awaitFeedbackOutcome = (planId: string) => {
+  let settle: (outcome: FeedbackOutcome) => void = () => {};
+  const outcome = new Promise<FeedbackOutcome>((resolve) => {
+    settle = resolve;
+  });
+  const timer = setTimeout(() => settle({}), FEEDBACK_OUTCOME_TIMEOUT_MS);
+  const unsubscribe = subscribeToActivityStream((payload) => {
+    if (payload.type !== 'feedback' || payload.planId !== planId) return;
+    if (payload.stage === 'done') settle({ undo: payload.undo });
+    else if (payload.stage === 'failed') settle({ error: payload.error ?? 'Agent did not reply' });
+  });
+  const dispose = () => {
+    clearTimeout(timer);
+    unsubscribe();
+  };
+  void outcome.then(dispose);
+  return { outcome, dispose };
+};
+
 export const postFeedbackMessage = async (
   planId: string,
   text: string,
   context?: MountContext,
-): Promise<{ error?: string; undo?: { commitSha: string } }> => {
-  const response = await apiFetch(apiUrl('/api/agent/feedback-message'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId, text, context }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
-  return data as { error?: string; undo?: { commitSha: string } };
+  onFiled?: () => Promise<void> | void,
+): Promise<FeedbackOutcome> => {
+  const { outcome, dispose } = awaitFeedbackOutcome(planId);
+  try {
+    const response = await apiFetch(apiUrl('/api/agent/feedback-message'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId, text, context }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
+  } catch (err) {
+    dispose();
+    throw err;
+  }
+  await onFiled?.();
+  return outcome;
 };
 
 export const promoteFeedbackMessage = async (
