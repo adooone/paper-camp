@@ -111,10 +111,14 @@ function fakeGit(overrides: Partial<RouteContext['git']> = {}): RouteContext['gi
   } as unknown as RouteContext['git'];
 }
 
-let published: { type: string; stage?: string }[] = [];
+let published: { type: string; stage?: string; planId?: string }[] = [];
 
 function feedbackSettled() {
-  return vi.waitFor(() => expect(published.some((e) => e.type === 'feedback')).toBe(true));
+  return vi.waitFor(() =>
+    expect(
+      published.some((e) => e.type === 'feedback' && (e.stage === 'done' || e.stage === 'failed')),
+    ).toBe(true),
+  );
 }
 
 function route(root: string, path: string, ctx: Partial<RouteContext> = {}) {
@@ -251,6 +255,24 @@ describe('POST /api/agent/feedback-message resuming a question-parked run', () =
     expect(planFile).toContain(
       '- [ ] 2026-08-04 [question] [agent] Run-all parked on phase 1 ("First phase") — the agent needs a decision: which auth flow should this use?',
     );
+  });
+});
+
+describe('POST /api/agent/feedback-message stage events', () => {
+  it('publishes reading, thinking, replying, done for the entity in order', async () => {
+    const root = await makeRoot();
+    const runReadOnlyPrompt = vi.fn(async () => JSON.stringify({ reply: 'Noted.' }));
+
+    const { res } = fakeRes();
+    await route(root, '/api/agent/feedback-message', {
+      agent: { runReadOnlyPrompt } as unknown as RouteContext['agent'],
+      checks: {} as unknown as RouteContext['checks'],
+    }).handle(fakeReq(JSON.stringify({ planId: 'IDEA-1', text: 'Just an aside.' })), res);
+    await vi.waitFor(() => expect(published.some((e) => e.stage === 'done')).toBe(true));
+
+    const feedback = published.filter((e) => e.type === 'feedback');
+    expect(feedback.map((e) => e.stage)).toEqual(['reading', 'thinking', 'replying', 'done']);
+    expect(feedback.every((e) => e.planId === 'IDEA-1')).toBe(true);
   });
 });
 

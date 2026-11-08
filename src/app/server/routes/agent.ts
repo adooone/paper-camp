@@ -77,7 +77,8 @@ export interface FeedbackApplyResult {
   undo?: { commitSha: string };
 }
 
-type FeedbackDeps = Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'>;
+type FeedbackDeps = Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'> &
+  Partial<Pick<RouteContext, 'activity'>>;
 
 interface FiledFeedback {
   entity: EntityEntry;
@@ -117,10 +118,13 @@ async function fileFeedbackMessage(
 }
 
 async function runFeedbackPipeline(
-  { root, git, checks, agent }: FeedbackDeps,
+  { root, git, checks, agent, activity }: FeedbackDeps,
   { entity: filedEntity, entries, targetFile, text }: FiledFeedback,
   context?: MountContext,
 ): Promise<FeedbackApplyResult> {
+  const publishStage = (stage: 'reading' | 'thinking' | 'replying') =>
+    activity?.publish({ type: 'feedback', planId: filedEntity.id, stage });
+  publishStage('reading');
   const entity = await updateEntity(root, filedEntity.id, () => undefined);
   const threadWithUser = entity.thread ?? [];
 
@@ -138,6 +142,7 @@ async function runFeedbackPipeline(
   try {
     const plan = entityToPlan({ ...entity, thread: threadWithUser });
     const otherEntities = entries.filter((e) => e.id !== entity.id);
+    publishStage('thinking');
     const result = await replyToFeedback(
       plan,
       otherEntities,
@@ -188,6 +193,7 @@ async function runFeedbackPipeline(
     const reopen = addsOpenFix(entity.fixes, overrides.fixes);
     if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
 
+    publishStage('replying');
     let openQuestionIndex = -1;
     const written = await updateEntity(root, entity.id, (entry) => {
       let thread = entry.thread ?? [];
@@ -906,7 +912,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        const deps = { root, git, checks, agent };
+        const deps = { root, git, checks, agent, activity };
         const filed = await fileFeedbackMessage(root, planId, text);
         if (!filed) {
           sendJson(res, 404, { error: 'plan not found' });
