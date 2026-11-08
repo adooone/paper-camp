@@ -128,7 +128,11 @@ they are cached, and no request to fonts.googleapis.com.
 ### Thread
 - [x] 2026-11-08 [chat] i want to change subisland background from ideas view from kraft to white the same as in chat subisland
 - [x] 2026-11-08 [chat] [agent] Added that as a fix here — switch the Ideas view subisland background from kraft to white, matching the chat subisland. All four existing phases are checked or queued for other work, so this goes in as a new phase.
-- [ ] 2026-11-08 [question] [agent] Run-all parked on phase 4 ("Hosted client first paint") — the agent needs a decision: May I download the Cormorant Garamond and Caveat woff2 files from Google Fonts into public/fonts?
+- [x] 2026-11-08 [question] [agent] Run-all parked on phase 4 ("Hosted client first paint") — the agent needs a decision: May I download the Cormorant Garamond and Caveat woff2 files from Google Fonts into public/fonts?
       option: Allow the download — I fetch the woff2 files, add @font-face with swap, drop the Google links, finish the phase
       option: You add the font files — I write @font-face and edit index.html once the files are in public/fonts
       context: The Google Fonts request was blocked by the permission classifier, and no copy of these fonts is in the repo or node_modules. The immutable cache header and the chunk split are done.
+- [x] 2026-11-08 [clarification] yes, you can. as for previous message, it was for paper camp mobile, so remove it from here
+- [x] 2026-11-08 [chat] [agent] Got it, I'll treat the font download as approved. The agent can pull the Cormorant Garamond and Caveat woff2 files into public/fonts when run-all resumes phase 4.
+
+I can't remove phase 5 ("White subisland on Ideas view") from here, because chat edits can only add or reword phases. Delete it from the phases list on the idea page. It's still unchecked, so run-all will try it after phase 4 unless it's gone by then. The subisland change belongs in the paper-camp-mobile idea.
