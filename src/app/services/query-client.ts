@@ -137,14 +137,17 @@ export function getPlansError(): string | null {
 
 // `refetchType: 'all'` so a refresh triggered while the plans/ideas list isn't
 // mounted (e.g. from the Stack panel) still re-fetches, not just marks stale.
-function refreshResources(resources: string[]): Promise<void> {
+function refreshResources(
+  resources: string[],
+  refetchType: 'all' | 'active' = 'all',
+): Promise<void> {
   const { runtimeUrl } = getRuntimeConnection();
   return queryClient.invalidateQueries({
     predicate: (query) =>
       query.queryKey[0] === PROJECT_QUERY_PREFIX &&
       query.queryKey[1] === runtimeUrl &&
       resources.includes(String(query.queryKey[2])),
-    refetchType: 'all',
+    refetchType,
   });
 }
 
@@ -227,19 +230,10 @@ export function refreshCapacity(): Promise<void> {
 }
 
 const AREA_RESOURCES: Record<ChangeArea, string[]> = {
-  corpus: [
-    'plans',
-    'ideas',
-    'worklist',
-    'entity',
-    'suggestions',
-    'night-report',
-    'config',
-    'package-name',
-  ],
+  corpus: ['plans', 'ideas', 'worklist', 'entity', 'suggestions', 'night-report', 'config'],
   tasks: ['parked-questions', 'notifications', 'capacity'],
   chat: ['chat'],
-  services: ['services', 'capabilities'],
+  services: ['services'],
   git: [],
   ci: ['ci'],
 };
@@ -263,7 +257,7 @@ export function subscribeProjectToActivityStream(onChanged?: () => void): () => 
     if (payload.message !== 'changed') return;
     const areas = isChangeArea(payload.area) ? [payload.area] : ALL_AREAS;
     const resources = areas.flatMap((area) => AREA_RESOURCES[area]);
-    if (resources.length > 0) void refreshResources(resources);
+    if (resources.length > 0) void refreshResources(resources, 'active');
     if (areas.some((area) => PROJECT_STATE_AREAS.includes(area))) onChanged?.();
   });
 }

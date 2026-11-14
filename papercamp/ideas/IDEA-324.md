@@ -69,9 +69,10 @@ in under 50 ms.
       per-root `gh repo view` and git identity, cleared by recheck, connect
       and the login relay; tests.
       run: 4m12s · 40 in · 21k out · opus-5-5 · sess:47b62d23-fc0d-4c3c-9a3a-15ebc039bf22
-- [ ] Change ticks skip probe queries
+- [x] Change ticks skip probe queries
       Predicate and `refetchType: 'active'` in
       `subscribeProjectToActivityStream`; query-client tests.
+      run: 1m21s · 56 in · 26.1k out · opus-5-5 · sess:47b62d23-fc0d-4c3c-9a3a-15ebc039bf22
 - [ ] One heavy command at a time
       `heavy-slot.ts`, wired through the daemon and `paper-camp dev`; desk
       checks, the gate's formatter and fix commands acquire it; the `queued`

@@ -41,6 +41,40 @@ describe('subscribeProjectToActivityStream', () => {
     expect(refreshProjectState).not.toHaveBeenCalled();
   });
 
+  it('refetches only active corpus queries and never the probe queries on an unscoped tick', () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    invalidateSpy.mockClear();
+    activityListener?.({ message: 'changed' });
+    expect(invalidateSpy).toHaveBeenCalledOnce();
+    const { predicate, refetchType } = invalidateSpy.mock.calls[0]?.[0] ?? {};
+    const matches = (resource: string) =>
+      predicate?.({ queryKey: ['project', 'http://localhost:1234', resource] } as never) ?? false;
+    expect(refetchType).toBe('active');
+    expect(matches('worklist')).toBe(true);
+    expect(matches('services')).toBe(true);
+    expect(matches('capabilities')).toBe(false);
+    expect(matches('agent-auth-status')).toBe(false);
+    expect(matches('package-name')).toBe(false);
+  });
+
+  it('skips capabilities on a services tick', () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    invalidateSpy.mockClear();
+    activityListener?.({ message: 'changed', area: 'services' });
+    const { predicate } = invalidateSpy.mock.calls[0]?.[0] ?? {};
+    const matches = (resource: string) =>
+      predicate?.({ queryKey: ['project', 'http://localhost:1234', resource] } as never) ?? false;
+    expect(matches('services')).toBe(true);
+    expect(matches('capabilities')).toBe(false);
+  });
+
+  it('keeps refetching inactive queries on an explicit refresh', async () => {
+    const invalidateSpy = vi.spyOn(mod.queryClient, 'invalidateQueries');
+    invalidateSpy.mockClear();
+    await mod.refreshPlans();
+    expect(invalidateSpy.mock.calls[0]?.[0]?.refetchType).toBe('all');
+  });
+
   it('refreshes project state for git and services', () => {
     refreshProjectState.mockClear();
     activityListener?.({ message: 'changed', area: 'git' });
