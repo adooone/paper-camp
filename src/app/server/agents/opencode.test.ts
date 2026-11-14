@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChatArgs, parseChatLine, parseLine } from './opencode';
+import { buildChatArgs, buildChatEnv, mergePermission, parseChatLine, parseLine } from './opencode';
 
 function toolUseLine(tool: string, state: Record<string, unknown>): string {
   return JSON.stringify({
@@ -75,6 +75,44 @@ describe('opencode buildChatArgs', () => {
       '-m',
       'm',
     ]);
+  });
+});
+
+describe('opencode mergePermission', () => {
+  it('adds a command pattern to bash, keeping the existing default', () => {
+    expect(
+      mergePermission({ bash: 'ask', edit: 'ask' }, [{ tool: 'bash', target: 'pnpm test' }]),
+    ).toEqual({
+      bash: { '*': 'ask', 'pnpm test': 'allow' },
+      edit: 'ask',
+    });
+  });
+
+  it('extends existing bash patterns and globs a clipped command', () => {
+    expect(
+      mergePermission({ bash: { 'git *': 'allow' } }, [
+        { tool: 'bash', target: 'pnpm vitest run …' },
+      ]),
+    ).toEqual({ bash: { 'git *': 'allow', 'pnpm vitest run*': 'allow' } });
+  });
+
+  it('allows a non-shell tool outright', () => {
+    expect(mergePermission(undefined, [{ tool: 'webfetch', target: 'https://x.dev' }])).toEqual({
+      webfetch: 'allow',
+    });
+  });
+});
+
+describe('opencode buildChatEnv', () => {
+  it('carries a once-allowed tool in OPENCODE_PERMISSION', () => {
+    const env = buildChatEnv({ allow: [{ tool: 'bash', target: 'pnpm test' }] });
+    expect(JSON.parse(env?.OPENCODE_PERMISSION ?? '{}')).toEqual({
+      bash: { 'pnpm test': 'allow' },
+    });
+  });
+
+  it('sets nothing without an allow', () => {
+    expect(buildChatEnv({})).toBeUndefined();
   });
 });
 

@@ -1,5 +1,5 @@
 import { apiFetch, apiUrl } from '@/app/services/api-base';
-import type { ThreadMessage } from '@/types/index';
+import type { ChatPermissionAsk, ChatPermissionChoice, ThreadMessage } from '@/types/index';
 
 export const fetchChat = async (): Promise<ThreadMessage[]> => {
   const res = await apiFetch(apiUrl('/api/chat'));
@@ -21,44 +21,41 @@ export const fetchChatAt = async (baseUrl: string): Promise<ThreadMessage[] | nu
   }
 };
 
-export const postChatMessage = async (text: string): Promise<{ error?: string }> => {
-  const res = await apiFetch(apiUrl('/api/chat'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Failed to send message');
-  return data as { error?: string };
-};
+async function expectOk(res: Response, fallback: string): Promise<void> {
+  if (res.ok) return;
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  throw new Error(data.error ?? fallback);
+}
 
-export const postChatMessageAt = async (
-  baseUrl: string,
-  text: string,
-): Promise<{ error?: string }> => {
-  const res = await fetch(`${baseUrl}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Failed to send message');
-  return data as { error?: string };
-};
+const jsonPost = (body: unknown): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
 
-export const postChatRetry = async (): Promise<{ error?: string }> => {
-  const res = await apiFetch(apiUrl('/api/chat/retry'), { method: 'POST' });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Failed to retry message');
-  return data as { error?: string };
-};
+export const postChatMessage = async (text: string): Promise<void> =>
+  expectOk(await apiFetch(apiUrl('/api/chat'), jsonPost({ text })), 'Failed to send message');
 
-export const postChatRetryAt = async (baseUrl: string): Promise<{ error?: string }> => {
-  const res = await fetch(`${baseUrl}/api/chat/retry`, { method: 'POST' });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Failed to retry message');
-  return data as { error?: string };
-};
+export const postChatMessageAt = async (baseUrl: string, text: string): Promise<void> =>
+  expectOk(await fetch(`${baseUrl}/api/chat`, jsonPost({ text })), 'Failed to send message');
+
+export const postChatRetry = async (): Promise<void> =>
+  expectOk(
+    await apiFetch(apiUrl('/api/chat/retry'), { method: 'POST' }),
+    'Failed to retry message',
+  );
+
+export const postChatRetryAt = async (baseUrl: string): Promise<void> =>
+  expectOk(await fetch(`${baseUrl}/api/chat/retry`, { method: 'POST' }), 'Failed to retry message');
+
+export const postChatPermission = async (
+  choice: ChatPermissionChoice,
+  ask: ChatPermissionAsk,
+): Promise<void> =>
+  expectOk(
+    await apiFetch(apiUrl('/api/chat/allow'), jsonPost({ ...ask, choice })),
+    'Failed to answer the permission question',
+  );
 
 export const clearChat = async (): Promise<void> => {
   const res = await apiFetch(apiUrl('/api/chat'), { method: 'DELETE' });

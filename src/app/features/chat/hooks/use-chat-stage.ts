@@ -1,113 +1,140 @@
 import type { ActivityMessage } from '@/app/services/activity-stream';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
-import { useEffect, useState } from 'react';
+import type { ChatPermissionAsk } from '@/types/index';
+import { useEffect, useRef, useState } from 'react';
 
-type ChatStage = 'starting' | 'reading' | 'deciding' | 'filing' | 'posting' | 'answering';
+export type ChatStage = 'reading' | 'thinking' | 'replying';
 
-const CHAT_STAGES = new Set<string>([
-  'reading',
-  'deciding',
-  'filing',
-  'posting',
-  'answering',
-  'done',
-  'failed',
-]);
+type ChatEndStage = 'done' | 'failed';
 
-interface ChatStagePayload extends ActivityMessage {
+export interface ChatEvent extends ActivityMessage {
   type: 'chat';
-  stage: ChatStage | 'done' | 'failed';
-  ideas?: number;
-  entityId?: string;
-  error?: string;
+  tool?: string;
+  permission?: ChatPermissionAsk;
 }
 
-function isChatStagePayload(payload: ActivityMessage): payload is ChatStagePayload {
-  const stage = (payload as { stage?: unknown }).stage;
-  return payload.type === 'chat' && typeof stage === 'string' && CHAT_STAGES.has(stage);
-}
-
-interface ChatStageState {
-  stage: ChatStage;
-  ideas?: number;
-  entityId?: string;
+export interface ChatTurnState {
+  stage: ChatStage | ChatEndStage;
   startedAt: number;
+  text: string;
+  tools: string[];
+  endedAtLength?: number;
 }
 
-export function reduceChatStage(
-  state: ChatStageState | null,
-  event: ChatStagePayload,
+const LIVE_STAGES = new Set<string>(['reading', 'thinking', 'replying']);
+const END_STAGES = new Set<string>(['done', 'failed']);
+
+function isChatEvent(payload: ActivityMessage): payload is ChatEvent {
+  return payload.type === 'chat';
+}
+
+const freshTurn = (stage: ChatStage, now: number): ChatTurnState => ({
+  stage,
+  startedAt: now,
+  text: '',
+  tools: [],
+});
+
+export function reduceChatTurn(
+  state: ChatTurnState | null,
+  event: ChatEvent,
   now: number,
-): ChatStageState | null {
-  if (event.stage === 'done' || event.stage === 'failed') return null;
-  return {
-    stage: event.stage,
-    ideas: event.ideas,
-    entityId: event.entityId,
-    startedAt: event.stage === 'reading' ? now : (state?.startedAt ?? now),
-  };
+  threadLength: number,
+): ChatTurnState | null {
+  const { stage } = event;
+  if (stage === 'reading') return freshTurn('reading', now);
+  if (stage && END_STAGES.has(stage)) {
+    return state ? { ...state, stage: stage as ChatEndStage, endedAtLength: threadLength } : null;
+  }
+  const current =
+    state && state.endedAtLength === undefined
+      ? state
+      : freshTurn(typeof event.chunk === 'string' ? 'replying' : 'thinking', now);
+  if (stage && LIVE_STAGES.has(stage)) return { ...current, stage: stage as ChatStage };
+  if (typeof event.chunk === 'string') return { ...current, text: event.chunk };
+  if (typeof event.tool === 'string') return { ...current, tools: [...current.tools, event.tool] };
+  return state;
 }
 
-export interface ChatStageInfo {
-  stage: ChatStage;
-  ideas?: number;
-  entityId?: string;
+export function reduceChatPermission(
+  ask: ChatPermissionAsk | null,
+  event: ChatEvent,
+): ChatPermissionAsk | null {
+  if (event.stage === 'reading') return null;
+  return ask ?? event.permission ?? null;
+}
+
+export function visibleChatTurn(
+  state: ChatTurnState | null,
+  threadLength: number,
+): ChatTurnState | null {
+  if (!state) return null;
+  if (state.endedAtLength === undefined) return state;
+  return state.endedAtLength === threadLength ? state : null;
+}
+
+export interface ChatTurnInfo {
+  live: boolean;
+  stage: ChatStage | null;
+  text: string;
+  tools: string[];
   elapsedSeconds: number;
 }
 
-const STAGE_LINES: Record<ChatStage, (info: ChatStageInfo) => string> = {
-  starting: () => 'Thinking…',
-  reading: (info) => `Reading ${info.ideas ?? 0} ideas…`,
-  deciding: () => 'Deciding…',
-  filing: () => 'Filing an idea…',
-  posting: (info) => `Posting to ${info.entityId ?? ''}…`,
-  answering: () => 'Answering…',
+const STAGE_LINES: Record<ChatStage, string> = {
+  reading: 'Reading…',
+  thinking: 'Thinking…',
+  replying: 'Replying…',
 };
 
 const ELAPSED_SECONDS_HINT_THRESHOLD = 5;
 const SLOW_CLI_HINT_THRESHOLD = 30;
 
-export function chatStageLine(info: ChatStageInfo): string {
-  const line = STAGE_LINES[info.stage](info);
-  return info.elapsedSeconds >= ELAPSED_SECONDS_HINT_THRESHOLD
-    ? `${line} ${info.elapsedSeconds} s`
-    : line;
+export function chatStageLine(stage: ChatStage, elapsedSeconds: number): string {
+  const line = STAGE_LINES[stage];
+  return elapsedSeconds >= ELAPSED_SECONDS_HINT_THRESHOLD ? `${line} ${elapsedSeconds} s` : line;
 }
 
-export function showsSlowCliHint(info: ChatStageInfo): boolean {
-  return info.elapsedSeconds >= SLOW_CLI_HINT_THRESHOLD;
+export function showsSlowCliHint(turn: Pick<ChatTurnInfo, 'live' | 'elapsedSeconds'>): boolean {
+  return turn.live && turn.elapsedSeconds >= SLOW_CLI_HINT_THRESHOLD;
 }
 
 const TICK_MS = 1000;
 
-export function useChatStage(active: boolean): ChatStageInfo | null {
-  const [state, setState] = useState<ChatStageState | null>(null);
+export function useChatStage(threadLength: number) {
+  const [turn, setTurn] = useState<ChatTurnState | null>(null);
+  const [permission, setPermission] = useState<ChatPermissionAsk | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const lengthRef = useRef(threadLength);
+  lengthRef.current = threadLength;
+
+  useEffect(
+    () =>
+      subscribeToActivityStream((payload) => {
+        if (!isChatEvent(payload)) return;
+        setTurn((current) => reduceChatTurn(current, payload, Date.now(), lengthRef.current));
+        setPermission((current) => reduceChatPermission(current, payload));
+      }),
+    [],
+  );
+
+  const visible = visibleChatTurn(turn, threadLength);
+  const live = visible !== null && visible.endedAtLength === undefined;
 
   useEffect(() => {
-    if (!active) {
-      setState(null);
-      return;
-    }
-    setState({ stage: 'starting', startedAt: Date.now() });
-    return subscribeToActivityStream((payload) => {
-      if (!isChatStagePayload(payload)) return;
-      setState((current) => reduceChatStage(current, payload, Date.now()));
-    });
-  }, [active]);
-
-  useEffect(() => {
-    if (!active) return;
+    if (!live) return;
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
-  }, [active]);
+  }, [live]);
 
-  if (!active || !state) return null;
-  return {
-    stage: state.stage,
-    ideas: state.ideas,
-    entityId: state.entityId,
-    elapsedSeconds: Math.max(0, Math.floor((now - state.startedAt) / 1000)),
+  const info: ChatTurnInfo | null = visible && {
+    live,
+    stage: live ? (visible.stage as ChatStage) : null,
+    text: visible.text,
+    tools: visible.tools,
+    elapsedSeconds: Math.max(0, Math.floor((now - visible.startedAt) / 1000)),
   };
+
+  return { turn: info, permission, dismissPermission: () => setPermission(null) };
 }

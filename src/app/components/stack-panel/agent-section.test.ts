@@ -7,6 +7,7 @@ import {
   foreignProject,
   taskCardTitle,
   taskKindLabel,
+  taskPagePath,
   taskSubtitle,
 } from './agent-section';
 import { CAPACITY_CARD_HEIGHT_CLASS, TASK_CARD_HEIGHT_CLASS } from './shared';
@@ -106,6 +107,20 @@ describe('taskCardTitle', () => {
     expect(
       taskCardTitle(task({ taskKind: 'commit-suggest', planTitle: 'Suggest commit message' })),
     ).toBe('Commit');
+  });
+});
+
+describe('the chat task row', () => {
+  const chat = task({ id: 'chat-1', taskKind: 'chat', planTitle: 'Project chat' });
+
+  it('reads as Chat', () => {
+    expect(taskCardTitle(chat)).toBe('Chat');
+    expect(taskSubtitle(chat)).toBe('');
+  });
+
+  it('opens the project chat instead of a log row', () => {
+    expect(taskPagePath(chat)).toBe('/chat');
+    expect(taskPagePath(task({ id: 'p1' }))).toMatch(/^\/activity\//);
   });
 });
 

@@ -136,8 +136,9 @@ view, toolbar card and run row each open the chat with the id prefilled.
 - [x] Project chat on the session
       `POST /api/chat` appends the user message, starts the turn and acks; the reply is appended to `chat.md` on `done`, a failure as an agent message with the error; `/api/chat/retry` re-sends the last user message; `DELETE /api/chat` clears `chat.md` and the session file; the git shortcut stays first. Delete `chat-reply.ts`, `buildChatMovePrompt` and their tests; route tests for ack timing, retry and clear.
       run: 3m53s · 52 in · 15.6k out · opus-5-5 · sess:b5dd85b4-0c40-48ac-a029-4a9045b67cf2
-- [ ] The web page streams
+- [x] The web page streams
       `use-chat-thread.ts` unlocks the composer on ack and renders the streamed reply and tool lines under the pending bubble (the components IDEA-330 added for idea threads), `use-chat-stage.ts` follows the new stages, a `permission` event renders the question card with *Allow once*, *Always allow* (`POST /api/chat/allow` appends the rule to the agent's permission file) and *Skip*, each re-sending the turn with the choice; the chat task shows in the Stack panel with stop. Hook and view tests.
+      run: 10m55s · 156 in · 61.5k out · opus-5-5 · sess:b5dd85b4-0c40-48ac-a029-4a9045b67cf2
 - [ ] One composer: the idea surfaces open the chat
       Delete `POST /api/agent/feedback-message`, `feedback-undo`, `feedback-summarize`, `feedback-reply.ts`, `buildFeedbackReplyPrompt`, `buildFeedbackSummaryPrompt`, the `feedback` activity event and `useSendFeedbackMessage`/`useFeedbackComposer`; `FeedbackSection` renders the read-only thread with promote kept; the idea view, `run-row-detail.tsx` and the toolbar's `scout-thread.tsx` get a *Discuss in chat* link that opens the project chat with `IDEA-N: ` prefilled, and the toolbar's Scout card shows the project chat and sends its `MountContext` with `POST /api/chat`; extend the MCP server where a shape is missing (`append_clarification` resolving the open question, `add_idea` with `kind: fix` and a parent). Route, hook and MCP tests.
 - [ ] Docs and the skill know the chat

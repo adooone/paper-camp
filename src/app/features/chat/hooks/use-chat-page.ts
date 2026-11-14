@@ -1,4 +1,6 @@
 import { type ScopeRow, useScope } from '@/app/features/scope';
+import { useAppStore } from '@/app/stores/app-store';
+import type { ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
 import { useMemo, useState } from 'react';
 import { mergeScopedChatMessages, threadEndsWithUserMessage } from '../helpers';
 import { useChatStage } from './use-chat-stage';
@@ -46,17 +48,30 @@ export function useChatPage() {
     await chat.handleRetry(targetProject, sentToForeign ? scopeChat.refetch : undefined);
   };
 
-  const chatStage = useChatStage(chat.sending);
-  const showFailureLine = !chat.sending && threadEndsWithUserMessage(chat.thread);
+  const stream = useChatStage(chat.thread.length);
+  const chatRunning = useAppStore((s) =>
+    s.agentStatus.some(
+      (task) =>
+        task.taskKind === 'chat' &&
+        (task.status === 'starting' || task.status === 'running' || task.status === 'stopping'),
+    ),
+  );
+  const showFailureLine =
+    !chat.sending && !chatRunning && !stream.turn && threadEndsWithUserMessage(chat.thread);
+
+  const handlePermission = async (choice: ChatPermissionChoice, ask: ChatPermissionAsk) => {
+    if (await chat.handlePermission(choice, ask)) stream.dismissPermission();
+  };
 
   return {
     loading: chat.loading,
     messages,
     pending: chat.pending,
     sending: chat.sending,
-    chatStage,
+    chatTurn: stream.turn,
+    permission: stream.permission,
+    handlePermission,
     showFailureLine,
-    retryError: chat.retryError,
     handleRetry,
     input: chat.input,
     setInput: chat.setInput,

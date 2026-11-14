@@ -4,30 +4,33 @@ import {
   clearChat,
   postChatMessage,
   postChatMessageAt,
+  postChatPermission,
   postChatRetry,
   postChatRetryAt,
 } from '@/app/services/content';
 import { refreshChat } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { ThreadMessage } from '@/types/index';
+import type { ChatPermissionAsk, ChatPermissionChoice, ThreadMessage } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
 import { useState } from 'react';
 import { nowMinuteString } from '../helpers';
 
+type Toast = ReturnType<typeof useToast>['toast'];
+
 async function postAndReload(
-  post: () => Promise<{ error?: string }>,
+  post: () => Promise<void>,
   loadChat: () => Promise<void>,
-  toast: ReturnType<typeof useToast>['toast'],
+  toast: Toast,
   onThrowFailure?: () => void,
   onPosted?: () => void,
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<boolean> {
   try {
-    const { error } = await post();
+    await post();
     // Clears the optimistic bubble before the reload lands, so the fetched
     // thread never renders the same message alongside it.
     onPosted?.();
     await loadChat();
-    return { ok: !error, error };
+    return true;
   } catch (err) {
     toast({
       title: 'Message failed to send',
@@ -35,7 +38,7 @@ async function postAndReload(
       variant: 'error',
     });
     onThrowFailure?.();
-    return { ok: false };
+    return false;
   }
 }
 
@@ -43,13 +46,13 @@ export async function sendChatText(
   text: string,
   { restoreOnFailure }: { restoreOnFailure: boolean },
   deps: {
-    postChatMessage: (text: string) => Promise<{ error?: string }>;
+    postChatMessage: (text: string) => Promise<void>;
     loadChat: () => Promise<void>;
-    toast: ReturnType<typeof useToast>['toast'];
+    toast: Toast;
     setInput: (updater: (current: string) => string) => void;
     onPosted?: () => void;
   },
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<boolean> {
   return postAndReload(
     () => deps.postChatMessage(text),
     deps.loadChat,
@@ -62,11 +65,23 @@ export async function sendChatText(
 }
 
 export async function retryChatReply(deps: {
-  postChatRetry: () => Promise<{ error?: string }>;
+  postChatRetry: () => Promise<void>;
   loadChat: () => Promise<void>;
-  toast: ReturnType<typeof useToast>['toast'];
-}): Promise<{ ok: boolean; error?: string }> {
+  toast: Toast;
+}): Promise<boolean> {
   return postAndReload(deps.postChatRetry, deps.loadChat, deps.toast);
+}
+
+export async function answerChatPermission(
+  choice: ChatPermissionChoice,
+  ask: ChatPermissionAsk,
+  deps: {
+    postChatPermission: (choice: ChatPermissionChoice, ask: ChatPermissionAsk) => Promise<void>;
+    loadChat: () => Promise<void>;
+    toast: Toast;
+  },
+): Promise<boolean> {
+  return postAndReload(() => deps.postChatPermission(choice, ask), deps.loadChat, deps.toast);
 }
 
 export interface PendingChatMessage {
@@ -85,7 +100,6 @@ export function useChatThread() {
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const [retryError, setRetryError] = useState<string | null>(null);
 
   const loadChatFor = (
     target?: ScopeRow,
@@ -108,10 +122,9 @@ export function useChatThread() {
       message: { kind: 'chat', from: 'user', text, date: nowMinuteString() },
       project: target,
     });
-    setRetryError(null);
     try {
       const toForeign = target && !target.isCurrent;
-      const result = await sendChatText(text, opts, {
+      return await sendChatText(text, opts, {
         postChatMessage: toForeign
           ? (t) => postChatMessageAt(target.runtimeUrl, t)
           : postChatMessage,
@@ -120,8 +133,6 @@ export function useChatThread() {
         setInput,
         onPosted: () => setPending(null),
       });
-      setRetryError(result.error ?? null);
-      return result.ok;
     } finally {
       setPending(null);
       setSending(false);
@@ -153,12 +164,24 @@ export function useChatThread() {
     setSending(true);
     try {
       const toForeign = target && !target.isCurrent;
-      const result = await retryChatReply({
+      await retryChatReply({
         postChatRetry: toForeign ? () => postChatRetryAt(target.runtimeUrl) : postChatRetry,
         loadChat: loadChatFor(target, refetchForeign),
         toast,
       });
-      setRetryError(result.error ?? null);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handlePermission = async (choice: ChatPermissionChoice, ask: ChatPermissionAsk) => {
+    setSending(true);
+    try {
+      return await answerChatPermission(choice, ask, {
+        postChatPermission,
+        loadChat: refreshChat,
+        toast,
+      });
     } finally {
       setSending(false);
     }
@@ -194,7 +217,7 @@ export function useChatThread() {
     handleSend,
     handleAnswer,
     handleRetry,
-    retryError,
+    handlePermission,
     confirmOpen,
     openConfirmClear,
     closeConfirmClear,

@@ -690,12 +690,15 @@ export interface AgentRunOptions {
   effort?: string;
   /** Prior claude-code session id to continue instead of starting cold; ignored by opencode. */
   resume?: string;
+  allow?: ChatPermissionAsk[];
 }
 
 export interface ChatPermissionAsk {
   tool: string;
   target?: string;
 }
+
+export type ChatPermissionChoice = 'once' | 'always' | 'skip';
 
 /** Maps option names to a fixed value list (renders a Select) or null (free-text or hidden). */
 export type AgentOptionsDescriptor = Record<string, string[] | null | undefined>;

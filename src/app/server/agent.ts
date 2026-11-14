@@ -39,6 +39,7 @@ import type {
   AgentRunOptions,
   AgentTaskState,
   AgentTaskStatus,
+  ChatPermissionAsk,
   CheckName,
   DefaultAgentsMap,
   EntityEntry,
@@ -305,6 +306,7 @@ type Result = { ok: true } | { ok: false; error: string; kind?: 'auth' };
 interface ChatTurnContext {
   branch?: { name: string; dirty: string[] };
   mount?: MountContext;
+  allow?: ChatPermissionAsk[];
 }
 
 type ChatStage = 'reading' | 'thinking' | 'replying' | 'done' | 'failed';
@@ -940,10 +942,15 @@ export function createAgentManager(
     });
   }
 
-  function spawnAgent(adapter: AgentAdapter, args: string[]): ChildProcess {
+  function spawnAgent(
+    adapter: AgentAdapter,
+    args: string[],
+    env?: Record<string, string>,
+  ): ChildProcess {
     return spawn(adapter.command, args, {
       cwd: root,
       stdio: ['ignore', 'pipe', 'pipe'],
+      ...(env && { env: { ...process.env, ...env } }),
     });
   }
 
@@ -2741,7 +2748,11 @@ export function createAgentManager(
     const { adapter } = task;
     task.errorReason = undefined;
     task.lastStreamAt = Date.now();
-    const proc = spawnAgent(adapter, adapter.buildChatArgs(prompt, opts));
+    const proc = spawnAgent(
+      adapter,
+      adapter.buildChatArgs(prompt, opts),
+      adapter.buildChatEnv?.(opts),
+    );
     task.proc = proc;
 
     let sessionId: string | undefined;
@@ -2782,7 +2793,8 @@ export function createAgentManager(
           onStage('thinking');
           publishChat(task, { tool: label });
         }
-        for (const permission of parsed.permissions ?? []) {
+        for (const ask of parsed.permissions ?? []) {
+          const permission = ask.target ? { ...ask, target: relative(ask.target) } : ask;
           pushLine(
             task,
             `Permission needed: ${permission.tool}${permission.target ? ` ${permission.target}` : ''}`,
@@ -2895,7 +2907,12 @@ export function createAgentManager(
       };
 
       let attempt = resume
-        ? await chatAttempt(task, buildChatTurnPrompt(turn), { model, effort, resume }, onStage)
+        ? await chatAttempt(
+            task,
+            buildChatTurnPrompt(turn),
+            { model, effort, resume, allow: context.allow },
+            onStage,
+          )
         : undefined;
       if (!attempt || attempt.resumeFailed) {
         if (attempt) pushLine(task, '[chat] session could not be resumed — starting a fresh one');
@@ -2903,7 +2920,7 @@ export function createAgentManager(
         attempt = await chatAttempt(
           task,
           buildChatTurnPrompt({ ...turn, fresh: { replay } }),
-          { model, effort },
+          { model, effort, allow: context.allow },
           onStage,
         );
       }

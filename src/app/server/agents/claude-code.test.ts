@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildArgs, buildChatArgs, parseChatLine, parseLine } from './claude-code';
+import { buildArgs, buildChatArgs, parseChatLine, parseLine, permissionRule } from './claude-code';
 
 describe('claude-code buildArgs', () => {
   it('passes --mcp-config with the paper-camp server and keeps --strict-mcp-config', () => {
@@ -302,6 +302,44 @@ describe('claude-code buildChatArgs', () => {
   it('resumes the chat session and passes model and effort', () => {
     const args = buildChatArgs('hello', { resume: 'sess-1', model: 'opus', effort: 'high' });
     expect(args.slice(-6)).toEqual(['--model', 'opus', '--effort', 'high', '--resume', 'sess-1']);
+  });
+});
+
+describe('claude-code permissionRule', () => {
+  it('scopes a shell command to itself', () => {
+    expect(permissionRule({ tool: 'Bash', target: 'pnpm test' })).toBe('Bash(pnpm test)');
+  });
+
+  it('turns a clipped command into a prefix rule', () => {
+    expect(permissionRule({ tool: 'Bash', target: 'pnpm vitest run src/a.test.ts …' })).toBe(
+      'Bash(pnpm vitest run src/a.test.ts:*)',
+    );
+  });
+
+  it('scopes a fetch to the domain', () => {
+    expect(permissionRule({ tool: 'WebFetch', target: 'https://docs.example.com/a?b' })).toBe(
+      'WebFetch(domain:docs.example.com)',
+    );
+  });
+
+  it('scopes file tools to the path, absolute ones with the double slash', () => {
+    expect(permissionRule({ tool: 'Edit', target: 'src/a.ts' })).toBe('Edit(src/a.ts)');
+    expect(permissionRule({ tool: 'Read', target: '/etc/hosts' })).toBe('Read(//etc/hosts)');
+  });
+
+  it('allows the whole tool when there is no target to scope by', () => {
+    expect(permissionRule({ tool: 'mcp__github__create_issue' })).toBe('mcp__github__create_issue');
+    expect(permissionRule({ tool: 'Grep', target: 'TODO' })).toBe('Grep');
+  });
+});
+
+describe('claude-code buildChatArgs allow', () => {
+  it('passes a once-allowed tool as --allowedTools for that turn only', () => {
+    const args = buildChatArgs('hi', { allow: [{ tool: 'Bash', target: 'pnpm test' }] });
+    const at = args.indexOf('--allowedTools');
+    expect(args[at + 1]).toBe('Bash(pnpm test)');
+    expect(args).toContain('auto');
+    expect(buildChatArgs('hi')).not.toContain('--allowedTools');
   });
 });
 

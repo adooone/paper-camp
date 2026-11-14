@@ -17,6 +17,7 @@ export interface AgentAdapter {
   buildArgs: (prompt: string, opts?: AgentRunOptions) => string[];
   buildReadOnlyArgs: (opts?: AgentRunOptions) => string[];
   buildChatArgs: (prompt: string, opts?: AgentRunOptions) => string[];
+  buildChatEnv?: (opts?: AgentRunOptions) => Record<string, string> | undefined;
   parseLine: (line: string) => ParsedAgentLine | null;
   parseChatLine: (line: string) => ParsedChatLine | null;
   options: AgentOptionsDescriptor;
@@ -39,6 +40,7 @@ export const AGENTS: Record<AgentId, AgentAdapter> = {
     buildArgs: opencode.buildArgs,
     buildReadOnlyArgs: opencode.buildReadOnlyArgs,
     buildChatArgs: opencode.buildChatArgs,
+    buildChatEnv: opencode.buildChatEnv,
     parseLine: opencode.parseLine,
     parseChatLine: opencode.parseChatLine,
     options: AGENT_OPTIONS.opencode,

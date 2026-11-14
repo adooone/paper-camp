@@ -113,6 +113,7 @@ const SHORT_KIND_LABELS: Partial<Record<TaskKind, string>> = {
   'overlap-check': 'Overlap',
   sync: 'Sync',
   'resolve-conflict': 'Conflict',
+  chat: 'Chat',
 };
 
 /** `Phases: IDEA-123` — the kind and the entity, not the whole title, so the id
@@ -126,6 +127,9 @@ export const taskCardTitle = (task: AgentTaskState): string => {
       : kind;
   return task.planId ? `${numbered}: ${task.planId}` : numbered;
 };
+
+export const taskPagePath = (task: AgentTaskState): string =>
+  task.taskKind === 'chat' ? '/chat' : `/activity/${logRowIdForTask(task)}`;
 
 export const taskSubtitle = (task: AgentTaskState): string => {
   const label = taskKindLabel(task);
@@ -156,13 +160,16 @@ const AgentTaskCard = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const foreign = foreignProject(project);
+  const taskPath = taskPagePath(task);
   const openTaskPage = () =>
     foreign
-      ? onOpenCrossProject(foreign, `/activity/${logRowIdForTask(task)}`)
-      : navigate({
-          to: '/activity/$entryId',
-          params: { entryId: logRowIdForTask(task) },
-        });
+      ? onOpenCrossProject(foreign, taskPath)
+      : task.taskKind === 'chat'
+        ? navigate({ to: '/chat' })
+        : navigate({
+            to: '/activity/$entryId',
+            params: { entryId: logRowIdForTask(task) },
+          });
 
   const handleStop = async (e: React.MouseEvent) => {
     e.stopPropagation();

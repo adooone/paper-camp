@@ -171,8 +171,40 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   ];
 }
 
+const PATH_TOOLS = new Set(['Read', 'Edit', 'MultiEdit', 'Write', 'NotebookEdit']);
+
+function clippedPrefix(target: string): string | undefined {
+  return target.endsWith('…') ? target.slice(0, -1).trimEnd() : undefined;
+}
+
+export function permissionRule(ask: ChatPermissionAsk): string {
+  const { tool, target } = ask;
+  if (!target) return tool;
+  if (tool === 'Bash') {
+    const prefix = clippedPrefix(target);
+    return prefix ? `Bash(${prefix}:*)` : `Bash(${target})`;
+  }
+  if (tool === 'WebFetch') {
+    try {
+      return `WebFetch(domain:${new URL(target).hostname})`;
+    } catch {
+      return tool;
+    }
+  }
+  if (PATH_TOOLS.has(tool) && !clippedPrefix(target)) {
+    return target.startsWith('/') ? `${tool}(/${target})` : `${tool}(${target})`;
+  }
+  return tool;
+}
+
 export function buildChatArgs(prompt: string, opts?: AgentRunOptions): string[] {
-  return [...baseArgs(prompt), '--include-partial-messages', ...runOptionArgs(opts)];
+  const allowed = (opts?.allow ?? []).map(permissionRule);
+  return [
+    ...baseArgs(prompt),
+    '--include-partial-messages',
+    ...(allowed.length > 0 ? ['--allowedTools', ...allowed] : []),
+    ...runOptionArgs(opts),
+  ];
 }
 
 // Must never pick up the shared `--permission-mode auto` flag, since a read-only

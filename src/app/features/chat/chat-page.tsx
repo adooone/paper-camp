@@ -7,6 +7,7 @@ import {
   ChatFailureLine,
   ChatMessage,
   ChatPageSkeleton,
+  ChatPermissionCard,
   ChatStageBubble,
   ChatTitleActions,
   ClearChatModal,
@@ -24,9 +25,10 @@ export const ChatPage = () => {
     messages,
     pending,
     sending,
-    chatStage,
+    chatTurn,
+    permission,
+    handlePermission,
     showFailureLine,
-    retryError,
     handleRetry,
     input,
     setInput,
@@ -54,8 +56,10 @@ export const ChatPage = () => {
   const itemCount =
     messages.length +
     (pending ? 1 : 0) +
-    (sending && chatStage ? 1 : 0) +
+    (chatTurn ? 1 : 0) +
+    (permission ? 1 : 0) +
     (showFailureLine ? 1 : 0);
+  const streamedLength = (chatTurn?.text.length ?? 0) + (chatTurn?.tools.length ?? 0);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
@@ -81,14 +85,17 @@ export const ChatPage = () => {
       scrollToBottom();
       return;
     }
-    if (itemCount === itemCountRef.current) return;
+    if (itemCount === itemCountRef.current) {
+      if (streamedLength > 0 && nearBottomRef.current) scrollToBottom();
+      return;
+    }
     itemCountRef.current = itemCount;
     if (nearBottomRef.current) {
       scrollToBottom();
     } else {
       setNewMessagesPending(true);
     }
-  }, [loading, itemCount, scrollToBottom]);
+  }, [loading, itemCount, streamedLength, scrollToBottom]);
 
   const fillComposer = (text: string) => {
     setInput(text);
@@ -152,8 +159,15 @@ export const ChatPage = () => {
             project={pending.project}
           />
         )}
-        {sending && chatStage && <ChatStageBubble stage={chatStage} />}
-        {showFailureLine && <ChatFailureLine error={retryError} onRetry={handleRetry} />}
+        {chatTurn && <ChatStageBubble turn={chatTurn} />}
+        {permission && (
+          <ChatPermissionCard
+            ask={permission}
+            disabled={sending || Boolean(chatTurn?.live)}
+            onChoose={handlePermission}
+          />
+        )}
+        {showFailureLine && <ChatFailureLine onRetry={handleRetry} />}
 
         <div ref={bottomRef} />
       </div>

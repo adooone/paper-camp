@@ -1,5 +1,5 @@
 import { classifyAnchor } from '@/core/phase-progress';
-import type { AgentRunOptions } from '@/types/index';
+import type { AgentRunOptions, ChatPermissionAsk } from '@/types/index';
 import type { ParsedChatLine } from './chat';
 import { clip, describePaperCampTool, stringField } from './chat';
 import type { ParsedAgentLine } from './claude-code';
@@ -17,6 +17,40 @@ export function buildChatArgs(prompt: string, opts?: AgentRunOptions): string[] 
   if (opts?.model) args.push('-m', opts.model);
   if (opts?.effort) args.push('--variant', opts.effort);
   return args;
+}
+
+type PermissionConfig = Record<string, unknown>;
+
+function bashPattern(target: string): string {
+  return target.endsWith('…') ? `${target.slice(0, -1).trimEnd()}*` : target;
+}
+
+export function mergePermission(existing: unknown, asks: ChatPermissionAsk[]): PermissionConfig {
+  const merged: PermissionConfig =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as PermissionConfig) }
+      : {};
+  for (const { tool, target } of asks) {
+    const key = tool.toLowerCase();
+    if (key !== 'bash' || !target) {
+      merged[key] = 'allow';
+      continue;
+    }
+    const current = merged.bash;
+    const patterns =
+      current && typeof current === 'object'
+        ? { ...(current as PermissionConfig) }
+        : typeof current === 'string'
+          ? { '*': current }
+          : {};
+    merged.bash = { ...patterns, [bashPattern(target)]: 'allow' };
+  }
+  return merged;
+}
+
+export function buildChatEnv(opts?: AgentRunOptions): Record<string, string> | undefined {
+  if (!opts?.allow?.length) return undefined;
+  return { OPENCODE_PERMISSION: JSON.stringify(mergePermission(undefined, opts.allow)) };
 }
 
 export function buildReadOnlyArgs(opts?: AgentRunOptions): string[] {

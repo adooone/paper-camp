@@ -322,6 +322,109 @@ describe('POST /api/chat/retry', () => {
   });
 });
 
+describe('POST /api/chat/allow', () => {
+  const ask = { tool: 'Bash', target: 'pnpm test' };
+  const allow = async (root: string, body: unknown, ctx: Partial<RouteContext>) => {
+    const { res, status, json } = fakeRes();
+    await routeAt(root, '/api/chat/allow', 'POST', ctx).handle(fakeReq(JSON.stringify(body)), res);
+    return { status: status(), json: json() };
+  };
+  const settingsPath = (root: string) => join(root, '.claude', 'settings.json');
+
+  it('re-sends the turn with the tool allowed once, leaving the settings alone', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'Tests pass.');
+
+    const result = await allow(root, { ...ask, choice: 'once' }, agentCtx(runChatTurn));
+
+    expect(result).toEqual({ status: 200, json: { ok: true } });
+    expect(runChatTurn).toHaveBeenCalledWith('Allowed once: Bash `pnpm test`. Go ahead.', {
+      branch: { name: 'main', dirty: [] },
+      allow: [ask],
+    });
+    expect(await waitForChat(root, 'Tests pass.')).toContain(
+      '[chat] Allowed once: Bash `pnpm test`. Go ahead.',
+    );
+    await expect(access(settingsPath(root))).rejects.toThrow();
+  });
+
+  it('appends the rule to the claude-code allowlist on always, keeping what is there', async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, '.claude'), { recursive: true });
+    await writeFile(
+      settingsPath(root),
+      JSON.stringify({ permissions: { allow: ['Bash(git status)'] }, hooks: {} }),
+    );
+    const runChatTurn = vi.fn(async () => 'ok');
+
+    await allow(root, { ...ask, choice: 'always' }, agentCtx(runChatTurn));
+    await allow(root, { ...ask, choice: 'always' }, agentCtx(runChatTurn));
+
+    const settings = JSON.parse(await readFile(settingsPath(root), 'utf-8'));
+    expect(settings).toEqual({
+      permissions: { allow: ['Bash(git status)', 'Bash(pnpm test)'] },
+      hooks: {},
+    });
+    expect(runChatTurn).toHaveBeenLastCalledWith(
+      'Always allowed: Bash `pnpm test`. Go ahead.',
+      expect.objectContaining({ allow: [ask] }),
+    );
+  });
+
+  it('writes opencode.json when the chat runs on opencode', async () => {
+    const root = await makeRoot();
+    const configPath = join(root, 'papercamp', 'config.json');
+    const config = JSON.parse(await readFile(configPath, 'utf-8'));
+    await writeFile(
+      configPath,
+      JSON.stringify({ ...config, defaultAgents: { chat: { agent: 'opencode' } } }),
+    );
+    await writeFile(join(root, 'opencode.json'), JSON.stringify({ mcp: {} }));
+
+    await allow(
+      root,
+      { tool: 'bash', target: 'pnpm test', choice: 'always' },
+      agentCtx(vi.fn(async () => 'ok')),
+    );
+
+    expect(JSON.parse(await readFile(join(root, 'opencode.json'), 'utf-8'))).toEqual({
+      mcp: {},
+      permission: { bash: { 'pnpm test': 'allow' } },
+    });
+  });
+
+  it('re-sends the turn without the tool on skip', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'Skipped.');
+
+    await allow(root, { ...ask, choice: 'skip' }, agentCtx(runChatTurn));
+
+    expect(runChatTurn).toHaveBeenCalledWith('Skip Bash `pnpm test`. Carry on without it.', {
+      branch: { name: 'main', dirty: [] },
+    });
+  });
+
+  it('rejects an unknown choice', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'ok');
+    const result = await allow(root, { ...ask, choice: 'forever' }, agentCtx(runChatTurn));
+    expect(result.status).toBe(400);
+    expect(runChatTurn).not.toHaveBeenCalled();
+  });
+
+  it('refuses while a chat turn is still running', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'ok');
+    const result = await allow(
+      root,
+      { ...ask, choice: 'once' },
+      agentCtx(runChatTurn, [{ taskKind: 'chat', status: 'running' }]),
+    );
+    expect(result.status).toBe(409);
+    expect(runChatTurn).not.toHaveBeenCalled();
+  });
+});
+
 describe('DELETE /api/chat', () => {
   it('clears the thread except unanswered questions and drops the session file', async () => {
     const root = await makeRoot();

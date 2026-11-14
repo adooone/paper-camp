@@ -1,7 +1,8 @@
 import { readCorpus } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
-import type { AgentTaskState } from '@/types/index';
+import type { AgentTaskState, ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
+import { allowAlways, permissionChoiceText } from '../chat-permission';
 import { clearChatSession } from '../chat-session';
 import { tryHandleGitChatRequest } from '../git-chat';
 import { appendToChatFile, clearChatFile, readChatFile } from '../helpers';
@@ -35,8 +36,17 @@ async function branchContext(git: RouteContext['git']) {
   }
 }
 
-async function startTurn({ root, agent, git, activity }: ChatTurnContext, text: string) {
-  const turn = agent.runChatTurn(text, { branch: await branchContext(git) });
+const CHOICES: ChatPermissionChoice[] = ['once', 'always', 'skip'];
+
+async function startTurn(
+  { root, agent, git, activity }: ChatTurnContext,
+  text: string,
+  allow?: ChatPermissionAsk[],
+) {
+  const turn = agent.runChatTurn(text, {
+    branch: await branchContext(git),
+    ...(allow && { allow }),
+  });
   void turn
     .catch((err: Error) => err.message || 'Scout failed without an error message')
     .then(async (reply) => {
@@ -103,6 +113,40 @@ export function chatRoutes({ root, agent, git, activity }: RouteContext): Route[
           return;
         }
         await startTurn(ctx, last.text.trim());
+        sendJson(res, 200, { ok: true });
+      },
+    },
+
+    {
+      method: 'POST',
+      path: '/api/chat/allow',
+      handle: async (req, res) => {
+        const body =
+          (await readJson<{ tool?: string; target?: string; choice?: string }>(req)) ?? {};
+        const tool = body.tool?.trim();
+        const choice = CHOICES.find((c) => c === body.choice);
+        if (!tool || !choice) {
+          sendJson(res, 400, { error: 'tool and a choice of once, always or skip are required' });
+          return;
+        }
+        if (chatBusy(agent)) {
+          sendJson(res, 409, { error: BUSY_ERROR });
+          return;
+        }
+        const target = body.target?.trim();
+        const ask: ChatPermissionAsk = { tool, ...(target && { target }) };
+        if (choice === 'always') {
+          try {
+            await allowAlways(root, ask);
+          } catch (err) {
+            sendJson(res, 500, { error: (err as Error).message });
+            return;
+          }
+        }
+        const text = permissionChoiceText(choice, ask);
+        await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text });
+        activity.notifyChanged('chat');
+        await startTurn(ctx, text, choice === 'skip' ? undefined : [ask]);
         sendJson(res, 200, { ok: true });
       },
     },
