@@ -49,17 +49,35 @@ switched in `defaultAgents.chat`) starts a fresh session and replays the
 last ten `chat.md` messages as the first turn's context. A turn sends the
 new message only; the model carries the rest, so a turn costs the turn.
 
-**Tools instead of moves.** The session runs from the repository root
-with read-only code tools (`Read`, `Grep`, `Glob`) and the paper-camp MCP
-server, and nothing else: `Bash`, `Edit`, `Write`, `NotebookEdit`,
-`WebFetch` and `WebSearch` are disallowed. Filing an idea is `add_idea`,
-posting to an idea's thread is `append_note`, answering a parked question
-is `append_clarification`, rewording a phase is `update_phase`: Scout
-chooses the tool, the MCP server does the write, and `chat.md` records the
-exchange. The first turn's preamble is short: the persona, that the
-project's `AGENTS.md` and `papercamp/` are the map, what each MCP tool is
-for, and that code changes are never made here but handed to a run. The
-three-move classifier, the hand-built index and `buildChatMovePrompt` go.
+**The same hands as a run.** The chat session is a full agent, not a
+note-taker. It starts with `buildArgs`, the flags a phase run gets:
+`--permission-mode auto`, the paper-camp MCP server under
+`--strict-mcp-config`, and every tool, with `WebFetch` and `WebSearch`
+allowed here (a conversation looks things up). Scout reads and edits the
+code directly on the checked-out branch, runs `pnpm run check-types`,
+biome and the tests when a change warrants it, and commits only when
+asked, in the repository's commit format. Idea writes still go through
+the MCP tools (`add_idea`, `append_note`, `update_phase`, `edit_idea`,
+`append_clarification`) so `papercamp/` keeps its grammar. Each turn is
+prefixed with a two-line status the daemon already knows: the current
+branch with its dirty files, and the active runs with their ideas, so
+Scout keeps off a tree a run is editing. The first turn's preamble is
+short: the persona, that the project's `AGENTS.md` and `papercamp/` are
+the map, what each MCP tool is for, and that code the user asks for is
+changed here and now. The three-move classifier, the hand-built index and
+`buildChatMovePrompt` go.
+
+**A blocked tool is a question, not a dead end.** Under `auto` a tool
+call the repo's allowlist does not cover is denied in a headless run
+(the "denied by permission ask" the opencode adapter already surfaces,
+and the equivalent `permission_denials` in claude-code's result). In the
+chat that denial becomes a question card under the pending bubble naming
+the tool and its target ("Run `pnpm test`?") with *Allow once*, *Always
+allow* and *Skip*. *Always allow* appends the rule to the agent's own
+permission file (`.claude/settings.json` `permissions.allow` for
+claude-code, `opencode.json` `permission` for opencode), so phase runs
+gain it too; either allow re-sends the turn with the choice. The daemon
+never runs an agent with permissions bypassed.
 
 **Instant ack, streamed reply, visible task.** `POST /api/chat` answers
 `{ ok: true }` once the user message is on `chat.md` and the turn has
@@ -73,36 +91,52 @@ task appears in the agent status list and the Stack panel like any other
 task, with stop. The git phrasing shortcut (`tryHandleGitChatRequest`)
 stays in front of the session.
 
-**One session for the idea threads too.** A message sent from an idea
-view or the toolbar goes to the same project session, prefixed with the
-idea it was sent from ("In IDEA-331: …"). Scout answers in that idea's
-thread through the MCP tools and the daemon keeps the `feedback` events
-(`reading`, `thinking`, `replying`, `done`, `failed`, `chunk`) the phone
-and toolbar listen to. Phase and body edits become `update_phase` and
-`edit_idea` calls; an answered parked question is `append_clarification`,
-which resumes the parked run as today; a fix request becomes a phase on
-that idea, as the prompt already demands. `feedback-reply.ts` and
-`buildFeedbackReplyPrompt` go with `chat-reply.ts`.
+**One chat per project, and nothing else.** Every conversation with
+Scout happens in the project chat; the project picker is the only split.
+The idea view, the toolbar card, the run row and the phone stop carrying
+their own composer: `FeedbackSection` becomes the read-only thread
+(notes, decisions, logs, parked questions and clarifications stay the
+idea's record), `useFeedbackComposer`, `useSendFeedbackMessage` and the
+toolbar's `scout-thread.tsx` composer go, and each of those places gets a
+*Discuss in chat* link that opens the project chat with the idea's id
+prefilled in the composer ("IDEA-331: "). The toolbar's Scout card shows
+the project chat itself and sends its `MountContext` (route, component)
+with each message so Scout knows where the user is standing. Scout acts on
+an idea when the message names it: a reply about IDEA-331 is posted to its
+thread with `append_note`, a phase reword is `update_phase`, a body change
+is `edit_idea`, an answer to a parked question is `append_clarification`,
+which marks the open question resolved so the phase re-runs with it as
+today. Parked questions already appear in `chat.md`; they stay there and
+are answered there. `POST /api/agent/feedback-message`, `feedback-undo`
+and `feedback-summarize` are deleted with `feedback-reply.ts`,
+`buildFeedbackReplyPrompt` and `buildFeedbackSummaryPrompt` (summarising a
+thread is something you ask Scout); `feedback-promote` stays, it is a
+deterministic thread action, not a conversation. The `feedback` activity
+event type goes with the route; the phone and toolbar follow `chat`
+events like the web page.
 
 **Acceptance.** A plain question in the project chat shows the first
 streamed words within 3 s and the composer unlocks under 300 ms after
 send. The second message of a conversation sends under 2k new tokens to
 the model. Asking "which file handles the chat routes" names
 `src/app/server/routes/chat.ts` because Scout read it. "File an idea for
-X" creates the idea through `add_idea` and the reply links it. The
-running chat turn is a row in the Stack panel with a stop button. A
-message typed in IDEA-331's view appears on IDEA-331's thread with
-Scout's reply under it, and the phone and toolbar receive the same
-`feedback` events as before.
+X" creates the idea through `add_idea` and the reply links it. "Rename
+`probe-cache.ts` to `probe-store.ts`" changes the files and the Stack
+panel's commit section shows them dirty. A command outside the allowlist
+shows the permission card and runs on *Allow once*. The
+running chat turn is a row in the Stack panel with a stop button. "IDEA-331: reword the second phase to …" edits that phase through
+`update_phase` and the exchange is visible in the chat and as a note on
+IDEA-331's thread. No view outside the chat offers a composer; the idea
+view, toolbar card and run row each open the chat with the id prefilled.
 
 ### Phases
 - [ ] The chat session runner
-      `buildChatArgs` in `src/app/server/agents/claude-code.ts` (`-p --output-format stream-json --verbose --include-partial-messages --mcp-config … --strict-mcp-config --allowedTools Read,Grep,Glob,mcp__paper-camp__* --disallowedTools Bash,Edit,Write,NotebookEdit,WebFetch,WebSearch`, `--resume` when a session exists) and the opencode equivalent (`run --format json --session <id>` with a permission config denying edit and bash through `OPENCODE_CONFIG_CONTENT`); `runChatTurn(root, text, context)` in `agent.ts` that reads and writes `.local/chat-session.json`, feeds the preamble on the first turn, replays the last ten `chat.md` messages when a resume fails, publishes `chat` stage, chunk and tool events, records the task like any other (no `chat` filter in `getStatus`), and returns the final text. Adapter and runner tests with a fake agent.
+      `buildChatArgs` in `src/app/server/agents/claude-code.ts` (`buildArgs` without the `WebFetch`/`WebSearch` denial, plus `--include-partial-messages` and `--resume` when a session exists) and the opencode equivalent (`run --format json --session <id>`); `permission_denials` from the result and opencode's permission asks are reported as a `permission` chat event with tool and target; `runChatTurn(root, text, context)` in `agent.ts` that reads and writes `.local/chat-session.json`, feeds the preamble on the first turn, replays the last ten `chat.md` messages when a resume fails, publishes `chat` stage, chunk and tool events, records the task like any other (no `chat` filter in `getStatus`), and returns the final text. Adapter and runner tests with a fake agent.
 - [ ] Project chat on the session
       `POST /api/chat` appends the user message, starts the turn and acks; the reply is appended to `chat.md` on `done`, a failure as an agent message with the error; `/api/chat/retry` re-sends the last user message; `DELETE /api/chat` clears `chat.md` and the session file; the git shortcut stays first. Delete `chat-reply.ts`, `buildChatMovePrompt` and their tests; route tests for ack timing, retry and clear.
 - [ ] The web page streams
-      `use-chat-thread.ts` unlocks the composer on ack and renders the streamed reply and tool lines under the pending bubble (the components IDEA-330 added for idea threads), `use-chat-stage.ts` follows the new stages, the chat task shows in the Stack panel with stop. Hook and view tests.
-- [ ] Idea threads ride the session
-      `applyFeedbackMessage` files the message on the idea's thread and sends it to the project session with the idea prefix; the daemon maps the session's `chat` events to `feedback` events for that `planId`; Scout's edits arrive through `update_phase`, `edit_idea` and `append_clarification` (extend the MCP server where a shape is missing, e.g. `add_idea` with `kind: fix` and a parent); the clarification path still resumes a parked run. Delete `feedback-reply.ts`, `buildFeedbackReplyPrompt` and `buildFeedbackSummaryPrompt`; route and MCP tests.
+      `use-chat-thread.ts` unlocks the composer on ack and renders the streamed reply and tool lines under the pending bubble (the components IDEA-330 added for idea threads), `use-chat-stage.ts` follows the new stages, a `permission` event renders the question card with *Allow once*, *Always allow* (`POST /api/chat/allow` appends the rule to the agent's permission file) and *Skip*, each re-sending the turn with the choice; the chat task shows in the Stack panel with stop. Hook and view tests.
+- [ ] One composer: the idea surfaces open the chat
+      Delete `POST /api/agent/feedback-message`, `feedback-undo`, `feedback-summarize`, `feedback-reply.ts`, `buildFeedbackReplyPrompt`, `buildFeedbackSummaryPrompt`, the `feedback` activity event and `useSendFeedbackMessage`/`useFeedbackComposer`; `FeedbackSection` renders the read-only thread with promote kept; the idea view, `run-row-detail.tsx` and the toolbar's `scout-thread.tsx` get a *Discuss in chat* link that opens the project chat with `IDEA-N: ` prefilled, and the toolbar's Scout card shows the project chat and sends its `MountContext` with `POST /api/chat`; extend the MCP server where a shape is missing (`append_clarification` resolving the open question, `add_idea` with `kind: fix` and a parent). Route, hook and MCP tests.
 - [ ] Docs and the skill know the chat
-      `USAGE.md` gets a Chat section (what the project chat is, what Scout can and cannot do, cost per turn, how to clear); the paper-camp skill tells an agent that chat writes arrive through the MCP tools; `docs/` gains the session file's shape.
+      `USAGE.md` gets a Chat section (what the project chat is, what Scout can do, how the allowlist and the permission card work, cost per turn, how to clear); the paper-camp skill tells an agent that chat writes arrive through the MCP tools; `docs/` gains the session file's shape.
