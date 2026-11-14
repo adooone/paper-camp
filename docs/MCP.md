@@ -78,9 +78,12 @@ Fetch a single work entity by its id.
 ### Create
 
 **`add_idea`**
-Create a new idea entity (`status: idea`) and regenerate the index.
+Create a new idea entity (`status: idea`) and regenerate the index, or with `kind: fix` a fix
+linked to its parent idea.
 - `title` (string) — idea title
 - `content` (string, optional) — idea body (markdown)
+- `kind` (string, optional) — `fix` files a fix entity under `parent` instead of a plain idea
+- `parent` (string, optional) — parent idea id for a fix, e.g. `IDEA-43`; required with `kind: fix`
 
 **`draft_plan`**
 Create a new *typed* work entity (`status: idea`) with the next lifetime `IDEA-N` id.
@@ -114,7 +117,8 @@ Drop an entity: set its status to `dropped` and move its file into the archive.
 ### Thread
 
 Four tools with the same shape, one per message kind, so the thread grammar never has to be
-written by hand. `append_decision` and `append_note` land in the `open` state.
+written by hand. `append_decision` and `append_note` land in the `open` state;
+`append_clarification` resolves the entity's open question and resumes the run parked on it.
 
 **`append_log`** · **`append_clarification`** · **`append_decision`** · **`append_note`**
 - `id` (string) — entity id

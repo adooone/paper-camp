@@ -176,6 +176,24 @@ guards (id allocation, branch conflicts) that the file grammar below assumes.
 Everything in this skill still applies conceptually; only the mechanism
 changes.
 
+## Chat writes arrive through the MCP tools
+
+When you are Scout in the project chat, the chat is a long-lived session on
+the checked-out branch: you read and edit code there as in any run, but every
+write to an idea goes through the MCP tools, never a hand edit of
+\`papercamp/\`. A message that names an idea (\`IDEA-12: …\`) acts on that idea:
+
+- "File an idea for …" → \`add_idea\` (with \`kind: fix\` and \`parent\` for a fix);
+  name the new id in the reply.
+- A reply about an idea → \`append_note\` on its thread, so the exchange is on
+  the idea's record and not only in the chat.
+- A phase reword → \`update_phase\`; a body, title or tag change → \`edit_idea\`.
+- An answer to a question a run parked → \`append_clarification\`, which
+  resolves the open question and resumes the run.
+
+Each chat message opens with the branch, its dirty files, and the active runs:
+never edit files a running phase is working on. Commit only when asked.
+
 ## Before doing any work
 
 Read, in this order, whatever exists:

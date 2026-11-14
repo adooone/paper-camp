@@ -26,8 +26,8 @@ survives any tool — the app is optional at every step.
    status `idea`.
 2. **Refine.** Open the idea. *Extend* has an agent expand the one-liner into a
    reasoned body. Set its **Subject** (the epic-like grouping, managed in
-   Settings) and its **run order** from the sidebar card. Discuss in
-   **Comments**.
+   Settings) and its **run order** from the sidebar card. Discuss it in the
+   project chat (*Discuss in chat* on the idea).
 3. **Plan.** *Draft plan* has an agent write a `### Phases` checklist — small,
    independently-verifiable steps. The idea becomes `planned` and joins the run
    queue (the 1..N order stamps in the list gutter).
@@ -58,10 +58,12 @@ survives any tool — the app is optional at every step.
   stamps in the gutter, filters by status/tags, search, plus the AI-suggestion
   inbox and the archive queue below the list.
 - **Idea detail** — phases with per-phase run/copy actions, progress bar,
-  Comments; the sidebar card is the control surface: Status, Subject, Order,
+  the idea's read-only thread; the sidebar card is the control surface: Status, Subject, Order,
   Agent, Tags, Actions (run all, fix review, approve & close, drop).
 - **Stack panel** (right) — the machine room: running agent tasks (click one
   for its log), check stamps, and the git card (commit / push / sync / pull).
+- **Chat** — the project chat with Scout, the one place you talk to an
+  agent. See "Chat" below.
 - **Tasks** — the run log, grouped by day: every agent invocation with timing,
   outcome, and expandable output. Survives restarts.
 - **Docs** — this file and other repo docs, searchable.
@@ -70,6 +72,58 @@ survives any tool — the app is optional at every step.
 - **Projects hub** — the registry of every project this browser knows, with
   cross-project tabs; *Back to projects* in the header opens it. See "The
   hub" below.
+
+## Chat
+
+The project chat is a conversation with Scout, this project's own agent, and
+the only composer in the app: the idea view, a run row and the toolbar's Scout
+card each have *Discuss in chat*, which opens the chat with the idea's id
+prefilled (`IDEA-12: `). Each project has one chat; the project picker is the
+only split.
+
+**What Scout can do.** Scout is a full agent session on the checked-out
+branch, with the same tools a phase run gets plus web fetch and search. It
+reads `AGENTS.md` and the code before answering, edits files when you ask
+for a change, runs the checks and tests when the change warrants it, and
+commits only when you ask. Idea writes go through the paper-camp MCP tools:
+"file an idea for …" creates one with `add_idea`, and a message that names an
+idea acts on it — a reply lands on its thread (`append_note`), a phase reword
+is `update_phase`, a body change is `edit_idea`, an answer to a parked
+question is `append_clarification`, which resumes the run that parked. Every
+message also carries the branch with its dirty files and the active runs, so
+Scout keeps off files a running phase is editing. Git sync phrasings ("pull
+and push", "sync with main", "resolve the conflict") are still handled by the
+daemon directly, before the session sees them.
+
+**Streaming.** Sending acks at once and unlocks the composer; the reply
+streams in under the pending bubble with a line per tool call ("Reading
+src/app/server/git.ts"). The turn is a row in the Stack panel like any other
+task, with stop. One turn runs at a time; a failed one leaves its error in
+the chat with a retry.
+
+**The permission card.** Scout runs under the agent's own allowlist —
+`.claude/settings.json` `permissions.allow` for Claude Code, `opencode.json`
+`permission` for opencode — and is never run with permissions bypassed. A tool
+call the allowlist does not cover is denied, and the chat shows a card naming
+it ("Run `pnpm test`?"):
+
+- *Allow once* re-sends the turn with that one call allowed.
+- *Always allow* appends the rule to the permission file, so phase runs gain
+  it too, then re-sends the turn.
+- *Skip* tells Scout to carry on without it.
+
+**Cost per turn.** The chat is one long-lived session, started on the first
+message and resumed on every later one. The first turn carries a short
+preamble; each later turn sends only the new message and its two status
+lines, and the model keeps the rest, so a turn costs the turn, not the whole
+history. If the session cannot be resumed (it expired, or the chat agent or
+model changed in Settings), a fresh one starts with the last ten messages
+replayed. Each turn is logged in Tasks like any other run.
+
+**Clearing.** *Clear chat* deletes `papercamp/chat.md` and the session file
+together, so the next message starts a new session with no memory of the
+old one. [`docs/CHAT_SESSION.md`](docs/CHAT_SESSION.md) has the session file's
+shape.
 
 ## Beyond the app
 

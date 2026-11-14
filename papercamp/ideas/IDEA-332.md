@@ -2,7 +2,7 @@
 id: IDEA-332
 title: Scout chat as a live agent session
 type: feat
-status: planned
+status: review
 created: 2026-11-14
 updated: 2026-11-14
 tags:
@@ -142,5 +142,6 @@ view, toolbar card and run row each open the chat with the id prefilled.
 - [x] One composer: the idea surfaces open the chat
       Delete `POST /api/agent/feedback-message`, `feedback-undo`, `feedback-summarize`, `feedback-reply.ts`, `buildFeedbackReplyPrompt`, `buildFeedbackSummaryPrompt`, the `feedback` activity event and `useSendFeedbackMessage`/`useFeedbackComposer`; `FeedbackSection` renders the read-only thread with promote kept; the idea view, `run-row-detail.tsx` and the toolbar's `scout-thread.tsx` get a *Discuss in chat* link that opens the project chat with `IDEA-N: ` prefilled, and the toolbar's Scout card shows the project chat and sends its `MountContext` with `POST /api/chat`; extend the MCP server where a shape is missing (`append_clarification` resolving the open question, `add_idea` with `kind: fix` and a parent). Route, hook and MCP tests.
       run: 15m50s · 208 in · 52k out · opus-5-5 · sess:d1c19332-2b33-42c6-bd73-47e9ded59a7e
-- [ ] Docs and the skill know the chat
+- [x] Docs and the skill know the chat
       `USAGE.md` gets a Chat section (what the project chat is, what Scout can do, how the allowlist and the permission card work, cost per turn, how to clear); the paper-camp skill tells an agent that chat writes arrive through the MCP tools; `docs/` gains the session file's shape.
+      run: 3m33s · 50 in · 10.8k out · opus-5-5 · sess:abf2744e-df11-432e-ab3a-b1b375380a8f
