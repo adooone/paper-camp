@@ -233,6 +233,22 @@ export function createProjectMounter(
   buildApi: (project: MachineProject) => Promise<ApiMiddleware>,
   mounted: Map<string, ApiMiddleware> = new Map(),
 ) {
+  const building = new Map<string, Promise<ApiMiddleware>>();
+
+  function build(project: MachineProject): Promise<ApiMiddleware> {
+    const inFlight = building.get(project.slug);
+    if (inFlight) return inFlight;
+    const promise = buildApi(project)
+      .then((api) => {
+        mounted.set(project.slug, api);
+        console.log(`paper-camp: mounted "${project.slug}" (${project.path})`);
+        return api;
+      })
+      .finally(() => building.delete(project.slug));
+    building.set(project.slug, promise);
+    return promise;
+  }
+
   async function mount(slug: string): Promise<MountResult> {
     const registry = await loadRegistry(registryPath);
     const project = registry.projects.find((p) => p.slug === slug);
@@ -254,10 +270,7 @@ export function createProjectMounter(
     const cached = mounted.get(slug);
     if (cached) return { kind: 'mounted', api: cached };
 
-    const apiMiddleware = await buildApi(project);
-    mounted.set(slug, apiMiddleware);
-    console.log(`paper-camp: mounted "${slug}" (${project.path})`);
-    return { kind: 'mounted', api: apiMiddleware };
+    return { kind: 'mounted', api: await build(project) };
   }
 
   return { mount, mounted };

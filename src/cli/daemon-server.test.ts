@@ -113,6 +113,26 @@ describe('createProjectMounter', () => {
     expect(mounted.get('repo')).toBe(api);
   });
 
+  it('builds once when several first requests for a slug arrive together', async () => {
+    const projectPath = await makeProjectDir('repo');
+    const { registry } = addProject({ version: 1, projects: [] }, projectPath, 'Repo');
+    const registryPath = await makeRegistryFile(registry);
+    const api = fakeApi();
+    const buildApi = vi
+      .fn()
+      .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(api), 50)));
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { mount } = createProjectMounter(registryPath, buildApi);
+    const results = await Promise.all([mount('repo'), mount('repo'), mount('repo')]);
+
+    const mountedLines = log.mock.calls.filter(([line]) => String(line).includes('mounted "repo"'));
+    log.mockRestore();
+    expect(results).toEqual(Array(3).fill({ kind: 'mounted', api }));
+    expect(buildApi).toHaveBeenCalledTimes(1);
+    expect(mountedLines).toHaveLength(1);
+  });
+
   it('mounts independent slugs independently', async () => {
     const alphaPath = await makeProjectDir('alpha');
     const betaPath = await makeProjectDir('beta');

@@ -80,9 +80,10 @@ slowly" rather than "unreachable" against a loaded box.
       30-minute limit with `killWithEscalation`, `stopCheck`,
       `POST /api/checks/stop`, the stop button on the running stamp; tests.
       run: 1m24s · 36 in · 10.6k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
-- [ ] Single-flight mount
+- [x] Single-flight mount
       In-flight promise per slug in `createProjectMounter`; test with
       concurrent first requests.
+      run: 41s · 48 in · 12.4k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
 - [ ] Slow is not down
       Late-completion detection in `probeReachable`, the "responding slowly"
       page with automatic retry; tests.
