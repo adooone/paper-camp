@@ -2860,6 +2860,7 @@ export function createAgentManager(
       taskKind: 'chat',
     });
     if (getAgentSignIn(agentId).signedOut) {
+      publish?.({ type: 'chat', stage: 'failed', error: SIGNED_OUT_ERROR });
       throw readOnlyPromptError(SIGNED_OUT_ERROR, 'auth');
     }
 

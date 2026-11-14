@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { AgentId } from '@/types/index';
 import { localFile, readMaybe } from './helpers';
@@ -31,4 +31,8 @@ export async function writeChatSession(root: string, session: ChatSession): Prom
   const path = chatSessionPath(root);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(session, null, 2)}\n`, 'utf-8');
+}
+
+export async function clearChatSession(root: string): Promise<void> {
+  await rm(chatSessionPath(root), { force: true });
 }

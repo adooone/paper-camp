@@ -133,8 +133,9 @@ view, toolbar card and run row each open the chat with the id prefilled.
 - [x] The chat session runner
       `buildChatArgs` in `src/app/server/agents/claude-code.ts` (`buildArgs` without the `WebFetch`/`WebSearch` denial, plus `--include-partial-messages` and `--resume` when a session exists) and the opencode equivalent (`run --format json --session <id>`); `permission_denials` from the result and opencode's permission asks are reported as a `permission` chat event with tool and target; `runChatTurn(root, text, context)` in `agent.ts` that reads and writes `.local/chat-session.json`, feeds the preamble on the first turn, replays the last ten `chat.md` messages when a resume fails, publishes `chat` stage, chunk and tool events, records the task like any other (no `chat` filter in `getStatus`), and returns the final text. Adapter and runner tests with a fake agent.
       run: 9m43s · 82 in · 44.9k out · opus-5-5 · sess:473e0898-736b-42df-8d86-42a7d8cae5bf
-- [ ] Project chat on the session
+- [x] Project chat on the session
       `POST /api/chat` appends the user message, starts the turn and acks; the reply is appended to `chat.md` on `done`, a failure as an agent message with the error; `/api/chat/retry` re-sends the last user message; `DELETE /api/chat` clears `chat.md` and the session file; the git shortcut stays first. Delete `chat-reply.ts`, `buildChatMovePrompt` and their tests; route tests for ack timing, retry and clear.
+      run: 3m53s · 52 in · 15.6k out · opus-5-5 · sess:b5dd85b4-0c40-48ac-a029-4a9045b67cf2
 - [ ] The web page streams
       `use-chat-thread.ts` unlocks the composer on ack and renders the streamed reply and tool lines under the pending bubble (the components IDEA-330 added for idea threads), `use-chat-stage.ts` follows the new stages, a `permission` event renders the question card with *Allow once*, *Always allow* (`POST /api/chat/allow` appends the rule to the agent's permission file) and *Skip*, each re-sending the turn with the choice; the chat task shows in the Stack panel with stop. Hook and view tests.
 - [ ] One composer: the idea surfaces open the chat

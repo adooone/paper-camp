@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -34,7 +34,9 @@ function routeAt(root: string, path: string, method: string, ctx: Partial<RouteC
     root,
     activity: { notifyChanged: () => {}, publish: () => {} },
     agent: { getStatus: () => [] } as unknown as RouteContext['agent'],
-    git: {} as unknown as RouteContext['git'],
+    git: {
+      getStatusSnapshot: async () => ({ branch: 'main', entries: [] }),
+    } as unknown as RouteContext['git'],
     checks: {} as unknown as RouteContext['checks'],
     ...ctx,
   } as RouteContext).find((r) => r.path === path && r.method === method);
@@ -81,13 +83,37 @@ function fakeRes(): { res: ServerResponse; status: () => number; json: () => unk
   return { res, status: () => statusCode, json: () => JSON.parse(body) };
 }
 
-function agentCtx(runChatReply: (prompt: string) => Promise<string>): Partial<RouteContext> {
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (err: Error) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+function agentCtx(
+  runChatTurn: (text: string, context?: unknown) => Promise<string>,
+  status: unknown[] = [],
+): Partial<RouteContext> {
   return {
     agent: {
-      runReadOnlyPrompt: (_taskKind: string, prompt: string) => runChatReply(prompt),
-      getStatus: () => [],
+      runChatTurn,
+      getStatus: () => status,
     } as unknown as RouteContext['agent'],
   };
+}
+
+const chatPath = (root: string) => join(root, 'papercamp', 'chat.md');
+
+async function waitForChat(root: string, needle: string): Promise<string> {
+  for (let i = 0; i < 50; i++) {
+    const content = await readFile(chatPath(root), 'utf-8').catch(() => '');
+    if (content.includes(needle)) return content;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error(`chat.md never contained ${needle}`);
 }
 
 describe('GET /api/chat', () => {
@@ -153,258 +179,101 @@ describe('GET /api/chat', () => {
 });
 
 describe('POST /api/chat', () => {
-  it('drafts and creates a new idea for the add_idea move', async () => {
+  it('acks once the user message is on disk, before the turn finishes', async () => {
     const root = await makeRoot();
-    const runChatReply = vi.fn(async () =>
-      JSON.stringify({
-        result: JSON.stringify({ move: 'add_idea', title: 'Dark mode toggle', content: 'Body.' }),
-      }),
-    );
+    const reply = deferred<string>();
+    const runChatTurn = vi.fn(() => reply.promise);
 
     const { res, status, json } = fakeRes();
-    await route(root, 'POST', agentCtx(runChatReply)).handle(
-      fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })),
-      res,
-    );
-
-    expect(status()).toBe(200);
-    expect(json()).toEqual({ ok: true });
-    expect(runChatReply).toHaveBeenCalledOnce();
-
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
-    expect(chatFile).toContain('[chat] We should add a dark mode toggle');
-    expect(chatFile).toMatch(/\[chat\] \[agent\] Filed \[\[IDEA-\d+]] — Dark mode toggle\./);
-
-    const ideaFiles = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8').catch(
-      () => null,
-    );
-    expect(ideaFiles).toContain('Dark mode toggle');
-  });
-
-  it('routes a message about an existing idea through the feedback path', async () => {
-    const root = await makeRoot();
-    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
-    await writeFile(
-      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
-      [
-        '---',
-        'id: IDEA-9',
-        'title: Existing idea',
-        'type: feat',
-        'status: in-progress',
-        'created: 2026-09-10',
-        'tags: []',
-        '---',
-        '',
-        'Body.',
-        '',
-      ].join('\n'),
-      'utf-8',
-    );
-
-    const runChatReply = vi.fn(async (_prompt: string) =>
-      JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
-    );
-    const runFeedbackReply = vi.fn(async (_prompt: string) =>
-      JSON.stringify({ reply: 'Noted, thanks.' }),
-    );
-
-    const { res, status, json } = fakeRes();
-    await route(root, 'POST', {
-      agent: {
-        runReadOnlyPrompt: (taskKind: string, prompt: string) =>
-          taskKind === 'chat' ? runChatReply(prompt) : runFeedbackReply(prompt),
-        getStatus: () => [],
-      } as unknown as RouteContext['agent'],
-    }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
-
-    expect(status()).toBe(200);
-    expect(json()).toEqual({ ok: true });
-
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
-    expect(chatFile).toContain('[chat] [agent] Posted to [[IDEA-9]]: Noted, thanks.');
-
-    const ideaFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'utf-8');
-    expect(ideaFile).toContain('the log view is clipped again');
-    expect(ideaFile).toContain('Noted, thanks.');
-  });
-
-  it('replies directly for the answer move', async () => {
-    const root = await makeRoot();
-    const runChatReply = vi.fn(async () =>
-      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
-    );
-
-    const { res, status, json } = fakeRes();
-    await route(root, 'POST', agentCtx(runChatReply)).handle(
+    await route(root, 'POST', agentCtx(runChatTurn)).handle(
       fakeReq(JSON.stringify({ text: 'What is running?' })),
       res,
     );
 
     expect(status()).toBe(200);
     expect(json()).toEqual({ ok: true });
+    expect(runChatTurn).toHaveBeenCalledWith('What is running?', {
+      branch: { name: 'main', dirty: [] },
+    });
+    const before = await readFile(chatPath(root), 'utf-8');
+    expect(before).toContain('[chat] What is running?');
+    expect(before).not.toContain('[agent]');
 
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
-    expect(chatFile).toContain('[chat] What is running?');
-    expect(chatFile).toContain('[chat] [agent] Nothing is running.');
+    reply.resolve('Nothing is running.');
+    expect(await waitForChat(root, '[agent]')).toContain('[chat] [agent] Nothing is running.');
   });
 
-  it('keeps the user message on disk even when the agent run fails', async () => {
+  it('passes the branch and its dirty files to the turn', async () => {
     const root = await makeRoot();
-    const runChatReply = vi.fn(async () => {
+    const runChatTurn = vi.fn(async () => 'ok');
+
+    const { res } = fakeRes();
+    await route(root, 'POST', {
+      ...agentCtx(runChatTurn),
+      git: {
+        getStatusSnapshot: async () => ({
+          branch: 'feat/idea-1-x',
+          entries: [{ path: 'src/a.ts', status: ' M', staged: false }],
+        }),
+      } as unknown as RouteContext['git'],
+    }).handle(fakeReq(JSON.stringify({ text: 'Hi' })), res);
+
+    expect(runChatTurn).toHaveBeenCalledWith('Hi', {
+      branch: { name: 'feat/idea-1-x', dirty: ['src/a.ts'] },
+    });
+  });
+
+  it('appends a failed turn as an agent message carrying the error', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => {
       throw new Error('agent unavailable');
     });
 
-    const { res, status, json } = fakeRes();
-    await route(root, 'POST', agentCtx(runChatReply)).handle(
+    const { res, json } = fakeRes();
+    await route(root, 'POST', agentCtx(runChatTurn)).handle(
       fakeReq(JSON.stringify({ text: 'Hello?' })),
       res,
     );
 
-    expect(status()).toBe(200);
-    expect(json()).toMatchObject({ ok: true, error: 'agent unavailable' });
-
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    expect(json()).toEqual({ ok: true });
+    const chatFile = await waitForChat(root, '[agent]');
     expect(chatFile).toContain('[chat] Hello?');
-    expect(chatFile).not.toContain('[agent]');
+    expect(chatFile).toContain('[chat] [agent] agent unavailable');
   });
 
-  it('publishes reading, deciding, filing, then done for the add_idea move', async () => {
+  it('refuses while a chat turn is still running, without appending', async () => {
     const root = await makeRoot();
-    const runChatReply = vi.fn(async () =>
-      JSON.stringify({
-        result: JSON.stringify({ move: 'add_idea', title: 'Dark mode toggle', content: 'Body.' }),
-      }),
-    );
-    const publish = vi.fn();
+    const runChatTurn = vi.fn(async () => 'ok');
 
-    const { res } = fakeRes();
-    await route(root, 'POST', {
-      ...agentCtx(runChatReply),
-      activity: {
-        notifyChanged: () => {},
-        onChange: () => () => {},
-        publish,
-        getState: () => ({ clients: new Set() }),
-        subscribe: () => {},
-        close: () => {},
-      },
-    }).handle(fakeReq(JSON.stringify({ text: 'We should add a dark mode toggle' })), res);
+    const { res, status, json } = fakeRes();
+    await route(
+      root,
+      'POST',
+      agentCtx(runChatTurn, [{ taskKind: 'chat', status: 'running' }]),
+    ).handle(fakeReq(JSON.stringify({ text: 'Again?' })), res);
 
-    expect(publish.mock.calls.map((call) => call[0])).toEqual([
-      { type: 'chat', stage: 'reading', ideas: 0 },
-      { type: 'chat', stage: 'deciding' },
-      { type: 'chat', stage: 'filing' },
-      { type: 'chat', stage: 'done' },
-    ]);
+    expect(status()).toBe(409);
+    expect(json()).toEqual({ error: 'Scout is still answering the previous message' });
+    expect(runChatTurn).not.toHaveBeenCalled();
+    expect(await readFile(chatPath(root), 'utf-8').catch(() => '')).not.toContain('Again?');
   });
 
-  it('publishes posting with the entity id for the entity move', async () => {
+  it('answers a git request through the shortcut without starting a turn', async () => {
     const root = await makeRoot();
-    await mkdir(join(root, 'papercamp', 'ideas'), { recursive: true });
-    await writeFile(
-      join(root, 'papercamp', 'ideas', 'IDEA-9.md'),
-      [
-        '---',
-        'id: IDEA-9',
-        'title: Existing idea',
-        'type: feat',
-        'status: in-progress',
-        'created: 2026-09-10',
-        'tags: []',
-        '---',
-        '',
-        'Body.',
-        '',
-      ].join('\n'),
-      'utf-8',
-    );
-    const runChatReply = vi.fn(async (_prompt: string) =>
-      JSON.stringify({ result: JSON.stringify({ move: 'entity', entityId: 'IDEA-9' }) }),
-    );
-    const runFeedbackReply = vi.fn(async (_prompt: string) =>
-      JSON.stringify({ reply: 'Noted, thanks.' }),
-    );
-    const publish = vi.fn();
+    const runChatTurn = vi.fn(async () => 'ok');
 
-    const { res } = fakeRes();
+    const { res, json } = fakeRes();
     await route(root, 'POST', {
-      agent: {
-        runReadOnlyPrompt: (taskKind: string, prompt: string) =>
-          taskKind === 'chat' ? runChatReply(prompt) : runFeedbackReply(prompt),
-        getStatus: () => [],
-      } as unknown as RouteContext['agent'],
-      activity: {
-        notifyChanged: () => {},
-        onChange: () => () => {},
-        publish,
-        getState: () => ({ clients: new Set() }),
-        subscribe: () => {},
-        close: () => {},
-      },
-    }).handle(fakeReq(JSON.stringify({ text: 'the log view is clipped again' })), res);
+      ...agentCtx(runChatTurn),
+      git: {
+        getStatusSnapshot: async () => ({ branch: 'main', entries: [] }),
+        runGitSync: async () => ({ ok: true }),
+      } as unknown as RouteContext['git'],
+    }).handle(fakeReq(JSON.stringify({ text: 'pull and push' })), res);
 
-    expect(publish.mock.calls.map((call) => call[0])).toEqual([
-      { type: 'chat', stage: 'reading', ideas: 1 },
-      { type: 'chat', stage: 'deciding' },
-      { type: 'chat', stage: 'posting', entityId: 'IDEA-9' },
-      { type: 'chat', stage: 'done' },
-    ]);
-  });
-
-  it('publishes answering for the answer move', async () => {
-    const root = await makeRoot();
-    const runChatReply = vi.fn(async () =>
-      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
-    );
-    const publish = vi.fn();
-
-    const { res } = fakeRes();
-    await route(root, 'POST', {
-      ...agentCtx(runChatReply),
-      activity: {
-        notifyChanged: () => {},
-        onChange: () => () => {},
-        publish,
-        getState: () => ({ clients: new Set() }),
-        subscribe: () => {},
-        close: () => {},
-      },
-    }).handle(fakeReq(JSON.stringify({ text: 'What is running?' })), res);
-
-    expect(publish.mock.calls.map((call) => call[0])).toEqual([
-      { type: 'chat', stage: 'reading', ideas: 0 },
-      { type: 'chat', stage: 'deciding' },
-      { type: 'chat', stage: 'answering' },
-      { type: 'chat', stage: 'done' },
-    ]);
-  });
-
-  it('publishes failed with the error when the agent run throws', async () => {
-    const root = await makeRoot();
-    const runChatReply = vi.fn(async () => {
-      throw new Error('agent unavailable');
-    });
-    const publish = vi.fn();
-
-    const { res } = fakeRes();
-    await route(root, 'POST', {
-      ...agentCtx(runChatReply),
-      activity: {
-        notifyChanged: () => {},
-        onChange: () => () => {},
-        publish,
-        getState: () => ({ clients: new Set() }),
-        subscribe: () => {},
-        close: () => {},
-      },
-    }).handle(fakeReq(JSON.stringify({ text: 'Hello?' })), res);
-
-    expect(publish.mock.calls.map((call) => call[0])).toEqual([
-      { type: 'chat', stage: 'reading', ideas: 0 },
-      { type: 'chat', stage: 'deciding' },
-      { type: 'chat', stage: 'failed', error: 'agent unavailable' },
-    ]);
+    expect(json()).toEqual({ ok: true });
+    expect(runChatTurn).not.toHaveBeenCalled();
+    expect(await readFile(chatPath(root), 'utf-8')).toContain('[chat] [agent] Synced');
   });
 
   it('rejects an empty message', async () => {
@@ -417,87 +286,47 @@ describe('POST /api/chat', () => {
 });
 
 describe('POST /api/chat/retry', () => {
-  it('runs the reply for the last stored message without appending it again', async () => {
+  it('re-sends the last user message without appending it again', async () => {
     const root = await makeRoot();
     const today = new Date().toISOString().slice(0, 10);
     await writeFile(
-      join(root, 'papercamp', 'chat.md'),
-      `### Thread\n- [x] ${today} [chat] What is running?\n`,
+      chatPath(root),
+      [
+        '### Thread',
+        `- [x] ${today} [chat] What is running?`,
+        `- [x] ${today} [chat] [agent] agent unavailable`,
+      ].join('\n'),
       'utf-8',
     );
-    const runChatReply = vi.fn(async () =>
-      JSON.stringify({ result: JSON.stringify({ move: 'answer', reply: 'Nothing is running.' }) }),
-    );
+    const runChatTurn = vi.fn(async () => 'Nothing is running.');
 
     const { res, status, json } = fakeRes();
-    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatReply)).handle(fakeReq(), res);
+    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatTurn)).handle(fakeReq(), res);
 
     expect(status()).toBe(200);
     expect(json()).toEqual({ ok: true });
-    expect(runChatReply).toHaveBeenCalledOnce();
-
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
-    const userOccurrences = chatFile.match(/What is running\?/g) ?? [];
-    expect(userOccurrences).toHaveLength(1);
-    expect(chatFile).toContain('[chat] [agent] Nothing is running.');
+    expect(runChatTurn).toHaveBeenCalledWith('What is running?', expect.anything());
+    const chatFile = await waitForChat(root, 'Nothing is running.');
+    expect(chatFile.match(/What is running\?/g)).toHaveLength(1);
   });
 
-  it('publishes the same stage events as a fresh send', async () => {
+  it('refuses when there is no user message to re-send', async () => {
     const root = await makeRoot();
-    await writeFile(
-      join(root, 'papercamp', 'chat.md'),
-      '### Thread\n- [x] 2026-09-11 [chat] Hello?\n',
-      'utf-8',
-    );
-    const runChatReply = vi.fn(async () => {
-      throw new Error('agent unavailable');
-    });
-    const publish = vi.fn();
+    const runChatTurn = vi.fn(async () => 'ok');
 
-    const { res } = fakeRes();
-    await routeAt(root, '/api/chat/retry', 'POST', {
-      ...agentCtx(runChatReply),
-      activity: {
-        notifyChanged: () => {},
-        onChange: () => () => {},
-        publish,
-        getState: () => ({ clients: new Set() }),
-        subscribe: () => {},
-        close: () => {},
-      },
-    }).handle(fakeReq(), res);
+    const { res, status } = fakeRes();
+    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatTurn)).handle(fakeReq(), res);
 
-    expect(publish.mock.calls.map((call) => call[0])).toEqual([
-      { type: 'chat', stage: 'reading', ideas: 0 },
-      { type: 'chat', stage: 'deciding' },
-      { type: 'chat', stage: 'failed', error: 'agent unavailable' },
-    ]);
-  });
-
-  it('returns the error without a toast-worthy throw when the agent run fails', async () => {
-    const root = await makeRoot();
-    await writeFile(
-      join(root, 'papercamp', 'chat.md'),
-      '### Thread\n- [x] 2026-09-11 [chat] Hello?\n',
-      'utf-8',
-    );
-    const runChatReply = vi.fn(async () => {
-      throw new Error('agent unavailable');
-    });
-
-    const { res, status, json } = fakeRes();
-    await routeAt(root, '/api/chat/retry', 'POST', agentCtx(runChatReply)).handle(fakeReq(), res);
-
-    expect(status()).toBe(200);
-    expect(json()).toMatchObject({ ok: true, error: 'agent unavailable' });
+    expect(status()).toBe(400);
+    expect(runChatTurn).not.toHaveBeenCalled();
   });
 });
 
 describe('DELETE /api/chat', () => {
-  it('clears the thread except unanswered questions', async () => {
+  it('clears the thread except unanswered questions and drops the session file', async () => {
     const root = await makeRoot();
     await writeFile(
-      join(root, 'papercamp', 'chat.md'),
+      chatPath(root),
       [
         '### Thread',
         '- [x] 2026-09-11 [chat] Hello',
@@ -506,15 +335,19 @@ describe('DELETE /api/chat', () => {
       ].join('\n'),
       'utf-8',
     );
+    const sessionPath = join(root, 'papercamp', '.local', 'chat-session.json');
+    await mkdir(join(root, 'papercamp', '.local'), { recursive: true });
+    await writeFile(sessionPath, JSON.stringify({ sessionId: 's1', agent: 'claude-code' }));
 
     const { res, status, json } = fakeRes();
     await route(root, 'DELETE').handle(fakeReq(), res);
     expect(status()).toBe(200);
     expect(json()).toEqual({ ok: true });
 
-    const chatFile = await readFile(join(root, 'papercamp', 'chat.md'), 'utf-8');
+    const chatFile = await readFile(chatPath(root), 'utf-8');
     expect(chatFile).toContain('Which auth flow?');
     expect(chatFile).not.toContain('Hello');
     expect(chatFile).not.toContain('Resolved one');
+    await expect(access(sessionPath)).rejects.toThrow();
   });
 });

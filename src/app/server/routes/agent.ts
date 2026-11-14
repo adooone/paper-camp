@@ -273,22 +273,6 @@ async function runFeedbackPipeline(
   return { entity, replyText, error, undo };
 }
 
-/** The feedback path for callers that need the outcome: files `text` on `planId`'s thread,
- * then runs the reply pipeline and awaits it. Shared with the project chat's "about an
- * existing idea" move (IDEA-251). Returns null when planId doesn't resolve to an entity. */
-export async function applyFeedbackMessage(
-  deps: FeedbackDeps,
-  planId: string,
-  text: string,
-  context?: MountContext,
-): Promise<FeedbackApplyResult | null> {
-  const filed = await fileFeedbackMessage(deps.root, planId, text);
-  if (!filed) return null;
-  return enqueueFeedback(`${deps.root}:${filed.entity.id}`, () =>
-    runFeedbackPipeline(deps, filed, context),
-  );
-}
-
 // Known renames from this project's own history, cheap enough to
 // fix with plain substitution before spending a model call on the rest of the drift.
 const KNOWN_RENAMES: ReadonlyArray<readonly [string, string]> = [

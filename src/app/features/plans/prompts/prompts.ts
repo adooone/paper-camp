@@ -1,6 +1,5 @@
 import type { PackageManager } from '@/core/desk-discovery/evidence';
 import type {
-  AgentTaskState,
   EntityEntry,
   IdeaEntry,
   Issue,
@@ -10,7 +9,6 @@ import type {
   ReviewThread,
   SuggestionEntry,
   TaskKind,
-  TaskLogEntry,
   ThreadMessage,
 } from '@/types/index';
 import type { SimilarityCandidate } from '../helpers';
@@ -490,91 +488,6 @@ Rules:
 - When every phase above is already checked ([x]) and the message asks for new or still-missing work, use "add" for a new phase — never "reword" a finished phase to smuggle in new work, since a completed phase never re-runs. The app never rewrites a finished Phases history: for a plan still under review it tracks the new work in its own Fixes list; for a done or archived idea it spawns a separate linked fix entity instead of reopening the closed idea, so your reply should just acknowledge the request rather than promise the fix landed on this idea.
 - "edit.body", when present, must be the complete replacement body, not a fragment — reproduce every part that isn't changing, word for word.
 - Only include "edit" when the message clearly asks for a change; a fix request always becomes an "edit" (a phase on this idea), never anything else. Never create a new idea, and never decline a fix request with a bare reply.`;
-}
-
-/** Read-only (server/agent.ts's runReadOnlyPrompt/runChatReply) — the project-wide
- * chat's reply, not bound to any one idea. Classifies the last message into one of
- * three moves (add_idea / feedback-path append / corpus-and-status answer) and drafts
- * what that move needs; chat-reply.ts executes the move deterministically. */
-export function buildChatMovePrompt(
-  messages: ThreadMessage[],
-  entities: EntityEntry[],
-  taskLog: TaskLogEntry[],
-  agentStatus: AgentTaskState[],
-): string {
-  const threadList = messages.length
-    ? messages
-        .map((m) => {
-          const speaker = m.from === 'agent' ? 'Agent' : 'User';
-          const parked =
-            m.kind === 'question' && m.entityId
-              ? ` [parked question on ${m.entityId}, ${m.state}]`
-              : '';
-          return `${speaker}${parked}: ${m.text}`;
-        })
-        .join('\n')
-    : '(empty thread)';
-
-  const ideaIndex = entities.length
-    ? entities
-        .map((e) =>
-          e.status === 'done' || e.status === 'dropped'
-            ? `- ${e.id}: ${e.title} (status: ${e.status})`
-            : `### ${e.id}: ${e.title} (status: ${e.status ?? 'unknown'})\n${e.body}`,
-        )
-        .join('\n\n')
-    : '(no ideas exist in this project yet)';
-
-  const recentRuns = taskLog.slice(-10);
-  const runLogList = recentRuns.length
-    ? recentRuns
-        .map((r) => {
-          const outcome = r.outcome ?? (r.endedAt ? 'done' : 'running');
-          const label = r.planId ? `${r.planId} (${r.planTitle})` : r.planTitle;
-          return `- ${label}: ${r.taskKind} ${outcome}${r.reason ? ` — ${r.reason}` : ''}`;
-        })
-        .join('\n')
-    : '(no runs logged yet)';
-
-  const liveStatus = agentStatus.length
-    ? agentStatus
-        .map((t) => {
-          const label = t.ideaId ?? t.planId ?? t.planTitle;
-          return `- ${label}: ${t.taskKind} ${t.status}${
-            t.phaseIndex !== undefined ? ` (phase ${t.phaseIndex + 1})` : ''
-          }`;
-        })
-        .join('\n')
-    : '(nothing running)';
-
-  return `You are Paper Scout, this project's own agent identity — the same Scout that opens draft PRs and cuts releases in CI, now talking in the project's own chat, not bound to any one idea. Sound like a sharp, low-ceremony teammate: direct and concise, no corporate throat-clearing, no restating the question back before answering it.
-
-Every idea in the project:
-${ideaIndex}
-
-Recent runs, oldest first:
-${runLogList}
-
-What's running right now:
-${liveStatus}
-
-Conversation so far, oldest first — the last line is what you're acting on:
-${threadList}
-
-Task: decide exactly one of three moves for the last line and respond with ONLY a single JSON object, no prose, no code fences, no markdown:
-- It describes new work with nothing above already covering it — draft a new idea: {"move": "add_idea", "title": "short title", "content": "idea body in markdown"}. ${TITLE_STYLE}
-- It's about an existing idea, fix, or run — named by id, by title, or by being the one currently running or errored above — and belongs on that entity's own thread: {"move": "entity", "entityId": "IDEA-42"}. Only use an id that appears in the lists above.
-- It's a question you can answer from the idea index, run log, or live status above, or a plain remark needing no action: {"move": "answer", "reply": "short reply text, continuing the conversation naturally"}.
-
-Rules:
-- Prefer "entity" over "add_idea" whenever the message is clearly about something already tracked above — never create a duplicate idea for existing work.
-- Prefer "entity" over "answer" when the message asks for a change or reports a problem with something tracked above, even if phrased as a question — that belongs on the entity's own thread, not just an answer here.
-- If the last line answers the nearest "[parked question ...]" line above it, that's always "entity" with that question's own entity id, even if the reply doesn't name the entity itself.
-- Use "add_idea" only when the message describes work with nothing above already covering it.
-- Never fabricate an entity id that isn't in the lists above; if unsure which entity a message means, answer instead of guessing.
-- Answer in at most three sentences.
-- Name ideas by id, never by title alone.
-- Never restate the user's message back to them.`;
 }
 
 /** Read-only (server/agent.ts's runReadOnlyPrompt/runFeedbackReply, reused for this

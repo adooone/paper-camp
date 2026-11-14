@@ -1,68 +1,53 @@
-import { createIdea, localFile, planFile, readCorpus } from '@/core/corpus';
+import { readCorpus } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
-import { readTaskLog } from '@/core/parse';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
-import type { ThreadMessage } from '@/types/index';
-import { replyToChat } from '../chat-reply';
+import type { AgentTaskState } from '@/types/index';
+import { clearChatSession } from '../chat-session';
 import { tryHandleGitChatRequest } from '../git-chat';
-import { appendToChatFile, clearChatFile, readChatFile, readMaybe } from '../helpers';
+import { appendToChatFile, clearChatFile, readChatFile } from '../helpers';
 import { readJson, sendJson } from '../http';
-import { applyFeedbackMessage } from './agent';
 import type { Route, RouteContext } from './types';
 
-type ChatReplyContext = Pick<RouteContext, 'root' | 'agent' | 'git' | 'checks' | 'activity'>;
+type ChatTurnContext = Pick<RouteContext, 'root' | 'agent' | 'git' | 'activity'>;
 
-async function appendUserMessage(root: string, text: string): Promise<void> {
-  await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text });
+const BUSY_ERROR = 'Scout is still answering the previous message';
+const SETTLED: AgentTaskState['status'][] = ['done', 'error', 'superseded'];
+
+function appendAgentMessage(root: string, text: string): Promise<void> {
+  return appendToChatFile(
+    root,
+    agentThreadMessage(text, 'chat', undefined, undefined, nowMinuteString()),
+  );
 }
 
-async function runChatReply(
-  { root, agent, git, checks, activity }: ChatReplyContext,
-  thread: ThreadMessage[],
-): Promise<{ error?: string }> {
-  const publishStage = (event: { stage: string } & Record<string, unknown>) =>
-    activity.publish({ type: 'chat', ...event });
+function chatBusy(agent: RouteContext['agent']): boolean {
+  return agent
+    .getStatus()
+    .some((task) => task.taskKind === 'chat' && !SETTLED.includes(task.status));
+}
 
-  let error: string | undefined;
+async function branchContext(git: RouteContext['git']) {
   try {
-    const [{ entries }, taskLogRaw] = await Promise.all([
-      readCorpus(root),
-      readMaybe(localFile(root, 'tasks.log')),
-    ]);
-    const taskLog = readTaskLog(taskLogRaw);
-    publishStage({ stage: 'reading', ideas: entries.length });
-    const replyText = await replyToChat(
-      thread,
-      { entities: entries, taskLog, agentStatus: agent.getStatus() },
-      {
-        runPrompt: (prompt) => agent.runReadOnlyPrompt('chat', prompt, 'Project chat'),
-        createIdea: (title, content) => createIdea(root, { title, content }),
-        applyToEntity: async (entityId, feedbackText) => {
-          const result = await applyFeedbackMessage(
-            { root, git, checks, agent },
-            entityId,
-            feedbackText,
-          );
-          return result ? { replyText: result.replyText, error: result.error } : null;
-        },
-        onStage: publishStage,
-      },
-    );
-    await appendToChatFile(
-      root,
-      agentThreadMessage(replyText, 'chat', undefined, undefined, nowMinuteString()),
-    );
-    publishStage({ stage: 'done' });
-  } catch (err) {
-    error = (err as Error).message;
-    publishStage({ stage: 'failed', error });
+    const { branch, entries } = await git.getStatusSnapshot();
+    return { name: branch, dirty: entries.map((entry) => entry.path) };
+  } catch {
+    return undefined;
   }
-
-  activity.notifyChanged(['chat', 'corpus']);
-  return { error };
 }
 
-export function chatRoutes({ root, agent, git, checks, activity }: RouteContext): Route[] {
+async function startTurn({ root, agent, git, activity }: ChatTurnContext, text: string) {
+  const turn = agent.runChatTurn(text, { branch: await branchContext(git) });
+  void turn
+    .catch((err: Error) => err.message || 'Scout failed without an error message')
+    .then(async (reply) => {
+      await appendAgentMessage(root, reply);
+      activity.notifyChanged(['chat', 'corpus']);
+    })
+    .catch(() => {});
+}
+
+export function chatRoutes({ root, agent, git, activity }: RouteContext): Route[] {
+  const ctx = { root, agent, git, activity };
   return [
     {
       method: 'GET',
@@ -78,32 +63,27 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       path: '/api/chat',
       handle: async (req, res) => {
         const { text } = (await readJson<{ text?: string }>(req)) ?? {};
-        if (!text?.trim()) {
+        const trimmed = text?.trim();
+        if (!trimmed) {
           sendJson(res, 400, { error: 'text is required' });
           return;
         }
+        if (chatBusy(agent)) {
+          sendJson(res, 409, { error: BUSY_ERROR });
+          return;
+        }
 
-        const trimmed = text.trim();
-        await appendUserMessage(root, trimmed);
+        await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text: trimmed });
+        activity.notifyChanged('chat');
         const gitReply = await tryHandleGitChatRequest('project-chat', trimmed, git, agent);
         if (gitReply.handled) {
-          await appendToChatFile(
-            root,
-            agentThreadMessage(
-              gitReply.reply ?? '',
-              'chat',
-              undefined,
-              undefined,
-              nowMinuteString(),
-            ),
-          );
+          await appendAgentMessage(root, gitReply.reply ?? '');
           activity.notifyChanged('chat');
           sendJson(res, 200, { ok: true });
           return;
         }
-        const thread = await readChatFile(root);
-        const { error } = await runChatReply({ root, agent, git, checks, activity }, thread);
-        sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
+        await startTurn(ctx, trimmed);
+        sendJson(res, 200, { ok: true });
       },
     },
 
@@ -111,9 +91,19 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       method: 'POST',
       path: '/api/chat/retry',
       handle: async (_req, res) => {
-        const thread = await readChatFile(root);
-        const { error } = await runChatReply({ root, agent, git, checks, activity }, thread);
-        sendJson(res, 200, { ok: true, ...(error ? { error } : {}) });
+        if (chatBusy(agent)) {
+          sendJson(res, 409, { error: BUSY_ERROR });
+          return;
+        }
+        const last = (await readChatFile(root)).findLast(
+          (message) => message.from !== 'agent' && message.kind === 'chat',
+        );
+        if (!last?.text.trim()) {
+          sendJson(res, 400, { error: 'no message to retry' });
+          return;
+        }
+        await startTurn(ctx, last.text.trim());
+        sendJson(res, 200, { ok: true });
       },
     },
 
@@ -121,7 +111,7 @@ export function chatRoutes({ root, agent, git, checks, activity }: RouteContext)
       method: 'DELETE',
       path: '/api/chat',
       handle: async (_req, res) => {
-        await clearChatFile(root);
+        await Promise.all([clearChatFile(root), clearChatSession(root)]);
         activity.notifyChanged('chat');
         sendJson(res, 200, { ok: true });
       },
