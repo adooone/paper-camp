@@ -1,9 +1,10 @@
+import { type ChatTurnInfo, chatStageLine } from '@/app/features/chat/hooks/use-chat-stage';
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
-import { useSendFeedbackMessage, useStreamedReply } from '@/app/features/plans/hooks';
+import { useChatClient } from '@/app/hooks/use-chat-client';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/folk-ui';
 import type { CSSProperties } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 const rootStyle: CSSProperties = {
   display: 'flex',
@@ -16,7 +17,6 @@ const rootStyle: CSSProperties = {
 const questionCountStyle: CSSProperties = {
   opacity: 0.6,
   fontSize: '0.75rem',
-  flexShrink: 0,
 };
 
 const threadStyle: CSSProperties = {
@@ -63,112 +63,65 @@ const footerRowStyle: CSSProperties = {
   gap: '0.5rem',
 };
 
+const headerRowStyle: CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '0.5rem',
+  flexShrink: 0,
+};
+
 const replyBoxStyle: CSSProperties = { flexShrink: 0 };
 const errorRowStyle: CSSProperties = { marginTop: '0.375rem' };
-const emptyStateStyle: CSSProperties = { opacity: 0.6, fontSize: '0.75rem' };
 
-const noopReload = async () => {};
+const Bubble = ({ text, fromAgent, date }: { text: string; fromAgent: boolean; date?: string }) => (
+  <div style={bubbleColumnStyle(fromAgent)}>
+    <div style={bubbleWrapStyle}>
+      <Card size="small">
+        <span style={bubbleTextStyle}>{text}</span>
+      </Card>
+    </div>
+    {(fromAgent || date) && (
+      <div style={bubbleMetaStyle}>
+        {fromAgent && <Stamp size="small">agent</Stamp>}
+        {date && <span>{date}</span>}
+      </div>
+    )}
+  </div>
+);
 
-const ThreadMessages = ({ planId, messages }: { planId?: string; messages: ThreadMessage[] }) => {
+const ThreadMessages = ({
+  messages,
+  turn,
+}: {
+  messages: ThreadMessage[];
+  turn: ChatTurnInfo | null;
+}) => {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const streamed = useStreamedReply(planId, messages.length);
-  const streamedLength = streamed?.length ?? 0;
+  const streamedLength = (turn?.text.length ?? 0) + (turn?.tools.length ?? 0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length and streamedLength are the rescroll triggers, not read in the body.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
   }, [messages.length, streamedLength]);
 
-  if (messages.length === 0 && !streamed) {
-    return <span style={emptyThreadStyle}>No messages yet — say hello.</span>;
+  if (messages.length === 0 && !turn) {
+    return <span style={emptyThreadStyle}>No messages yet — ask Scout anything.</span>;
   }
 
   return (
     <>
-      {messages.map((message, i) => {
-        const fromAgent = message.from === 'agent';
-        return (
-          <div
-            key={`${message.kind}-${message.date ?? ''}-${i}`}
-            style={bubbleColumnStyle(fromAgent)}
-          >
-            <div style={bubbleWrapStyle}>
-              <Card size="small">
-                <span style={bubbleTextStyle}>{message.text}</span>
-              </Card>
-            </div>
-            <div style={bubbleMetaStyle}>
-              {fromAgent && <Stamp size="small">agent</Stamp>}
-              {message.date && <span>{message.date}</span>}
-            </div>
-          </div>
-        );
-      })}
-      {streamed && (
-        <div style={bubbleColumnStyle(true)}>
-          <div style={bubbleWrapStyle}>
-            <Card size="small">
-              <span style={bubbleTextStyle}>{streamed}</span>
-            </Card>
-          </div>
-        </div>
-      )}
+      {messages.map((message, i) => (
+        <Bubble
+          key={`${message.kind}-${message.date ?? ''}-${i}`}
+          text={message.text}
+          fromAgent={message.from === 'agent'}
+          date={message.date}
+        />
+      ))}
+      {turn?.text && <Bubble text={turn.text} fromAgent />}
       <div ref={bottomRef} />
     </>
-  );
-};
-
-const ReplyBox = ({
-  plan,
-  placeholder,
-  onSent,
-}: {
-  plan: PlanEntry;
-  placeholder: string;
-  onSent: () => void;
-}) => {
-  const [input, setInput] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  // No <ToastProvider> inside the toolbar's shadow DOM (its portal would render
-  // unstyled in the host page), so failures surface inline here instead.
-  const { sending, stageLine, send } = useSendFeedbackMessage(plan, {
-    reload: noopReload,
-    notify: (options) => setError(options.title ?? 'Something went wrong'),
-  });
-
-  const handleSend = async () => {
-    setError(null);
-    if (!input.trim()) return;
-    if (await send(input.trim())) {
-      setInput('');
-      onSent();
-    }
-  };
-
-  return (
-    <div style={replyBoxStyle}>
-      <Textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        aria-label={`Reply to ${plan.title}`}
-        placeholder={placeholder}
-        rows={2}
-        disabled={sending}
-      />
-      <div style={footerRowStyle}>
-        {sending ? <Spinner size="small" label={stageLine} /> : <span />}
-        <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
-          Send
-        </Button>
-      </div>
-      {error && (
-        <div style={errorRowStyle}>
-          <Stamp size="small" variant="error">
-            {error}
-          </Stamp>
-        </div>
-      )}
-    </div>
   );
 };
 
@@ -180,37 +133,62 @@ export interface ScoutThreadProps {
 
 export const ScoutThread = ({ focusPlan, openQuestions, onRefresh }: ScoutThreadProps) => {
   const [oldest] = openQuestions;
-  const activePlan = oldest?.plan ?? focusPlan;
+  const discussId = oldest?.plan.id ?? focusPlan?.id;
+  const chat = useChatClient(focusPlan?.id);
+  const questionCount = openQuestions.reduce((sum, group) => sum + group.questions.length, 0);
+  const busy = chat.sending || Boolean(chat.turn?.live);
 
-  if (!activePlan) {
-    return (
-      <div style={rootStyle}>
-        <span style={emptyStateStyle}>No active idea and no open questions.</span>
-      </div>
-    );
-  }
-
-  const remainingQuestionCount = oldest
-    ? openQuestions.reduce((sum, group) => sum + group.questions.length, 0) - 1
-    : 0;
+  const handleSend = async () => {
+    await chat.send();
+    onRefresh();
+  };
 
   return (
     <div style={rootStyle}>
-      {remainingQuestionCount > 0 && (
-        <span style={questionCountStyle}>{remainingQuestionCount} more open question(s)</span>
+      {(questionCount > 0 || discussId) && (
+        <div style={headerRowStyle}>
+          <span style={questionCountStyle}>
+            {questionCount > 0 ? `${questionCount} open question(s)` : ''}
+          </span>
+          {discussId && (
+            <Button size="tiny" variant="ghost" onClick={() => chat.prefill(discussId)}>
+              Discuss {discussId} in chat
+            </Button>
+          )}
+        </div>
       )}
       <div style={threadStyle}>
-        <ThreadMessages planId={activePlan.id} messages={activePlan.thread ?? []} />
+        <ThreadMessages messages={chat.thread} turn={chat.turn} />
       </div>
-      <ReplyBox
-        plan={activePlan}
-        placeholder={
-          oldest
-            ? 'Reply to resolve and resume…'
-            : 'Ask Scout, jot a note, or say “note this down as an idea”…'
-        }
-        onSent={onRefresh}
-      />
+      <div style={replyBoxStyle}>
+        <Textarea
+          value={chat.input}
+          onChange={(e) => chat.setInput(e.target.value)}
+          aria-label="Message Scout"
+          placeholder="Ask Scout, or name an idea (IDEA-N: …) to act on it…"
+          rows={2}
+        />
+        <div style={footerRowStyle}>
+          {chat.turn?.live && chat.turn.stage ? (
+            <Spinner
+              size="small"
+              label={chatStageLine(chat.turn.stage, chat.turn.elapsedSeconds)}
+            />
+          ) : (
+            <span />
+          )}
+          <Button size="small" onClick={handleSend} disabled={busy || !chat.input.trim()}>
+            Send
+          </Button>
+        </div>
+        {chat.error && (
+          <div style={errorRowStyle}>
+            <Stamp size="small" variant="error">
+              {chat.error}
+            </Stamp>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

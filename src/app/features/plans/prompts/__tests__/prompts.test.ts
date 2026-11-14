@@ -1,10 +1,8 @@
 import { buildAgentPrompt } from '@/app/server/agent';
-import type { EntityEntry, IdeaEntry, PlanEntry, ReviewThread, ThreadMessage } from '@/types/index';
+import type { IdeaEntry, PlanEntry, ReviewThread, ThreadMessage } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
-  buildFeedbackReplyPrompt,
-  buildFeedbackSummaryPrompt,
   buildFixReviewPrompt,
   buildIdeaExtendPrompt,
   buildInstallToolbarPrompt,
@@ -211,133 +209,6 @@ describe('buildPrReviewPrompt', () => {
   });
 });
 
-describe('buildFeedbackReplyPrompt', () => {
-  it('carries the Paper Scout persona and defaults scope to the bound idea', () => {
-    const prompt = buildFeedbackReplyPrompt(plan, []);
-    expect(prompt).toContain('You are Paper Scout');
-    expect(prompt).toContain("that's your default scope");
-    expect(prompt).toContain('(no other ideas exist in this project yet)');
-  });
-
-  it('lists every other idea for answering questions outside the bound one', () => {
-    const otherEntities: EntityEntry[] = [
-      {
-        id: 'IDEA-3',
-        title: 'Another idea',
-        status: 'planned',
-        created: '2026-06-01',
-        tags: [],
-        needs: [],
-        body: 'Another idea body.',
-        phases: [],
-      },
-    ];
-    const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
-    expect(prompt).toContain('### IDEA-3: Another idea (status: planned)');
-    expect(prompt).toContain('Another idea body.');
-    expect(prompt).toContain('never propose an "edit" for it');
-  });
-
-  it('collapses done and dropped ideas to one-line index entries', () => {
-    const otherEntities: EntityEntry[] = [
-      {
-        id: 'IDEA-4',
-        title: 'Finished idea',
-        status: 'done',
-        created: '2026-06-01',
-        tags: [],
-        needs: [],
-        body: 'Finished idea body.',
-        phases: [],
-      },
-      {
-        id: 'IDEA-5',
-        title: 'Dropped idea',
-        status: 'dropped',
-        created: '2026-06-01',
-        tags: [],
-        needs: [],
-        body: 'Dropped idea body.',
-        phases: [],
-      },
-    ];
-    const prompt = buildFeedbackReplyPrompt(plan, otherEntities);
-    expect(prompt).toContain('- IDEA-4: Finished idea (status: done)');
-    expect(prompt).toContain('- IDEA-5: Dropped idea (status: dropped)');
-    expect(prompt).not.toContain('Finished idea body.');
-    expect(prompt).not.toContain('Dropped idea body.');
-  });
-
-  it('omits the ambient context block when no mount context is given', () => {
-    const prompt = buildFeedbackReplyPrompt(plan, []);
-    expect(prompt).not.toContain('Ambient context');
-  });
-
-  it('folds whatever a mount fed into a silent ambient context block', () => {
-    const prompt = buildFeedbackReplyPrompt(plan, [], {
-      route: '/checkout',
-      focusedIdeaId: 'IDEA-9',
-      viewport: { width: 375, height: 812 },
-    });
-    expect(prompt).toContain('never mention it explicitly');
-    expect(prompt).toContain('Current route in the host app: /checkout');
-    expect(prompt).toContain('Idea focused in the mount: IDEA-9');
-    expect(prompt).toContain('Viewport: 375×812');
-  });
-
-  it('orders sections stable-first: persona, corpus index, idea, then thread', () => {
-    const otherEntities: EntityEntry[] = [
-      {
-        id: 'IDEA-3',
-        title: 'Another idea',
-        status: 'planned',
-        created: '2026-06-01',
-        tags: [],
-        needs: [],
-        body: 'Another idea body.',
-        phases: [],
-      },
-    ];
-    const withThread: PlanEntry = {
-      ...plan,
-      thread: [{ kind: 'chat', text: 'Latest message', from: 'user' }],
-    };
-    const prompt = buildFeedbackReplyPrompt(withThread, otherEntities);
-    const personaIndex = prompt.indexOf('You are Paper Scout');
-    const corpusIndex = prompt.indexOf('### IDEA-3: Another idea');
-    const ideaIndex = prompt.indexOf('Idea/plan body:');
-    const threadIndex = prompt.indexOf('Feedback thread, most recent messages:');
-    expect(personaIndex).toBeGreaterThanOrEqual(0);
-    expect(personaIndex).toBeLessThan(corpusIndex);
-    expect(corpusIndex).toBeLessThan(ideaIndex);
-    expect(ideaIndex).toBeLessThan(threadIndex);
-  });
-
-  it('renders prior log-kind entries as session summaries, not raw thread lines', () => {
-    const withThread: PlanEntry = {
-      ...plan,
-      thread: [{ kind: 'log', date: '2026-07-01', text: 'Settled on approach A.' }],
-    };
-    const prompt = buildFeedbackReplyPrompt(withThread, []);
-    expect(prompt).toContain('Prior session summaries, oldest first:');
-    expect(prompt).toContain('- Settled on approach A.');
-  });
-
-  it('caps the inlined thread to the last 10 non-summary messages', () => {
-    const messages: ThreadMessage[] = Array.from({ length: 12 }, (_, i) => ({
-      kind: 'chat',
-      text: `Message ${i + 1}`,
-      from: i % 2 === 0 ? 'user' : 'agent',
-    }));
-    const withThread: PlanEntry = { ...plan, thread: messages };
-    const prompt = buildFeedbackReplyPrompt(withThread, []);
-    expect(prompt).not.toContain('Message 1\n');
-    expect(prompt).not.toContain('Message 2\n');
-    expect(prompt).toContain('Message 3');
-    expect(prompt).toContain('Message 12');
-  });
-});
-
 describe('buildStylePassPhase', () => {
   it('returns an unchecked phase scoped to the plan diff, docs/CODE_STYLE.md, and the three checks', () => {
     const phase = buildStylePassPhase();
@@ -358,18 +229,6 @@ describe('buildStylePassPhase', () => {
     expect(prompt).toContain('phase 2, "Style pass"');
     expect(prompt).toContain('Phase details:');
     expect(prompt).toContain('docs/CODE_STYLE.md');
-  });
-});
-
-describe('buildFeedbackSummaryPrompt', () => {
-  it('lays out the exchange oldest-first with the Paper Scout persona', () => {
-    const prompt = buildFeedbackSummaryPrompt(plan, [
-      { kind: 'chat', text: 'What should we do about X?', from: 'user' },
-      { kind: 'chat', text: "Let's go with Y.", from: 'agent' },
-    ]);
-    expect(prompt).toContain('You are Paper Scout');
-    expect(prompt).toContain("User: What should we do about X?\nAgent: Let's go with Y.");
-    expect(prompt).toContain('{"summary": "one sentence"}');
   });
 });
 

@@ -1,7 +1,6 @@
+import { DiscussInChatButton } from '@/app/features/chat/views/discuss-in-chat-button';
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
-import { useSendFeedbackMessage } from '@/app/features/plans/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { readLocalDraft, removeLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import { formatDuration, shortModel } from '@/core/phase-run';
 import { usageForEntry } from '@/core/run-rows';
 import {
@@ -12,18 +11,9 @@ import {
   type PlanEntry,
   type StoredNotification,
 } from '@/types/index';
-import {
-  Button,
-  Card,
-  type FactItem,
-  FactsGrid,
-  Spinner,
-  Stamp,
-  Textarea,
-  useToast,
-} from '@dendelion/folk-ui';
+import { Button, Card, type FactItem, FactsGrid, Spinner, Stamp } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatFullTimestamp, promoteLabel, summaryLine } from '../helpers';
 import type { LogRowActions } from '../hooks/use-run-rows';
@@ -81,9 +71,7 @@ const FailureReason = ({ issue, cleared }: { issue: Issue; cleared: boolean }) =
       )}
       <p className="m-0 text-sm text-state-danger">{issue.reason}</p>
     </div>
-    {issue.thread.length > 0 && (
-      <FeedbackThread messages={issue.thread} undo={null} undoing={false} onUndo={() => {}} />
-    )}
+    {issue.thread.length > 0 && <FeedbackThread messages={issue.thread} />}
   </div>
 );
 
@@ -159,66 +147,16 @@ const ReplyBody = ({ notification }: { notification: StoredNotification }) => (
   <p className="m-0">{notification.text}</p>
 );
 
-const QuestionReplyForm = ({
-  plan,
-  reload,
-}: {
-  plan: PlanEntry;
-  reload: () => Promise<void>;
-}) => {
-  const { toast } = useToast();
-  const [input, setInput] = useState('');
-  const { sending, stageLine, send, undo, undoing, undoEdit } = useSendFeedbackMessage(plan, {
-    reload,
-    notify: toast,
-  });
-  const draftKey = `question-reply:${plan.id}`;
-
-  useEffect(() => {
-    const draft = readLocalDraft<string>(draftKey);
-    if (draft) setInput(draft);
-  }, [draftKey]);
-
-  useEffect(() => {
-    if (!input) return;
-    writeLocalDraft(draftKey, input);
-  }, [draftKey, input]);
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    if (await send(input.trim())) {
-      setInput('');
-      removeLocalDraft(draftKey);
-    }
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <FeedbackThread
-        messages={plan.thread ?? []}
-        undo={undo}
-        undoing={undoing}
-        onUndo={undoEdit}
-      />
-      <Textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        aria-label={`Reply to ${plan.title}`}
-        placeholder="Reply to resolve and resume…"
-        rows={2}
-        disabled={sending}
-      />
-      <div className="flex justify-end items-center gap-3">
-        <span className={sending ? 'visible' : 'invisible'}>
-          <Spinner size="small" label={stageLine} />
-        </span>
-        <Button size="small" onClick={handleSend} disabled={sending || !input.trim()}>
-          Reply
-        </Button>
+const QuestionThread = ({ plan }: { plan: PlanEntry }) => (
+  <div className="flex flex-col gap-3">
+    <FeedbackThread messages={plan.thread ?? []} />
+    {plan.id && (
+      <div className="flex justify-end">
+        <DiscussInChatButton ideaId={plan.id} />
       </div>
-    </div>
-  );
-};
+    )}
+  </div>
+);
 
 const QuestionBody = ({
   question,
@@ -229,7 +167,7 @@ const QuestionBody = ({
 }) => {
   const plan = actions.plans.find((p) => p.id === question.entityId);
   if (!plan) return <p className="m-0">{question.text}</p>;
-  return <QuestionReplyForm plan={plan} reload={actions.reloadEntities} />;
+  return <QuestionThread plan={plan} />;
 };
 
 const resolveRowFailure = (

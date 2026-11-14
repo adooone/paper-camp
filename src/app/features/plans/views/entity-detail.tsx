@@ -1,15 +1,9 @@
-import {
-  useIdeaAssets,
-  usePlanStatusPatch,
-  useRunningPhaseFill,
-  useSendFeedbackMessage,
-} from '@/app/features/plans/hooks';
+import { useIdeaAssets, usePlanStatusPatch, useRunningPhaseFill } from '@/app/features/plans/hooks';
 import { useWorklist } from '@/app/hooks';
-import { refreshPlans } from '@/app/services/query-client';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
-import { Text, useToast } from '@dendelion/folk-ui';
+import { Text } from '@dendelion/folk-ui';
 import { useEffect, useMemo } from 'react';
 import { RefreshButton } from '../actions';
 import { PlanIdStamp } from '../components';
@@ -44,7 +38,6 @@ interface EntityDetailProps {
 
 export const EntityDetail = ({ plan }: EntityDetailProps) => {
   const { worklist } = useWorklist();
-  const { toast } = useToast();
   const { patch: patchById, updating } = usePlanStatusPatch();
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentBusy = useAppStore(selectAgentBusy);
@@ -128,14 +121,6 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
     }
   };
 
-  const {
-    sending,
-    send: sendFeedbackMessage,
-    undo: feedbackUndo,
-    undoing: undoingFeedback,
-    undoEdit,
-  } = useSendFeedbackMessage(plan, { reload: refreshPlans, notify: toast });
-
   return (
     <div {...dropHandlers}>
       <div className="flex items-baseline justify-between gap-3 mb-2">
@@ -179,14 +164,7 @@ export const EntityDetail = ({ plan }: EntityDetailProps) => {
       </div>
 
       {showFeedback ? (
-        <FeedbackSection
-          plan={plan}
-          updating={sending}
-          onSend={sendFeedbackMessage}
-          undo={feedbackUndo}
-          undoing={undoingFeedback}
-          onUndo={undoEdit}
-        />
+        <FeedbackSection plan={plan} />
       ) : (
         <>
           {plan.entityKind === 'board' ? (

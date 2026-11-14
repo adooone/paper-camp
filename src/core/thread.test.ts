@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ThreadMessage } from '../types/index';
-import { chatSinceLastLog, promoteThreadMessage } from './thread';
+import { promoteThreadMessage } from './thread';
 
 describe('promoteThreadMessage', () => {
   const thread: ThreadMessage[] = [
@@ -38,45 +38,5 @@ describe('promoteThreadMessage', () => {
   it('leaves every other message untouched', () => {
     const result = promoteThreadMessage(thread, 0, 'log');
     expect(result[1]).toEqual(thread[1]);
-  });
-});
-
-describe('chatSinceLastLog', () => {
-  it('returns every chat message when the thread has no log entries', () => {
-    const thread: ThreadMessage[] = [
-      { kind: 'note', text: 'A note' },
-      { kind: 'chat', text: 'Hey' },
-      { kind: 'chat', text: 'What about this?' },
-    ];
-    expect(chatSinceLastLog(thread)).toEqual([
-      { kind: 'chat', text: 'Hey' },
-      { kind: 'chat', text: 'What about this?' },
-    ]);
-  });
-
-  it('returns only chat messages after the last log entry', () => {
-    const thread: ThreadMessage[] = [
-      { kind: 'chat', text: 'Earlier exchange' },
-      { kind: 'log', text: 'Earlier summary' },
-      { kind: 'chat', text: 'New question' },
-      { kind: 'question', text: 'A parked question' },
-      { kind: 'chat', text: 'New reply' },
-    ];
-    expect(chatSinceLastLog(thread)).toEqual([
-      { kind: 'chat', text: 'New question' },
-      { kind: 'chat', text: 'New reply' },
-    ]);
-  });
-
-  it('returns an empty array when nothing followed the last log entry', () => {
-    const thread: ThreadMessage[] = [
-      { kind: 'chat', text: 'Earlier exchange' },
-      { kind: 'log', text: 'Earlier summary' },
-    ];
-    expect(chatSinceLastLog(thread)).toEqual([]);
-  });
-
-  it('defaults to an empty array for an undefined thread', () => {
-    expect(chatSinceLastLog(undefined)).toEqual([]);
   });
 });

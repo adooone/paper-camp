@@ -338,7 +338,6 @@ export type ReadOnlyTaskKind =
   | 'commit-suggest'
   | 'overlap-check'
   | 'prioritise'
-  | 'feedback'
   | 'chat'
   | 'desk-discovery';
 
@@ -1083,7 +1082,6 @@ export function createAgentManager(
     'commit-suggest',
     'overlap-check',
     'prioritise',
-    'feedback',
     'chat',
     'desk-discovery',
   ]);

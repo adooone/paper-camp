@@ -223,6 +223,49 @@ describe('POST /api/chat', () => {
     });
   });
 
+  it('passes the mount context a toolbar sends to the turn', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'ok');
+
+    const { res } = fakeRes();
+    await route(root, 'POST', agentCtx(runChatTurn)).handle(
+      fakeReq(
+        JSON.stringify({
+          text: 'Why is this button grey?',
+          context: {
+            route: '/settings',
+            focusedIdeaId: 'IDEA-7',
+            viewport: { width: 1280, height: 800 },
+            extra: 'dropped',
+          },
+        }),
+      ),
+      res,
+    );
+
+    expect(runChatTurn).toHaveBeenCalledWith('Why is this button grey?', {
+      branch: { name: 'main', dirty: [] },
+      mount: {
+        route: '/settings',
+        focusedIdeaId: 'IDEA-7',
+        viewport: { width: 1280, height: 800 },
+      },
+    });
+  });
+
+  it('ignores a mount context with nothing usable in it', async () => {
+    const root = await makeRoot();
+    const runChatTurn = vi.fn(async () => 'ok');
+
+    const { res } = fakeRes();
+    await route(root, 'POST', agentCtx(runChatTurn)).handle(
+      fakeReq(JSON.stringify({ text: 'Hi', context: { route: 42, viewport: 'big' } })),
+      res,
+    );
+
+    expect(runChatTurn).toHaveBeenCalledWith('Hi', { branch: { name: 'main', dirty: [] } });
+  });
+
   it('appends a failed turn as an agent message carrying the error', async () => {
     const root = await makeRoot();
     const runChatTurn = vi.fn(async () => {

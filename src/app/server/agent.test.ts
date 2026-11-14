@@ -943,11 +943,11 @@ Plan body.
     expect(runAllId).toBeDefined();
 
     // Board pressure: an operator watching the run also fires the read-only
-    // helpers behind Suggest/Feedback. None of these carry an exclusive
+    // helpers behind Suggest/Prioritise. None of these carry an exclusive
     // write-set, so they must never preempt the run-all's checkpoints.
     const boardPressure = Promise.allSettled([
       manager.runReadOnlyPrompt('commit-suggest', 'prompt', 'Suggest commit message'),
-      manager.runReadOnlyPrompt('feedback', 'prompt', 'Feedback'),
+      manager.runReadOnlyPrompt('prioritise', 'prompt', 'Prioritise'),
     ]);
 
     // Let every phase (and the board-pressure helpers, which share the same

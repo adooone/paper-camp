@@ -1,4 +1,5 @@
 import { AppShell } from '@/app/components/layout/app-shell';
+import { chatAboutParam } from '@/app/features/chat/helpers';
 import { HubHome } from '@/app/features/hub';
 import { type GroupMode, isGroupMode } from '@/app/features/plans/helpers';
 import { PlansPage } from '@/app/features/plans/index';
@@ -369,6 +370,9 @@ const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/chat',
   component: ChatPage,
+  validateSearch: (search: Record<string, unknown>): { about?: string } => ({
+    about: chatAboutParam(search.about),
+  }),
   staticData: { layer: 'runtime' },
 });
 

@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import {
@@ -18,20 +17,18 @@ import { parseSuggestions } from '@/core/parse';
 import { readProjectConfig } from '@/core/project-config';
 import { entityToPlan } from '@/core/readers';
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
-import { agentThreadMessage, todayDateString } from '@/core/serialize';
+import { todayDateString } from '@/core/serialize';
 import { isClosedEntity } from '@/core/status';
-import { chatSinceLastLog, logFromThread, promoteThreadMessage } from '@/core/thread';
+import { logFromThread, promoteThreadMessage } from '@/core/thread';
 import type {
   AgentTaskState,
   EntityEntry,
   IdeaEntry,
   IdeaStatus,
   Issue,
-  MountContext,
   PhaseItem,
   PlanEntry,
   PrReviewStatus,
-  ThreadMessage,
 } from '@/types/index';
 import { getAgentSignIn, markAgentSignedIn, markAgentSignedOut } from '../agent-signin';
 import { resolveAgent } from '../agents';
@@ -41,236 +38,15 @@ import {
   probeAgentAuthStatus,
 } from '../capabilities';
 import { probeSignIn } from '../capacity-probe';
-import {
-  addsOpenFix,
-  applyFeedbackEdit,
-  replyToFeedback,
-  summarizeFeedback,
-} from '../feedback-reply';
-import { tryHandleGitChatRequest } from '../git-chat';
-import { checkStaleBaseForRunAll, planFile, readMaybe, resolveChatQuestion } from '../helpers';
+import { checkStaleBaseForRunAll, planFile, readMaybe } from '../helpers';
 import { readJson, requestUrl, sendJson } from '../http';
 import { getCurrentLoginRelay, startClaudeLoginRelay } from '../login-relay';
-import { appendNotification } from '../notification-log';
 import { readReviewedShas } from '../pr-review-state';
 import type { Route, RouteContext } from './types';
 
-// Shared by every feedback-thread route (message, undo, promote, summarize): finds
-// the plan-kind entity a planId names, plus the file it currently lives at.
-async function resolveFeedbackEntity(
-  root: string,
-  planId: string,
-): Promise<{ entries: EntityEntry[]; entity: EntityEntry; targetFile: string } | null> {
-  const ideasDir = planFile(root, 'ideas');
+async function findThreadEntity(root: string, planId: string): Promise<EntityEntry | undefined> {
   const { entries } = await readCorpus(root);
-  const entity = entries.find((e) => e.id === planId && e.kind !== 'note');
-  if (!entity) return null;
-  const targetFile =
-    (await resolveEntityFilePath(root, entity.id)) ?? join(ideasDir, `${entity.id}.md`);
-  return { entries, entity, targetFile };
-}
-
-export interface FeedbackApplyResult {
-  entity: EntityEntry;
-  replyText?: string;
-  error?: string;
-  undo?: { commitSha: string };
-}
-
-type FeedbackDeps = Pick<RouteContext, 'root' | 'git' | 'checks' | 'agent'> &
-  Partial<Pick<RouteContext, 'activity'>>;
-
-interface FiledFeedback {
-  entity: EntityEntry;
-  entries: EntityEntry[];
-  targetFile: string;
-  text: string;
-}
-
-const feedbackQueues = new Map<string, Promise<unknown>>();
-
-function enqueueFeedback<T>(key: string, job: () => Promise<T>): Promise<T> {
-  const run = (feedbackQueues.get(key) ?? Promise.resolve()).then(job, job);
-  const tail = run.catch(() => undefined);
-  feedbackQueues.set(key, tail);
-  void tail.then(() => {
-    if (feedbackQueues.get(key) === tail) feedbackQueues.delete(key);
-  });
-  return run;
-}
-
-async function fileFeedbackMessage(
-  root: string,
-  planId: string,
-  text: string,
-): Promise<FiledFeedback | null> {
-  const resolved = await resolveFeedbackEntity(root, planId);
-  if (!resolved) return null;
-  const userMessage: ThreadMessage = {
-    kind: 'chat',
-    date: todayDateString(),
-    text: text.trim(),
-  };
-  await updateEntity(root, resolved.entity.id, (entry) => ({
-    thread: [...(entry.thread ?? []), userMessage],
-  }));
-  return { ...resolved, text: text.trim() };
-}
-
-async function runFeedbackPipeline(
-  { root, git, checks, agent, activity }: FeedbackDeps,
-  { entity: filedEntity, entries, targetFile, text }: FiledFeedback,
-  context?: MountContext,
-): Promise<FeedbackApplyResult> {
-  const publishStage = (stage: 'reading' | 'thinking' | 'replying') =>
-    activity?.publish({ type: 'feedback', planId: filedEntity.id, stage });
-  publishStage('reading');
-  const entity = await updateEntity(root, filedEntity.id, () => undefined);
-  const threadWithUser = entity.thread ?? [];
-
-  const gitReply = await tryHandleGitChatRequest(entity.id, text, git, agent);
-  if (gitReply.handled) {
-    await updateEntity(root, entity.id, (entry) => ({
-      thread: [...(entry.thread ?? []), agentThreadMessage(gitReply.reply ?? '', 'chat')],
-    }));
-    return { entity, replyText: gitReply.reply };
-  }
-
-  let error: string | undefined;
-  let undo: { commitSha: string } | undefined;
-  let replyText: string | undefined;
-  try {
-    const plan = entityToPlan({ ...entity, thread: threadWithUser });
-    const otherEntities = entries.filter((e) => e.id !== entity.id);
-    publishStage('thinking');
-    const result = await replyToFeedback(
-      plan,
-      otherEntities,
-      (prompt, planTitle, onText) =>
-        agent.runReadOnlyPrompt('feedback', prompt, planTitle, { onText }),
-      context,
-      activity
-        ? (chunk) => activity.publish({ type: 'feedback', planId: entity.id, chunk })
-        : undefined,
-    );
-    const editResult = result.edit ? applyFeedbackEdit(entity, result.edit) : {};
-    const { spawnFix, ...overrides } = editResult;
-
-    replyText = result.reply;
-
-    let spawnedId: string | undefined;
-    if (spawnFix?.length) {
-      spawnedId = await createIdea(root, {
-        title: spawnFix[0].text,
-        kind: 'fix',
-        idea: entity.id,
-        phases: spawnFix,
-      });
-      const fixPath = join(planFile(root, 'ideas'), `${spawnedId}.md`);
-      await git.commit(
-        [relative(root, fixPath)],
-        `fix(ideas): spawn ${spawnedId} from ${entity.id}`,
-        `Refs: ${spawnedId}`,
-        { noVerify: true },
-      );
-      undo = { commitSha: await git.getHeadSha() };
-      replyText = `${replyText} (spawned ${spawnedId} to track this)`;
-
-      agent.startRunAllPhases(
-        entityToPlan({
-          id: spawnedId,
-          title: spawnFix[0].text,
-          type: 'fix',
-          kind: 'fix',
-          idea: entity.id,
-          created: todayDateString(),
-          tags: [],
-          needs: [],
-          body: '',
-          phases: spawnFix,
-        }),
-        () => checks.runChecksAndWait(),
-        () => checks.getCachedOrRunChecks(),
-      );
-    }
-
-    const reopen = addsOpenFix(entity.fixes, overrides.fixes);
-    if (reopen) replyText = `${replyText} (reopened this idea to re-run)`;
-
-    publishStage('replying');
-    let openQuestionIndex = -1;
-    const written = await updateEntity(root, entity.id, (entry) => {
-      let thread = entry.thread ?? [];
-      if (result.answersQuestion) {
-        const userIndex = thread.findLastIndex((m) => m.kind === 'chat' && m.text === text);
-        if (userIndex !== -1) {
-          thread = thread.map((m, i) =>
-            i === userIndex ? { ...m, kind: 'clarification' as const } : m,
-          );
-        }
-        openQuestionIndex = thread.findLastIndex(
-          (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
-        );
-        if (openQuestionIndex !== -1) {
-          thread = thread.map((m, i) =>
-            i === openQuestionIndex ? { ...m, state: 'resolved' as const } : m,
-          );
-        }
-      }
-      return {
-        thread: [...thread, agentThreadMessage(replyText ?? '', 'chat')],
-        ...overrides,
-        ...(reopen ? { status: 'in-progress' } : {}),
-      };
-    });
-    const thread = written.thread ?? [];
-    void appendNotification(root, {
-      id: randomUUID(),
-      kind: 'reply',
-      entityId: entity.id,
-      entityTitle: entity.title,
-      text: replyText,
-    });
-
-    if (openQuestionIndex !== -1) {
-      await resolveChatQuestion(root, entity.id);
-      await agent.resumeQuestionParkedTasks(
-        entity.id,
-        () => checks.runChecksAndWait(),
-        () => checks.getCachedOrRunChecks(),
-      );
-    }
-
-    if (overrides.phases || overrides.fixes || overrides.body) {
-      const relFile = relative(root, targetFile);
-      await git.commit(
-        [relFile],
-        `${entity.type ?? 'feat'}(ideas): apply feedback edit to ${entity.id}`,
-        `Refs: ${entity.id}`,
-        { noVerify: true },
-      );
-      undo = { commitSha: await git.getHeadSha() };
-    }
-
-    if (reopen) {
-      const reopenedPlan = entityToPlan({
-        ...entity,
-        thread,
-        updated: todayDateString(),
-        ...overrides,
-        status: 'in-progress',
-      });
-      agent.startRunAllPhases(
-        reopenedPlan,
-        () => checks.runChecksAndWait(),
-        () => checks.getCachedOrRunChecks(),
-      );
-    }
-  } catch (err) {
-    error = (err as Error).message;
-  }
-
-  return { entity, replyText, error, undo };
+  return entries.find((e) => e.id === planId && e.kind !== 'note');
 }
 
 // Known renames from this project's own history, cheap enough to
@@ -883,101 +659,6 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       },
     },
 
-    {
-      method: 'POST',
-      path: '/api/agent/feedback-message',
-      handle: async (req, res) => {
-        const { planId, text, context } =
-          (await readJson<{
-            planId?: string;
-            text?: string;
-            context?: MountContext;
-          }>(req)) ?? {};
-        if (!planId || !text?.trim()) {
-          sendJson(res, 400, { error: 'planId and text are required' });
-          return;
-        }
-
-        const deps = { root, git, checks, agent, activity };
-        const filed = await fileFeedbackMessage(root, planId, text);
-        if (!filed) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-
-        activity.notifyChanged('corpus');
-        sendJson(res, 200, { ok: true });
-
-        void enqueueFeedback(`${root}:${filed.entity.id}`, async () => {
-          let outcome: FeedbackApplyResult;
-          try {
-            outcome = await runFeedbackPipeline(deps, filed, context);
-          } catch (err) {
-            outcome = { entity: filed.entity, error: (err as Error).message };
-          }
-          if (outcome.error) {
-            const failure = outcome.error;
-            await updateEntity(root, filed.entity.id, (entry) => ({
-              thread: [
-                ...(entry.thread ?? []),
-                agentThreadMessage(`I couldn't process that message: ${failure}`, 'chat'),
-              ],
-            })).catch(() => undefined);
-          }
-          activity.notifyChanged('corpus');
-          activity.publish({
-            type: 'feedback',
-            planId: filed.entity.id,
-            ...(outcome.error
-              ? { stage: 'failed', error: outcome.error }
-              : { stage: 'done', ...(outcome.undo ? { undo: outcome.undo } : {}) }),
-          });
-        });
-      },
-    },
-
-    {
-      method: 'POST',
-      path: '/api/agent/feedback-undo',
-      handle: async (req, res) => {
-        const { planId, commitSha } =
-          (await readJson<{
-            planId?: string;
-            commitSha?: string;
-          }>(req)) ?? {};
-        if (!planId || !commitSha) {
-          sendJson(res, 400, { error: 'planId and commitSha are required' });
-          return;
-        }
-
-        const resolved = await resolveFeedbackEntity(root, planId);
-        if (!resolved) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const { targetFile } = resolved;
-        const relFile = relative(root, targetFile);
-
-        // The commit must still be the file's tip — a later edit landing on top would
-        // make a blind revert clobber that newer change instead of just this one.
-        const lastCommit = await git.getLastCommitFor(relFile);
-        if (lastCommit !== commitSha) {
-          sendJson(res, 409, { error: 'This edit can no longer be undone' });
-          return;
-        }
-
-        try {
-          await git.revert(commitSha);
-        } catch (err) {
-          sendJson(res, 400, { error: (err as Error).message });
-          return;
-        }
-
-        activity.notifyChanged('corpus');
-        sendJson(res, 200, { ok: true });
-      },
-    },
-
     // Distills one ephemeral `chat` message into a durable thread kind, deterministically.
     // `note` carries the promote-to-idea breadcrumb after the idea is minted elsewhere.
     {
@@ -996,12 +677,12 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
           return;
         }
 
-        const resolved = await resolveFeedbackEntity(root, planId);
-        if (!resolved) {
+        const entity = await findThreadEntity(root, planId);
+        if (!entity) {
           sendJson(res, 404, { error: 'plan not found' });
           return;
         }
-        const thread = resolved.entity.thread ?? [];
+        const thread = entity.thread ?? [];
         if (thread[index]?.kind !== 'chat') {
           sendJson(res, 404, { error: 'no chat message at that index' });
           return;
@@ -1012,46 +693,6 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         }));
         activity.notifyChanged('corpus');
         sendJson(res, 200, { ok: true });
-      },
-    },
-
-    // Fires once a chat session goes quiet (client-side inactivity timer), distilling
-    // the exchange since the last log entry into one durable line; no-op if nothing new.
-    {
-      method: 'POST',
-      path: '/api/agent/feedback-summarize',
-      handle: async (req, res) => {
-        const { planId } = (await readJson<{ planId?: string }>(req)) ?? {};
-        if (!planId) {
-          sendJson(res, 400, { error: 'planId is required' });
-          return;
-        }
-
-        const resolved = await resolveFeedbackEntity(root, planId);
-        if (!resolved) {
-          sendJson(res, 404, { error: 'plan not found' });
-          return;
-        }
-        const { entity } = resolved;
-        const messages = chatSinceLastLog(entity.thread);
-        if (messages.length === 0) {
-          sendJson(res, 200, { ok: true, skipped: true });
-          return;
-        }
-
-        try {
-          const plan = entityToPlan(entity);
-          const summary = await summarizeFeedback(plan, messages, (prompt, planTitle) =>
-            agent.runReadOnlyPrompt('feedback', prompt, planTitle),
-          );
-          await updateEntity(root, planId, (current) => ({
-            thread: [...(current.thread ?? []), agentThreadMessage(summary)],
-          }));
-          activity.notifyChanged('corpus');
-          sendJson(res, 200, { ok: true, summary });
-        } catch (err) {
-          sendJson(res, 500, { error: (err as Error).message });
-        }
       },
     },
 

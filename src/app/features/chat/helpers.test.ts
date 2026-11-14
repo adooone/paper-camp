@@ -2,10 +2,12 @@ import type { ScopeRow } from '@/app/features/scope';
 import type { ThreadMessage } from '@/types/index';
 import { describe, expect, it } from 'vitest';
 import {
+  chatAboutParam,
   isNearBottom,
   isSendKey,
   mergeScopedChatMessages,
   threadEndsWithUserMessage,
+  withIdeaPrefix,
 } from './helpers';
 
 const project = (name: string) => ({ name }) as unknown as ScopeRow;
@@ -78,5 +80,28 @@ describe('threadEndsWithUserMessage', () => {
   it('is false when the thread ends on a parked question', () => {
     const question: ThreadMessage = { kind: 'question', text: 'which idea?', from: 'agent' };
     expect(threadEndsWithUserMessage([msg(undefined, 'hi'), question])).toBe(false);
+  });
+});
+
+describe('chatAboutParam', () => {
+  it('keeps an entity id and drops anything else', () => {
+    expect(chatAboutParam('IDEA-331')).toBe('IDEA-331');
+    expect(chatAboutParam('idea-331')).toBeUndefined();
+    expect(chatAboutParam('IDEA-331; rm')).toBeUndefined();
+    expect(chatAboutParam(331)).toBeUndefined();
+  });
+});
+
+describe('withIdeaPrefix', () => {
+  it('prefills an empty draft with the idea id', () => {
+    expect(withIdeaPrefix('', 'IDEA-331')).toBe('IDEA-331: ');
+  });
+
+  it('puts the prefix in front of a draft already in progress', () => {
+    expect(withIdeaPrefix('  reword phase 2', 'IDEA-331')).toBe('IDEA-331: reword phase 2');
+  });
+
+  it('leaves a draft that already starts with the prefix alone', () => {
+    expect(withIdeaPrefix('IDEA-331: hello', 'IDEA-331')).toBe('IDEA-331: hello');
   });
 });

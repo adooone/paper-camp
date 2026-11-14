@@ -49,3 +49,15 @@ export function threadEndsWithUserMessage(thread: ThreadMessage[]): boolean {
 export function nowMinuteString(): string {
   return new Date().toISOString().slice(0, 16);
 }
+
+const ENTITY_ID = /^[A-Z]+-\d+$/;
+
+export function chatAboutParam(value: unknown): string | undefined {
+  return typeof value === 'string' && ENTITY_ID.test(value) ? value : undefined;
+}
+
+export function withIdeaPrefix(draft: string, ideaId: string): string {
+  const prefix = `${ideaId}: `;
+  if (draft.startsWith(prefix)) return draft;
+  return `${prefix}${draft.trimStart()}`;
+}

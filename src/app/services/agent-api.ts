@@ -2,11 +2,9 @@ import type {
   AgentTaskState,
   Issue,
   LoginRelayState,
-  MountContext,
   PrReviewStatus,
   ReconcileQueueItem,
 } from '@/types/index';
-import { subscribeToActivityStream } from './activity-stream';
 import { apiFetch, apiUrl } from './api-base';
 
 const handleAgentResponse = async (
@@ -188,55 +186,6 @@ export const fetchPrReviewStatus = async (planId: string): Promise<PrReviewStatu
   }
 };
 
-const FEEDBACK_OUTCOME_TIMEOUT_MS = 10 * 60_000;
-
-export interface FeedbackOutcome {
-  error?: string;
-  undo?: { commitSha: string };
-}
-
-const awaitFeedbackOutcome = (planId: string) => {
-  let settle: (outcome: FeedbackOutcome) => void = () => {};
-  const outcome = new Promise<FeedbackOutcome>((resolve) => {
-    settle = resolve;
-  });
-  const timer = setTimeout(() => settle({}), FEEDBACK_OUTCOME_TIMEOUT_MS);
-  const unsubscribe = subscribeToActivityStream((payload) => {
-    if (payload.type !== 'feedback' || payload.planId !== planId) return;
-    if (payload.stage === 'done') settle({ undo: payload.undo });
-    else if (payload.stage === 'failed') settle({ error: payload.error ?? 'Agent did not reply' });
-  });
-  const dispose = () => {
-    clearTimeout(timer);
-    unsubscribe();
-  };
-  void outcome.then(dispose);
-  return { outcome, dispose };
-};
-
-export const postFeedbackMessage = async (
-  planId: string,
-  text: string,
-  context?: MountContext,
-  onFiled?: () => Promise<void> | void,
-): Promise<FeedbackOutcome> => {
-  const { outcome, dispose } = awaitFeedbackOutcome(planId);
-  try {
-    const response = await apiFetch(apiUrl('/api/agent/feedback-message'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ planId, text, context }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error ?? 'Failed to send message');
-  } catch (err) {
-    dispose();
-    throw err;
-  }
-  await onFiled?.();
-  return outcome;
-};
-
 export const promoteFeedbackMessage = async (
   planId: string,
   index: number,
@@ -252,34 +201,6 @@ export const promoteFeedbackMessage = async (
     const data = await response.json().catch(() => null);
     throw new Error(data?.error ?? `Failed to promote message (${response.status})`);
   }
-};
-
-export const summarizeFeedbackSession = async (
-  planId: string,
-): Promise<{ skipped?: boolean; summary?: string }> => {
-  const response = await apiFetch(apiUrl('/api/agent/feedback-summarize'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId }),
-  });
-  const data = await response.json().catch(() => null);
-  if (!response.ok)
-    throw new Error(data?.error ?? `Failed to summarize feedback (${response.status})`);
-  return data as { skipped?: boolean; summary?: string };
-};
-
-export const undoFeedbackEdit = async (
-  planId: string,
-  commitSha: string,
-): Promise<{ error?: string }> => {
-  const response = await apiFetch(apiUrl('/api/agent/feedback-undo'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ planId, commitSha }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? 'Failed to undo edit');
-  return data as { error?: string };
 };
 
 export const stopAgent = async (taskId?: string): Promise<void> => {

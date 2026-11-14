@@ -1,9 +1,7 @@
 import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
-import { QuestionCard } from '@/app/features/plans/components/question-card';
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 import {
-  Button,
   Card,
   CheckIcon,
   IconButton,
@@ -14,7 +12,6 @@ import {
   NoteIcon,
   Spinner,
   Stamp,
-  Tooltip,
 } from '@dendelion/folk-ui';
 import { colors } from '@dendelion/folk-ui/tokens';
 
@@ -30,16 +27,9 @@ export type PromoteTarget = 'decision' | 'log' | 'idea';
 
 interface FeedbackThreadProps {
   messages: ThreadMessage[];
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
   /** Only offered on `chat`-kind messages — everything else is already durable. */
   onPromote?: (index: number, target: PromoteTarget) => void;
   promotingIndex?: number | null;
-  /** Answers a parked `question` — pressing an option or the card's own reply
-   * field sends through here exactly as a typed message does (IDEA-287). */
-  onAnswer?: (text: string) => Promise<boolean>;
-  answering?: boolean;
   /** Tags every message with the scope project it belongs to, when more than
    * one project is in view (IDEA-291). */
   project?: ScopeRow;
@@ -47,22 +37,14 @@ interface FeedbackThreadProps {
 
 export const FeedbackThread = ({
   messages,
-  undo,
-  undoing,
-  onUndo,
   onPromote,
   promotingIndex,
-  onAnswer,
-  answering = false,
   project,
 }: FeedbackThreadProps) => (
   <>
     {messages.map((message, i) => {
       const label = THREAD_KIND_LABEL[message.kind];
       const fromAgent = message.from === 'agent';
-      const isLast = i === messages.length - 1;
-      const isDecisionCard =
-        message.kind === 'question' && (message.options?.length ?? 0) > 0 && Boolean(onAnswer);
       const promoteItems: MenuEntry[] = [
         {
           id: 'decision',
@@ -89,42 +71,27 @@ export const FeedbackThread = ({
           className={`flex flex-col gap-1 ${fromAgent ? 'items-start' : 'items-end'}`}
         >
           <div className="max-w-[85%]">
-            {isDecisionCard ? (
-              <QuestionCard
-                message={message}
-                onAnswer={(text) => onAnswer?.(text) ?? Promise.resolve(false)}
-                busy={answering}
-              />
-            ) : (
-              <Card
-                size="small"
-                surface="paper"
-                texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
-                shade={fromAgent}
-                accent={!fromAgent}
-                accentColor={label ? 'rose' : 'blue'}
+            <Card
+              size="small"
+              surface="paper"
+              texture={fromAgent ? 'kraft' : label ? 'canvas' : 'parchment'}
+              shade={fromAgent}
+              accent={!fromAgent}
+              accentColor={label ? 'rose' : 'blue'}
+            >
+              <CollapsibleText
+                collapsedLines={message.kind === 'chat' ? 1 : 3}
+                resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
               >
-                <CollapsibleText
-                  collapsedLines={message.kind === 'chat' ? 1 : 3}
-                  resetKey={`${message.kind}-${message.date ?? ''}-${i}`}
-                >
-                  {message.text}
-                </CollapsibleText>
-              </Card>
-            )}
+                {message.text}
+              </CollapsibleText>
+            </Card>
           </div>
           <div className="flex items-center gap-2">
             {fromAgent && (
               <Stamp size="small" fillColor={colors.surfaceOverlay}>
                 agent
               </Stamp>
-            )}
-            {fromAgent && isLast && undo && (
-              <Tooltip content="Revert this run's plan edit">
-                <Button size="small" variant="ghost" onClick={onUndo} disabled={undoing}>
-                  {undoing ? 'Undoing…' : 'Undo'}
-                </Button>
-              </Tooltip>
             )}
             {project && <ProjectChip project={project} />}
             {message.date && (

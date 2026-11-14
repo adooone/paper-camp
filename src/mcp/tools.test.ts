@@ -245,6 +245,39 @@ describe('write tools', () => {
     expect(written).toContain('Some body.');
   });
 
+  it('add_idea with kind fix files a fix under its parent', async () => {
+    const root = await makeRoot();
+    await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Parent plan' }));
+    await writeFile(
+      join(root, 'papercamp', 'config.json'),
+      `${JSON.stringify({ nextId: { idea: 2 } }, null, 2)}\n`,
+    );
+    const client = await connect(root);
+
+    const result = await client.callTool({
+      name: 'add_idea',
+      arguments: { title: 'Broken link', kind: 'fix', parent: 'IDEA-1' },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({ ok: true, id: 'IDEA-2' });
+
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
+    expect(written).toContain('kind: fix');
+    expect(written).toContain('idea: IDEA-1');
+    expect(written).toContain('type: fix');
+  });
+
+  it('add_idea rejects a fix without a parent', async () => {
+    const root = await makeRoot();
+    const client = await connect(root);
+
+    const result = await client.callTool({
+      name: 'add_idea',
+      arguments: { title: 'Orphan fix', kind: 'fix' },
+    });
+    expect(result.isError).toBe(true);
+  });
+
   it('draft_plan assigns the next id for its kind and writes the file', async () => {
     const root = await makeRoot();
     const client = await connect(root);
@@ -328,6 +361,26 @@ describe('write tools', () => {
       'utf-8',
     );
     expect(archived).toContain('status: dropped');
+  });
+
+  it('update_phase rewords a phase and keeps its done state', async () => {
+    const root = await makeRoot();
+    await writePlan(
+      root,
+      'IDEA-1',
+      planFile({ id: 'IDEA-1', title: 'Plan', phases: ['- [x] First', '- [ ] Second'] }),
+    );
+    const client = await connect(root);
+
+    const result = await client.callTool({
+      name: 'update_phase',
+      arguments: { id: 'IDEA-1', phaseIndex: 1, text: 'Second, reworded' },
+    });
+    expect(result.isError).toBeFalsy();
+
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(written).toContain('- [x] First');
+    expect(written).toContain('- [ ] Second, reworded');
   });
 
   it('update_phase rejects an out-of-range index', async () => {
@@ -456,6 +509,29 @@ describe('append tools', () => {
 
     const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
     expect(written).toContain('[clarification] [agent] Meant the write path');
+  });
+
+  it('append_clarification resolves the open question', async () => {
+    const root = await makeRoot();
+    await writePlan(root, 'IDEA-1', planFile({ id: 'IDEA-1', title: 'Plan' }));
+    const client = await connect(root);
+
+    await writeFile(
+      join(root, 'papercamp', 'ideas', 'IDEA-1.md'),
+      `${planFile({ id: 'IDEA-1', title: 'Plan' })}
+### Thread
+- [ ] 2026-07-01 [question] [agent] Which port?
+`,
+    );
+
+    await client.callTool({
+      name: 'append_clarification',
+      arguments: { id: 'IDEA-1', text: 'Use 3333' },
+    });
+
+    const written = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    expect(written).toMatch(/- \[x\] .*\[question\] \[agent\] Which port\?/);
+    expect(written).toContain('[clarification] [agent] Use 3333');
   });
 
   it('rejects empty text and an unknown id', async () => {

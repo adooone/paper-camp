@@ -2,7 +2,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { readCorpus } from '@/core/corpus';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import type { RouteContext } from '../types';
 import { entityRoutes } from './entities';
 
@@ -48,10 +49,17 @@ async function makeRoot(): Promise<string> {
   return root;
 }
 
-function route(root: string, method: 'POST' | 'PATCH', path: string) {
+function route(
+  root: string,
+  method: 'POST' | 'PATCH',
+  path: string,
+  resumeQuestionParkedTasks = vi.fn(async () => ({ resumed: false })),
+) {
   const found = entityRoutes({
     root,
     activity: { notifyChanged: () => {}, publish: () => {} },
+    agent: { resumeQuestionParkedTasks },
+    checks: { runChecksAndWait: async () => [], getCachedOrRunChecks: async () => [] },
   } as unknown as RouteContext).find((r) => r.method === method && r.path === path);
   if (!found) throw new Error(`no ${method} ${path} route registered`);
   return found;
@@ -404,6 +412,78 @@ describe('POST /api/entities/thread', () => {
     expect(status()).toBe(200);
     const planFile = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-2.md'), 'utf-8');
     expect(planFile).toContain('Did a thing.');
+  });
+
+  async function postThread(
+    root: string,
+    kind: string,
+    text: string,
+    resume?: ReturnType<typeof vi.fn>,
+  ): Promise<unknown> {
+    const { res, status, json } = fakeRes();
+    await route(root, 'POST', '/api/entities/thread', resume).handle(
+      fakeReq('/api/entities/thread?id=IDEA-2', JSON.stringify({ kind, text })),
+      res,
+    );
+    expect(status()).toBe(200);
+    return json();
+  }
+
+  async function threadOf(root: string) {
+    const { entries } = await readCorpus(root);
+    return entries.find((e) => e.id === 'IDEA-2')?.thread ?? [];
+  }
+
+  it('a clarification resolves the open question and resumes the parked run', async () => {
+    const root = await makeRoot();
+    await postThread(root, 'question', 'Which port?');
+    const resume = vi.fn(async () => ({ resumed: true }));
+    const body = await postThread(root, 'clarification', 'Use 3333.', resume);
+
+    expect(body).toEqual({ ok: true, resolvedQuestion: true });
+    const thread = await threadOf(root);
+    expect(thread.find((m) => m.kind === 'question')?.state).toBe('resolved');
+    expect(thread.at(-1)).toMatchObject({ kind: 'clarification', text: 'Use 3333.' });
+    expect(resume).toHaveBeenCalledWith('IDEA-2', expect.any(Function), expect.any(Function));
+  });
+
+  it('a clarification with no open question resumes nothing', async () => {
+    const root = await makeRoot();
+    const resume = vi.fn(async () => ({ resumed: false }));
+    const body = await postThread(root, 'clarification', 'For the record.', resume);
+
+    expect(body).toEqual({ ok: true });
+    expect(resume).not.toHaveBeenCalled();
+  });
+
+  it('a note leaves the open question open', async () => {
+    const root = await makeRoot();
+    await postThread(root, 'question', 'Which port?');
+    const resume = vi.fn(async () => ({ resumed: false }));
+    await postThread(root, 'note', 'Unrelated.', resume);
+
+    const thread = await threadOf(root);
+    expect(thread.find((m) => m.kind === 'question')?.state).toBe('open');
+    expect(resume).not.toHaveBeenCalled();
+  });
+});
+
+describe('PATCH /api/entities phase', () => {
+  it('rewords a phase without touching its done state', async () => {
+    const root = await makeRoot();
+    const { res, status } = fakeRes();
+    await route(root, 'PATCH', '/api/entities').handle(
+      fakeReq(
+        '/api/entities?id=IDEA-2',
+        JSON.stringify({ phase: { index: 0, text: 'Renamed phase', description: 'More detail' } }),
+      ),
+      res,
+    );
+    expect(status()).toBe(200);
+    const { entries } = await readCorpus(root);
+    expect(entries.find((e) => e.id === 'IDEA-2')?.phases).toEqual([
+      expect.objectContaining({ done: false, text: 'Renamed phase', description: 'More detail' }),
+    ]);
   });
 });
 

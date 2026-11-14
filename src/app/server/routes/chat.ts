@@ -1,7 +1,12 @@
 import { readCorpus } from '@/core/corpus';
 import { resolveClosedIdeaQuestions } from '@/core/parked-questions';
 import { agentThreadMessage, nowMinuteString } from '@/core/serialize';
-import type { AgentTaskState, ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
+import type {
+  AgentTaskState,
+  ChatPermissionAsk,
+  ChatPermissionChoice,
+  MountContext,
+} from '@/types/index';
 import { allowAlways, permissionChoiceText } from '../chat-permission';
 import { clearChatSession } from '../chat-session';
 import { tryHandleGitChatRequest } from '../git-chat';
@@ -38,14 +43,31 @@ async function branchContext(git: RouteContext['git']) {
 
 const CHOICES: ChatPermissionChoice[] = ['once', 'always', 'skip'];
 
+function isViewport(value: unknown): value is { width: number; height: number } {
+  const { width, height } = (value ?? {}) as { width?: unknown; height?: unknown };
+  return typeof width === 'number' && typeof height === 'number';
+}
+
+function mountContext(raw: unknown): MountContext | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const { route, focusedIdeaId, viewport } = raw as Record<string, unknown>;
+  const mount: MountContext = {
+    ...(typeof route === 'string' && route && { route }),
+    ...(typeof focusedIdeaId === 'string' && focusedIdeaId && { focusedIdeaId }),
+    ...(isViewport(viewport) && { viewport: { width: viewport.width, height: viewport.height } }),
+  };
+  return Object.keys(mount).length > 0 ? mount : undefined;
+}
+
 async function startTurn(
   { root, agent, git, activity }: ChatTurnContext,
   text: string,
-  allow?: ChatPermissionAsk[],
+  { allow, mount }: { allow?: ChatPermissionAsk[]; mount?: MountContext } = {},
 ) {
   const turn = agent.runChatTurn(text, {
     branch: await branchContext(git),
     ...(allow && { allow }),
+    ...(mount && { mount }),
   });
   void turn
     .catch((err: Error) => err.message || 'Scout failed without an error message')
@@ -72,7 +94,8 @@ export function chatRoutes({ root, agent, git, activity }: RouteContext): Route[
       method: 'POST',
       path: '/api/chat',
       handle: async (req, res) => {
-        const { text } = (await readJson<{ text?: string }>(req)) ?? {};
+        const { text, context } =
+          (await readJson<{ text?: string; context?: MountContext }>(req)) ?? {};
         const trimmed = text?.trim();
         if (!trimmed) {
           sendJson(res, 400, { error: 'text is required' });
@@ -92,7 +115,7 @@ export function chatRoutes({ root, agent, git, activity }: RouteContext): Route[
           sendJson(res, 200, { ok: true });
           return;
         }
-        await startTurn(ctx, trimmed);
+        await startTurn(ctx, trimmed, { mount: mountContext(context) });
         sendJson(res, 200, { ok: true });
       },
     },
@@ -146,7 +169,7 @@ export function chatRoutes({ root, agent, git, activity }: RouteContext): Route[
         const text = permissionChoiceText(choice, ask);
         await appendToChatFile(root, { kind: 'chat', date: nowMinuteString(), text });
         activity.notifyChanged('chat');
-        await startTurn(ctx, text, choice === 'skip' ? undefined : [ask]);
+        await startTurn(ctx, text, choice === 'skip' ? {} : { allow: [ask] });
         sendJson(res, 200, { ok: true });
       },
     },

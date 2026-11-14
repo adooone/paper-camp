@@ -2,7 +2,6 @@ import {
   CorpusError,
   type CreateIdeaInput,
   type EntityFileInput,
-  appendThread,
   createIdea,
   readCorpus,
   updateEntity,
@@ -21,13 +20,33 @@ import {
   type PlanStatus,
   type ThreadMessage,
 } from '@/types/index';
-import { planFile, readRunOrderFile, withRunOrderLock, writeRunOrderFile } from '../../helpers';
+import {
+  planFile,
+  readRunOrderFile,
+  resolveChatQuestion,
+  withRunOrderLock,
+  writeRunOrderFile,
+} from '../../helpers';
 import { readJson, requestUrl, sendJson } from '../../http';
 import type { Route, RouteContext } from '../types';
 
 const NOTE_STATE_KINDS = new Set<ThreadMessage['kind']>(['note', 'decision', 'question']);
 
-export function entityRoutes({ root, activity }: RouteContext): Route[] {
+function resolveOpenQuestion(thread: ThreadMessage[]): {
+  thread: ThreadMessage[];
+  resolved: boolean;
+} {
+  const index = thread.findLastIndex(
+    (m) => m.kind === 'question' && (m.state ?? 'open') === 'open',
+  );
+  if (index === -1) return { thread, resolved: false };
+  return {
+    thread: thread.map((m, i) => (i === index ? { ...m, state: 'resolved' as const } : m)),
+    resolved: true,
+  };
+}
+
+export function entityRoutes({ root, activity, agent, checks }: RouteContext): Route[] {
   return [
     {
       method: 'POST',
@@ -70,7 +89,7 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
             type?: EntityType;
             needs?: string[];
             phases?: PhaseItem[];
-            phase?: { index: number; done: boolean };
+            phase?: { index: number; done?: boolean; text?: string; description?: string };
             fixes?: PhaseItem[];
             /** `null` clears the stored override (e.g. reopening a dropped plan). */
             status?: PlanStatus | null;
@@ -101,14 +120,25 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         const buildOverrides = (entry: EntityEntry): Partial<EntityFileInput> => {
           let phases = updates.phases;
           if (updates.phase !== undefined) {
-            const { index, done } = updates.phase;
+            const { index, done, text, description } = updates.phase;
             if (index < 0 || index >= entry.phases.length) {
               throw new CorpusError(
                 `phase index ${index} out of range (entity has ${entry.phases.length} phases)`,
                 400,
               );
             }
-            phases = entry.phases.map((p, i) => (i === index ? { ...p, done } : p));
+            phases = entry.phases.map((p, i) =>
+              i === index
+                ? {
+                    ...p,
+                    ...(done !== undefined && { done }),
+                    ...(text?.trim() && { text: text.trim() }),
+                    ...(description !== undefined && {
+                      description: description.trim() || undefined,
+                    }),
+                  }
+                : p,
+            );
           }
           // Derived from the fresh entry, not the pre-chain read, so a concurrent
           // appendThread landing in between isn't overwritten by a stale log/thread edit.
@@ -224,8 +254,17 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
         }
         const message = agentThreadMessage(text.trim(), kind);
         if (NOTE_STATE_KINDS.has(kind) && message.state === undefined) message.state = 'open';
+        let answered = false as boolean;
         try {
-          await appendThread(root, id.trim(), message);
+          await updateEntity(root, id.trim(), (entry) => {
+            const prior = entry.thread ?? [];
+            const { thread, resolved } =
+              kind === 'clarification'
+                ? resolveOpenQuestion(prior)
+                : { thread: prior, resolved: false };
+            answered = resolved;
+            return { thread: [...thread, message] };
+          });
         } catch (error) {
           if (error instanceof CorpusError) {
             sendJson(res, error.status, { error: error.message });
@@ -233,8 +272,16 @@ export function entityRoutes({ root, activity }: RouteContext): Route[] {
           }
           throw error;
         }
-        activity.notifyChanged('corpus');
-        sendJson(res, 200, { ok: true });
+        if (answered) {
+          await resolveChatQuestion(root, id.trim());
+          await agent.resumeQuestionParkedTasks(
+            id.trim(),
+            () => checks.runChecksAndWait(),
+            () => checks.getCachedOrRunChecks(),
+          );
+        }
+        activity.notifyChanged(answered ? ['corpus', 'chat'] : 'corpus');
+        sendJson(res, 200, { ok: true, ...(answered && { resolvedQuestion: true }) });
       },
     },
 

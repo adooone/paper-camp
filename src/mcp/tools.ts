@@ -115,10 +115,16 @@ export function registerWriteTools(server: McpServer, root: string): void {
     'add_idea',
     {
       title: 'Add idea',
-      description: 'Create a new idea entity (status: idea) and regenerate the index.',
+      description:
+        "Create a new idea entity (status: idea), or with kind 'fix' a fix linked to its parent idea.",
       inputSchema: {
         title: z.string().describe('Idea title'),
         content: z.string().optional().describe('Idea body (markdown)'),
+        kind: z
+          .enum(['idea', 'fix'])
+          .optional()
+          .describe("'fix' files a fix entity under `parent` instead of a plain idea"),
+        parent: z.string().optional().describe('Parent idea id for a fix, e.g. IDEA-43'),
         needs: z
           .array(z.string())
           .optional()
@@ -128,12 +134,19 @@ export function registerWriteTools(server: McpServer, root: string): void {
       },
       outputSchema: idResultSchema.shape,
     },
-    async ({ title, content, needs }) => {
+    async ({ title, content, needs, kind, parent }) => {
       if (!title.trim()) throw new Error('title is required');
+      const fix = kind === 'fix';
+      if (fix && !parent?.trim()) throw new Error('a fix needs its parent idea id');
       const client = await daemonClient(root);
       const result = await client.post<{ ok: true; id: string; unresolvedNeeds?: string[] }>(
         '/api/entities',
-        { title: title.trim(), content, needs },
+        {
+          title: title.trim(),
+          content,
+          needs,
+          ...(fix && { kind: 'fix', type: 'fix', idea: parent?.trim() }),
+        },
       );
       return json(result);
     },
@@ -169,19 +182,27 @@ export function registerWriteTools(server: McpServer, root: string): void {
     {
       title: 'Update phase',
       description:
-        'Toggle a plan phase done/not-done by index, optionally updating the plan status (archiving it only if the new status is dropped).',
+        'Toggle a plan phase done/not-done or reword its title/description by index, optionally updating the plan status (archiving it only if the new status is dropped).',
       inputSchema: {
-        id: z.string().describe('Plan id, e.g. FEAT-32'),
+        id: z.string().describe('Plan id, e.g. IDEA-32'),
         phaseIndex: z.number().int().nonnegative().describe('0-based index into the phases list'),
-        done: z.boolean(),
+        done: z.boolean().optional(),
+        text: z.string().optional().describe('New phase title'),
+        description: z.string().optional().describe('New phase description'),
         status: z.enum(PLAN_STATUSES).optional().describe('Optional new plan status'),
       },
       outputSchema: okResultSchema.shape,
     },
-    async ({ id, phaseIndex, done, status }) => {
+    async ({ id, phaseIndex, done, text, description, status }) => {
+      if (text !== undefined && !text.trim()) throw new Error('text cannot be empty');
       const client = await daemonClient(root);
       await client.patch(`/api/entities?id=${encodeURIComponent(id)}`, {
-        phase: { index: phaseIndex, done },
+        phase: {
+          index: phaseIndex,
+          ...(done !== undefined && { done }),
+          ...(text !== undefined && { text: text.trim() }),
+          ...(description !== undefined && { description }),
+        },
         ...(status !== undefined && { status }),
       });
       return json({ ok: true });
@@ -264,7 +285,7 @@ export function registerWriteTools(server: McpServer, root: string): void {
   registerAppendTool(
     'append_clarification',
     'Append clarification',
-    "Append a clarification to an entity's thread.",
+    "Append a clarification to an entity's thread; it resolves the entity's open question and resumes the run parked on it.",
     'clarification',
   );
   registerAppendTool(

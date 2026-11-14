@@ -1,5 +1,3 @@
-import type { PlanEntry } from '@/types/index';
-
 const STALENESS_CAP_MS = 14 * 24 * 60 * 60 * 1000;
 
 interface StoredEntry<T> {
@@ -37,8 +35,4 @@ export function removeLocalDraft(key: string): void {
   } catch {
     // localStorage unavailable (e.g. private browsing)
   }
-}
-
-export function feedbackDraftKeyFor(plan: PlanEntry): string {
-  return `feedback-draft:${plan.id ?? plan.title}`;
 }

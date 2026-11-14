@@ -32,6 +32,7 @@ export const ChatPage = () => {
     handleRetry,
     input,
     setInput,
+    prefilledAbout,
     handleSend,
     handleAnswer,
     confirmOpen,
@@ -96,6 +97,10 @@ export const ChatPage = () => {
       setNewMessagesPending(true);
     }
   }, [loading, itemCount, streamedLength, scrollToBottom]);
+
+  useEffect(() => {
+    if (prefilledAbout) textareaRef.current?.focus();
+  }, [prefilledAbout]);
 
   const fillComposer = (text: string) => {
     setInput(text);

@@ -1,5 +1,10 @@
 import { apiFetch, apiUrl } from '@/app/services/api-base';
-import type { ChatPermissionAsk, ChatPermissionChoice, ThreadMessage } from '@/types/index';
+import type {
+  ChatPermissionAsk,
+  ChatPermissionChoice,
+  MountContext,
+  ThreadMessage,
+} from '@/types/index';
 
 export const fetchChat = async (): Promise<ThreadMessage[]> => {
   const res = await apiFetch(apiUrl('/api/chat'));
@@ -33,8 +38,11 @@ const jsonPost = (body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 });
 
-export const postChatMessage = async (text: string): Promise<void> =>
-  expectOk(await apiFetch(apiUrl('/api/chat'), jsonPost({ text })), 'Failed to send message');
+export const postChatMessage = async (text: string, context?: MountContext): Promise<void> =>
+  expectOk(
+    await apiFetch(apiUrl('/api/chat'), jsonPost({ text, ...(context && { context }) })),
+    'Failed to send message',
+  );
 
 export const postChatMessageAt = async (baseUrl: string, text: string): Promise<void> =>
   expectOk(await fetch(`${baseUrl}/api/chat`, jsonPost({ text })), 'Failed to send message');

@@ -1,7 +1,7 @@
 import { useIdeas, useNotifications, useOpenEntity, usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
-import { refreshIdeas, refreshNotifications, refreshPlans } from '@/app/services/query-client';
+import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import {
   applyPromotions,
@@ -32,7 +32,6 @@ export interface LogRowActions {
   fixingIssueId: string | undefined;
   promotingId: string | null;
   handlePromote: (issue: Issue) => Promise<void>;
-  reloadEntities: () => Promise<void>;
 }
 
 export const useLogRows = () => {
@@ -118,10 +117,6 @@ export const useLogRows = () => {
     }
   };
 
-  const reloadEntities = async () => {
-    await Promise.all([refreshPlans(), refreshNotifications()]);
-  };
-
   const fixingIssueId = agentStatus.find(
     (t) =>
       t.taskKind === 'issue-fix' &&
@@ -139,7 +134,6 @@ export const useLogRows = () => {
     fixingIssueId,
     promotingId,
     handlePromote,
-    reloadEntities,
   };
 
   return {

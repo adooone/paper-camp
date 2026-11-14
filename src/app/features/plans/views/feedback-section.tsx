@@ -1,107 +1,56 @@
-import { useFeedbackComposer } from '@/app/features/plans/hooks';
+import { DiscussInChatButton } from '@/app/features/chat/views/discuss-in-chat-button';
+import { usePromoteThreadMessage } from '@/app/features/plans/hooks';
 import type { PlanEntry } from '@/types/index';
-import { Button, Card, SectionHeading, Spinner, Textarea } from '@dendelion/folk-ui';
+import { Card, SectionHeading } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
-import { FeedbackThread } from '../components';
+import { useState } from 'react';
+import { FeedbackThread, type PromoteTarget } from '../components';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
-interface FeedbackSectionProps {
-  plan: PlanEntry;
-  updating: boolean;
-  onSend: (text: string) => Promise<boolean>;
-  undo: { commitSha: string } | null;
-  undoing: boolean;
-  onUndo: () => void;
-}
+export const FeedbackSection = ({ plan }: { plan: PlanEntry }) => {
+  const thread = plan.thread ?? [];
+  const [ideaPromptIndex, setIdeaPromptIndex] = useState<number | null>(null);
+  const { promotingIndex, promoteToDurable, promoteToIdea } = usePromoteThreadMessage(plan);
 
-export const FeedbackSection = ({
-  plan,
-  updating,
-  onSend,
-  undo,
-  undoing,
-  onUndo,
-}: FeedbackSectionProps) => {
-  const {
-    thread,
-    input,
-    setInput,
-    pending,
-    promotingIndex,
-    ideaPromptIndex,
-    handleSend,
-    handleAnswer,
-    handlePromote,
-    handlePromoteToIdea,
-    closeIdeaPrompt,
-  } = useFeedbackComposer(plan, onSend);
+  const handlePromote = (index: number, target: PromoteTarget) => {
+    if (target === 'idea') setIdeaPromptIndex(index);
+    else promoteToDurable(index, target);
+  };
+
+  const handlePromoteToIdea = async (idea: {
+    title: string;
+    content?: string;
+    kind?: 'idea' | 'note' | 'board';
+  }) => {
+    if (ideaPromptIndex === null) return;
+    if (await promoteToIdea(ideaPromptIndex, idea)) setIdeaPromptIndex(null);
+  };
 
   return (
     <div className="mb-8">
-      <SectionHeading as="h3" className="mb-3">
-        Feedback
-      </SectionHeading>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <SectionHeading as="h3">Feedback</SectionHeading>
+        {plan.id && <DiscussInChatButton ideaId={plan.id} />}
+      </div>
       <Card size="small" accent accentColor="slate" texture={surface.card}>
-        <div className="flex flex-col gap-3 mb-4">
-          {thread.length > 0 || pending ? (
-            <>
-              <FeedbackThread
-                messages={thread}
-                undo={undo}
-                undoing={undoing}
-                onUndo={onUndo}
-                onPromote={handlePromote}
-                promotingIndex={promotingIndex}
-                onAnswer={handleAnswer}
-                answering={Boolean(pending) || updating}
-              />
-              {pending && (
-                <div className="flex flex-col gap-1 items-end">
-                  <div className="max-w-[85%]">
-                    <Card
-                      size="small"
-                      surface="paper"
-                      texture="parchment"
-                      accent
-                      accentColor="blue"
-                    >
-                      {pending}
-                    </Card>
-                  </div>
-                </div>
-              )}
-              {updating && (
-                <div className="flex flex-col gap-1 items-start">
-                  <Card size="small" texture={surface.nestedCard}>
-                    <Spinner size="small" label="Agent thinking…" />
-                  </Card>
-                </div>
-              )}
-            </>
+        <div className="flex flex-col gap-3">
+          {thread.length > 0 ? (
+            <FeedbackThread
+              messages={thread}
+              onPromote={handlePromote}
+              promotingIndex={promotingIndex}
+            />
           ) : (
             <p className="text-sm m-0 text-ink-500">
-              Jot a comment, ask a question, or say what's wrong with this plan.
+              Nothing on this idea's thread yet. Discuss it in chat and Scout records the outcome
+              here.
             </p>
           )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            aria-label="Feedback message"
-            placeholder="Write a message…"
-            rows={3}
-          />
-          <div className="flex justify-end items-center gap-3">
-            <Button size="small" onClick={handleSend} disabled={updating || !input.trim()}>
-              Send
-            </Button>
-          </div>
         </div>
       </Card>
       <CreateIdeaModal
         open={ideaPromptIndex !== null}
-        onClose={closeIdeaPrompt}
+        onClose={() => setIdeaPromptIndex(null)}
         onAdd={handlePromoteToIdea}
         initialContent={ideaPromptIndex !== null ? thread[ideaPromptIndex]?.text : undefined}
       />

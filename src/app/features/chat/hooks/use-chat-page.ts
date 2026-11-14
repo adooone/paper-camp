@@ -1,8 +1,9 @@
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
-import { useMemo, useState } from 'react';
-import { mergeScopedChatMessages, threadEndsWithUserMessage } from '../helpers';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { mergeScopedChatMessages, threadEndsWithUserMessage, withIdeaPrefix } from '../helpers';
 import { useChatStage } from './use-chat-stage';
 import { useChatThread } from './use-chat-thread';
 import { useScopeChat } from './use-scope-chat';
@@ -10,6 +11,17 @@ import { useScopeChat } from './use-scope-chat';
 export function useChatPage() {
   const chat = useChatThread();
   const scope = useScope('chat');
+  const { about } = useSearch({ strict: false }) as { about?: string };
+  const navigate = useNavigate();
+  const [prefilledAbout, setPrefilledAbout] = useState<string | null>(null);
+  const { setInput } = chat;
+
+  useEffect(() => {
+    if (!about) return;
+    setInput((current) => withIdeaPrefix(current, about));
+    setPrefilledAbout(about);
+    void navigate({ to: '/chat', search: {}, replace: true });
+  }, [about, setInput, navigate]);
 
   const allScopeRows = useMemo(() => scope.groups.flatMap((g) => g.rows), [scope.groups]);
   const currentScopeRow = allScopeRows.find((r) => r.isCurrent);
@@ -75,6 +87,7 @@ export function useChatPage() {
     handleRetry,
     input: chat.input,
     setInput: chat.setInput,
+    prefilledAbout,
     handleSend,
     handleAnswer,
     confirmOpen: chat.confirmOpen,

@@ -64,7 +64,7 @@ function withChatLock<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 // Persisted before the reply is generated so the user's message survives a slow or
-// failed agent run, then again once the reply lands — mirrors the feedback-message route.
+// failed agent run, then again once the reply lands.
 export async function appendToChatFile(root: string, message: ThreadMessage): Promise<void> {
   await withChatLock(async () => {
     const content = await readMaybe(chatFilePath(root));

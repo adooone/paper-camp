@@ -8,7 +8,6 @@ export type ActivityMessage = {
   stage?: string;
   chunk?: string;
   error?: string;
-  undo?: { commitSha: string };
 };
 export type ActivityListener = (payload: ActivityMessage) => void;
 

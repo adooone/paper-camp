@@ -180,31 +180,6 @@ export interface PrReviewResult {
   findings: PrReviewFinding[];
 }
 
-export interface FeedbackPhaseEdit {
-  op: 'add' | 'reword';
-  /** 1-based position in the plan's current phase list; required for "reword", ignored for "add". */
-  index?: number;
-  text: string;
-  description?: string;
-}
-
-export interface FeedbackEdit {
-  phases?: FeedbackPhaseEdit[];
-  /** The complete replacement body, when the message corrects body prose. */
-  body?: string;
-}
-
-/** Parsed from the JSON object a feedback-reply agent's prompt requires as its
- * final line. The chat never creates ideas — a request is either a reply or an
- * edit on the current plan. */
-export interface FeedbackReplyResult {
-  reply: string;
-  edit?: FeedbackEdit;
-  /** True when the user's message answers an open question the agent asked
-   * earlier in this thread — the route persists that message as a clarification. */
-  answersQuestion?: boolean;
-}
-
 /** Live-resolved PR info for an entity's branch — see `core/pr.ts`. */
 export interface PrInfo {
   number: number;

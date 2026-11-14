@@ -83,11 +83,3 @@ export function promoteThreadMessage(
     return { ...rest, kind, text };
   });
 }
-
-/** Every `chat` message after the thread's last `log` entry — the exchange a quiet
- * session's auto-summary distills, so a summary never re-covers ground an earlier
- * one (or a manual promotion) already turned into a log line. */
-export function chatSinceLastLog(thread: ThreadMessage[] = []): ThreadMessage[] {
-  const lastLogIndex = thread.reduce((acc, m, i) => (m.kind === 'log' ? i : acc), -1);
-  return thread.slice(lastLogIndex + 1).filter((m) => m.kind === 'chat');
-}
