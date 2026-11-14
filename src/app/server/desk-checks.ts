@@ -8,6 +8,7 @@ import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { CheckStatus, DeskCheckState, FailingCheck } from '../../types';
 import { killWithEscalation } from './agent-process';
 import { runBiomeFix } from './biome-fix';
+import { type HeavySlot, createHeavySlot } from './heavy-slot';
 import { readMaybe } from './helpers';
 
 export interface CheckFingerprint {
@@ -48,6 +49,8 @@ interface RunResult {
   output: string;
   timedOut: boolean;
 }
+
+const NOT_SPAWNED: RunResult = { code: null, output: '', timedOut: false };
 
 function run(cmd: string, cwd: string, options: RunOptions = {}): Promise<RunResult> {
   return new Promise((resolve) => {
@@ -114,6 +117,7 @@ export function createDeskCheckManager(
   publish?: (payload: { type: string } & Record<string, unknown>) => void,
   state: DeskCheckManagerState = createEmptyCheckState(),
   timeoutMs: number = CHECK_TIMEOUT_MS,
+  slot: HeavySlot = createHeavySlot(),
 ) {
   const { runtimes, inFlight } = state;
   const procs = new Map<string, ChildProcess>();
@@ -162,12 +166,18 @@ export function createDeskCheckManager(
       const fingerprint = getFingerprint
         ? await getFingerprint().catch(() => EMPTY_FINGERPRINT)
         : EMPTY_FINGERPRINT;
-      setResult(name, 'running', '', fingerprint);
       try {
-        const result = await run(check.cmd, root, {
-          timeoutMs,
-          onSpawn: (proc) => procs.set(name, proc),
-        });
+        const result = await slot.run(
+          () => {
+            if (stopRequested.has(name)) return Promise.resolve(NOT_SPAWNED);
+            setResult(name, 'running', '', fingerprint);
+            return run(check.cmd, root, {
+              timeoutMs,
+              onSpawn: (proc) => procs.set(name, proc),
+            });
+          },
+          { onQueued: () => setResult(name, 'queued', '', fingerprint) },
+        );
         procs.delete(name);
         inFlight.delete(name);
         const stopped = stopRequested.delete(name);
@@ -188,6 +198,10 @@ export function createDeskCheckManager(
   function stopCheck(name: string): boolean {
     const proc = procs.get(name);
     if (!proc) {
+      if (runtimes.get(name)?.status === 'queued') {
+        stopRequested.add(name);
+        return true;
+      }
       if ((loadDeskConfig(root).checks ?? []).some((c) => c.name === name)) return false;
       throw new UnknownCheckError(`No check named "${name}" in the desk manifest`);
     }
@@ -201,7 +215,8 @@ export function createDeskCheckManager(
     if (!check) throw new UnknownCheckError(`No check named "${name}" in the desk manifest`);
     if (!check.fixCmd) throw new MissingFixCmdError(`Check "${name}" has no fix command`);
 
-    await run(check.fixCmd, root);
+    const { fixCmd } = check;
+    await slot.run(() => run(fixCmd, root));
     await runCheck(name);
     return getStatus().find((c) => c.name === name) as DeskCheckState;
   }
@@ -258,7 +273,7 @@ export function createDeskCheckManager(
   // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
   // nits can't hard-fail an autonomous run-all phase; always runs every check.
   async function runChecksAndWait(): Promise<FailingCheck[]> {
-    await runBiomeFix(root);
+    await slot.run(() => runBiomeFix(root));
 
     const names = (loadDeskConfig(root).checks ?? []).map((c) => c.name);
     const hasVitest = repoHasVitest(root);

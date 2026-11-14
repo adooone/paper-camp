@@ -10,6 +10,7 @@ import {
   isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
+import { type HeavySlot, createHeavySlot } from '../app/server/heavy-slot';
 import { readBody, sendJson } from '../app/server/http';
 import { migrateLocalState } from '../app/server/migrate-local-state';
 import { type PairCodeManager, createPairCodeManager } from '../app/server/pair-code';
@@ -194,6 +195,7 @@ export async function createProjectApi(
   onPaired: () => void,
   checkMachineBusy: () => boolean,
   pairCodeManager: PairCodeManager,
+  heavySlot: HeavySlot,
 ): Promise<ApiMiddleware> {
   // Cheap no-op after the first mount's migration has landed. A project found
   // mid-rebase or with staged changes is left alone and retried on the next mount.
@@ -217,6 +219,7 @@ export async function createProjectApi(
     onPaired,
     isMachineBusy: checkMachineBusy,
     pairCode: pairCodeManager,
+    heavySlot,
   });
 }
 
@@ -707,13 +710,21 @@ export async function startDaemonServer({
   const { state: pairingState, persist: persistPairing } = await loadMachinePairing();
   const updateToken = await loadOrMintUpdateToken(updateTokenPath());
   const pairCodeManager = createPairCodeManager();
+  const heavySlot = createHeavySlot();
   const mounted = new Map<string, ApiMiddleware>();
   const checkMachineBusy = () => isMachineBusy(mounted);
   let pendingUpdateVersion: string | null = null;
   const { mount } = createProjectMounter(
     defaultRegistryPath(),
     (project) =>
-      createProjectApi(project, pairingState, persistPairing, checkMachineBusy, pairCodeManager),
+      createProjectApi(
+        project,
+        pairingState,
+        persistPairing,
+        checkMachineBusy,
+        pairCodeManager,
+        heavySlot,
+      ),
     mounted,
   );
 

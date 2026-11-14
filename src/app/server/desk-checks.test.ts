@@ -5,8 +5,9 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { corpusFingerprint } from '@/core/corpus';
 import { afterAll, describe, expect, it } from 'vitest';
-import { MissingFixCmdError, createDeskCheckManager } from './desk-checks';
+import { CHECK_TIMEOUT_MS, MissingFixCmdError, createDeskCheckManager } from './desk-checks';
 import { createGitManager } from './git';
+import { createHeavySlot } from './heavy-slot';
 
 const run = promisify(execFile);
 const roots: string[] = [];
@@ -216,5 +217,118 @@ describe('getCachedOrRunChecks', () => {
     expect(getState().runtimes.get('lint')).toEqual(
       expect.objectContaining({ status: 'pass', headSha }),
     );
+  });
+});
+
+async function tmpRootWithChecks(checks: { name: string; cmd: string }[]): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'papercamp-desk-checks-slot-'));
+  roots.push(root);
+  await mkdir(join(root, 'papercamp'), { recursive: true });
+  await writeFile(join(root, 'papercamp', 'config.json'), JSON.stringify({ desk: { checks } }));
+  return root;
+}
+
+const loggedCheck = (name: string, log: string) => ({
+  name,
+  cmd: `echo ${name}:start >> ${log} && sleep 0.1 && echo ${name}:end >> ${log}`,
+});
+
+describe('heavy slot', () => {
+  it('runs two checks one after the other and shows the waiting one as queued', async () => {
+    const log = join(tmpdir(), `papercamp-desk-checks-slot-${Date.now()}.txt`);
+    const root = await tmpRootWithChecks([loggedCheck('a', log), loggedCheck('b', log)]);
+    const manager = createDeskCheckManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      CHECK_TIMEOUT_MS,
+      createHeavySlot(1),
+    );
+
+    const a = manager.runCheck('a');
+    const b = manager.runCheck('b');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(manager.getStatus().find((c) => c.name === 'b')?.status).toBe('queued');
+
+    expect(await Promise.all([a, b])).toEqual(['pass', 'pass']);
+    expect((await readFile(log, 'utf-8')).trim().split('\n')).toEqual([
+      'a:start',
+      'a:end',
+      'b:start',
+      'b:end',
+    ]);
+  });
+
+  it('shares one slot between two projects', async () => {
+    const log = join(tmpdir(), `papercamp-desk-checks-shared-${Date.now()}.txt`);
+    const slot = createHeavySlot(1);
+    const one = createDeskCheckManager(
+      await tmpRootWithChecks([loggedCheck('one', log)]),
+      undefined,
+      undefined,
+      undefined,
+      CHECK_TIMEOUT_MS,
+      slot,
+    );
+    const two = createDeskCheckManager(
+      await tmpRootWithChecks([loggedCheck('two', log)]),
+      undefined,
+      undefined,
+      undefined,
+      CHECK_TIMEOUT_MS,
+      slot,
+    );
+
+    await Promise.all([one.runCheck('one'), two.runCheck('two')]);
+    expect((await readFile(log, 'utf-8')).trim().split('\n')).toEqual([
+      'one:start',
+      'one:end',
+      'two:start',
+      'two:end',
+    ]);
+  });
+
+  it('releases the slot after a failing check', async () => {
+    const root = await tmpRootWithChecks([
+      { name: 'broken', cmd: 'exit 1' },
+      { name: 'fine', cmd: 'true' },
+    ]);
+    const manager = createDeskCheckManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      CHECK_TIMEOUT_MS,
+      createHeavySlot(1),
+    );
+
+    expect(await Promise.all([manager.runCheck('broken'), manager.runCheck('fine')])).toEqual([
+      'fail',
+      'pass',
+    ]);
+  });
+
+  it('stops a queued check without ever spawning it', async () => {
+    const log = join(tmpdir(), `papercamp-desk-checks-stop-${Date.now()}.txt`);
+    const root = await tmpRootWithChecks([loggedCheck('a', log), loggedCheck('b', log)]);
+    const manager = createDeskCheckManager(
+      root,
+      undefined,
+      undefined,
+      undefined,
+      CHECK_TIMEOUT_MS,
+      createHeavySlot(1),
+    );
+
+    const a = manager.runCheck('a');
+    const b = manager.runCheck('b');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(manager.stopCheck('b')).toBe(true);
+
+    expect(await b).toBe('fail');
+    expect(await a).toBe('pass');
+    expect(manager.getStatus().find((c) => c.name === 'b')?.output).toBe('stopped');
+    expect((await readFile(log, 'utf-8')).trim().split('\n')).toEqual(['a:start', 'a:end']);
   });
 });

@@ -76,7 +76,9 @@ export const useDeliverChecksRow = () => {
   const [docsExpanded, setDocsExpanded] = useState(false);
   const [fixingName, setFixingName] = useState<string | null>(null);
 
-  const anyRunning = deskChecks.some((check) => check.status === 'running');
+  const anyRunning = deskChecks.some(
+    (check) => check.status === 'running' || check.status === 'queued',
+  );
   const hasDocIssues = consistency.length > 0;
 
   const failing = firstFailingCheck(deskChecks, doctor, consistency);
@@ -95,7 +97,9 @@ export const useDeliverChecksRow = () => {
 
   const stopRunningChecks = () =>
     Promise.all(
-      deskChecks.filter((check) => check.status === 'running').map((check) => stop(check.name)),
+      deskChecks
+        .filter((check) => check.status === 'running' || check.status === 'queued')
+        .map((check) => stop(check.name)),
     );
 
   const fixCheck = () => {

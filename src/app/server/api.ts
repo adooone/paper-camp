@@ -8,6 +8,7 @@ import { type AgentManager, type AgentManagerState, createAgentManager } from '.
 import { createAgentHooks } from './agent-hooks';
 import { onAgentSignInChange, onAgentSignedIn } from './agent-signin';
 import {
+  CHECK_TIMEOUT_MS,
   type DeskCheckManager,
   type DeskCheckManagerState,
   createDeskCheckManager,
@@ -18,6 +19,7 @@ import {
   createDeskServiceManager,
 } from './desk-services';
 import { createGitManager } from './git';
+import { type HeavySlot, createHeavySlot } from './heavy-slot';
 import { HttpError, sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
@@ -186,6 +188,7 @@ export interface ApiMiddlewareOptions {
   onPaired?: (origin: string) => void;
   isMachineBusy?: () => boolean;
   pairCode?: PairCodeManager;
+  heavySlot?: HeavySlot;
 }
 
 export function createApiMiddleware(
@@ -201,6 +204,7 @@ export function createApiMiddleware(
     onPaired,
     isMachineBusy,
     pairCode,
+    heavySlot = createHeavySlot(),
   } = options;
   const activity = createActivityManager(root, activityState);
   const stats = createProjectStatsStore(root);
@@ -217,6 +221,8 @@ export function createApiMiddleware(
     async () => ({ headSha: await git.getHeadSha(), treeHash: await git.getTreeHash() }),
     publish,
     checkState,
+    CHECK_TIMEOUT_MS,
+    heavySlot,
   );
   const pairing = createPairingManager(pairingState, onPaired);
   const hooks = createAgentHooks(root, git);

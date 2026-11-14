@@ -1069,7 +1069,7 @@ export interface AssetsConfig {
   maxFileSizeMb?: number;
 }
 
-export type CheckStatus = 'stale' | 'running' | 'pass' | 'fail';
+export type CheckStatus = 'stale' | 'queued' | 'running' | 'pass' | 'fail';
 
 export interface CheckResult {
   status: CheckStatus;

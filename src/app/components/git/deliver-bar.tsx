@@ -23,6 +23,7 @@ const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {
   pass: 'success',
   fail: 'error',
   running: 'warning',
+  queued: 'neutral',
   stale: 'neutral',
 };
 
@@ -30,6 +31,7 @@ const DOT_CLASS: Record<CheckStatus, string> = {
   pass: 'bg-watercolor-green-dark',
   fail: 'bg-watercolor-rose-dark',
   running: 'bg-watercolor-amber-dark',
+  queued: 'bg-watercolor-amber-light',
   stale: 'bg-watercolor-slate-dark',
 };
 
@@ -118,6 +120,7 @@ export const DeliverBar = ({
 
   const failingDeskChecks = deskChecks.filter((check) => check.status === 'fail');
   const runningCount = deskChecks.filter((check) => check.status === 'running').length;
+  const queuedCount = deskChecks.filter((check) => check.status === 'queued').length;
   const totalChecks = deskChecks.length + 1;
   const failingCount = failingDeskChecks.length + (hasDocIssues ? 1 : 0);
   const firstFailingName = failingDeskChecks[0]?.name ?? (hasDocIssues ? 'Docs' : undefined);
@@ -133,7 +136,10 @@ export const DeliverBar = ({
         : `${failingCount} of ${totalChecks} failing`;
   } else if (anyRunning) {
     statusVariant = 'warning';
-    statusLabel = `${runningCount} checks running…`;
+    statusLabel =
+      queuedCount > 0
+        ? `${runningCount} running · ${queuedCount} queued`
+        : `${runningCount} checks running…`;
   } else if (allStale) {
     statusVariant = 'neutral';
     statusLabel = 'Checks not run';
@@ -146,7 +152,10 @@ export const DeliverBar = ({
     const autoFix = check.status === 'fail' && Boolean(check.fixCmd);
     return {
       id: `check:${check.name}`,
-      label: menuItemLabel(check.name, autoFix ? 'Auto-fix' : 'Run'),
+      label: menuItemLabel(
+        check.name,
+        check.status === 'queued' ? 'queued' : autoFix ? 'Auto-fix' : 'Run',
+      ),
       icon: <StatusDot status={check.status} />,
       disabled: anyRunning,
       onSelect: autoFix ? () => runAutoFix(check.name) : () => runDeskCheck(check.name),

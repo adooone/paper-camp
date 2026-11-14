@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
+import { createHeavySlot } from '../app/server/heavy-slot';
 import { createPairCodeManager } from '../app/server/pair-code';
 import type { PairingManagerState } from '../app/server/pairing';
 import { writeCapacity } from '../core/capacity';
@@ -519,12 +520,14 @@ describe('createProjectApi', () => {
     const onPaired = vi.fn();
 
     const pairCodeManager = createPairCodeManager();
+    const heavySlot = createHeavySlot();
     const apiAlpha = await createProjectApi(
       { slug: 'alpha', path: '/some/alpha', name: 'Alpha' },
       pairingState,
       onPaired,
       () => false,
       pairCodeManager,
+      heavySlot,
     );
     const apiBeta = await createProjectApi(
       { slug: 'beta', path: '/some/beta', name: 'Beta' },
@@ -532,6 +535,7 @@ describe('createProjectApi', () => {
       onPaired,
       () => false,
       pairCodeManager,
+      heavySlot,
     );
 
     expect(apiAlpha.pairing.token).toBe('shared-token');
