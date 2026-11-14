@@ -8,7 +8,7 @@ import { readBatchRunState } from '@/core/batch-run';
 import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
 import type { FailingCheck, PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildAgentPrompt,
   buildFixItemPrompt,
@@ -34,6 +34,12 @@ vi.setConfig({ testTimeout: 20_000 });
 // The manager is exercised with a fake adapter whose "agent" is a short `node -e`
 // script — the real spawn/readline/verification machinery runs, only the AI CLI is
 // substituted. `agentScript.current` is what each spawned agent executes.
+const agentPidFile = await vi.hoisted(async () => {
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  return join(tmpdir(), `papercamp-agent-test-pids-${process.env.VITEST_WORKER_ID}`);
+});
+
 const agentScript = vi.hoisted(() => ({
   current: 'process.exit(0)',
   buildArgs: undefined as ((prompt: string, opts?: { resume?: string }) => string[]) | undefined,
@@ -62,8 +68,13 @@ vi.mock('./agents', () => {
     get command() {
       return agentScript.readOnlyCommand ?? process.execPath;
     },
-    buildArgs: (prompt: string, opts?: { resume?: string }) =>
-      agentScript.buildArgs ? agentScript.buildArgs(prompt, opts) : ['-e', agentScript.current],
+    buildArgs: (prompt: string, opts?: { resume?: string }) => {
+      const [flag, script] = agentScript.buildArgs
+        ? agentScript.buildArgs(prompt, opts)
+        : ['-e', agentScript.current];
+      const recordPid = `require('node:fs').appendFileSync(${JSON.stringify(agentPidFile)}, process.pid + '\\n');`;
+      return [flag, `${recordPid}\n${script}`];
+    },
     // runReadOnlyPrompt builds no prompt arg (it pipes the prompt on stdin), so
     // the fake adapter's read-only args are argv-only — the script itself is
     // picked by `command` above (agentScript.readOnlyCommand).
@@ -153,7 +164,25 @@ Plan body.
 
 const roots: string[] = [];
 
+function killIfAlive(pid: number): void {
+  try {
+    process.kill(pid, 'SIGKILL');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error;
+  }
+}
+
+async function killRecordedAgents(): Promise<void> {
+  const recorded = await readFile(agentPidFile, 'utf8').catch(() => '');
+  for (const pid of recorded.split('\n').filter(Boolean)) killIfAlive(Number(pid));
+  await writeFile(agentPidFile, '');
+}
+
+afterEach(killRecordedAgents);
+
 afterAll(async () => {
+  await killRecordedAgents();
+  await rm(agentPidFile, { force: true });
   // maxRetries/retryDelay: a few tests deliberately leave a subprocess killed but not
   // yet reaped when their assertions finish; its close handler can still append to
   // tasks.log after this cleanup starts, racing a bare rm into ENOTEMPTY.
