@@ -2,7 +2,7 @@
 id: IDEA-332
 title: Scout chat as a live agent session
 type: feat
-status: review
+status: done
 created: 2026-11-14
 updated: 2026-11-14
 tags:
