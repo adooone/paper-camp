@@ -802,7 +802,7 @@ describe('fixDivergence', () => {
     expect(git(root, 'stash', 'list')).toBe('');
   });
 
-  it('carries a dirty papercamp/ through a rebase with its staged state intact', async () => {
+  it('commits a dirty papercamp/ ahead of a rebase instead of stashing it', async () => {
     await divergeFromOrigin();
     await commitFile(root, 'local.txt', 'from local\n', 'local-only change');
     await dirtyPapercamp();
@@ -810,9 +810,11 @@ describe('fixDivergence', () => {
     expect(await manager.fixDivergence()).toEqual({ ok: true });
 
     expect(await readFile(join(root, 'remote.txt'), 'utf-8')).toBe('from remote\n');
-    expect(git(root, 'status', '--porcelain', '-uall')).toBe(
-      'A  papercamp/ideas/IDEA-9.md\n?? papercamp/chat.md',
-    );
+    expect(git(root, 'status', '--porcelain', '-uall')).toBe('');
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): reconcile corpus');
+    expect(git(root, 'show', 'HEAD:papercamp/ideas/IDEA-9.md')).toBe('new idea');
+    expect(git(root, 'show', 'HEAD:papercamp/chat.md')).toBe('untracked');
+    expect(git(root, 'merge-base', '--is-ancestor', 'origin/main', 'HEAD')).toBe('');
     expect(git(root, 'stash', 'list')).toBe('');
   });
 
@@ -825,14 +827,16 @@ describe('fixDivergence', () => {
 
     const result = await manager.fixDivergence();
 
-    expect(result).toMatchObject({ ok: false, stashPending: false });
+    expect(result).toMatchObject({ ok: false, stage: 'reconcile', stashPending: false });
+    expect((result as { message: string }).message).toContain('src.ts');
     expect(git(root, 'status', '--porcelain', '-uall')).toBe(
       'A  papercamp/ideas/IDEA-9.md\nA  src.ts\n?? papercamp/chat.md',
     );
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('local-only change');
     expect(git(root, 'stash', 'list')).toBe('');
   });
 
-  it('reports the stash as pending when papercamp/ changes cannot go back after a rebase', async () => {
+  it('routes a conflicting corpus edit through the rebase conflict path, leaving no stash', async () => {
     await addOrigin(root);
     await mkdir(join(root, 'papercamp'), { recursive: true });
     await commitFile(root, 'papercamp/config.json', 'base\n', 'base config');
@@ -845,10 +849,15 @@ describe('fixDivergence', () => {
 
     const result = await manager.fixDivergence();
 
-    expect(result).toMatchObject({ ok: false, stashPending: true });
-    expect((result as { message: string }).message).toContain('git stash pop --index');
-    expect(git(root, 'stash', 'list')).toContain('papercamp-reconcile');
-    expect(git(root, 'show', 'stash@{0}:papercamp/config.json')).toBe('local edit');
+    expect(result).toMatchObject({
+      ok: false,
+      stage: 'conflicted',
+      stashPending: false,
+      conflictedFiles: ['papercamp/config.json'],
+    });
+    expect(git(root, 'log', '-1', '--format=%s')).toBe('docs(ideas): reconcile corpus');
+    expect(git(root, 'show', 'HEAD:papercamp/config.json')).toBe('local edit');
+    expect(git(root, 'stash', 'list')).toBe('');
   });
 
   it('swallows a failed fetch by default, reconciling against whatever refs are already known', async () => {

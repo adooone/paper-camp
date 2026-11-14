@@ -64,8 +64,9 @@ and in the git card; *Restore* puts its idea files back and the entry
 disappears from `git stash list`.
 
 ### Phases
-- [ ] Reconcile commits the corpus instead of stashing
+- [x] Reconcile commits the corpus instead of stashing
       In `src/app/server/git.ts`, `reconcileOnto` calls `commitCorpus('docs(ideas): reconcile corpus')` before the rebase and no longer stashes; delete `stashDirtyPapercamp` and `StashPendingError` and every reference. `git.test.ts`: a dirty idea file survives a rebase as a commit on the branch, `git stash list` stays empty, and a dirty file outside `papercamp/` still makes the reconcile refuse.
+      run: 2m3s · 22 in · 6.9k out · opus-5-5 · sess:24ca2c86-6acc-40a2-8967-aa1ab737796f
 - [ ] Stranded stashes in doctor and the git card
       A `stranded-stash` doctor rule listing `papercamp-reconcile` and `papercamp-sync` entries with date and `papercamp/` paths; `POST /api/git/stash-restore` restoring that stash's `papercamp/` files (tracked from the stash, untracked from its third parent), refusing differing files by name, dropping the entry when complete, and naming the non-`papercamp/` files it left; a row per stash in the git card with *Restore*. Route and rule tests, including the refuse path.
 

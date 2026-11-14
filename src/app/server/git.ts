@@ -62,16 +62,6 @@ export interface StatusSnapshot {
   entries: GitStatusEntry[];
 }
 
-// Thrown by reconcileOnto when it moved onto `ref` but could not put the local
-// changes back — they are still whole in `git stash`, and nothing may sweep the tree.
-class StashPendingError extends Error {
-  constructor(ref: string) {
-    super(
-      `Moved onto ${ref}, but your local changes could not be restored — they are kept in \`git stash\` (papercamp-reconcile); restore them with \`git stash pop --index\``,
-    );
-  }
-}
-
 // Thrown by reconcileOnto so callers can tell a genuine content conflict — one that needs
 // domain judgement to resolve — apart from any other reconcile failure (fetch, checkout, ...).
 class RebaseConflictError extends Error {
@@ -820,17 +810,6 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   // committed-but-unpushed change never leaves the branch split.
   const MAX_CONFLICT_CONTENT_CHARS = 20000;
 
-  // Only the daemon's own papercamp/ churn is stashed around a rebase; anything else dirty
-  // makes it refuse. No pathspec: a pathspec stash records the whole index, breaking `pop --index`.
-  async function stashDirtyPapercamp(): Promise<boolean> {
-    const dirty = await runGitStatus({ untrackedFiles: 'all' });
-    if (dirty.length === 0 || dirty.some((entry) => !entry.path.startsWith('papercamp/'))) {
-      return false;
-    }
-    await runGit(['stash', 'push', '--include-untracked', '-m', 'papercamp-reconcile']);
-    return true;
-  }
-
   // During a conflict, stage 1/2/3 hold the merge base, "ours" and "theirs" — the only
   // look this needs at what each side wrote, without disturbing the in-progress rebase.
   async function readConflictStages(
@@ -915,38 +894,24 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   async function reconcileOnto(ref: string): Promise<void> {
-    // A fast-forward runs over a dirty tree unless the incoming commits touch it,
-    // so local work is only stashed when a rebase is actually needed.
     try {
       await runGit(['merge', '--ff-only', ref]);
       return;
     } catch {}
-    const stashed = await stashDirtyPapercamp();
-    let outcome: { ok: true } | { ok: false; err: unknown };
+    const outside = (await runGitStatus())
+      .filter((entry) => !entry.status.startsWith('?') && !entry.path.startsWith('papercamp/'))
+      .map((entry) => entry.path);
+    if (outside.length > 0) {
+      throw new Error(
+        `Cannot rebase onto ${ref} over uncommitted changes outside papercamp/: ${outside.join(', ')}`,
+      );
+    }
+    await commitCorpus('docs(ideas): reconcile corpus');
     try {
-      try {
-        await runGit(['merge', '--ff-only', ref]);
-      } catch {
-        try {
-          await runGit(['rebase', ref]);
-        } catch (err) {
-          await driveRebaseToCompletion(ref, err);
-        }
-      }
-      outcome = { ok: true };
+      await runGit(['rebase', ref]);
     } catch (err) {
-      outcome = { ok: false, err };
+      await driveRebaseToCompletion(ref, err);
     }
-    if (stashed) {
-      try {
-        await runGit(['stash', 'pop', '--index']);
-      } catch {
-        // The rebase's own failure already explains what's wrong; don't bury it under
-        // a secondary stash-pop error that only matters once the rebase itself succeeded.
-        if (outcome.ok) outcome = { ok: false, err: new StashPendingError(ref) };
-      }
-    }
-    if (!outcome.ok) throw outcome.err;
   }
 
   // Tells a genuine rebase conflict (needs domain judgement to resolve) apart from
@@ -1156,14 +1121,13 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     } catch (err) {
       const message = (err as Error).message;
       const failureFields = reconcileFailureFields(err);
-      const stashPending = err instanceof StashPendingError;
       return {
         ok: false,
         message,
-        stashPending,
+        stashPending: false,
         ...failureFields,
         recoveryPrompt: buildGitSyncRecoveryPrompt(
-          { ...failureFields, message, stashPending },
+          { ...failureFields, message, stashPending: false },
           branch,
           await runGitStatus(),
         ),
