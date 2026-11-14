@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0](https://github.com/adooone/paper-camp/compare/v0.47.0...v0.48.0) (2026-11-14)
+
+### Features
+
+- **Scout's status rides the activity stream** (IDEA-330)
+
+### Bug Fixes
+
+- **The chat ack comes before the work** (IDEA-329)
+- **Daemon survives a busy box** (IDEA-323)
+- **Lighter daemon on a small box** (IDEA-324)
+- **Agent tests stop leaking processes** (IDEA-325)
+- **Reconcile never strands a stash** (IDEA-331)
+
 ## [0.47.0](https://github.com/adooone/paper-camp/compare/v0.46.0...v0.47.0) (2026-11-08)
 
 ### Features
