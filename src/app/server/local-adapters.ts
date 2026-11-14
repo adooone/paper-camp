@@ -4,7 +4,7 @@ import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectAction } from '
 import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
 import { readMaybe } from './helpers';
-import { VERSION_PROBE_TIMEOUT_MS, run } from './run';
+import { type ProbeExec, type ProbeResult, VERSION_PROBE_TIMEOUT_MS, run } from './run';
 
 // Tools the runtime drives on the machine (git, claude-code, opencode); each keeps its
 // own credential locally on this machine, never a remote account tied to Paper Camp.
@@ -12,10 +12,10 @@ export interface LocalAdapterDefinition {
   id: string;
   label: string;
   unlocks: string;
-  probe: (root: string) => Promise<CapabilityResult>;
+  probe: (exec: ProbeExec) => Promise<CapabilityResult>;
   /** Null once the adapter probes `ok` — nothing to connect. */
   connect: (result: CapabilityResult) => ConnectAction | null;
-  signedIn: (root: string) => Promise<boolean | null>;
+  signedIn: (exec: ProbeExec) => Promise<boolean | null>;
   /** Only claude-code implements this — whether headless runs actually see this repo's allowlist. */
   trustDialogAccepted?: (root: string) => Promise<boolean>;
 }
@@ -35,8 +35,9 @@ async function claudeTrustDialogAccepted(root: string): Promise<boolean> {
   }
 }
 
-export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
-  const result = await run('claude', ['auth', 'status'], root);
+export const CLAUDE_AUTH_STATUS_ARGS = ['auth', 'status'];
+
+function parseClaudeAuthStatus(result: ProbeResult): AgentAuthStatus | null {
   if (result.code !== 0) return null;
   try {
     const parsed = JSON.parse(result.stdout) as Partial<AgentAuthStatus>;
@@ -50,34 +51,22 @@ export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | 
   }
 }
 
-const AUTH_STATUS_TTL_MS = 60_000;
-const authStatusCache = new Map<
-  string,
-  { value: Promise<AgentAuthStatus | null>; expiresAt: number }
->();
-
-export function clearClaudeAuthStatusCache(root: string): void {
-  authStatusCache.delete(root);
+export async function claudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
+  return parseClaudeAuthStatus(await run('claude', CLAUDE_AUTH_STATUS_ARGS, root));
 }
 
-// Shared by the connections badge and the capability probe so a `claude login` in a
-// terminal clears one cache and both surfaces see it within the TTL instead of disagreeing.
-export function cachedClaudeAuthStatus(root: string): Promise<AgentAuthStatus | null> {
-  const cached = authStatusCache.get(root);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
-  const value = claudeAuthStatus(root);
-  authStatusCache.set(root, { value, expiresAt: Date.now() + AUTH_STATUS_TTL_MS });
-  return value;
+export async function machineClaudeAuthStatus(exec: ProbeExec): Promise<AgentAuthStatus | null> {
+  return parseClaudeAuthStatus(await exec.machine('claude', CLAUDE_AUTH_STATUS_ARGS));
 }
 
-async function probeGit(root: string): Promise<CapabilityResult> {
-  const repo = await run('git', ['rev-parse', '--is-inside-work-tree'], root);
+async function probeGit(exec: ProbeExec): Promise<CapabilityResult> {
+  const repo = await exec.repo('git', ['rev-parse', '--is-inside-work-tree']);
   if (repo.code !== 0) {
     return { id: 'git', status: 'missing', detail: 'Not inside a git repository' };
   }
   const [name, email] = await Promise.all([
-    run('git', ['config', 'user.name'], root),
-    run('git', ['config', 'user.email'], root),
+    exec.repo('git', ['config', 'user.name']),
+    exec.repo('git', ['config', 'user.email']),
   ]);
   if (!name.stdout.trim() || !email.stdout.trim()) {
     return {
@@ -106,9 +95,9 @@ async function gitSignedIn(): Promise<boolean | null> {
   return null;
 }
 
-async function probeAgent(id: AgentId, root: string): Promise<CapabilityResult> {
+async function probeAgent(id: AgentId, exec: ProbeExec): Promise<CapabilityResult> {
   const { command } = AGENTS[id];
-  const result = await run(command, ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
+  const result = await exec.machine(command, ['--version'], VERSION_PROBE_TIMEOUT_MS);
   if (result.timedOut) {
     return { id: `agent:${id}`, status: 'warn', detail: `${command} took too long to respond` };
   }
@@ -124,9 +113,9 @@ function agentConnect(id: AgentId, result: CapabilityResult): ConnectAction | nu
   return { kind: 'text', message: `Install the ${AGENT_LABELS[id]} CLI and add it to PATH` };
 }
 
-async function agentSignedIn(id: AgentId, root: string): Promise<boolean | null> {
+async function agentSignedIn(id: AgentId, exec: ProbeExec): Promise<boolean | null> {
   if (id !== 'claude-code') return null;
-  const status = await cachedClaudeAuthStatus(root);
+  const status = await machineClaudeAuthStatus(exec);
   return status?.loggedIn ?? null;
 }
 
@@ -143,9 +132,9 @@ export const LOCAL_ADAPTERS: LocalAdapterDefinition[] = [
     id: `agent:${id}`,
     label: `${AGENT_LABELS[id]} CLI`,
     unlocks: `Launching ${AGENT_LABELS[id]} for phase runs, drafts, and reviews`,
-    probe: (root: string) => probeAgent(id, root),
+    probe: (exec: ProbeExec) => probeAgent(id, exec),
     connect: (result: CapabilityResult) => agentConnect(id, result),
-    signedIn: (root: string) => agentSignedIn(id, root),
+    signedIn: (exec: ProbeExec) => agentSignedIn(id, exec),
     ...(id === 'claude-code' ? { trustDialogAccepted: claudeTrustDialogAccepted } : {}),
   })),
 ];

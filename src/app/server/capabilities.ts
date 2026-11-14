@@ -1,13 +1,13 @@
 import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectionResult } from '../../types';
 import { EXTERNAL_SERVICES, type ExternalServiceDefinition } from './external-services';
 import {
+  CLAUDE_AUTH_STATUS_ARGS,
   LOCAL_ADAPTERS,
   type LocalAdapterDefinition,
-  cachedClaudeAuthStatus,
-  clearClaudeAuthStatusCache,
+  machineClaudeAuthStatus,
 } from './local-adapters';
 import { clearProbe } from './probe-cache';
-import { run } from './run';
+import { type ProbeExec, type ProbeResult, run } from './run';
 
 type Plugin =
   | { kind: 'external'; def: ExternalServiceDefinition }
@@ -20,8 +20,8 @@ const PLUGINS: Plugin[] = [
 
 // The one place the two credential stores meet: external services report remote-account
 // auth, local adapters local-session sign-in — different things, same client rendering.
-function authState(plugin: Plugin, root: string): Promise<boolean | null> {
-  return plugin.kind === 'external' ? plugin.def.authenticated(root) : plugin.def.signedIn(root);
+function authState(plugin: Plugin, exec: ProbeExec): Promise<boolean | null> {
+  return plugin.kind === 'external' ? plugin.def.authenticated(exec) : plugin.def.signedIn(exec);
 }
 
 // null for anything but claude-code, which is the only adapter with a trust dialog to check.
@@ -33,19 +33,62 @@ function trustDialogState(plugin: Plugin, root: string): Promise<boolean | null>
 export const capabilitiesProbeKey = (root: string) => `capabilities:${root}`;
 export const connectionsProbeKey = (root: string) => `connections:${root}`;
 
-// A daemon holds one middleware (and root) per mounted project in the same process,
-// so the probe cache is keyed by root rather than shared process-wide.
+const FACT_TTL_MS = 10 * 60_000;
+
+interface Fact {
+  result: Promise<ProbeResult>;
+  expiresAt: number;
+}
+
+const machineFacts = new Map<string, Fact>();
+const repoFacts = new Map<string, Map<string, Fact>>();
+
+const factKey = (command: string, args: string[]) => [command, ...args].join(' ');
+
+function remembered(
+  facts: Map<string, Fact>,
+  key: string,
+  load: () => Promise<ProbeResult>,
+): Promise<ProbeResult> {
+  const cached = facts.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
+  const fact: Fact = { result: load(), expiresAt: Date.now() + FACT_TTL_MS };
+  facts.set(key, fact);
+  fact.result.then(({ timedOut }) => {
+    if (timedOut && facts.get(key) === fact) facts.delete(key);
+  });
+  return fact.result;
+}
+
+function probeExec(root: string): ProbeExec {
+  return {
+    machine: (command, args, timeoutMs) =>
+      remembered(machineFacts, factKey(command, args), () => run(command, args, root, timeoutMs)),
+    repo: (command, args, timeoutMs) => {
+      let facts = repoFacts.get(root);
+      if (!facts) {
+        facts = new Map();
+        repoFacts.set(root, facts);
+      }
+      return remembered(facts, factKey(command, args), () => run(command, args, root, timeoutMs));
+    },
+  };
+}
+
 export function clearCapabilitiesCache(root: string): void {
+  machineFacts.clear();
+  repoFacts.delete(root);
   clearProbe(capabilitiesProbeKey(root));
   clearProbe(connectionsProbeKey(root));
 }
 
-export function clearAgentAuthStatusCache(root: string): void {
-  clearClaudeAuthStatusCache(root);
+export function clearAgentAuthStatusCache(): void {
+  machineFacts.delete(factKey('claude', CLAUDE_AUTH_STATUS_ARGS));
 }
 
 export function probeCapabilities(root: string): Promise<CapabilityResult[]> {
-  return Promise.all(PLUGINS.map((p) => p.def.probe(root)));
+  const exec = probeExec(root);
+  return Promise.all(PLUGINS.map((p) => p.def.probe(exec)));
 }
 
 async function toConnectionResult(
@@ -53,9 +96,10 @@ async function toConnectionResult(
   root: string,
   precomputed?: CapabilityResult,
 ): Promise<ConnectionResult> {
+  const exec = probeExec(root);
   const [result, authenticated, trustDialogAccepted] = await Promise.all([
-    precomputed ?? plugin.def.probe(root),
-    authState(plugin, root),
+    precomputed ?? plugin.def.probe(exec),
+    authState(plugin, exec),
     trustDialogState(plugin, root),
   ]);
   return {
@@ -81,7 +125,7 @@ export function probeConnections(root: string): Promise<ConnectionResult[]> {
 export async function runConnect(id: string, root: string): Promise<ConnectionResult | null> {
   const plugin = PLUGINS.find((p) => p.def.id === id);
   if (!plugin) return null;
-  const before = await plugin.def.probe(root);
+  const before = await plugin.def.probe(probeExec(root));
   const action = plugin.def.connect(before);
   if (action?.kind !== 'command' || !action.runnable) {
     return toConnectionResult(plugin, root, before);
@@ -107,6 +151,6 @@ const UNKNOWN_AUTH_STATUS: AgentAuthStatus = {
 // report unknown rather than being probed with a command they don't have.
 export async function probeAgentAuthStatus(id: AgentId, root: string): Promise<AgentAuthStatus> {
   if (id !== 'claude-code') return UNKNOWN_AUTH_STATUS;
-  const status = await cachedClaudeAuthStatus(root);
+  const status = await machineClaudeAuthStatus(probeExec(root));
   return status ?? UNKNOWN_AUTH_STATUS;
 }

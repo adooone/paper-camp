@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-interface ProbeResult {
+export interface ProbeResult {
   code: number | null;
   stdout: string;
   stderr: string;
@@ -13,6 +13,13 @@ const KILL_SIGNAL = 'SIGTERM';
 // `gh`/`claude`/`opencode --version` are the slowest probes; a shorter timeout
 // here reports one as slow instead of stalling every other probe alongside it.
 export const VERSION_PROBE_TIMEOUT_MS = 2000;
+
+type ProbeRun = (command: string, args: string[], timeoutMs?: number) => Promise<ProbeResult>;
+
+export interface ProbeExec {
+  machine: ProbeRun;
+  repo: ProbeRun;
+}
 
 export function run(
   command: string,

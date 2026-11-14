@@ -1,5 +1,5 @@
 import type { CapabilityResult, ConnectAction } from '../../types';
-import { VERSION_PROBE_TIMEOUT_MS, run } from './run';
+import { type ProbeExec, VERSION_PROBE_TIMEOUT_MS } from './run';
 
 // The runtime speaks to these on the user's behalf (GitHub today, Figma/Linear later);
 // credentials live in each service's own CLI, tied to a remote account, not Paper Camp.
@@ -7,25 +7,25 @@ export interface ExternalServiceDefinition {
   id: string;
   label: string;
   unlocks: string;
-  probe: (root: string) => Promise<CapabilityResult>;
+  probe: (exec: ProbeExec) => Promise<CapabilityResult>;
   /** Null once the service probes `ok` — nothing to connect. */
   connect: (result: CapabilityResult) => ConnectAction | null;
-  authenticated: (root: string) => Promise<boolean | null>;
+  authenticated: (exec: ProbeExec) => Promise<boolean | null>;
 }
 
-async function probeGh(root: string): Promise<CapabilityResult> {
-  const version = await run('gh', ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
+async function probeGh(exec: ProbeExec): Promise<CapabilityResult> {
+  const version = await exec.machine('gh', ['--version'], VERSION_PROBE_TIMEOUT_MS);
   if (version.timedOut) {
     return { id: 'gh', status: 'warn', detail: 'gh CLI took too long to respond' };
   }
   if (version.code !== 0) {
     return { id: 'gh', status: 'missing', detail: 'gh CLI not found on PATH' };
   }
-  const auth = await run('gh', ['auth', 'status'], root);
+  const auth = await exec.machine('gh', ['auth', 'status']);
   if (auth.code !== 0) {
     return { id: 'gh', status: 'warn', detail: 'gh is installed but not authenticated' };
   }
-  const origin = await run('git', ['remote', 'get-url', 'origin'], root);
+  const origin = await exec.repo('git', ['remote', 'get-url', 'origin']);
   if (origin.code !== 0) {
     return {
       id: 'gh',
@@ -33,7 +33,7 @@ async function probeGh(root: string): Promise<CapabilityResult> {
       detail: 'Authenticated, but repository has no origin remote',
     };
   }
-  const repoView = await run('gh', ['repo', 'view', '--json', 'nameWithOwner'], root);
+  const repoView = await exec.repo('gh', ['repo', 'view', '--json', 'nameWithOwner']);
   if (repoView.code !== 0) {
     return {
       id: 'gh',
@@ -60,10 +60,10 @@ function ghConnect(result: CapabilityResult): ConnectAction | null {
   return null;
 }
 
-async function ghAuthenticated(root: string): Promise<boolean | null> {
-  const version = await run('gh', ['--version'], root, VERSION_PROBE_TIMEOUT_MS);
+async function ghAuthenticated(exec: ProbeExec): Promise<boolean | null> {
+  const version = await exec.machine('gh', ['--version'], VERSION_PROBE_TIMEOUT_MS);
   if (version.code !== 0) return null;
-  const auth = await run('gh', ['auth', 'status'], root);
+  const auth = await exec.machine('gh', ['auth', 'status']);
   return auth.code === 0;
 }
 

@@ -427,7 +427,7 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
       method: 'GET',
       path: '/api/agent/auth-status',
       handle: async (req, res) => {
-        if (requestUrl(req).searchParams.has('recheck')) clearAgentAuthStatusCache(root);
+        if (requestUrl(req).searchParams.has('recheck')) clearAgentAuthStatusCache();
         const defaultAgents = readProjectConfig(root).defaultAgents;
         const { id } = resolveAgent({ defaultAgents, taskKind: 'phase' });
         const status = await probeAgentAuthStatus(id, root);
@@ -447,7 +447,6 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         const probe = await probeSignIn(root);
         if (probe.signedIn) {
           clearCapabilitiesCache(root);
-          clearAgentAuthStatusCache(root);
           markAgentSignedIn();
         } else if (probe.signedIn === false) {
           markAgentSignedOut(probe.reason ?? 'Claude is signed out');
@@ -463,7 +462,6 @@ export function agentRoutes({ root, git, checks, agent, activity }: RouteContext
         const handle = await startClaudeLoginRelay(root, {
           onLoginConfirmed: () => {
             clearCapabilitiesCache(root);
-            clearAgentAuthStatusCache(root);
             markAgentSignedIn();
           },
         });

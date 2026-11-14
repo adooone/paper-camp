@@ -2,7 +2,7 @@
 id: IDEA-324
 title: Lighter daemon on a small box
 type: fix
-status: planned
+status: in-progress
 created: 2026-11-03
 updated: 2026-11-14
 tags:
@@ -64,10 +64,11 @@ process, and a second `/api/doctor` within five minutes of the first answers
 in under 50 ms.
 
 ### Phases
-- [ ] One probe cache per machine
+- [x] One probe cache per machine
       Module-level cache for CLI and auth facts with a 10-minute TTL,
       per-root `gh repo view` and git identity, cleared by recheck, connect
       and the login relay; tests.
+      run: 4m12s · 40 in · 21k out · opus-5-5 · sess:47b62d23-fc0d-4c3c-9a3a-15ebc039bf22
 - [ ] Change ticks skip probe queries
       Predicate and `refetchType: 'active'` in
       `subscribeProjectToActivityStream`; query-client tests.

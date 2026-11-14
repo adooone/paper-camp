@@ -5,7 +5,6 @@ import type { RouteContext } from './types';
 
 const mock = vi.hoisted(() => ({
   cleared: [] as string[],
-  authCleared: [] as string[],
   capabilities: [] as unknown[],
   connections: [] as unknown[],
 }));
@@ -15,9 +14,6 @@ vi.mock('../capabilities', () => ({
   connectionsProbeKey: (root: string) => `connections:${root}`,
   clearCapabilitiesCache: (root: string) => {
     mock.cleared.push(root);
-  },
-  clearAgentAuthStatusCache: (root: string) => {
-    mock.authCleared.push(root);
   },
   probeCapabilities: async () => mock.capabilities,
   probeConnections: async () => mock.connections,
@@ -73,19 +69,15 @@ describe('GET /api/capabilities', () => {
 describe('GET /api/connections', () => {
   it('serves the cached probe without clearing it', async () => {
     mock.cleared.length = 0;
-    mock.authCleared.length = 0;
     const { res } = fakeRes();
     await route('/api/connections', 'GET').handle(fakeReq('/api/connections'), res);
     expect(mock.cleared).toEqual([]);
-    expect(mock.authCleared).toEqual([]);
   });
 
-  it('clears the capabilities and Claude auth status caches when recheck is requested', async () => {
+  it('clears the capabilities cache when recheck is requested', async () => {
     mock.cleared.length = 0;
-    mock.authCleared.length = 0;
     const { res } = fakeRes();
     await route('/api/connections', 'GET').handle(fakeReq('/api/connections?recheck=1'), res);
     expect(mock.cleared).toEqual(['/repo']);
-    expect(mock.authCleared).toEqual(['/repo']);
   });
 });

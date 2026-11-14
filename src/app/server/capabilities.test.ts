@@ -23,7 +23,7 @@ vi.mock('node:os', async (importOriginal) => {
 // choke point keeps these tests to in-memory dispatch — no real subprocesses, no
 // temp git repos, no PATH shims. A per-command handler stands in for a fake binary;
 // `git` is stateful so the `git init` connect flow can flip an empty dir into a repo.
-type RunResult = { code: number | null; stdout: string; stderr: string };
+type RunResult = { code: number | null; stdout: string; stderr: string; timedOut?: boolean };
 
 const mock = vi.hoisted(() => {
   const ok = (stdout = ''): RunResult => ({ code: 0, stdout, stderr: '' });
@@ -31,12 +31,15 @@ const mock = vi.hoisted(() => {
   const notInstalled: RunResult = { code: null, stdout: '', stderr: '' };
   const bins = new Map<string, (args: string[]) => RunResult>();
   const git = { inRepo: true, name: 'Test User', email: 'test@example.com', origin: '' };
+  const names = new Map<string, string>();
+  const calls: string[] = [];
 
-  function dispatch(command: string, args: string[]): RunResult {
+  function dispatch(command: string, args: string[], cwd = '/repo'): RunResult {
+    calls.push([command, ...args].join(' '));
     if (command === 'git') {
       const sub = args.join(' ');
       if (sub === 'rev-parse --is-inside-work-tree') return git.inRepo ? ok('true') : fail();
-      if (sub === 'config user.name') return ok(git.name);
+      if (sub === 'config user.name') return ok(names.get(cwd) ?? git.name);
       if (sub === 'config user.email') return ok(git.email);
       if (sub === 'remote get-url origin') return git.origin ? ok(git.origin) : fail();
       if (sub === 'init') {
@@ -53,9 +56,14 @@ const mock = vi.hoisted(() => {
     fail,
     git,
     dispatch,
+    calls,
+    names,
+    count: (line: string) => calls.filter((c) => c === line).length,
     bin: (name: string, handler: (args: string[]) => RunResult) => bins.set(name, handler),
     reset: () => {
       bins.clear();
+      names.clear();
+      calls.length = 0;
       Object.assign(git, {
         inRepo: true,
         name: 'Test User',
@@ -67,18 +75,21 @@ const mock = vi.hoisted(() => {
 });
 
 vi.mock('./run', () => ({
-  run: (command: string, args: string[]) => Promise.resolve(mock.dispatch(command, args)),
+  run: (command: string, args: string[], cwd: string) =>
+    Promise.resolve(mock.dispatch(command, args, cwd)),
   VERSION_PROBE_TIMEOUT_MS: 2000,
 }));
 
 const ROOT = '/repo';
+const OTHER = '/other';
 
 beforeEach(() => {
   mock.reset();
   // Every case below expects a fresh probe against its own mock state, not the process
   // lifetime cache these functions now keep in production.
   clearCapabilitiesCache(ROOT);
-  clearAgentAuthStatusCache(ROOT);
+  clearCapabilitiesCache(OTHER);
+  clearAgentAuthStatusCache();
 });
 
 function byId(capabilities: Awaited<ReturnType<typeof probeCapabilities>>, id: string) {
@@ -378,11 +389,11 @@ describe('agent auth status caching', () => {
       authMethod: null,
       apiProvider: null,
     });
-    clearAgentAuthStatusCache(ROOT);
+    clearAgentAuthStatusCache();
     expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBe(true);
   });
 
-  it('re-probes agent auth status once the 60s TTL elapses', async () => {
+  it('re-probes agent auth status once the 10-minute TTL elapses', async () => {
     vi.useFakeTimers();
     try {
       expect(await probeAgentAuthStatus('claude-code', ROOT)).toEqual({
@@ -394,6 +405,8 @@ describe('agent auth status caching', () => {
         mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
       );
       vi.advanceTimersByTime(60_001);
+      expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBeNull();
+      vi.advanceTimersByTime(10 * 60_000);
       expect((await probeAgentAuthStatus('claude-code', ROOT)).loggedIn).toBe(true);
     } finally {
       vi.useRealTimers();
@@ -410,5 +423,79 @@ describe('agent auth status caching', () => {
       mock.ok('{"loggedIn": true, "authMethod": "claude.ai", "apiProvider": "firstParty"}'),
     );
     expect(byConnId(await probeConnections(ROOT), 'agent:claude-code').authenticated).toBeNull();
+  });
+});
+
+describe('probe facts cache', () => {
+  it('probes CLI versions and sign-ins once for every project on the machine', async () => {
+    mock.git.origin = 'https://example.invalid/owner/repo.git';
+    mock.bin('gh', () => mock.ok());
+    mock.bin('claude', () => mock.ok('{"loggedIn": true}'));
+    mock.bin('opencode', () => mock.ok('9.9.9'));
+    await probeConnections(ROOT);
+    await probeConnections(OTHER);
+    await probeCapabilities(OTHER);
+    await probeAgentAuthStatus('claude-code', OTHER);
+    expect(mock.count('claude --version')).toBe(1);
+    expect(mock.count('opencode --version')).toBe(1);
+    expect(mock.count('gh --version')).toBe(1);
+    expect(mock.count('gh auth status')).toBe(1);
+    expect(mock.count('claude auth status')).toBe(1);
+  });
+
+  it('keeps the repo view and git identity per project', async () => {
+    mock.git.origin = 'https://example.invalid/owner/repo.git';
+    mock.bin('gh', () => mock.ok());
+    mock.names.set(OTHER, 'Other User');
+    expect(byId(await probeCapabilities(ROOT), 'git').detail).toBe('Test User <test@example.com>');
+    expect(byId(await probeCapabilities(OTHER), 'git').detail).toBe(
+      'Other User <test@example.com>',
+    );
+    await probeCapabilities(ROOT);
+    expect(mock.count('gh repo view --json nameWithOwner')).toBe(2);
+    expect(mock.count('git config user.name')).toBe(2);
+  });
+
+  it('re-probes the git identity once the 10-minute TTL elapses', async () => {
+    vi.useFakeTimers();
+    try {
+      await probeCapabilities(ROOT);
+      mock.git.name = 'Renamed';
+      vi.advanceTimersByTime(9 * 60_000);
+      expect(byId(await probeCapabilities(ROOT), 'git').detail).toBe(
+        'Test User <test@example.com>',
+      );
+      vi.advanceTimersByTime(60_001);
+      expect(byId(await probeCapabilities(ROOT), 'git').detail).toBe('Renamed <test@example.com>');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears machine and repo facts on clearCapabilitiesCache', async () => {
+    await probeCapabilities(ROOT);
+    mock.bin('claude', () => mock.ok('1.2.3 (Claude Code)'));
+    mock.git.name = 'Renamed';
+    expect(byId(await probeCapabilities(OTHER), 'agent:claude-code').status).toBe('missing');
+    clearCapabilitiesCache(ROOT);
+    const capabilities = await probeCapabilities(ROOT);
+    expect(byId(capabilities, 'agent:claude-code').status).toBe('ok');
+    expect(byId(capabilities, 'git').detail).toBe('Renamed <test@example.com>');
+  });
+
+  it('does not remember a version probe that timed out', async () => {
+    mock.bin('opencode', () => ({ code: null, stdout: '', stderr: '', timedOut: true }));
+    expect(byId(await probeCapabilities(ROOT), 'agent:opencode').status).toBe('warn');
+    mock.bin('opencode', () => mock.ok('9.9.9'));
+    expect(byId(await probeCapabilities(ROOT), 'agent:opencode').status).toBe('ok');
+  });
+
+  it('refreshes the Claude sign-in on clearAgentAuthStatusCache without re-probing versions', async () => {
+    mock.bin('claude', (args) => (args[0] === '--version' ? mock.ok('1.2.3') : mock.fail()));
+    await probeConnections(ROOT);
+    clearAgentAuthStatusCache();
+    await probeConnections(ROOT);
+    expect(mock.count('claude auth status')).toBe(2);
+    expect(mock.count('claude --version')).toBe(1);
   });
 });

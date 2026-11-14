@@ -1,7 +1,6 @@
 import { PAPER_CAMP_VERSION } from '@/core/scaffold';
 import {
   capabilitiesProbeKey,
-  clearAgentAuthStatusCache,
   clearCapabilitiesCache,
   connectionsProbeKey,
   probeCapabilities,
@@ -37,10 +36,7 @@ export function capabilitiesRoutes({ root, activity }: RouteContext): Route[] {
       method: 'GET',
       path: '/api/connections',
       handle: async (req, res) => {
-        if (requestUrl(req).searchParams.has('recheck')) {
-          clearCapabilitiesCache(root);
-          clearAgentAuthStatusCache(root);
-        }
+        if (requestUrl(req).searchParams.has('recheck')) clearCapabilitiesCache(root);
         sendJson(res, 200, {
           connections: await cachedProbe(
             connectionsProbeKey(root),

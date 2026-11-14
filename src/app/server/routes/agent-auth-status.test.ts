@@ -5,7 +5,7 @@ import { agentRoutes } from './agent';
 import type { RouteContext } from './types';
 
 const mock = vi.hoisted(() => ({
-  cleared: [] as string[],
+  cleared: 0,
   probe: { signedIn: true } as { signedIn: boolean | null; reason?: string },
 }));
 
@@ -15,8 +15,8 @@ vi.mock('../capacity-probe', () => ({
 
 vi.mock('../capabilities', () => ({
   clearCapabilitiesCache: () => {},
-  clearAgentAuthStatusCache: (root: string) => {
-    mock.cleared.push(root);
+  clearAgentAuthStatusCache: () => {
+    mock.cleared += 1;
   },
   probeAgentAuthStatus: async () => ({ loggedIn: null, authMethod: null, apiProvider: null }),
 }));
@@ -58,17 +58,17 @@ beforeEach(() => resetAgentSignInForTests());
 
 describe('GET /api/agent/auth-status', () => {
   it('serves the cached probe without clearing it', async () => {
-    mock.cleared.length = 0;
+    mock.cleared = 0;
     const { res } = fakeRes();
     await route('/api/agent/auth-status').handle(fakeReq('/api/agent/auth-status'), res);
-    expect(mock.cleared).toEqual([]);
+    expect(mock.cleared).toBe(0);
   });
 
   it('clears the agent auth status cache when recheck is requested', async () => {
-    mock.cleared.length = 0;
+    mock.cleared = 0;
     const { res } = fakeRes();
     await route('/api/agent/auth-status').handle(fakeReq('/api/agent/auth-status?recheck=1'), res);
-    expect(mock.cleared).toEqual([ROOT]);
+    expect(mock.cleared).toBe(1);
   });
 });
 
