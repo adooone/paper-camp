@@ -49,8 +49,6 @@ async function fetchPackageName(timeoutMs: number): Promise<'ok' | 'rejected' | 
 
 // A fresh --share tunnel can leave the first probe finding nothing — one miss
 // shouldn't be a permanent verdict with no way for the user to prompt a retry.
-// A request that outlives the first limit but still completes is a loaded box,
-// not a missing one, so it is reported apart from a runtime that never answers.
 export async function probeReachable(): Promise<ProbeResult> {
   let slow = false;
   for (let attempt = 0; attempt <= PROBE_RETRIES; attempt++) {

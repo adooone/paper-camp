@@ -12,43 +12,25 @@
     "ticket": 7
   },
   "defaultAgents": {
-    "phase": {
+    "build": {
       "agent": "claude-code",
-      "model": "sonnet",
+      "model": "opus",
+      "effort": "high"
+    },
+    "plan": {
+      "agent": "claude-code",
+      "model": "fable",
+      "effort": "high"
+    },
+    "chat": {
+      "agent": "claude-code",
+      "model": "fable",
       "effort": "medium"
     },
-    "planDraft": {
-      "agent": "claude-code",
-      "model": "opus",
-      "effort": "high"
-    },
-    "ideaExtend": {
-      "agent": "claude-code",
-      "model": "opus",
-      "effort": "high"
-    },
-    "commitSuggest": {
+    "quick": {
       "agent": "claude-code",
       "model": "sonnet",
       "effort": "low"
-    },
-    "feedback": {
-      "agent": "claude-code",
-      "model": "sonnet",
-      "effort": "medium"
-    },
-    "codeReview": {
-      "agent": "claude-code",
-      "model": "opus",
-      "effort": "high"
-    },
-    "deskDiscovery": {
-      "agent": "claude-code"
-    },
-    "nightShift": {
-      "agent": "claude-code",
-      "model": "sonnet",
-      "effort": "medium"
     }
   },
   "subjects": [
