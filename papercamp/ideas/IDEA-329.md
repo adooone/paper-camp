@@ -45,4 +45,4 @@ The phone's timed-out-equals-sent heuristic becomes dead code.
 - [x] Move the web send hook onto the feedback event
       `useSendFeedbackMessage` and `postFeedbackMessage` stop reading `error`/`undo` from the response and take them from `feedback` events for `plan.id`, on both the desk and the toolbar mount.
       run: 46s · 42 in · 11.9k out · sonnet-5-5 · sess:66be5558-08c9-4412-a10e-a174db65c221
-- [ ] [manual] Delete the phone's timed-out-equals-sent heuristic in paper-camp-mobile
+- [ ] [manual] Delete the phone's timed-out-equals-sent heuristic in paper-camp-mobile (filed as paper-camp-mobile/IDEA-19)

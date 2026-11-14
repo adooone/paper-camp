@@ -2,9 +2,9 @@
 id: IDEA-328
 title: Daemon reads with no per-request work
 type: feat
-status: review
+status: done
 created: 2026-11-08
-updated: 2026-11-08
+updated: 2026-11-14
 tags:
   - server
   - core

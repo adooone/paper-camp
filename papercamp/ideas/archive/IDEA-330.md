@@ -2,9 +2,9 @@
 id: IDEA-330
 title: Scout's status rides the activity stream
 type: feat
-status: review
+status: done
 created: 2026-11-08
-updated: 2026-11-08
+updated: 2026-11-14
 tags:
   - server
   - chat

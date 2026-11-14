@@ -2,9 +2,9 @@
 id: IDEA-327
 title: A lean data flow for the Ideas page
 type: feat
-status: review
+status: done
 created: 2026-11-07
-updated: 2026-11-08
+updated: 2026-11-13
 tags:
   - app
   - server
