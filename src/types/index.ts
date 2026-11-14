@@ -1260,6 +1260,13 @@ export interface GitStashEntry {
   own: boolean;
 }
 
+export interface GitStashRestoreResult {
+  restored: string[];
+  refused: string[];
+  leftInStash: string[];
+  dropped: boolean;
+}
+
 export interface GitStatusResponse {
   branch: string;
   entries: GitStatusEntry[];

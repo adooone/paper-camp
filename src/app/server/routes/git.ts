@@ -420,6 +420,25 @@ export function gitRoutes({ root, git, agent, activity }: RouteContext): Route[]
 
     {
       method: 'POST',
+      path: '/api/git/stash-restore',
+      handle: async (req, res) => {
+        const { index } = (await readJson<{ index?: unknown }>(req)) ?? {};
+        if (typeof index !== 'number' || !Number.isInteger(index) || index < 0) {
+          sendJson(res, 400, { error: 'index is required' });
+          return;
+        }
+        try {
+          const result = await git.restoreStash(index);
+          activity.notifyChanged(['git', 'corpus']);
+          sendJson(res, 200, result);
+        } catch (error) {
+          sendJson(res, 400, { error: (error as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/git/suggest-commit-message',
       handle: async (req, res) => {
         try {

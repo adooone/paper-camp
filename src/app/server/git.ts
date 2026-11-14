@@ -5,11 +5,13 @@ import { join } from 'node:path';
 import { branchName } from '@/core/git-pr';
 import { parseEntityFile } from '@/core/parse/parser';
 import { todayDateString } from '@/core/serialize';
+import { OWN_STASH_MESSAGE, readOwnStashes } from '@/core/stash';
 import type {
   BranchHygieneStatus,
   FileDiffEntry,
   GitLiveState,
   GitStashEntry,
+  GitStashRestoreResult,
   GitStatusEntry,
   GitSyncResult,
   PhaseState,
@@ -1067,8 +1069,6 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   const STASH_REFLOG_SUBJECT = /^(?:WIP on|On) ([^:]+): ?(.*)$/;
-  const PAPERCAMP_STASH_MESSAGE = /^(?:papercamp-sync|sync-)/;
-
   async function getStashes(): Promise<GitStashEntry[]> {
     const output = await runGit(['stash', 'list', '--format=%gd%x09%ci%x09%gs']).catch(() => '');
     return output
@@ -1084,7 +1084,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
           branch: subjectMatch?.[1] ?? '',
           message,
           ageDays: Math.floor((Date.now() - Date.parse(date ?? '')) / 86_400_000),
-          own: PAPERCAMP_STASH_MESSAGE.test(message),
+          own: OWN_STASH_MESSAGE.test(message),
         };
       });
   }
@@ -1096,6 +1096,49 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     return patch.length > STASH_DIFF_MAX_CHARS
       ? `${patch.slice(0, STASH_DIFF_MAX_CHARS)}\n... (truncated)`
       : patch;
+  }
+
+  async function readDiskBlob(path: string): Promise<string | null> {
+    return runGit(['hash-object', '--', path])
+      .then((out) => out.trim())
+      .catch(() => null);
+  }
+
+  async function readTreeBlob(rev: string | null, path: string): Promise<string | null> {
+    if (rev === null) return null;
+    return runGit(['rev-parse', '--verify', '--quiet', `${rev}:${path}`])
+      .then((out) => out.trim())
+      .catch(() => null);
+  }
+
+  async function restoreStash(index: number): Promise<GitStashRestoreResult> {
+    const stash = (await readOwnStashes(root)).find((entry) => entry.index === index);
+    if (!stash) throw new Error(`stash@{${index}} is not a paper-camp stash`);
+    const restored: string[] = [];
+    const refused: string[] = [];
+    for (const file of stash.papercampFiles) {
+      const onDisk = await readDiskBlob(file.path);
+      if (onDisk !== (await readTreeBlob(file.source, file.path))) {
+        if (onDisk !== (await readTreeBlob(file.base, file.path))) {
+          refused.push(file.path);
+          continue;
+        }
+        await runGit([
+          'restore',
+          `--source=${file.source}`,
+          '--worktree',
+          '--',
+          toLiteralPathspec(file.path),
+        ]);
+      }
+      restored.push(file.path);
+    }
+    const complete = refused.length === 0 && stash.otherFiles.length === 0;
+    const current = complete
+      ? (await readOwnStashes(root)).find((entry) => entry.sha === stash.sha)
+      : undefined;
+    if (current) await runGit(['stash', 'drop', `stash@{${current.index}}`]);
+    return { restored, refused, leftInStash: stash.otherFiles, dropped: current !== undefined };
   }
 
   // Reconcile the current branch: fast-forward if behind, else rebase local commits
@@ -1177,6 +1220,7 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
     hasPendingSyncStash,
     getStashes,
     showStash,
+    restoreStash,
     runGitSync,
     runGitPull,
     fixDivergence,

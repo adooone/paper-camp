@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -296,6 +296,97 @@ describe('POST /api/git/pull', () => {
 
     expect(status()).toBe(502);
     expect(json()).toMatchObject({ error: 'fatal: unable to access origin' });
+  });
+});
+
+describe('POST /api/git/stash-restore', () => {
+  function strandRepo(): string {
+    const root = initGitRepo(1);
+    mkdirSync(join(root, 'papercamp', 'ideas'), { recursive: true });
+    writeFileSync(join(root, 'papercamp', 'config.json'), 'base\n');
+    git(root, 'add', '.');
+    git(root, 'commit', '-m', 'chore(repo): add config');
+    writeFileSync(join(root, 'papercamp', 'config.json'), 'stashed\n');
+    writeFileSync(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'idea nine\n');
+    return root;
+  }
+
+  async function restore(root: string, index: unknown) {
+    const notifyChanged = vi.fn();
+    const { res, status, json } = fakeRes();
+    await route(root, '/api/git/stash-restore', {
+      activity: { notifyChanged },
+    }).handle(fakeReqWithBody('/api/git/stash-restore', { index }), res);
+    return { status: status(), body: json(), notifyChanged };
+  }
+
+  it('puts tracked and untracked papercamp/ files back and drops the stash', async () => {
+    const root = strandRepo();
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-reconcile');
+
+    const { status, body, notifyChanged } = await restore(root, 0);
+
+    expect(status).toBe(200);
+    expect(body).toEqual({
+      restored: ['papercamp/config.json', 'papercamp/ideas/IDEA-9.md'],
+      refused: [],
+      leftInStash: [],
+      dropped: true,
+    });
+    expect(readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8')).toBe('stashed\n');
+    expect(readFileSync(join(root, 'papercamp', 'ideas', 'IDEA-9.md'), 'utf-8')).toBe(
+      'idea nine\n',
+    );
+    expect(git(root, 'stash', 'list')).toBe('');
+    expect(git(root, 'diff', '--cached', '--name-only')).toBe('');
+    expect(notifyChanged).toHaveBeenCalledWith(['git', 'corpus']);
+  });
+
+  it('refuses a papercamp/ file that changed on disk, naming it, and keeps the stash', async () => {
+    const root = strandRepo();
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-reconcile');
+    writeFileSync(join(root, 'papercamp', 'config.json'), 'edited since\n');
+
+    const { status, body } = await restore(root, 0);
+
+    expect(status).toBe(200);
+    expect(body).toEqual({
+      restored: ['papercamp/ideas/IDEA-9.md'],
+      refused: ['papercamp/config.json'],
+      leftInStash: [],
+      dropped: false,
+    });
+    expect(readFileSync(join(root, 'papercamp', 'config.json'), 'utf-8')).toBe('edited since\n');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-reconcile');
+  });
+
+  it('leaves files outside papercamp/ in the stash and names them', async () => {
+    const root = strandRepo();
+    writeFileSync(join(root, 'file-0.txt'), 'source edit\n');
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'papercamp-sync');
+
+    const { body } = await restore(root, 0);
+
+    expect(body).toMatchObject({ refused: [], leftInStash: ['file-0.txt'], dropped: false });
+    expect(existsSync(join(root, 'papercamp', 'ideas', 'IDEA-9.md'))).toBe(true);
+    expect(readFileSync(join(root, 'file-0.txt'), 'utf-8')).toBe('0\n');
+    expect(git(root, 'stash', 'list')).toContain('papercamp-sync');
+  });
+
+  it('refuses a stash paper-camp did not make', async () => {
+    const root = strandRepo();
+    git(root, 'stash', 'push', '--include-untracked', '-m', 'human wip');
+
+    const { status, body } = await restore(root, 0);
+
+    expect(status).toBe(400);
+    expect(body).toMatchObject({ error: expect.stringContaining('not a paper-camp stash') });
+    expect(git(root, 'stash', 'list')).toContain('human wip');
+  });
+
+  it('answers 400 without an index', async () => {
+    const root = initGitRepo(1);
+    expect((await restore(root, undefined)).status).toBe(400);
   });
 });
 

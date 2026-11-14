@@ -2,6 +2,7 @@ import type {
   FileDiffEntry,
   GitBranch,
   GitLogResponse,
+  GitStashRestoreResult,
   GitStatusResponse,
   LocalStateMigrationResult,
 } from '@/types/index';
@@ -57,6 +58,17 @@ export const fetchStashDiff = async (index: number): Promise<string> => {
   await throwIfNotOk(response, 'Failed to load stash diff');
   const data = await response.json();
   return data.patch;
+};
+
+export const restoreStash = async (index: number): Promise<GitStashRestoreResult> => {
+  const response = await apiFetch(apiUrl('/api/git/stash-restore'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index }),
+    signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
+  });
+  await throwIfNotOk(response, 'Failed to restore stash');
+  return response.json();
 };
 
 export const commitChanges = async (

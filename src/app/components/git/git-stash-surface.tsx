@@ -1,6 +1,6 @@
-import { fetchStashDiff } from '@/app/services/git-api';
+import { fetchStashDiff, restoreStash } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
-import type { GitStashEntry } from '@/types/index';
+import type { GitStashEntry, GitStashRestoreResult } from '@/types/index';
 import { Button, Stamp } from '@dendelion/folk-ui';
 import { useState } from 'react';
 
@@ -8,13 +8,39 @@ const formatStashAge = (days: number) =>
   days <= 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
 
 const RECOVERY_HINT =
-  'A sync pop failed and left work parked here. Recover with `git restore --source=origin/main --staged --worktree .` then `git merge --ff-only`.';
+  'Paper Camp parked work here. Restore puts its papercamp/ files back; anything outside papercamp/ stays in the stash for you.';
+
+const describeRestore = (result: GitStashRestoreResult) =>
+  [
+    result.refused.length > 0 &&
+      `Kept on disk, differs from the stash: ${result.refused.join(', ')}.`,
+    result.leftInStash.length > 0 && `Left in the stash: ${result.leftInStash.join(', ')}.`,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
 const StashEntryRow = ({ entry }: { entry: GitStashEntry }) => {
   const [diff, setDiff] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showing, setShowing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreNote, setRestoreNote] = useState<string | null>(null);
+  const loadGitStatus = useAppStore((s) => s.loadGitStatus);
+  const loadDoctor = useAppStore((s) => s.loadDoctor);
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    setRestoreNote(null);
+    try {
+      setRestoreNote(describeRestore(await restoreStash(entry.index)) || null);
+    } catch (err) {
+      setRestoreNote((err as Error).message);
+    } finally {
+      setRestoring(false);
+      await Promise.all([loadGitStatus(), loadDoctor()]);
+    }
+  };
 
   const handleToggle = async () => {
     if (showing) {
@@ -36,9 +62,17 @@ const StashEntryRow = ({ entry }: { entry: GitStashEntry }) => {
 
   return (
     <div className="flex flex-col gap-1">
-      <Button variant="link" onClick={handleToggle} className="text-watercolor-amber-dark">
-        {entry.branch}: {entry.message} · {formatStashAge(entry.ageDays)}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button variant="link" onClick={handleToggle} className="text-watercolor-amber-dark">
+          {entry.branch}: {entry.message} · {formatStashAge(entry.ageDays)}
+        </Button>
+        {entry.own && (
+          <Button size="small" variant="secondary" onClick={handleRestore} disabled={restoring}>
+            {restoring ? 'Restoring…' : 'Restore'}
+          </Button>
+        )}
+      </div>
+      {restoreNote && <p className="m-0 text-2xs opacity-80">{restoreNote}</p>}
       {showing && (
         <pre className="m-0 max-h-64 overflow-auto whitespace-pre-wrap font-mono text-2xs opacity-80">
           {loading ? 'Loading…' : (error ?? diff)}

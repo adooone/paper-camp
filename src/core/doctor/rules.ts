@@ -147,6 +147,13 @@ export const DOCTOR_RULES = [
       '.gitattributes has no paper-camp managed block, so two clones appending to papercamp/chat.md will conflict on pull instead of merging — run `paper-camp doctor --fix` to add it.',
   },
   {
+    id: 'stranded-stash',
+    category: 'local-state',
+    severity: 'error',
+    summary:
+      'A `papercamp-reconcile` or `papercamp-sync` stash entry was never popped, so the papercamp/ files it holds are missing from the tree — restore it from the Git page.',
+  },
+  {
     id: 'asset-orphan-folder',
     category: 'assets',
     severity: 'warning',

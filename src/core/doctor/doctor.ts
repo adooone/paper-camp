@@ -3,6 +3,7 @@ import { basename, dirname, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import type { LocalStateDrift } from '../corpus';
 import { readLocalStateDrift } from '../corpus';
+import { type OwnStash, readOwnStashes } from '../stash';
 import { assetChecks } from './checks/assets';
 import { localStateChecks } from './checks/local-state';
 import { metadataChecks } from './checks/metadata';
@@ -36,6 +37,7 @@ export interface DoctorContext {
   draftPrWorkflowContent?: string | null;
   pullRequestTemplateContent?: string | null;
   localStateDrift?: LocalStateDrift | null;
+  strandedStashes?: OwnStash[];
   assetFolders?: DoctorAssetFolder[];
   assetMaxBytes?: number;
 }
@@ -184,6 +186,7 @@ export async function collectDoctorContext(paperCampDir: string): Promise<Doctor
       join(root, '.github', 'pull_request_template.md'),
     ),
     localStateDrift: await readLocalStateDrift(root),
+    strandedStashes: await readOwnStashes(root),
     assetFolders: await readAssetFolders(paperCampDir),
     assetMaxBytes: (config?.assets?.maxFileSizeMb ?? DEFAULT_ASSET_MAX_FILE_SIZE_MB) * 1024 * 1024,
   };

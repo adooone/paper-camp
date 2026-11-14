@@ -1,3 +1,4 @@
+import type { OwnStash } from '../../stash';
 import type { DoctorCheck } from '../doctor';
 
 const checkTrackedOutsidePlan: DoctorCheck = ({ localStateDrift }) =>
@@ -48,9 +49,28 @@ const checkMissingGitignoreBlock: DoctorCheck = ({ localStateDrift }) =>
       ]
     : [];
 
+function describeStashFiles(stash: OwnStash): string {
+  const held = stash.papercampFiles.map((file) => file.path);
+  const outside = stash.otherFiles.length;
+  const parts = [
+    held.length > 0 ? `holds ${held.join(', ')}` : 'holds no papercamp/ files',
+    ...(outside > 0 ? [`plus ${outside} file${outside === 1 ? '' : 's'} outside papercamp/`] : []),
+  ];
+  return parts.join(', ');
+}
+
+const checkStrandedStash: DoctorCheck = ({ strandedStashes }) =>
+  (strandedStashes ?? []).map((stash) => ({
+    file: `stash@{${stash.index}}`,
+    line: 1,
+    rule: 'stranded-stash',
+    message: `${stash.message} from ${stash.date} ${describeStashFiles(stash)} — restore it from the Git page.`,
+  }));
+
 export const localStateChecks: DoctorCheck[] = [
   checkTrackedOutsidePlan,
   checkMissingLocalGitignore,
   checkMissingGitattributesBlock,
   checkMissingGitignoreBlock,
+  checkStrandedStash,
 ];

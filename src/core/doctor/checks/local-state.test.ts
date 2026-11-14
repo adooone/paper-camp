@@ -94,3 +94,53 @@ describe('local-state checks with no drift data at all', () => {
     expect(run(undefined)).toEqual([]);
   });
 });
+
+describe('stranded-stash', () => {
+  function runStashes(strandedStashes: DoctorContext['strandedStashes']) {
+    const context: DoctorContext = { files: [], config: null, strandedStashes };
+    return localStateChecks.flatMap((check) => check(context));
+  }
+
+  it('names each stash with its date and the papercamp/ files it holds', () => {
+    const findings = runStashes([
+      {
+        index: 0,
+        sha: 'abc',
+        message: 'papercamp-reconcile',
+        date: '2026-11-04',
+        papercampFiles: [
+          { path: 'papercamp/config.json', source: 'abc', base: 'abc^1' },
+          { path: 'papercamp/ideas/IDEA-323.md', source: 'abc^3', base: null },
+        ],
+        otherFiles: ['src/app.ts'],
+      },
+      {
+        index: 1,
+        sha: 'def',
+        message: 'papercamp-sync',
+        date: '2026-11-03',
+        papercampFiles: [],
+        otherFiles: [],
+      },
+    ]);
+    expect(findings).toEqual([
+      {
+        file: 'stash@{0}',
+        line: 1,
+        rule: 'stranded-stash',
+        message: expect.stringMatching(
+          /^papercamp-reconcile from 2026-11-04 holds papercamp\/config\.json, papercamp\/ideas\/IDEA-323\.md, plus 1 file outside papercamp\//,
+        ),
+      },
+      expect.objectContaining({
+        file: 'stash@{1}',
+        rule: 'stranded-stash',
+        message: expect.stringContaining('papercamp-sync from 2026-11-03'),
+      }),
+    ]);
+  });
+
+  it('is silent with no stranded stash', () => {
+    expect(runStashes([])).toEqual([]);
+  });
+});
