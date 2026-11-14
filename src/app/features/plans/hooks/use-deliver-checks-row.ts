@@ -60,7 +60,13 @@ export const activeCheckFix = (
 };
 
 export const useDeliverChecksRow = () => {
-  const { checks: deskChecks, run: runDeskCheck, runAll: runAllChecks, fix } = useDeskChecks();
+  const {
+    checks: deskChecks,
+    run: runDeskCheck,
+    runAll: runAllChecks,
+    stop,
+    fix,
+  } = useDeskChecks();
   const doctor = useAppStore((s) => s.doctor);
   const consistency = useAppStore((s) => s.consistency);
   const { plans } = usePlans();
@@ -87,6 +93,11 @@ export const useDeliverChecksRow = () => {
     }
   };
 
+  const stopRunningChecks = () =>
+    Promise.all(
+      deskChecks.filter((check) => check.status === 'running').map((check) => stop(check.name)),
+    );
+
   const fixCheck = () => {
     if (!failing) return;
     launchIssueFix(failing.id, failing.title, failing.reason, failing.output);
@@ -109,6 +120,7 @@ export const useDeliverChecksRow = () => {
     navigate,
     runDeskCheck,
     runAllChecks,
+    stopRunningChecks,
     linkedPlanFor,
     failing,
     failingCheck,

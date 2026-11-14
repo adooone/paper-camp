@@ -31,3 +31,15 @@ export const fixDeskCheck = async (name: string): Promise<DeskCheckState> => {
   const body = (await response.json()) as { check: DeskCheckState };
   return body.check;
 };
+
+export const stopDeskCheck = async (name: string): Promise<void> => {
+  const response = await apiFetch(apiUrl('/api/checks/stop'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Failed to stop check' }));
+    throw new Error(err.error ?? 'Failed to stop check');
+  }
+};

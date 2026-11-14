@@ -41,6 +41,27 @@ export function checkRoutes({ checks }: RouteContext): Route[] {
 
     {
       method: 'POST',
+      path: '/api/checks/stop',
+      handle: async (req, res) => {
+        const { name } = (await readJson<{ name?: string }>(req)) ?? {};
+        if (!name) {
+          sendJson(res, 400, { error: 'name is required' });
+          return;
+        }
+        try {
+          sendJson(res, 200, { stopped: checks.stopCheck(name) });
+        } catch (err) {
+          if (err instanceof UnknownCheckError) {
+            sendJson(res, 404, { error: err.message });
+            return;
+          }
+          sendJson(res, 500, { error: (err as Error).message });
+        }
+      },
+    },
+
+    {
+      method: 'POST',
       path: '/api/checks/fix',
       handle: async (req, res) => {
         const { name } = (await readJson<{ name?: string }>(req)) ?? {};

@@ -69,6 +69,37 @@ describe('runCheck', () => {
   });
 });
 
+describe('check timeout and stop', () => {
+  it('fails a check that outlives the limit with a timeout message', async () => {
+    const root = await tmpRoot('exec sleep 30');
+    const manager = createDeskCheckManager(root, undefined, undefined, undefined, 100);
+
+    expect(await manager.runCheck('test')).toBe('fail');
+
+    const check = manager.getStatus()[0];
+    expect(check.status).toBe('fail');
+    expect(check.output).toBe('timed out after 30 min');
+  });
+
+  it('stops a running check and records it as failed', async () => {
+    const root = await tmpRoot('exec sleep 30');
+    const manager = createDeskCheckManager(root);
+    const running = manager.runCheck('test');
+    while (!manager.stopCheck('test')) await new Promise((r) => setTimeout(r, 10));
+
+    expect(await running).toBe('fail');
+    expect(manager.getStatus()[0].output).toBe('stopped');
+  });
+
+  it('reports false when the check is not running and rejects an unknown name', async () => {
+    const root = await tmpRoot('true');
+    const manager = createDeskCheckManager(root);
+
+    expect(manager.stopCheck('test')).toBe(false);
+    expect(() => manager.stopCheck('nope')).toThrow('No check named');
+  });
+});
+
 describe('runCheck fingerprint', () => {
   it('captures the fingerprint before the command runs, not after', async () => {
     const root = await tmpRoot('sleep 0.05');

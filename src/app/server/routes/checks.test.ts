@@ -195,3 +195,40 @@ describe('POST /api/checks/fix', () => {
     expect((json() as { error: string }).error).toMatch(/fix command crashed/);
   });
 });
+
+describe('POST /api/checks/stop', () => {
+  it('rejects a missing name with 400', async () => {
+    const stopCheck = vi.fn();
+    const { res, status } = fakeRes();
+    await route('/api/checks/stop', 'POST', { stopCheck }).handle(
+      fakeReq('/api/checks/stop', '{}'),
+      res,
+    );
+    expect(status()).toBe(400);
+    expect(stopCheck).not.toHaveBeenCalled();
+  });
+
+  it('stops a named check', async () => {
+    const stopCheck = vi.fn(() => true);
+    const { res, status, json } = fakeRes();
+    await route('/api/checks/stop', 'POST', { stopCheck }).handle(
+      fakeReq('/api/checks/stop', JSON.stringify({ name: 'types' })),
+      res,
+    );
+    expect(status()).toBe(200);
+    expect(json()).toEqual({ stopped: true });
+    expect(stopCheck).toHaveBeenCalledWith('types');
+  });
+
+  it('reports an unknown check as 404', async () => {
+    const stopCheck = vi.fn(() => {
+      throw new UnknownCheckError('No check named "ghost" in the desk manifest');
+    });
+    const { res, status } = fakeRes();
+    await route('/api/checks/stop', 'POST', { stopCheck }).handle(
+      fakeReq('/api/checks/stop', JSON.stringify({ name: 'ghost' })),
+      res,
+    );
+    expect(status()).toBe(404);
+  });
+});

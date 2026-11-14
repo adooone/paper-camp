@@ -4,6 +4,7 @@ import { useBranchSync } from '@/app/hooks/use-branch-sync';
 import type { CheckStatus } from '@/types/index';
 import {
   Button,
+  CloseIcon,
   IconButton,
   Menu,
   type MenuEntry,
@@ -102,6 +103,7 @@ export const DeliverBar = ({
     navigate,
     runDeskCheck,
     runAllChecks,
+    stopRunningChecks,
     linkedPlanFor,
     failing,
     failingCheck,
@@ -221,6 +223,15 @@ export const DeliverBar = ({
           items={menuItems}
           className="[&_[role=menuitem]]:px-2 [&_[role=menuitem]]:py-1 [&_[role=menuitem]]:text-sm"
         />
+        {anyRunning && (
+          <IconButton
+            icon={<CloseIcon size={14} />}
+            variant="ghost"
+            size="small"
+            label="Stop checks"
+            onClick={stopRunningChecks}
+          />
+        )}
         {fixButton}
         <span className="text-xs opacity-60">
           {gitStateLine(hasChanges, files.length, gitAhead, branch)}

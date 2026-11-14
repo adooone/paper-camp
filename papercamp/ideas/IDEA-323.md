@@ -76,9 +76,10 @@ slowly" rather than "unreachable" against a loaded box.
       reused pid with a 15 s limit; `daemon.json` written right after
       `listen`; tests for the slow-daemon case.
       run: 49s · 12 in · 3.7k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
-- [ ] Check timeout and stop
+- [x] Check timeout and stop
       30-minute limit with `killWithEscalation`, `stopCheck`,
       `POST /api/checks/stop`, the stop button on the running stamp; tests.
+      run: 1m24s · 36 in · 10.6k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
 - [ ] Single-flight mount
       In-flight promise per slug in `createProjectMounter`; test with
       concurrent first requests.

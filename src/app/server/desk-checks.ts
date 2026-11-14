@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFingerprint, readCorpus } from '@/core/corpus';
@@ -6,6 +6,7 @@ import { loadDeskConfig } from '@/core/desk-config';
 import { findConsistencyIssues } from '@/core/parse';
 import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { CheckStatus, DeskCheckState, FailingCheck } from '../../types';
+import { killWithEscalation } from './agent-process';
 import { runBiomeFix } from './biome-fix';
 import { readMaybe } from './helpers';
 
@@ -33,20 +34,47 @@ function emptyRuntime(): CheckRuntime {
 export class MissingFixCmdError extends Error {}
 export class UnknownCheckError extends Error {}
 
-function run(cmd: string, cwd: string): Promise<{ code: number | null; output: string }> {
+export const CHECK_TIMEOUT_MS = 30 * 60 * 1000;
+const TIMEOUT_OUTPUT = 'timed out after 30 min';
+const STOPPED_OUTPUT = 'stopped';
+
+interface RunOptions {
+  timeoutMs?: number;
+  onSpawn?: (proc: ChildProcess) => void;
+}
+
+interface RunResult {
+  code: number | null;
+  output: string;
+  timedOut: boolean;
+}
+
+function run(cmd: string, cwd: string, options: RunOptions = {}): Promise<RunResult> {
   return new Promise((resolve) => {
     const proc = spawn(cmd, { cwd, stdio: ['ignore', 'pipe', 'pipe'], shell: true });
+    options.onSpawn?.(proc);
     let output = '';
+    let timedOut = false;
+    const timer = options.timeoutMs
+      ? setTimeout(() => {
+          timedOut = true;
+          killWithEscalation(proc);
+        }, options.timeoutMs)
+      : undefined;
     proc.stdout?.on('data', (d: Buffer) => {
       output += d.toString();
     });
     proc.stderr?.on('data', (d: Buffer) => {
       output += d.toString();
     });
-    proc.on('close', (code) => resolve({ code, output }));
-    proc.on('error', (err) =>
-      resolve({ code: null, output: `Failed to spawn check: ${err.message}` }),
-    );
+    proc.on('close', (code) => {
+      clearTimeout(timer);
+      resolve({ code, output, timedOut });
+    });
+    proc.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ code: null, output: `Failed to spawn check: ${err.message}`, timedOut: false });
+    });
   });
 }
 
@@ -85,8 +113,11 @@ export function createDeskCheckManager(
   getFingerprint?: () => Promise<CheckFingerprint>,
   publish?: (payload: { type: string } & Record<string, unknown>) => void,
   state: DeskCheckManagerState = createEmptyCheckState(),
+  timeoutMs: number = CHECK_TIMEOUT_MS,
 ) {
   const { runtimes, inFlight } = state;
+  const procs = new Map<string, ChildProcess>();
+  const stopRequested = new Set<string>();
 
   function runtimeFor(name: string): CheckRuntime {
     let runtime = runtimes.get(name);
@@ -133,9 +164,15 @@ export function createDeskCheckManager(
         : EMPTY_FINGERPRINT;
       setResult(name, 'running', '', fingerprint);
       try {
-        const { code, output } = await run(check.cmd, root);
+        const result = await run(check.cmd, root, {
+          timeoutMs,
+          onSpawn: (proc) => procs.set(name, proc),
+        });
+        procs.delete(name);
         inFlight.delete(name);
-        const status = code === 0 ? 'pass' : 'fail';
+        const stopped = stopRequested.delete(name);
+        const status = result.code === 0 && !result.timedOut && !stopped ? 'pass' : 'fail';
+        const output = result.timedOut ? TIMEOUT_OUTPUT : stopped ? STOPPED_OUTPUT : result.output;
         setResult(name, status, output, fingerprint);
         return status;
       } catch (err) {
@@ -146,6 +183,17 @@ export function createDeskCheckManager(
     })();
     inFlight.set(name, promise);
     return promise;
+  }
+
+  function stopCheck(name: string): boolean {
+    const proc = procs.get(name);
+    if (!proc) {
+      if ((loadDeskConfig(root).checks ?? []).some((c) => c.name === name)) return false;
+      throw new UnknownCheckError(`No check named "${name}" in the desk manifest`);
+    }
+    stopRequested.add(name);
+    killWithEscalation(proc);
+    return true;
   }
 
   async function runFix(name: string): Promise<DeskCheckState> {
@@ -284,6 +332,7 @@ export function createDeskCheckManager(
 
   return {
     runCheck,
+    stopCheck,
     runFix,
     getStatus,
     runChecksAndWait,
