@@ -156,16 +156,17 @@ describe('readRunningDaemonState', () => {
     await expect(access(path)).rejects.toThrow();
   });
 
-  it('keeps the file when the pid is alive but the daemon is too busy to answer in time', async () => {
+  it('resolves the state and keeps the file when the daemon is too busy to answer the probe', async () => {
     const path = await makeStatePath();
     const port = await listenOnFreePort(() => {});
-    await writeDaemonState(path, { ...baseState, pid: process.pid, port });
+    const state: DaemonState = { ...baseState, pid: process.pid, port };
+    await writeDaemonState(path, state);
 
-    expect(await readRunningDaemonState(path, { first: 50, retry: 100 })).toBeNull();
+    expect(await readRunningDaemonState(path, 50)).toEqual(state);
     await expect(access(path)).resolves.toBeUndefined();
   });
 
-  it('resolves the state when a slow daemon answers the longer retry probe', async () => {
+  it('resolves the state when a slow daemon answers after a delay', async () => {
     const path = await makeStatePath();
     const port = await listenOnFreePort((_req, res) => {
       setTimeout(() => {
@@ -176,7 +177,20 @@ describe('readRunningDaemonState', () => {
     const state: DaemonState = { ...baseState, pid: process.pid, port };
     await writeDaemonState(path, state);
 
-    expect(await readRunningDaemonState(path, { first: 50, retry: 2000 })).toEqual(state);
+    expect(await readRunningDaemonState(path, 2000)).toEqual(state);
+    await expect(access(path)).resolves.toBeUndefined();
+  });
+
+  it('removes the file when the port is held by a program that is not a daemon', async () => {
+    const path = await makeStatePath();
+    const port = await listenOnFreePort((_req, res) => {
+      res.statusCode = 404;
+      res.end();
+    });
+    await writeDaemonState(path, { ...baseState, pid: process.pid, port });
+
+    expect(await readRunningDaemonState(path)).toBeNull();
+    await expect(access(path)).rejects.toThrow();
   });
 
   it('resolves the state and keeps the file when the pid is alive and the endpoint answers', async () => {

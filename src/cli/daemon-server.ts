@@ -800,6 +800,8 @@ export async function startDaemonServer({
     server.listen(port, resolve);
   });
 
+  await writeDaemonState(statePath, daemonState);
+
   const color = process.stdout.isTTY === true && !process.env.NO_COLOR;
 
   let tailnetName: string | undefined;

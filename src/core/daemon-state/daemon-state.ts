@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { connect } from 'node:net';
 import { dirname, join } from 'node:path';
 import {
   MACHINE_NIGHT_PATH,
@@ -148,31 +149,42 @@ async function probeDaemon(port: number, timeoutMs: number): Promise<ProbeOutcom
   }
 }
 
-export interface DaemonProbeTimeouts {
-  first: number;
-  retry: number;
+const REUSED_PID_PROBE_TIMEOUT_MS = 15_000;
+const TCP_CONNECT_TIMEOUT_MS = 5_000;
+
+function isPortListening(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = connect({ port, host: '127.0.0.1' });
+    const settle = (listening: boolean) => {
+      socket.destroy();
+      resolve(listening);
+    };
+    socket.setTimeout(TCP_CONNECT_TIMEOUT_MS, () => settle(false));
+    socket.once('connect', () => settle(true));
+    socket.once('error', () => settle(false));
+  });
 }
 
-const DEFAULT_PROBE_TIMEOUTS: DaemonProbeTimeouts = { first: PROBE_TIMEOUT_MS, retry: 10_000 };
-
 /** The one truth every lifecycle command reads: a state file, a live pid, and
- * a daemon answering on its port. A dead pid or a refused port is stale, so the
- * file is pruned; a daemon too busy to answer in time keeps its file — deleting
- * it would orphan a live daemon from every CLI and MCP client. */
+ * a listening port. The file goes only when the pid is dead, nothing listens,
+ * or the port answers as something other than a daemon. A daemon too busy to
+ * answer the HTTP probe is still running — deleting its file would orphan it
+ * from every CLI and MCP client. */
 export async function readRunningDaemonState(
   path: string,
-  timeouts: DaemonProbeTimeouts = DEFAULT_PROBE_TIMEOUTS,
+  httpTimeoutMs: number = REUSED_PID_PROBE_TIMEOUT_MS,
 ): Promise<DaemonState | null> {
   const state = await loadDaemonState(path);
-  if (state === undefined || !isProcessAlive(state.pid)) {
+  if (state === undefined || !isProcessAlive(state.pid) || !(await isPortListening(state.port))) {
     await removeDaemonState(path);
     return null;
   }
-  let outcome = await probeDaemon(state.port, timeouts.first);
-  if (outcome === 'slow') outcome = await probeDaemon(state.port, timeouts.retry);
-  if (outcome === 'answered') return state;
-  if (outcome === 'gone') await removeDaemonState(path);
-  return null;
+  const outcome = await probeDaemon(state.port, httpTimeoutMs);
+  if (outcome === 'gone') {
+    await removeDaemonState(path);
+    return null;
+  }
+  return state;
 }
 
 export function formatDaemonStatusLine(state: DaemonState): string {
