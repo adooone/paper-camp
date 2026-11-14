@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0](https://github.com/adooone/paper-camp/compare/v0.47.0...v0.48.0) (2026-11-14)
+
+
+### Features
+
+* **server:** Publish feedback stages from the pipeline ([64a60df](https://github.com/adooone/paper-camp/commit/64a60df7032c26461bc4792a65f22656a2696e34))
+* **server:** Show the live stage under the newest bubble ([859e4ce](https://github.com/adooone/paper-camp/commit/859e4ce417f3d2b8f73b9327614baed5498e0840))
+* **server:** Stream partial reply text from read-only runs ([283d129](https://github.com/adooone/paper-camp/commit/283d129cd1bceb1665b2b7f79bfecf867bbc804f))
+* **server:** Type the streamed reply into the thread ([3a8b990](https://github.com/adooone/paper-camp/commit/3a8b990c30149f3a187cff37f310ee3f1481c99c))
+
+
+### Bug Fixes
+
+* **cli:** Check timeout and stop ([0aad1c6](https://github.com/adooone/paper-camp/commit/0aad1c665cc67818ba5dcbaea0aea9148d1821d7))
+* **cli:** lint ([d6d69fe](https://github.com/adooone/paper-camp/commit/d6d69feb17dda06c6d1364c209d4c0e824e65a41))
+* **cli:** Single-flight mount ([1c8a648](https://github.com/adooone/paper-camp/commit/1c8a648fb2c223e46eac64664b0f305165dcc480))
+* **cli:** Slow is not down ([ad7a687](https://github.com/adooone/paper-camp/commit/ad7a6879a5051243f39fcb3f3b5cb4e0fcda7541))
+* **cli:** State file tied to pid and port ([1a66ad1](https://github.com/adooone/paper-camp/commit/1a66ad1f1ec67127189534a5f2b31948149edca6))
+* **server:** Ack feedback-message once the message is filed ([44ce324](https://github.com/adooone/paper-camp/commit/44ce32432c3bac161128db6d13a552b40164adb6))
+* **server:** Cached doctor and stats ([aae5507](https://github.com/adooone/paper-camp/commit/aae5507320cc2fdc78b6dc6f7c636862b7c5d204))
+* **server:** Change ticks skip probe queries ([cd5d248](https://github.com/adooone/paper-camp/commit/cd5d2482c154f42402c0fd930321dadfbe946bf9))
+* **server:** Move the web send hook onto the feedback event ([edfcd44](https://github.com/adooone/paper-camp/commit/edfcd44847e4848d0d42b8204d7dcc410ac9e178))
+* **server:** One heavy command at a time ([d80988a](https://github.com/adooone/paper-camp/commit/d80988ac8f7a49d2340438e6ad303c1870984518))
+* **server:** One probe cache per machine ([55c84d3](https://github.com/adooone/paper-camp/commit/55c84d318cb0f8ff1d72670032903393f6559193))
+* **server:** Reconcile commits the corpus instead of stashing ([f1c5ccd](https://github.com/adooone/paper-camp/commit/f1c5ccd120fbc5f876d019036c629270edbc5a2e))
+* **server:** Stranded stashes in doctor and the git card ([b289c94](https://github.com/adooone/paper-camp/commit/b289c94c7a79d81594b27e9894804ad6cf964ba4))
+
 ## [0.47.0](https://github.com/adooone/paper-camp/compare/v0.46.0...v0.47.0) (2026-11-08)
 
 ### Features
