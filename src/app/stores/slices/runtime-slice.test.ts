@@ -19,7 +19,7 @@ describe('probeReachable', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(probeReachable()).resolves.toBe(true);
+    await expect(probeReachable()).resolves.toBe('reachable');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -33,7 +33,7 @@ describe('probeReachable', () => {
     const result = probeReachable();
     await vi.runAllTimersAsync();
 
-    await expect(result).resolves.toBe(true);
+    await expect(result).resolves.toBe('reachable');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -47,7 +47,7 @@ describe('probeReachable', () => {
     const result = probeReachable();
     await vi.runAllTimersAsync();
 
-    await expect(result).resolves.toBe(true);
+    await expect(result).resolves.toBe('reachable');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -58,8 +58,77 @@ describe('probeReachable', () => {
     const result = probeReachable();
     await vi.runAllTimersAsync();
 
-    await expect(result).resolves.toBe(false);
+    await expect(result).resolves.toBe('unreachable');
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('probeReachable on a loaded box', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  const timeout = () => Object.assign(new Error('timed out'), { name: 'TimeoutError' });
+
+  it('reports slow when the first request times out but the longer attempt answers', async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(timeout()).mockResolvedValueOnce({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(probeReachable()).resolves.toBe('slow');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports unreachable when nothing ever answers', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(timeout()));
+
+    const result = probeReachable();
+    await vi.runAllTimersAsync();
+
+    await expect(result).resolves.toBe('unreachable');
+  });
+});
+
+describe('checkRuntimeReachable retries a slow runtime', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.resetModules();
+    vi.unstubAllGlobals();
+  });
+
+  it('marks the runtime slow and probes again after 30 seconds', async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+    vi.doMock('@/app/services/mount', () => ({ mountPrefix: '' }));
+    vi.doMock('@/app/services/runtime-connection', () => ({
+      getRuntimeConnection: () => ({ runtimeUrl: 'http://localhost:4444', pairingToken: null }),
+    }));
+    const timeout = Object.assign(new Error('timed out'), { name: 'TimeoutError' });
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(timeout)
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const applied: Record<string, unknown>[] = [];
+    const { createRuntimeSlice } = await import('./runtime-slice');
+    const slice = createRuntimeSlice(((patch: Record<string, unknown>) => {
+      applied.push(patch);
+    }) as unknown as SetState);
+
+    await slice.checkRuntimeReachable();
+    expect(applied).toContainEqual({
+      runtimeReachable: false,
+      runtimeSlow: true,
+      runtimeChecking: false,
+    });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(applied).toContainEqual({ runtimeReachable: true, runtimeSlow: false });
   });
 });
 

@@ -2,7 +2,7 @@
 id: IDEA-323
 title: Daemon survives a busy box
 type: fix
-status: planned
+status: review
 created: 2026-11-03
 updated: 2026-11-14
 tags:
@@ -84,9 +84,10 @@ slowly" rather than "unreachable" against a loaded box.
       In-flight promise per slug in `createProjectMounter`; test with
       concurrent first requests.
       run: 41s · 48 in · 12.4k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
-- [ ] Slow is not down
+- [x] Slow is not down
       Late-completion detection in `probeReachable`, the "responding slowly"
       page with automatic retry; tests.
+      run: 1m38s · 66 in · 18.8k out · sonnet-5-5 · sess:005cfd34-7b6a-43d6-a579-aef125a87d4b
 
 ### Thread
 - [x] 2026-11-14 [log] [agent] Restored on 2026-11-14 from a stranded `papercamp-reconcile` stash dated 2026-11-06 (see IDEA-331); the file had been missing from the corpus since then while three bookkeeping commits on main referenced it. Part of phase 1 and phase 4 landed in 0.46.0 through `readRunningDaemonState` (pid plus HTTP probe, a slow daemon keeps its state file), not in the shape the phases describe; single-flight mount and the check stop are untouched.
