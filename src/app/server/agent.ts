@@ -5,7 +5,9 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import {
   ASSET_GUIDANCE,
+  type ChatActiveRun,
   NEEDS_DECISION_PROTOCOL,
+  buildChatTurnPrompt,
   buildPlanDraftPrompt,
   buildReconcilePrompt,
 } from '@/app/features/plans/prompts';
@@ -34,6 +36,7 @@ import { agentThreadMessage, computePlanContentHash, nowMinuteString } from '@/c
 import { logFromThread } from '@/core/thread';
 import type {
   AgentId,
+  AgentRunOptions,
   AgentTaskState,
   AgentTaskStatus,
   CheckName,
@@ -42,6 +45,7 @@ import type {
   FailingCheck,
   FixReviewResult,
   GitStatusEntry,
+  MountContext,
   PhaseItem,
   PhaseMilestone,
   PhaseRunRecord,
@@ -51,6 +55,7 @@ import type {
   ReviewThread,
   RunUsage,
   TaskKind,
+  ThreadMessage,
   ThreadMessageOption,
 } from '@/types/index';
 import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
@@ -63,11 +68,13 @@ import {
   markAgentSignedOut,
 } from './agent-signin';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
+import { readChatSession, writeChatSession } from './chat-session';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import {
   CorpusError,
   appendToChatFile,
   planFile,
+  readChatFile,
   readMaybe,
   readRunOrderFile,
   updateEntity,
@@ -96,6 +103,9 @@ const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
 const DECISION_QUESTION_LIMIT = 140;
 // A failing test run can print tens of kilobytes; the fix pass only needs the end.
 const CHECK_OUTPUT_TAIL_CHARS = 4000;
+const CHAT_REPLAY_MESSAGES = 10;
+const CHAT_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const CHAT_WALL_CLOCK_CAP_MS = 60 * 60 * 1000;
 
 function tailOfOutput(output: string): string {
   if (output.length <= CHECK_OUTPUT_TAIL_CHARS) return output;
@@ -291,6 +301,20 @@ export interface AgentTask {
 }
 
 type Result = { ok: true } | { ok: false; error: string; kind?: 'auth' };
+
+interface ChatTurnContext {
+  branch?: { name: string; dirty: string[] };
+  mount?: MountContext;
+}
+
+type ChatStage = 'reading' | 'thinking' | 'replying' | 'done' | 'failed';
+
+interface ChatAttempt {
+  text: string;
+  error?: string;
+  sessionId?: string;
+  resumeFailed: boolean;
+}
 
 // What one idea's run-all attempt settled into — the batch loop (IDEA-321) acts on
 // this instead of re-deriving it from task state.
@@ -2704,6 +2728,205 @@ export function createAgentManager(
     return setStatus(task, status);
   }
 
+  function publishChat(task: AgentTask, event: Record<string, unknown>): void {
+    publish?.({ type: 'chat', taskId: task.id, ...event });
+  }
+
+  function chatAttempt(
+    task: AgentTask,
+    prompt: string,
+    opts: AgentRunOptions,
+    onStage: (stage: ChatStage) => void,
+  ): Promise<ChatAttempt> {
+    const { adapter } = task;
+    task.errorReason = undefined;
+    task.lastStreamAt = Date.now();
+    const proc = spawnAgent(adapter, adapter.buildChatArgs(prompt, opts));
+    task.proc = proc;
+
+    let sessionId: string | undefined;
+    let message = '';
+    let started = false;
+    let produced = false;
+    let finalText: string | undefined;
+    let resultError: string | undefined;
+    let stdout = '';
+    let stderr = '';
+    const relative = (label: string) => label.split(`${root}/`).join('');
+
+    if (proc.stdout) {
+      const rl = createInterface({ input: proc.stdout });
+      rl.on('line', (line) => {
+        stdout += `${line}\n`;
+        task.lastStreamAt = Date.now();
+        const parsed = adapter.parseChatLine(line);
+        if (!parsed) return;
+        if (!started) {
+          started = true;
+          onStage('thinking');
+        }
+        if (parsed.sessionId) sessionId = parsed.sessionId;
+        if (parsed.usage) task.runUsage = parsed.usage;
+        if (parsed.messageStart) message = '';
+        const next = parsed.text ?? (parsed.delta !== undefined ? message + parsed.delta : message);
+        if (next !== message) {
+          message = next;
+          produced = true;
+          onStage('replying');
+          publishChat(task, { chunk: message });
+        }
+        for (const tool of parsed.tools ?? []) {
+          const label = relative(tool);
+          produced = true;
+          pushLine(task, label);
+          onStage('thinking');
+          publishChat(task, { tool: label });
+        }
+        for (const permission of parsed.permissions ?? []) {
+          pushLine(
+            task,
+            `Permission needed: ${permission.tool}${permission.target ? ` ${permission.target}` : ''}`,
+          );
+          publishChat(task, { permission });
+        }
+        if (parsed.done) {
+          finalText = parsed.result;
+          if (parsed.error) resultError = parsed.reason ?? 'Agent run failed';
+        }
+      });
+    }
+    proc.stderr?.on('data', (d: Buffer) => {
+      stderr += d.toString();
+    });
+
+    return runProcessWithTimeout(
+      proc,
+      CHAT_IDLE_TIMEOUT_MS,
+      CHAT_WALL_CLOCK_CAP_MS,
+      () => task.lastStreamAt ?? Date.now(),
+    ).then(({ ok, timedOut }) => {
+      const text = (finalText || message).trim();
+      const error = timedOut
+        ? 'Scout timed out'
+        : (resultError ??
+          (!ok
+            ? extractFailureText(stdout, stderr, `${adapter.command} exited with an error`)
+            : text
+              ? undefined
+              : 'Scout finished without a reply'));
+      return {
+        text,
+        ...(error && { error }),
+        ...(sessionId && { sessionId }),
+        resumeFailed: Boolean(opts.resume) && !!error && !produced && !isStopping(task),
+      };
+    });
+  }
+
+  async function chatReplay(text: string): Promise<ThreadMessage[]> {
+    const messages = await readChatFile(root);
+    const last = messages.at(-1);
+    const prior =
+      last && last.from !== 'agent' && last.kind === 'chat' && last.text.trim() === text
+        ? messages.slice(0, -1)
+        : messages;
+    return prior.slice(-CHAT_REPLAY_MESSAGES);
+  }
+
+  function activeRunSummaries(): ChatActiveRun[] {
+    return runningTasks()
+      .filter((task) => task.taskKind !== 'chat')
+      .map((task) => ({
+        label: task.planId ?? task.ideaId ?? task.planTitle,
+        taskKind: task.taskKind,
+        ...(task.phaseIndex !== undefined && { phaseIndex: task.phaseIndex }),
+      }));
+  }
+
+  // One turn of the project chat's long-lived session: resumed when the saved session
+  // matches the chat agent, otherwise started fresh with the preamble and a replay.
+  async function runChatTurn(text: string, context: ChatTurnContext = {}): Promise<string> {
+    const message = text.trim();
+    if (runningTasks().some((task) => task.taskKind === 'chat')) {
+      throw new Error('Scout is still answering the previous message');
+    }
+    const {
+      id: agentId,
+      adapter,
+      model,
+      effort,
+    } = resolveAgent({
+      defaultAgents: readProjectConfig(root).defaultAgents,
+      taskKind: 'chat',
+    });
+    if (getAgentSignIn(agentId).signedOut) {
+      throw readOnlyPromptError(SIGNED_OUT_ERROR, 'auth');
+    }
+
+    const task = registerAndStart(
+      newTask({ taskKind: 'chat', planTitle: 'Project chat', agentId, adapter }),
+    );
+    let stage: ChatStage | undefined;
+    const onStage = (next: ChatStage) => {
+      if (next === stage) return;
+      stage = next;
+      publishChat(task, { stage: next });
+    };
+    onStage('reading');
+
+    const fail = async (reason: string, status: 'done' | 'error'): Promise<never> => {
+      task.errorReason = reason;
+      pushLine(task, reason);
+      await setStatus(task, status);
+      publishChat(task, { stage: 'failed', error: reason });
+      throw readOnlyPromptError(reason, task.errorKind);
+    };
+
+    try {
+      const saved = await readChatSession(root);
+      const resume =
+        saved && saved.agent === agentId && saved.model === model ? saved.sessionId : undefined;
+      const turn = {
+        text: message,
+        branch: context.branch,
+        activeRuns: activeRunSummaries(),
+        mount: context.mount,
+      };
+
+      let attempt = resume
+        ? await chatAttempt(task, buildChatTurnPrompt(turn), { model, effort, resume }, onStage)
+        : undefined;
+      if (!attempt || attempt.resumeFailed) {
+        if (attempt) pushLine(task, '[chat] session could not be resumed — starting a fresh one');
+        const replay = await chatReplay(message);
+        attempt = await chatAttempt(
+          task,
+          buildChatTurnPrompt({ ...turn, fresh: { replay } }),
+          { model, effort },
+          onStage,
+        );
+      }
+
+      if (attempt.sessionId) {
+        await writeChatSession(root, {
+          sessionId: attempt.sessionId,
+          agent: agentId,
+          ...(model && { model }),
+        });
+      }
+      if (isStopping(task)) return await fail('Stopped', 'done');
+      if (attempt.error) return await fail(attempt.error, 'error');
+
+      pushLine(task, attempt.text);
+      await setStatus(task, 'done');
+      onStage('done');
+      return attempt.text;
+    } catch (err) {
+      if (isTaskDone(task)) throw err;
+      return await fail((err as Error).message, 'error');
+    }
+  }
+
   function stop(taskId?: string): Result {
     const task = taskId ? tasks.get(taskId) : currentTask();
     if (!task || isTaskDone(task)) {
@@ -2717,33 +2940,30 @@ export function createAgentManager(
   }
 
   function getStatus(): AgentTaskState[] {
-    return [...tasks.values()]
-      .reverse()
-      .filter((task) => task.taskKind !== 'chat')
-      .map((task) => ({
-        id: task.id,
-        status: task.status,
-        taskKind: task.taskKind,
-        planTitle: task.planTitle,
-        startedAt: task.startedAt,
-        planId: task.planId,
-        phaseIndex: task.phaseIndex,
-        ...(task.fixAttempt !== undefined
-          ? { fixAttempt: task.fixAttempt, fixAttemptCap: task.fixAttemptCap }
-          : {}),
-        ideaId: task.ideaId,
-        agentId: task.agentId,
-        lines: [...task.lines],
-        ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
-        ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
-        ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
-        ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
-        ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
-        ...(task.errorKind ? { errorKind: task.errorKind } : {}),
-        ...(task.conflictPrompt ? { conflictPrompt: task.conflictPrompt } : {}),
-        ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
-        ...(task.issueId ? { issueId: task.issueId } : {}),
-      }));
+    return [...tasks.values()].reverse().map((task) => ({
+      id: task.id,
+      status: task.status,
+      taskKind: task.taskKind,
+      planTitle: task.planTitle,
+      startedAt: task.startedAt,
+      planId: task.planId,
+      phaseIndex: task.phaseIndex,
+      ...(task.fixAttempt !== undefined
+        ? { fixAttempt: task.fixAttempt, fixAttemptCap: task.fixAttemptCap }
+        : {}),
+      ideaId: task.ideaId,
+      agentId: task.agentId,
+      lines: [...task.lines],
+      ...(task.phaseAnchor ? { phaseAnchor: task.phaseAnchor } : {}),
+      ...(task.anchorEnteredAt !== undefined ? { anchorEnteredAt: task.anchorEnteredAt } : {}),
+      ...(task.lastStreamAt !== undefined ? { lastStreamAt: task.lastStreamAt } : {}),
+      ...(task.fixReviewResult ? { suggestedCommit: task.fixReviewResult.commit } : {}),
+      ...(task.prReviewUrl ? { prReviewUrl: task.prReviewUrl } : {}),
+      ...(task.errorKind ? { errorKind: task.errorKind } : {}),
+      ...(task.conflictPrompt ? { conflictPrompt: task.conflictPrompt } : {}),
+      ...(task.rateLimit ? { rateLimit: task.rateLimit } : {}),
+      ...(task.issueId ? { issueId: task.issueId } : {}),
+    }));
   }
 
   function hasActiveTask(): boolean {
@@ -2862,6 +3082,7 @@ export function createAgentManager(
     endPausedBatch,
     runReadOnlyPrompt,
     finalizeReadOnlyTask,
+    runChatTurn,
     getFixReviewResult,
     consumeFixReviewResult,
     resumeAuthParkedTasks,
@@ -2992,6 +3213,7 @@ export interface AgentManager {
     },
   ) => Promise<string>;
   finalizeReadOnlyTask: (task: AgentTask, status: 'done' | 'error') => Promise<void>;
+  runChatTurn: (text: string, context?: ChatTurnContext) => Promise<string>;
   stop: (taskId?: string) => Result;
   getStatus: () => AgentTaskState[];
   hasActiveTask: () => boolean;

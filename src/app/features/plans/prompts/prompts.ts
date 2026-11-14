@@ -9,6 +9,7 @@ import type {
   PlanEntry,
   ReviewThread,
   SuggestionEntry,
+  TaskKind,
   TaskLogEntry,
   ThreadMessage,
 } from '@/types/index';
@@ -707,4 +708,86 @@ Rules:
 - "order" must contain every id from the current queue exactly once — no id added, dropped, or duplicated.
 - "why" must be an array of strings with exactly one entry per "order" entry, at the same index.
 - Each "why" entry is one sentence naming what put that idea in that position — the blocker, the dependency, or the trade-off. Do not restate the idea's title or summarise what it does.`;
+}
+
+export interface ChatActiveRun {
+  label: string;
+  taskKind: TaskKind;
+  phaseIndex?: number;
+}
+
+interface ChatTurnPromptInput {
+  text: string;
+  branch?: { name: string; dirty: string[] };
+  activeRuns: ChatActiveRun[];
+  mount?: MountContext;
+  fresh?: { replay: ThreadMessage[] };
+}
+
+const CHAT_DIRTY_FILE_LIMIT = 10;
+
+const CHAT_PREAMBLE = `You are Paper Scout, this project's own agent, talking with the user in the project chat. This is one long conversation: each later message arrives on its own, so carry what was said. Sound like a sharp, low-ceremony teammate: direct and concise, no restating the question.
+
+The project's AGENTS.md and papercamp/ are the map: read AGENTS.md before you touch the code or the workflow, and papercamp/ideas/<ID>.md holds every idea with its plan. Read files, search the code and look things up instead of guessing.
+
+Write ideas only through the paper-camp MCP tools, never by editing papercamp/ by hand:
+- add_idea files a new idea; name its id in your reply.
+- append_note posts to an idea's thread; when a message names an idea, post the exchange there.
+- update_phase changes a phase of an idea.
+- edit_idea changes an idea's title, body or fields.
+- append_clarification answers a question a run parked on an idea.
+- get_plan and list_plans read the ideas.
+
+Code the user asks for is changed here and now, on the checked-out branch. Run the checks and tests AGENTS.md names when a change warrants it. Commit only when asked, in the repository's commit format. Each message opens with the branch and the active runs: never edit files a running phase is working on, and never run git stash, reset or checkout over changes you did not make. Name ideas by id.`;
+
+function chatSpeaker(message: ThreadMessage): string {
+  const speaker = message.from === 'agent' ? 'Scout' : 'User';
+  if (message.kind === 'question' && message.entityId) {
+    return `${speaker} [question parked on ${message.entityId}, ${message.state ?? 'open'}]`;
+  }
+  return speaker;
+}
+
+function chatBranchLine(branch: ChatTurnPromptInput['branch']): string {
+  if (!branch) return 'Branch: unknown';
+  if (branch.dirty.length === 0) return `Branch: ${branch.name} (clean)`;
+  const shown = branch.dirty.slice(0, CHAT_DIRTY_FILE_LIMIT).join(', ');
+  const more = branch.dirty.length - CHAT_DIRTY_FILE_LIMIT;
+  return `Branch: ${branch.name}, dirty: ${shown}${more > 0 ? ` (+${more} more)` : ''}`;
+}
+
+function chatRunsLine(runs: ChatActiveRun[]): string {
+  if (runs.length === 0) return 'Active runs: none';
+  const list = runs.map(
+    (run) =>
+      `${run.label} ${run.taskKind}${run.phaseIndex !== undefined ? ` (phase ${run.phaseIndex + 1})` : ''}`,
+  );
+  return `Active runs: ${list.join(', ')}`;
+}
+
+function chatMountLine(mount: MountContext | undefined): string | null {
+  if (!mount?.route && !mount?.focusedIdeaId) return null;
+  const where = mount.route ? `on ${mount.route}` : '';
+  const focus = mount.focusedIdeaId ? `looking at ${mount.focusedIdeaId}` : '';
+  return `The user is ${[where, focus].filter(Boolean).join(', ')}.`;
+}
+
+/** One turn of the project chat session (agent.ts's runChatTurn): only the new message
+ * and the status the daemon knows, plus the preamble and a replay when the session is fresh. */
+export function buildChatTurnPrompt(input: ChatTurnPromptInput): string {
+  const status = [
+    chatBranchLine(input.branch),
+    chatRunsLine(input.activeRuns),
+    chatMountLine(input.mount),
+  ]
+    .filter((line): line is string => line !== null)
+    .join('\n');
+  const turn = `${status}\n\n${input.text}`;
+  if (!input.fresh) return turn;
+  const replay = input.fresh.replay.length
+    ? `The conversation so far, oldest first:\n${input.fresh.replay
+        .map((m) => `${chatSpeaker(m)}: ${m.text}`)
+        .join('\n')}\n\n`
+    : '';
+  return `${CHAT_PREAMBLE}\n\n${replay}${turn}`;
 }

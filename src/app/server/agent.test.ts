@@ -2010,8 +2010,8 @@ describe('runReadOnlyPrompt output (IDEA-312)', () => {
   });
 });
 
-describe('runChatReply (IDEA-306)', () => {
-  it('runs the prompt but stays out of getStatus(), so a chat reply never flashes as a Stack panel run', async () => {
+describe('runChatReply', () => {
+  it('runs the prompt and lists the chat task in getStatus() like any other run', async () => {
     agentScript.readOnlyCommand = readOnlyCommand;
     process.env.READONLY_STDOUT = 'hi there';
     process.env.READONLY_STDERR = '';
@@ -2022,7 +2022,9 @@ describe('runChatReply (IDEA-306)', () => {
     const result = await manager.runReadOnlyPrompt('chat', 'prompt', 'Project chat');
 
     expect(result).toBe('hi there');
-    expect(manager.getStatus()).toEqual([]);
+    expect(manager.getStatus()).toEqual([
+      expect.objectContaining({ taskKind: 'chat', status: 'done', planTitle: 'Project chat' }),
+    ]);
   });
 });
 

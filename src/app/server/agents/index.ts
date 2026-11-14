@@ -7,6 +7,7 @@ import type {
   DefaultAgentsMap,
   TaskKind,
 } from '@/types/index';
+import type { ParsedChatLine } from './chat';
 import * as claudeCode from './claude-code';
 import type { ParsedAgentLine } from './claude-code';
 import * as opencode from './opencode';
@@ -15,7 +16,9 @@ export interface AgentAdapter {
   command: string;
   buildArgs: (prompt: string, opts?: AgentRunOptions) => string[];
   buildReadOnlyArgs: (opts?: AgentRunOptions) => string[];
+  buildChatArgs: (prompt: string, opts?: AgentRunOptions) => string[];
   parseLine: (line: string) => ParsedAgentLine | null;
+  parseChatLine: (line: string) => ParsedChatLine | null;
   options: AgentOptionsDescriptor;
 }
 
@@ -26,14 +29,18 @@ export const AGENTS: Record<AgentId, AgentAdapter> = {
     command: 'claude',
     buildArgs: claudeCode.buildArgs,
     buildReadOnlyArgs: claudeCode.buildReadOnlyArgs,
+    buildChatArgs: claudeCode.buildChatArgs,
     parseLine: claudeCode.parseLine,
+    parseChatLine: claudeCode.parseChatLine,
     options: AGENT_OPTIONS['claude-code'],
   },
   opencode: {
     command: 'opencode',
     buildArgs: opencode.buildArgs,
     buildReadOnlyArgs: opencode.buildReadOnlyArgs,
+    buildChatArgs: opencode.buildChatArgs,
     parseLine: opencode.parseLine,
+    parseChatLine: opencode.parseChatLine,
     options: AGENT_OPTIONS.opencode,
   },
 };

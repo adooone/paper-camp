@@ -1,9 +1,19 @@
 import { classifyAnchor } from '@/core/phase-progress';
 import type { AgentRunOptions } from '@/types/index';
+import type { ParsedChatLine } from './chat';
+import { clip, describePaperCampTool, stringField } from './chat';
 import type { ParsedAgentLine } from './claude-code';
 
 export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
   const args = ['run', prompt, '--format', 'json'];
+  if (opts?.model) args.push('-m', opts.model);
+  if (opts?.effort) args.push('--variant', opts.effort);
+  return args;
+}
+
+export function buildChatArgs(prompt: string, opts?: AgentRunOptions): string[] {
+  const args = ['run', prompt, '--format', 'json'];
+  if (opts?.resume) args.push('--session', opts.resume);
   if (opts?.model) args.push('-m', opts.model);
   if (opts?.effort) args.push('--variant', opts.effort);
   return args;
@@ -104,4 +114,57 @@ export function parseLine(line: string): ParsedAgentLine | null {
     default:
       return null;
   }
+}
+
+const PAPER_CAMP_TOOL_PREFIX = 'paper-camp_';
+
+const CHAT_TOOL_VERBS: Record<string, [string, string]> = {
+  read: ['Reading', 'a file'],
+  edit: ['Editing', 'a file'],
+  write: ['Writing', 'a file'],
+  bash: ['Running', 'a command'],
+  grep: ['Searching for', 'the code'],
+  glob: ['Finding', 'files'],
+  webfetch: ['Fetching', 'a page'],
+  websearch: ['Searching the web for', 'the web'],
+};
+
+function describeChatTool(tool: string, input: Record<string, unknown> | undefined): string | null {
+  if (tool.startsWith(PAPER_CAMP_TOOL_PREFIX)) {
+    return describePaperCampTool(tool.slice(PAPER_CAMP_TOOL_PREFIX.length), input);
+  }
+  if (tool === 'todowrite' || tool === 'todoread') return null;
+  const verb = CHAT_TOOL_VERBS[tool];
+  if (!verb) return `Using ${tool}`;
+  const target = stringField(input, 'filePath', 'command', 'pattern', 'url', 'query');
+  return target ? `${verb[0]} ${target}` : `${verb[0]} ${verb[1]}`;
+}
+
+export function parseChatLine(line: string): ParsedChatLine | null {
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(line);
+  } catch {
+    return null;
+  }
+
+  const part = json.part as Record<string, unknown> | undefined;
+  const sessionOnly = typeof json.sessionID === 'string' ? { sessionId: json.sessionID } : null;
+  const session = sessionOnly ?? {};
+
+  if (json.type === 'text') {
+    const text = typeof part?.text === 'string' ? part.text.trim() : '';
+    return text ? { ...session, text } : sessionOnly;
+  }
+  if (json.type !== 'tool_use' || typeof part?.tool !== 'string') return sessionOnly;
+
+  const tool = part.tool;
+  const state = part.state as Record<string, unknown> | undefined;
+  const input = state?.input as Record<string, unknown> | undefined;
+  if (state?.status === 'error' && state.error === PERMISSION_DENIAL_ERROR) {
+    const target = permissionTarget(tool, input);
+    return { ...session, permissions: [{ tool, ...(target && { target: clip(target) }) }] };
+  }
+  const label = describeChatTool(tool, input);
+  return label ? { ...session, tools: [clip(label)] } : sessionOnly;
 }

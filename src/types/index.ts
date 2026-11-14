@@ -692,6 +692,11 @@ export interface AgentRunOptions {
   resume?: string;
 }
 
+export interface ChatPermissionAsk {
+  tool: string;
+  target?: string;
+}
+
 /** Maps option names to a fixed value list (renders a Select) or null (free-text or hidden). */
 export type AgentOptionsDescriptor = Record<string, string[] | null | undefined>;
 

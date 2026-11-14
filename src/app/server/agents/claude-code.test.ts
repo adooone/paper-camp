@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildArgs, parseLine } from './claude-code';
+import { buildArgs, buildChatArgs, parseChatLine, parseLine } from './claude-code';
 
 describe('claude-code buildArgs', () => {
   it('passes --mcp-config with the paper-camp server and keeps --strict-mcp-config', () => {
@@ -275,5 +275,96 @@ describe('claude-code parseLine', () => {
   it('drops an assistant message with no usage and no displayable block', () => {
     const line = JSON.stringify({ type: 'assistant', message: { content: [] } });
     expect(parseLine(line)).toBeNull();
+  });
+});
+
+describe('claude-code buildChatArgs', () => {
+  it('keeps the run flags, allows web tools and streams partial messages', () => {
+    const args = buildChatArgs('hello');
+    expect(args).toEqual([
+      '-p',
+      'hello',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      '--permission-mode',
+      'auto',
+      '--mcp-config',
+      JSON.stringify({
+        mcpServers: { 'paper-camp': { command: 'paper-camp', args: ['mcp'] } },
+      }),
+      '--strict-mcp-config',
+      '--include-partial-messages',
+    ]);
+    expect(args).not.toContain('--disallowedTools');
+  });
+
+  it('resumes the chat session and passes model and effort', () => {
+    const args = buildChatArgs('hello', { resume: 'sess-1', model: 'opus', effort: 'high' });
+    expect(args.slice(-6)).toEqual(['--model', 'opus', '--effort', 'high', '--resume', 'sess-1']);
+  });
+});
+
+describe('claude-code parseChatLine', () => {
+  it('takes the session id from the init event', () => {
+    const line = JSON.stringify({ type: 'system', subtype: 'init', session_id: 'sess-1' });
+    expect(parseChatLine(line)).toEqual({ sessionId: 'sess-1' });
+  });
+
+  it('reads text deltas and message starts from partial messages', () => {
+    const delta = JSON.stringify({
+      type: 'stream_event',
+      event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hel' } },
+    });
+    const start = JSON.stringify({ type: 'stream_event', event: { type: 'message_start' } });
+    expect(parseChatLine(delta)).toEqual({ delta: 'Hel' });
+    expect(parseChatLine(start)).toEqual({ messageStart: true });
+  });
+
+  it('describes tool calls, including the paper-camp MCP tools', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: {
+        content: [
+          { type: 'tool_use', name: 'Read', input: { file_path: 'src/app/server/git.ts' } },
+          { type: 'tool_use', name: 'TodoWrite', input: {} },
+          { type: 'tool_use', name: 'mcp__paper-camp__add_idea', input: { title: 'Faster chat' } },
+          { type: 'tool_use', name: 'mcp__paper-camp__append_note', input: { id: 'IDEA-3' } },
+          { type: 'text', text: 'Looking' },
+        ],
+      },
+    });
+    expect(parseChatLine(line)).toEqual({
+      tools: ['Reading src/app/server/git.ts', 'Filing an idea: Faster chat', 'Posting to IDEA-3'],
+    });
+  });
+
+  it('reports permission denials from the result with tool and target', () => {
+    const line = JSON.stringify({
+      type: 'result',
+      is_error: false,
+      result: 'I could not run the tests.',
+      session_id: 'sess-1',
+      permission_denials: [
+        { tool_name: 'Bash', tool_use_id: 't1', tool_input: { command: 'pnpm test' } },
+        { tool_name: 'WebFetch', tool_use_id: 't2', tool_input: {} },
+      ],
+    });
+    expect(parseChatLine(line)).toMatchObject({
+      done: true,
+      error: false,
+      result: 'I could not run the tests.',
+      sessionId: 'sess-1',
+      permissions: [{ tool: 'Bash', target: 'pnpm test' }, { tool: 'WebFetch' }],
+    });
+  });
+
+  it('names a failed result by its subtype when it carries no text', () => {
+    const line = JSON.stringify({ type: 'result', is_error: true, subtype: 'error_max_turns' });
+    expect(parseChatLine(line)).toMatchObject({
+      done: true,
+      error: true,
+      reason: 'error_max_turns',
+    });
   });
 });

@@ -1,12 +1,14 @@
 import { classifyAnchor } from '@/core/phase-progress';
 import type {
   AgentRunOptions,
+  ChatPermissionAsk,
   PhaseMilestone,
   RateLimitSnapshot,
   RateLimitWindow,
   RateLimitWindowKey,
   RunUsage,
 } from '@/types/index';
+import { type ParsedChatLine, clip, describePaperCampTool, stringField } from './chat';
 
 export interface ParsedAgentLine {
   text: string;
@@ -134,8 +136,8 @@ const MCP_CONFIG = JSON.stringify({
   mcpServers: { 'paper-camp': { command: 'paper-camp', args: ['mcp'] } },
 });
 
-export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
-  const args = [
+function baseArgs(prompt: string): string[] {
+  return [
     '-p',
     prompt,
     '--output-format',
@@ -148,14 +150,29 @@ export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
     '--mcp-config',
     MCP_CONFIG,
     '--strict-mcp-config',
-    '--disallowedTools',
-    'WebFetch',
-    'WebSearch',
   ];
+}
+
+function runOptionArgs(opts?: AgentRunOptions): string[] {
+  const args: string[] = [];
   if (opts?.model) args.push('--model', opts.model);
   if (opts?.effort) args.push('--effort', opts.effort);
   if (opts?.resume) args.push('--resume', opts.resume);
   return args;
+}
+
+export function buildArgs(prompt: string, opts?: AgentRunOptions): string[] {
+  return [
+    ...baseArgs(prompt),
+    '--disallowedTools',
+    'WebFetch',
+    'WebSearch',
+    ...runOptionArgs(opts),
+  ];
+}
+
+export function buildChatArgs(prompt: string, opts?: AgentRunOptions): string[] {
+  return [...baseArgs(prompt), '--include-partial-messages', ...runOptionArgs(opts)];
 }
 
 // Must never pick up the shared `--permission-mode auto` flag, since a read-only
@@ -249,5 +266,123 @@ export function parseLine(line: string): ParsedAgentLine | null {
     }
     default:
       return { text: 'Agent is working…' };
+  }
+}
+
+const PAPER_CAMP_TOOL_PREFIX = 'mcp__paper-camp__';
+
+function describeTool(name: string, input: Record<string, unknown> | undefined): string | null {
+  if (name.startsWith(PAPER_CAMP_TOOL_PREFIX)) {
+    return describePaperCampTool(name.slice(PAPER_CAMP_TOOL_PREFIX.length), input);
+  }
+  const target = stringField(
+    input,
+    'file_path',
+    'notebook_path',
+    'command',
+    'pattern',
+    'url',
+    'query',
+  );
+  switch (name) {
+    case 'TodoWrite':
+      return null;
+    case 'Read':
+      return target ? `Reading ${target}` : 'Reading a file';
+    case 'Edit':
+    case 'MultiEdit':
+    case 'NotebookEdit':
+      return target ? `Editing ${target}` : 'Editing a file';
+    case 'Write':
+      return target ? `Writing ${target}` : 'Writing a file';
+    case 'Bash':
+      return target ? `Running ${target}` : 'Running a command';
+    case 'Grep':
+      return target ? `Searching for ${target}` : 'Searching the code';
+    case 'Glob':
+      return target ? `Finding ${target}` : 'Finding files';
+    case 'WebFetch':
+      return target ? `Fetching ${target}` : 'Fetching a page';
+    case 'WebSearch':
+      return target ? `Searching the web for ${target}` : 'Searching the web';
+    default:
+      return `Using ${name}`;
+  }
+}
+
+function readPermissionDenials(value: unknown): ChatPermissionAsk[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((raw) => {
+    if (!raw || typeof raw !== 'object') return [];
+    const { tool_name, tool_input } = raw as Record<string, unknown>;
+    if (typeof tool_name !== 'string') return [];
+    const input = tool_input as Record<string, unknown> | undefined;
+    const target = stringField(
+      input,
+      'command',
+      'file_path',
+      'notebook_path',
+      'url',
+      'path',
+      'pattern',
+      'query',
+    );
+    return [{ tool: tool_name, ...(target && { target }) }];
+  });
+}
+
+export function parseChatLine(line: string): ParsedChatLine | null {
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(line);
+  } catch {
+    return null;
+  }
+
+  switch (json.type) {
+    case 'system':
+      return json.subtype === 'init' && typeof json.session_id === 'string'
+        ? { sessionId: json.session_id }
+        : null;
+    case 'stream_event': {
+      const event = json.event as Record<string, unknown> | undefined;
+      if (event?.type === 'message_start') return { messageStart: true };
+      const delta = event?.delta as Record<string, unknown> | undefined;
+      if (
+        event?.type === 'content_block_delta' &&
+        delta?.type === 'text_delta' &&
+        typeof delta.text === 'string'
+      ) {
+        return { delta: delta.text };
+      }
+      return null;
+    }
+    case 'assistant': {
+      const blocks = (json.message as { content?: unknown[] } | undefined)?.content ?? [];
+      const tools = blocks.flatMap((block) => {
+        const b = block as { type?: string; name?: string; input?: Record<string, unknown> };
+        if (b.type !== 'tool_use' || typeof b.name !== 'string') return [];
+        const label = describeTool(b.name, b.input);
+        return label ? [clip(label)] : [];
+      });
+      return tools.length > 0 ? { tools } : null;
+    }
+    case 'result': {
+      const error = Boolean(json.is_error);
+      const result = typeof json.result === 'string' ? json.result.trim() : '';
+      const subtype = typeof json.subtype === 'string' ? json.subtype : undefined;
+      const permissions = readPermissionDenials(json.permission_denials);
+      return {
+        done: true,
+        error,
+        result,
+        ...(error && { reason: result || subtype || 'Agent run failed' }),
+        ...(typeof json.session_id === 'string' && { sessionId: json.session_id }),
+        ...(permissions.length > 0 && { permissions }),
+        usage: extractUsage(json),
+      };
+    }
+    default:
+      return null;
   }
 }

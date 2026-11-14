@@ -130,8 +130,9 @@ IDEA-331's thread. No view outside the chat offers a composer; the idea
 view, toolbar card and run row each open the chat with the id prefilled.
 
 ### Phases
-- [ ] The chat session runner
+- [x] The chat session runner
       `buildChatArgs` in `src/app/server/agents/claude-code.ts` (`buildArgs` without the `WebFetch`/`WebSearch` denial, plus `--include-partial-messages` and `--resume` when a session exists) and the opencode equivalent (`run --format json --session <id>`); `permission_denials` from the result and opencode's permission asks are reported as a `permission` chat event with tool and target; `runChatTurn(root, text, context)` in `agent.ts` that reads and writes `.local/chat-session.json`, feeds the preamble on the first turn, replays the last ten `chat.md` messages when a resume fails, publishes `chat` stage, chunk and tool events, records the task like any other (no `chat` filter in `getStatus`), and returns the final text. Adapter and runner tests with a fake agent.
+      run: 9m43s · 82 in · 44.9k out · opus-5-5 · sess:473e0898-736b-42df-8d86-42a7d8cae5bf
 - [ ] Project chat on the session
       `POST /api/chat` appends the user message, starts the turn and acks; the reply is appended to `chat.md` on `done`, a failure as an agent message with the error; `/api/chat/retry` re-sends the last user message; `DELETE /api/chat` clears `chat.md` and the session file; the git shortcut stays first. Delete `chat-reply.ts`, `buildChatMovePrompt` and their tests; route tests for ack timing, retry and clear.
 - [ ] The web page streams
