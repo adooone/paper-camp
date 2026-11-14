@@ -1,7 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { hostname } from 'node:os';
+import { join } from 'node:path';
 import { invalidateCorpus, localStateDriftCount, readLocalStateDrift } from '@/core/corpus';
 import { watchCorpus } from '@/core/corpus-watch';
+import { describeFindings, runDoctor } from '@/core/doctor';
+import { computeProjectStats } from '@/core/stats';
 import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
@@ -24,7 +27,7 @@ import { HttpError, sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
 import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
 import { cachedProbe } from './probe-cache';
-import { createProjectStatsStore } from './project-stats';
+import { createReadCache } from './read-cache';
 import { buildRoutes } from './routes/index';
 
 export interface ApiMiddleware {
@@ -207,10 +210,18 @@ export function createApiMiddleware(
     heavySlot = createHeavySlot(),
   } = options;
   const activity = createActivityManager(root, activityState);
-  const stats = createProjectStatsStore(root);
+  const stats = createReadCache(() => computeProjectStats(root));
+  const doctor = createReadCache(async () =>
+    describeFindings(await runDoctor(join(root, 'papercamp'))),
+  );
+  const dropReads = () => {
+    stats.drop();
+    doctor.drop();
+  };
+  activity.onChange(dropReads);
   const closeWatcher = watchCorpus(root, () => {
     invalidateCorpus(root);
-    stats.schedule();
+    dropReads();
   });
   const git = createGitManager(root, () => activity.notifyChanged(['git', 'corpus']));
   const publish = (payload: { type: string } & Record<string, unknown>) =>
@@ -229,7 +240,6 @@ export function createApiMiddleware(
   const agent = createAgentManager(root, hooks, {
     onCorpusChanged: () => {
       activity.notifyChanged(['corpus', 'tasks']);
-      stats.schedule();
     },
     state: agentState,
     isMachineBusy,
@@ -255,6 +265,7 @@ export function createApiMiddleware(
     pairing,
     pairCode,
     stats,
+    doctor,
   });
 
   let lastRequestAt: number | null = null;
@@ -319,7 +330,6 @@ export function createApiMiddleware(
     );
   (handler as ApiMiddleware).close = () => {
     closeWatcher();
-    stats.close();
     activity.close();
   };
   return handler as ApiMiddleware;

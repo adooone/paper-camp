@@ -283,6 +283,7 @@ describe('POST /api/chat', () => {
       ...agentCtx(runChatReply),
       activity: {
         notifyChanged: () => {},
+        onChange: () => () => {},
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
@@ -335,6 +336,7 @@ describe('POST /api/chat', () => {
       } as unknown as RouteContext['agent'],
       activity: {
         notifyChanged: () => {},
+        onChange: () => () => {},
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
@@ -362,6 +364,7 @@ describe('POST /api/chat', () => {
       ...agentCtx(runChatReply),
       activity: {
         notifyChanged: () => {},
+        onChange: () => () => {},
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
@@ -389,6 +392,7 @@ describe('POST /api/chat', () => {
       ...agentCtx(runChatReply),
       activity: {
         notifyChanged: () => {},
+        onChange: () => () => {},
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},
@@ -455,6 +459,7 @@ describe('POST /api/chat/retry', () => {
       ...agentCtx(runChatReply),
       activity: {
         notifyChanged: () => {},
+        onChange: () => () => {},
         publish,
         getState: () => ({ clients: new Set() }),
         subscribe: () => {},

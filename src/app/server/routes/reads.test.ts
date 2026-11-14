@@ -2,7 +2,9 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { createActivityManager } from '../activity';
+import { READ_CACHE_TTL_MS, createReadCache } from '../read-cache';
 import { readRoutes } from './reads';
 
 const IDEA =
@@ -147,16 +149,66 @@ describe('GET /api/worklist and /api/entities', () => {
   });
 });
 
-describe('GET /api/stats', () => {
-  it('serves the stored result without computing on the request', async () => {
-    const stored = { generatedAt: 'then' };
-    const get = vi.fn(async () => stored);
-    const found = readRoutes({ root: '/x', stats: { get } } as unknown as RouteContext).find(
-      (r) => r.path === '/api/stats',
-    );
-    const out = fakeRes();
-    await found?.handle({} as never, out.res);
-    expect(out.json()).toEqual(stored);
-    expect(get).toHaveBeenCalledTimes(1);
+describe('GET /api/stats and /api/doctor', () => {
+  function cachedRoutes(compute: {
+    stats: () => Promise<unknown>;
+    doctor: () => Promise<unknown>;
+  }) {
+    const activity = createActivityManager('/x');
+    const stats = createReadCache(compute.stats);
+    const doctor = createReadCache(compute.doctor);
+    activity.onChange(() => {
+      stats.drop();
+      doctor.drop();
+    });
+    const routes = readRoutes({ root: '/x', activity, stats, doctor } as unknown as RouteContext);
+    const call = async (path: string) => {
+      const out = fakeRes();
+      await routes.find((r) => r.path === path)?.handle({} as never, out.res);
+      return out.json();
+    };
+    return { activity, call };
+  }
+
+  afterEach(() => vi.useRealTimers());
+
+  it('answers a second request within five minutes from the cache', async () => {
+    let n = 0;
+    const doctor = vi.fn(async () => ({ run: ++n }));
+    const stats = vi.fn(async () => ({ run: ++n }));
+    const { activity, call } = cachedRoutes({ stats, doctor });
+    expect(await call('/api/doctor')).toEqual({ run: 1 });
+    expect(await call('/api/doctor')).toEqual({ run: 1 });
+    expect(await call('/api/stats')).toEqual({ run: 2 });
+    expect(await call('/api/stats')).toEqual({ run: 2 });
+    expect(doctor).toHaveBeenCalledTimes(1);
+    expect(stats).toHaveBeenCalledTimes(1);
+    activity.close();
+  });
+
+  it('recomputes both after notifyChanged', async () => {
+    const doctor = vi.fn(async () => ({}));
+    const stats = vi.fn(async () => ({}));
+    const { activity, call } = cachedRoutes({ stats, doctor });
+    await call('/api/doctor');
+    await call('/api/stats');
+    activity.notifyChanged('git');
+    await call('/api/doctor');
+    await call('/api/stats');
+    expect(doctor).toHaveBeenCalledTimes(2);
+    expect(stats).toHaveBeenCalledTimes(2);
+    activity.close();
+  });
+
+  it('recomputes once the five minutes are up', async () => {
+    vi.useFakeTimers();
+    const doctor = vi.fn(async () => ({}));
+    const stats = vi.fn(async () => ({}));
+    const { activity, call } = cachedRoutes({ stats, doctor });
+    await call('/api/doctor');
+    vi.advanceTimersByTime(READ_CACHE_TTL_MS);
+    await call('/api/doctor');
+    expect(doctor).toHaveBeenCalledTimes(2);
+    activity.close();
   });
 });

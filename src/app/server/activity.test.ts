@@ -46,6 +46,19 @@ describe('createActivityManager', () => {
     expect(b.writes.at(-1)).toContain('"type":"service"');
   });
 
+  it('calls every change listener on notifyChanged until it unsubscribes', () => {
+    const activity = createActivityManager('/tmp/papercamp-activity-test');
+    const listener = vi.fn();
+    const off = activity.onChange(listener);
+
+    activity.notifyChanged('git');
+    off();
+    activity.notifyChanged('git');
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    activity.close();
+  });
+
   it('drops a client once it closes', () => {
     const activity = createActivityManager('/tmp/papercamp-activity-test');
     const a = fakeClient();

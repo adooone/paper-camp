@@ -24,6 +24,7 @@ export function createActivityManager(
   const broadcastTimers = new Map<ChangeArea, ReturnType<typeof setTimeout>>();
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
+  const changeListeners = new Set<() => void>();
 
   function writeToClients(payload: Record<string, unknown>) {
     const data = `data: ${JSON.stringify(payload)}\n\n`;
@@ -91,11 +92,18 @@ export function createActivityManager(
   return {
     notifyChanged(area: ChangeArea | ChangeArea[]) {
       const areas = Array.isArray(area) ? area : [area];
+      for (const listener of changeListeners) listener();
       for (const each of areas) scheduleBroadcast(each);
       if (areas.includes('corpus')) {
         invalidateCorpus(root);
         scheduleRunPass();
       }
+    },
+    onChange(listener: () => void) {
+      changeListeners.add(listener);
+      return () => {
+        changeListeners.delete(listener);
+      };
     },
     publish(payload: { type: string } & Record<string, unknown>) {
       writeToClients(payload);
@@ -106,6 +114,7 @@ export function createActivityManager(
       rerunQueued = false;
       for (const timer of broadcastTimers.values()) clearTimeout(timer);
       broadcastTimers.clear();
+      changeListeners.clear();
     },
     // Handed to a hot-reloaded replacement instance so both share this exact
     // clients set instead of the new instance starting deaf.

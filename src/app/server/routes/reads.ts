@@ -2,7 +2,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import { readCorpus } from '@/core/corpus';
 import { detectToolbarHostState } from '@/core/desk-discovery/toolbar-host';
-import { describeFindings, runDoctor } from '@/core/doctor';
 import { buildNightReportGroups, readNightFindings } from '@/core/night-suggestions';
 import { mergeNotifications } from '@/core/notifications';
 import { readParkedQuestions } from '@/core/parked-questions';
@@ -107,10 +106,6 @@ const READS: { path: string; handler: (root: string) => Promise<unknown> }[] = [
       const subjectVocabulary = roadmapRaw ? deriveSubjectVocabulary(parseRoadmap(roadmapRaw)) : [];
       return findConsistencyIssues(work, subjectVocabulary);
     },
-  },
-  {
-    path: '/api/doctor',
-    handler: async (root) => describeFindings(await runDoctor(join(root, 'papercamp'))),
   },
   {
     path: '/api/config',
@@ -226,6 +221,13 @@ export function readRoutes(ctx: RouteContext): Route[] {
       path: '/api/stats',
       handle: async (_req: IncomingMessage, res: ServerResponse) => {
         sendJson(res, 200, await ctx.stats.get());
+      },
+    },
+    {
+      method: 'GET' as const,
+      path: '/api/doctor',
+      handle: async (_req: IncomingMessage, res: ServerResponse) => {
+        sendJson(res, 200, await ctx.doctor.get());
       },
     },
     ...snapshotRoutes(ctx),

@@ -2,7 +2,7 @@
 id: IDEA-324
 title: Lighter daemon on a small box
 type: fix
-status: in-progress
+status: review
 created: 2026-11-03
 updated: 2026-11-14
 tags:
@@ -78,9 +78,10 @@ in under 50 ms.
       checks, the gate's formatter and fix commands acquire it; the `queued`
       stamp; tests for ordering and release on failure.
       run: 3m32s · 104 in · 43.4k out · opus-5-5 · sess:47b62d23-fc0d-4c3c-9a3a-15ebc039bf22
-- [ ] Cached doctor and stats
+- [x] Cached doctor and stats
       Per-root cache dropped by `notifyChanged` and after five minutes;
       route tests.
+      run: 2m38s · 32 in · 10.4k out · opus-5-5 · sess:92d97ceb-5dce-4059-a1ef-dc20550759b6
 
 ### Thread
 - [ ] 2026-11-14 [decision] [agent] Restored from a stranded `papercamp-reconcile` stash on 2026-11-14 (see IDEA-331). Since it was written, IDEA-327 and IDEA-328 landed: probes now go through `probe-cache.ts` per root with a 60 s TTL (not per machine, not 10 min), `changed` ticks carry an area and invalidate only that area's queries, and `/api/stats` is computed off the request path. Still open from this plan: the heavy-command slot for desk checks and the cached doctor. Decide whether to narrow this idea to those two phases or drop it in favour of filing them fresh.

@@ -1,4 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { DoctorFindingSummary } from '@/core/doctor';
+import type { ProjectStats } from '@/types/index';
 import type { ActivityManager } from '../activity';
 import type { AgentManager } from '../agent';
 import type { DeskCheckManager } from '../desk-checks';
@@ -6,7 +8,7 @@ import type { DeskServiceManager } from '../desk-services';
 import type { GitManager } from '../git';
 import type { PairCodeManager } from '../pair-code';
 import type { PairingManager } from '../pairing';
-import type { ProjectStatsStore } from '../project-stats';
+import type { ReadCache } from '../read-cache';
 
 /** Everything a route module can need — built once per middleware in api.ts. */
 export interface RouteContext {
@@ -17,7 +19,8 @@ export interface RouteContext {
   services: DeskServiceManager;
   checks: DeskCheckManager;
   pairing: PairingManager;
-  stats: ProjectStatsStore;
+  stats: ReadCache<ProjectStats>;
+  doctor: ReadCache<DoctorFindingSummary>;
   /** Undefined outside the daemon (e.g. `dev-server.ts`'s single-project mode),
    *  which has no pairing-code flow — `/api/pair` there stays token-only. */
   pairCode?: PairCodeManager;
