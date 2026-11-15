@@ -46,7 +46,8 @@ on every request after the first. Installing `gh` and waiting for the
 next probe refresh updates the Services card without a reload.
 
 ### Phases
-- [ ] Stats precomputed again
+- [x] Stats precomputed again
       Restore `src/app/server/project-stats.ts` and its test from aae55073's parent, wire the store in `api.ts`, make `/api/stats` read it and remove stats from `read-cache.ts`; test that a `corpus` change recomputes once after the debounce and the route returns without computing.
+      run: 2m1s · 28 in · 9.3k out · opus-5-5 · sess:a9e69b39-88b1-4004-9c74-ab80da57fa2a
 - [ ] Services tick refetches capabilities
       `query-client.ts`: the `services` area invalidates `capabilities` and `connections` (active refetch); update `query-client.test.ts`; delete the stale comment above the formatter in `desk-checks.ts`.

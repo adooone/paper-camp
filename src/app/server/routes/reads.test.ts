@@ -2,8 +2,10 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { ProjectStats } from '@/types/index';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { createActivityManager } from '../activity';
+import { createProjectStatsStore } from '../project-stats';
 import { READ_CACHE_TTL_MS, createReadCache } from '../read-cache';
 import { readRoutes } from './reads';
 
@@ -150,65 +152,90 @@ describe('GET /api/worklist and /api/entities', () => {
 });
 
 describe('GET /api/stats and /api/doctor', () => {
-  function cachedRoutes(compute: {
+  async function cachedRoutes(compute: {
     stats: () => Promise<unknown>;
     doctor: () => Promise<unknown>;
   }) {
-    const activity = createActivityManager('/x');
-    const stats = createReadCache(compute.stats);
+    const root = await makeRoot();
+    const activity = createActivityManager(root);
+    const stats = createProjectStatsStore(root, compute.stats as () => Promise<ProjectStats>);
     const doctor = createReadCache(compute.doctor);
-    activity.onChange(() => {
-      stats.drop();
+    activity.onChange((areas) => {
       doctor.drop();
+      if (areas.includes('corpus')) stats.schedule();
     });
-    const routes = readRoutes({ root: '/x', activity, stats, doctor } as unknown as RouteContext);
+    const routes = readRoutes({ root, activity, stats, doctor } as unknown as RouteContext);
     const call = async (path: string) => {
       const out = fakeRes();
       await routes.find((r) => r.path === path)?.handle({} as never, out.res);
       return out.json();
     };
-    return { activity, call };
+    const close = () => {
+      stats.close();
+      activity.close();
+    };
+    return { activity, call, close };
   }
 
   afterEach(() => vi.useRealTimers());
 
-  it('answers a second request within five minutes from the cache', async () => {
+  it('answers a second request from what the first computed', async () => {
     let n = 0;
     const doctor = vi.fn(async () => ({ run: ++n }));
     const stats = vi.fn(async () => ({ run: ++n }));
-    const { activity, call } = cachedRoutes({ stats, doctor });
+    const { call, close } = await cachedRoutes({ stats, doctor });
     expect(await call('/api/doctor')).toEqual({ run: 1 });
     expect(await call('/api/doctor')).toEqual({ run: 1 });
     expect(await call('/api/stats')).toEqual({ run: 2 });
     expect(await call('/api/stats')).toEqual({ run: 2 });
     expect(doctor).toHaveBeenCalledTimes(1);
     expect(stats).toHaveBeenCalledTimes(1);
-    activity.close();
+    close();
   });
 
-  it('recomputes both after notifyChanged', async () => {
-    const doctor = vi.fn(async () => ({}));
-    const stats = vi.fn(async () => ({}));
-    const { activity, call } = cachedRoutes({ stats, doctor });
-    await call('/api/doctor');
-    await call('/api/stats');
-    activity.notifyChanged('git');
-    await call('/api/doctor');
-    await call('/api/stats');
-    expect(doctor).toHaveBeenCalledTimes(2);
-    expect(stats).toHaveBeenCalledTimes(2);
-    activity.close();
-  });
-
-  it('recomputes once the five minutes are up', async () => {
+  it('recomputes doctor after any notifyChanged and leaves stats alone outside corpus', async () => {
     vi.useFakeTimers();
     const doctor = vi.fn(async () => ({}));
     const stats = vi.fn(async () => ({}));
-    const { activity, call } = cachedRoutes({ stats, doctor });
+    const { activity, call, close } = await cachedRoutes({ stats, doctor });
+    await call('/api/doctor');
+    await call('/api/stats');
+    activity.notifyChanged(['git', 'tasks']);
+    await vi.advanceTimersByTimeAsync(3_000);
+    await call('/api/doctor');
+    await call('/api/stats');
+    expect(doctor).toHaveBeenCalledTimes(2);
+    expect(stats).toHaveBeenCalledTimes(1);
+    close();
+  });
+
+  it('recomputes stats once after the debounce of a corpus burst and serves it without computing', async () => {
+    vi.useFakeTimers();
+    let n = 0;
+    const stats = vi.fn(async () => ({ run: ++n }));
+    const { activity, call, close } = await cachedRoutes({ stats, doctor: async () => ({}) });
+    expect(await call('/api/stats')).toEqual({ run: 1 });
+    activity.notifyChanged(['corpus', 'tasks']);
+    activity.notifyChanged('corpus');
+    expect(await call('/api/stats')).toEqual({ run: 1 });
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(stats).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(stats).toHaveBeenCalledTimes(2);
+    expect(await call('/api/stats')).toEqual({ run: 2 });
+    expect(await call('/api/stats')).toEqual({ run: 2 });
+    expect(stats).toHaveBeenCalledTimes(2);
+    close();
+  });
+
+  it('recomputes doctor once the five minutes are up', async () => {
+    vi.useFakeTimers();
+    const doctor = vi.fn(async () => ({}));
+    const { call, close } = await cachedRoutes({ stats: async () => ({}), doctor });
     await call('/api/doctor');
     vi.advanceTimersByTime(READ_CACHE_TTL_MS);
     await call('/api/doctor');
     expect(doctor).toHaveBeenCalledTimes(2);
-    activity.close();
+    close();
   });
 });

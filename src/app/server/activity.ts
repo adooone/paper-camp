@@ -24,7 +24,7 @@ export function createActivityManager(
   const broadcastTimers = new Map<ChangeArea, ReturnType<typeof setTimeout>>();
   let inFlight: Promise<void> | null = null;
   let rerunQueued = false;
-  const changeListeners = new Set<() => void>();
+  const changeListeners = new Set<(areas: ChangeArea[]) => void>();
 
   function writeToClients(payload: Record<string, unknown>) {
     const data = `data: ${JSON.stringify(payload)}\n\n`;
@@ -92,14 +92,14 @@ export function createActivityManager(
   return {
     notifyChanged(area: ChangeArea | ChangeArea[]) {
       const areas = Array.isArray(area) ? area : [area];
-      for (const listener of changeListeners) listener();
+      for (const listener of changeListeners) listener(areas);
       for (const each of areas) scheduleBroadcast(each);
       if (areas.includes('corpus')) {
         invalidateCorpus(root);
         scheduleRunPass();
       }
     },
-    onChange(listener: () => void) {
+    onChange(listener: (areas: ChangeArea[]) => void) {
       changeListeners.add(listener);
       return () => {
         changeListeners.delete(listener);
