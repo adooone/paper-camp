@@ -2,9 +2,9 @@
 id: IDEA-323
 title: Daemon survives a busy box
 type: fix
-status: review
+status: done
 created: 2026-11-03
-updated: 2026-11-14
+updated: 2026-11-15
 tags:
   - cli
   - server
@@ -91,3 +91,4 @@ slowly" rather than "unreachable" against a loaded box.
 
 ### Thread
 - [x] 2026-11-14 [log] [agent] Restored on 2026-11-14 from a stranded `papercamp-reconcile` stash dated 2026-11-06 (see IDEA-331); the file had been missing from the corpus since then while three bookkeeping commits on main referenced it. Part of phase 1 and phase 4 landed in 0.46.0 through `readRunningDaemonState` (pid plus HTTP probe, a slow daemon keeps its state file), not in the shape the phases describe; single-flight mount and the check stop are untouched.
+- [x] 2026-11-15 [log] [agent] Reviewed 2026-11-15: all four phases verified on main with tests. Follow-ups left as notes, none blocking: `TIMEOUT_OUTPUT` hardcodes "30 min" instead of deriving from `timeoutMs`; `procs`/`stopRequested` are not cleared when a check throws; the `slow` flag in `probeReachable` can be a direct return; commit d6d69feb also rewrote `defaultAgents` in config.json under this idea's reference. Phase 2's stop button lives on the DeliverBar, not the Stack panel, which matches the surface doctrine.

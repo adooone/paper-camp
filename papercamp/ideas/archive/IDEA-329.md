@@ -2,9 +2,9 @@
 id: IDEA-329
 title: The chat ack comes before the work
 type: fix
-status: review
+status: done
 created: 2026-11-08
-updated: 2026-11-08
+updated: 2026-11-15
 tags:
   - server
   - chat
@@ -45,4 +45,7 @@ The phone's timed-out-equals-sent heuristic becomes dead code.
 - [x] Move the web send hook onto the feedback event
       `useSendFeedbackMessage` and `postFeedbackMessage` stop reading `error`/`undo` from the response and take them from `feedback` events for `plan.id`, on both the desk and the toolbar mount.
       run: 46s · 42 in · 11.9k out · sonnet-5-5 · sess:66be5558-08c9-4412-a10e-a174db65c221
-- [ ] [manual] Delete the phone's timed-out-equals-sent heuristic in paper-camp-mobile (filed as paper-camp-mobile/IDEA-19)
+- [x] [manual] Delete the phone's timed-out-equals-sent heuristic in paper-camp-mobile (folded into paper-camp-mobile/IDEA-20, which replaced the idea composer with the project chat)
+
+### Thread
+- [x] 2026-11-15 [log] [agent] Reviewed 2026-11-15: both phases landed and were then superseded by IDEA-332, whose fourth phase deleted `POST /api/agent/feedback-message`, `feedback-reply.ts` and the `feedback` event; the ack-before-work shape now lives in `POST /api/chat`. Closing as done.

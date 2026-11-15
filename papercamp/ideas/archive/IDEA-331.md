@@ -2,9 +2,9 @@
 id: IDEA-331
 title: Reconcile never strands a stash
 type: fix
-status: review
+status: done
 created: 2026-11-14
-updated: 2026-11-14
+updated: 2026-11-15
 tags:
   - server
   - git
@@ -74,3 +74,4 @@ disappears from `git stash list`.
 ### Thread
 - [x] 2026-11-14 [chat] Which git.ts function does phase 1 change, and does it touch runGitSync too?
 - [x] 2026-11-14 [chat] [agent] Phase 1 changes `reconcileOnto` in `src/app/server/git.ts`: before the rebase it commits a dirty `papercamp/` with `commitCorpus('docs(ideas): reconcile corpus')`, and with the existing refusal for anything dirty outside `papercamp/` there is nothing left to stash, so `stashDirtyPapercamp` and `StashPendingError` get deleted. `runGitSync` is not changed — it already does the commit-first step (`commitCorpus('docs(ideas): sync corpus')`) and is the pattern phase 1 copies. The only knock-on is that `runGitSync`'s own leftover-stash handling stays as is; its `papercamp-sync` entries are just picked up by the phase 2 listing.
+- [x] 2026-11-15 [log] [agent] Reviewed 2026-11-15: both phases verified with tests. Two small follow-ups, not blocking: `stash-restore` takes only an index, so a stash pushed between listing and clicking shifts the target (pass and check the sha); `readStashFiles` skips `D` entries, so a stashed deletion of a papercamp file is lost when the entry is dropped. The restore surface is the Git page, not the Stack panel as the body says.
