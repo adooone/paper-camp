@@ -233,7 +233,7 @@ const AREA_RESOURCES: Record<ChangeArea, string[]> = {
   corpus: ['plans', 'ideas', 'worklist', 'entity', 'suggestions', 'night-report', 'config'],
   tasks: ['parked-questions', 'notifications', 'capacity'],
   chat: ['chat'],
-  services: ['services'],
+  services: ['services', 'capabilities', 'connections'],
   git: [],
   ci: ['ci'],
 };

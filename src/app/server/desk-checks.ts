@@ -270,8 +270,6 @@ export function createDeskCheckManager(
     return result;
   }
 
-  // Bypasses the queue and runs the auto-fixer first, so pre-existing formatting
-  // nits can't hard-fail an autonomous run-all phase; always runs every check.
   async function runChecksAndWait(): Promise<FailingCheck[]> {
     await slot.run(() => runBiomeFix(root));
 

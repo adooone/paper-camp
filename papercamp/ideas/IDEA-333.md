@@ -2,7 +2,7 @@
 id: IDEA-333
 title: Stats off the request path again
 type: fix
-status: planned
+status: review
 created: 2026-11-15
 updated: 2026-11-15
 tags:
@@ -49,5 +49,6 @@ next probe refresh updates the Services card without a reload.
 - [x] Stats precomputed again
       Restore `src/app/server/project-stats.ts` and its test from aae55073's parent, wire the store in `api.ts`, make `/api/stats` read it and remove stats from `read-cache.ts`; test that a `corpus` change recomputes once after the debounce and the route returns without computing.
       run: 2m1s · 28 in · 9.3k out · opus-5-5 · sess:a9e69b39-88b1-4004-9c74-ab80da57fa2a
-- [ ] Services tick refetches capabilities
+- [x] Services tick refetches capabilities
       `query-client.ts`: the `services` area invalidates `capabilities` and `connections` (active refetch); update `query-client.test.ts`; delete the stale comment above the formatter in `desk-checks.ts`.
+      run: 1m30s · 54 in · 13.9k out · opus-5-5 · sess:a9e69b39-88b1-4004-9c74-ab80da57fa2a
