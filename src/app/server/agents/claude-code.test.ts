@@ -242,6 +242,19 @@ describe('claude-code parseLine', () => {
     });
   });
 
+  it('tags assistant text and tool error bodies with their source', () => {
+    const assistant = JSON.stringify({
+      type: 'assistant',
+      message: { content: [{ type: 'text', text: 'NEEDS-DECISION: Which?' }] },
+    });
+    const tool = JSON.stringify({
+      type: 'user',
+      message: { content: [{ type: 'tool_result', is_error: true, content: 'claude -p …' }] },
+    });
+    expect(parseLine(assistant)?.source).toBe('assistant');
+    expect(parseLine(tool)?.source).toBe('tool');
+  });
+
   it('carries the turn context alongside a tool_use block', () => {
     const line = JSON.stringify({
       type: 'assistant',

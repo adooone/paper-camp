@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
-import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { readBatchRunState } from '@/core/batch-run';
 import { parseEntityFile } from '@/core/parse';
@@ -14,6 +15,7 @@ import {
   buildFixItemPrompt,
   buildFixPassPrompt,
   createAgentManager,
+  extractDecision,
 } from './agent';
 import { createAgentHooks } from './agent-hooks';
 import {
@@ -99,7 +101,10 @@ vi.mock('./agents', () => {
       if (text.startsWith('RATE-LIMIT:')) {
         return { text: '', rateLimit: JSON.parse(text.slice('RATE-LIMIT:'.length)) };
       }
-      return { text };
+      if (text.startsWith('TOOL:')) {
+        return { text: text.slice('TOOL:'.length).trim(), source: 'tool' };
+      }
+      return { text, source: 'assistant' };
     },
     options: {},
   };
@@ -161,6 +166,19 @@ Plan body.
 - [ ] First phase
 - [ ] Second phase
 `;
+
+const LEAKED_PGREP_LINE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'leaked-pgrep-decision.txt'),
+  'utf-8',
+);
+
+function decisionLine(question: string): string {
+  return `NEEDS-DECISION: ${question} OPTION: OAuth — matches the existing login OPTION: Magic link — no passwords to store`;
+}
+
+function decisionScript(question: string): string {
+  return `console.log(${JSON.stringify(decisionLine(question))})`;
+}
 
 const roots: string[] = [];
 
@@ -413,6 +431,61 @@ describe('buildAgentPrompt', () => {
     expect(prompt).toContain('git reset');
     expect(prompt).toContain('git checkout');
     expect(prompt).toContain('git diff');
+  });
+});
+
+describe('extractDecision', () => {
+  const plan = entityToPlan(parseEntityFile(PLAN_TWO_PHASES).entries[0]);
+
+  it('ignores the leaked pgrep command line that embeds the protocol template', () => {
+    expect(extractDecision(LEAKED_PGREP_LINE)).toBeUndefined();
+  });
+
+  it('ignores the template even when it starts a line of the prompt', () => {
+    expect(extractDecision(buildAgentPrompt(plan, plan.phases[0], 0))).toBeUndefined();
+  });
+
+  it('parses a multi-line block with its options and context', () => {
+    const block = [
+      'I need a call before going further.',
+      'NEEDS-DECISION: Should the sweep kill orphans or only report them?',
+      'OPTION: Kill them — frees the box without a click',
+      'OPTION: Report only — the user decides each one',
+      'CONTEXT: Orphans hold the CPU until reaped.',
+    ].join('\n');
+    expect(extractDecision(block)).toEqual({
+      question: 'Should the sweep kill orphans or only report them?',
+      options: [
+        { label: 'Kill them', consequence: 'frees the box without a click' },
+        { label: 'Report only', consequence: 'the user decides each one' },
+      ],
+      context: 'Orphans hold the CPU until reaped.',
+    });
+  });
+
+  it('parses the single-line form under the same limits', () => {
+    expect(extractDecision(decisionLine('Which auth flow should this use?'))).toMatchObject({
+      question: 'Which auth flow should this use?',
+      options: [{ label: 'OAuth' }, { label: 'Magic link' }],
+    });
+  });
+
+  it('rejects a marker that does not start a line', () => {
+    expect(extractDecision(`Output: ${decisionLine('Which flow?')}`)).toBeUndefined();
+  });
+
+  it.each([
+    ['a question without ?', 'NEEDS-DECISION: Which flow OPTION: A — x OPTION: B — y'],
+    ['an overlong question', `NEEDS-DECISION: ${'x'.repeat(140)}? OPTION: A — x OPTION: B — y`],
+    ['a single option', 'NEEDS-DECISION: Which flow? OPTION: A — x'],
+    [
+      'five options',
+      'NEEDS-DECISION: Which flow? OPTION: A OPTION: B OPTION: C OPTION: D OPTION: E',
+    ],
+    ['an overlong option', `NEEDS-DECISION: Which flow? OPTION: ${'a'.repeat(81)} OPTION: B`],
+    ['a placeholder', 'NEEDS-DECISION: Which flow? OPTION: <a> — x OPTION: B — y'],
+  ])('rejects %s', (_label, text) => {
+    expect(extractDecision(text)).toBeUndefined();
   });
 });
 
@@ -701,9 +774,21 @@ describe('startRunAllPhases', () => {
     expect(onRunComplete).toHaveBeenCalledTimes(1);
   });
 
+  it('does not park on a decision marker inside tool output', async () => {
+    const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
+    const toolLines = [decisionLine('which auth flow should this use?'), LEAKED_PGREP_LINE.trim()];
+    agentScript.current = `${FLIP_NEXT_CHECKBOX}
+for (const line of ${JSON.stringify(toolLines)}) console.log('TOOL: ' + line);`;
+    const manager = createAgentManager(root);
+
+    manager.startRunAllPhases(plan);
+    expect(await waitForStatus(manager, settled)).toBe('done');
+    expect(currentStatus(manager)?.errorKind).toBeUndefined();
+  });
+
   it('short-circuits to escalation when the phase agent declares a blocker mid-phase', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    agentScript.current = decisionScript('which auth flow should this use?');
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
     const manager = createAgentManager(root, {
@@ -766,7 +851,7 @@ process.exit(1)
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
     agentScript.buildArgs = (prompt) =>
       prompt.includes('Only make the failing checks pass')
-        ? ['-e', "console.log('NEEDS-DECISION: which auth flow should the fix use?')"]
+        ? ['-e', decisionScript('which auth flow should the fix use?')]
         : ['-e', FLIP_NEXT_CHECKBOX];
     const onPhaseCommit = vi.fn(async () => {});
     const onRunComplete = vi.fn(async () => {});
@@ -1882,7 +1967,7 @@ describe('resumeAuthParkedTasks', () => {
 describe('resumeQuestionParkedTasks', () => {
   it('re-launches a run-all that parked on a question and clears errorKind', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    agentScript.current = decisionScript('which auth flow should this use?');
     const manager = createAgentManager(root);
 
     manager.startRunAllPhases(plan);
@@ -1917,7 +2002,7 @@ describe('resumeQuestionParkedTasks', () => {
 
   it('ignores a question parked on a different plan', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    agentScript.current = decisionScript('which auth flow should this use?');
     const manager = createAgentManager(root);
 
     manager.startRunAllPhases(plan);
@@ -1930,7 +2015,7 @@ describe('resumeQuestionParkedTasks', () => {
 
   it('stays parked no matter how long it waits, until explicitly resumed', async () => {
     const { root, plan } = await makeRoot(PLAN_TWO_PHASES);
-    agentScript.current = "console.log('NEEDS-DECISION: which auth flow should this use?')";
+    agentScript.current = decisionScript('which auth flow should this use?');
     const manager = createAgentManager(root);
 
     manager.startRunAllPhases(plan);

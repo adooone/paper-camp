@@ -100,8 +100,12 @@ const FIX_ATTEMPT_CAP = 2;
 // beats carrying it forward (IDEA-255).
 const SESSION_CONTEXT_LIMIT = 120_000;
 const PR_REVIEW_DELIVERY_FAILURE_CAP = 3;
-const NEEDS_DECISION_MARKER = 'NEEDS-DECISION:';
+const DECISION_MARKER_RE = /^NEEDS-DECISION:/m;
+const DECISION_FIELD_RE = /\s+(?=OPTION:|CONTEXT:)/;
 const DECISION_QUESTION_LIMIT = 140;
+const DECISION_OPTION_LIMIT = 80;
+const DECISION_MIN_OPTIONS = 2;
+const DECISION_MAX_OPTIONS = 4;
 // A failing test run can print tens of kilobytes; the fix pass only needs the end.
 const CHECK_OUTPUT_TAIL_CHARS = 4000;
 const CHAT_REPLAY_MESSAGES = 10;
@@ -198,49 +202,43 @@ interface DecisionBlocker {
   context?: string;
 }
 
-interface ParsedDecision extends Omit<DecisionBlocker, 'options'> {
-  options: ThreadMessageOption[];
-  /** Set when the agent attempted the OPTION:/CONTEXT: block but broke its
-   * limits — still parks the run, but flags the prompt for tightening. */
-  brokenShape?: string;
-}
-
 // Lets the phase/fix-pass agent short-circuit to escalation on genuine ambiguity.
-// Tolerates the old single-line form by treating the whole line as the question, unchecked against limits.
-function extractDecision(text: string): ParsedDecision | undefined {
-  const idx = text.indexOf(NEEDS_DECISION_MARKER);
-  if (idx === -1) return undefined;
-  const lines = text.slice(idx + NEEDS_DECISION_MARKER.length).split('\n');
-  const question = lines[0]?.trim();
-  if (!question) return undefined;
+export function extractDecision(text: string): DecisionBlocker | undefined {
+  const block = decisionBlock(text);
+  if (!block || /[<>]/.test(block)) return undefined;
+  const [question = '', ...fields] = block.split(DECISION_FIELD_RE).map((field) => field.trim());
+  if (!question.endsWith('?') || question.length > DECISION_QUESTION_LIMIT) return undefined;
 
   const options: ThreadMessageOption[] = [];
   let context: string | undefined;
-  for (const raw of lines.slice(1)) {
-    const line = raw.trim();
-    if (line.startsWith('OPTION:')) {
-      const rest = line.slice('OPTION:'.length).trim();
-      const [label, consequence] = rest.split('—').map((s) => s.trim());
-      options.push({ label: label || rest, consequence: consequence ?? '' });
-    } else if (line.startsWith('CONTEXT:')) {
-      context = line.slice('CONTEXT:'.length).trim();
-    } else if (line !== '') {
-      break;
+  for (const field of fields) {
+    if (field.startsWith('CONTEXT:')) {
+      context = field.slice('CONTEXT:'.length).trim() || undefined;
+      continue;
     }
+    const rest = field.slice('OPTION:'.length).trim();
+    const dash = rest.indexOf('—');
+    const label = (dash === -1 ? rest : rest.slice(0, dash)).trim();
+    if (!label || label.length > DECISION_OPTION_LIMIT) return undefined;
+    options.push({ label, consequence: dash === -1 ? '' : rest.slice(dash + 1).trim() });
   }
-
-  if (options.length === 0 && context === undefined) {
-    return { question, options };
+  if (options.length < DECISION_MIN_OPTIONS || options.length > DECISION_MAX_OPTIONS) {
+    return undefined;
   }
+  return { question, options, context };
+}
 
-  const brokenShape =
-    question.length > DECISION_QUESTION_LIMIT
-      ? `question exceeds ${DECISION_QUESTION_LIMIT} characters`
-      : options.length === 0
-        ? 'names no option'
-        : undefined;
-
-  return { question, options, context, brokenShape };
+function decisionBlock(text: string): string | undefined {
+  const marker = DECISION_MARKER_RE.exec(text);
+  if (!marker) return undefined;
+  const [first = '', ...rest] = text.slice(marker.index + marker[0].length).split('\n');
+  const block = [first.trim()];
+  for (const raw of rest) {
+    const line = raw.trim();
+    if (line.startsWith('OPTION:') || line.startsWith('CONTEXT:')) block.push(line);
+    else if (line !== '') break;
+  }
+  return block.join(' ');
 }
 
 export interface AgentTask {
@@ -1014,18 +1012,9 @@ export function createAgentManager(
         }
         if (parsed?.text && parsed.text !== 'Agent is working…') {
           pushLine(task, `  ${parsed.text}`);
-          if (opts.trackBlocker) {
+          if (opts.trackBlocker && parsed.source === 'assistant') {
             const decision = extractDecision(parsed.text);
-            if (decision) {
-              task.blocker = {
-                question: decision.question,
-                options: decision.options.length > 0 ? decision.options : undefined,
-                context: decision.context,
-              };
-              if (decision.brokenShape) {
-                pushLine(task, `[decision-shape] agent broke the shape — ${decision.brokenShape}`);
-              }
-            }
+            if (decision) task.blocker = decision;
           }
         }
       });

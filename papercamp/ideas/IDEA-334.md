@@ -2,7 +2,7 @@
 id: IDEA-334
 title: Parked questions need a real marker
 type: fix
-status: planned
+status: in-progress
 created: 2026-11-15
 updated: 2026-11-15
 tags:
@@ -38,5 +38,8 @@ decision. A real `NEEDS-DECISION:` block from assistant text still parks
 the run with its options.
 
 ### Phases
-- [ ] Decision marker only from assistant text
+- [x] Decision marker only from assistant text
       Adapters mark text events `source: 'assistant' | 'tool'` (`agents/claude-code.ts`, `agents/opencode.ts`); `extractDecision` in `agent.ts` ignores tool text, anchors the marker to a line start and validates both forms (question length and `?`, 2–4 options of at most 80 characters, no angle-bracket placeholders); tests with the leaked command line as a fixture and a valid block.
+
+### Thread
+- [ ] 2026-11-15 [question] [agent] Run-all parked on phase 1 ("Decision marker only from assistant text") — the agent needs a decision: ` block written by the assistant, not on one that turns up in tool output. Type-check and biome pass, and the three test files I edited pass (127 tests in `agent.test.ts`, 53 across the two adapter test files). I haven't committed anything.

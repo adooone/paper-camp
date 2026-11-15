@@ -10,8 +10,11 @@ import type {
 } from '@/types/index';
 import { type ParsedChatLine, clip, describePaperCampTool, stringField } from './chat';
 
+export type AgentTextSource = 'assistant' | 'tool';
+
 export interface ParsedAgentLine {
   text: string;
+  source?: AgentTextSource;
   done?: boolean;
   error?: boolean;
   reason?: string;
@@ -263,7 +266,7 @@ export function parseLine(line: string): ParsedAgentLine | null {
           });
         }
         if (b.type === 'text' && typeof b.text === 'string' && b.text.trim()) {
-          return withContext({ text: b.text.trim() });
+          return withContext({ text: b.text.trim(), source: 'assistant' });
         }
       }
       return turnContextTokens === undefined ? null : { text: '', turnContextTokens };
@@ -274,7 +277,7 @@ export function parseLine(line: string): ParsedAgentLine | null {
       const block = Array.isArray(content) ? (content[0] as Record<string, unknown>) : undefined;
       if (block?.is_error) {
         const text = typeof block.content === 'string' ? block.content : 'Tool call failed';
-        return { text: `Error: ${text}`, error: true };
+        return { text: `Error: ${text}`, error: true, source: 'tool' };
       }
       return { text: 'Tool finished' };
     }
@@ -291,6 +294,7 @@ export function parseLine(line: string): ParsedAgentLine | null {
         text,
         done: true,
         error,
+        ...(!error && result && { source: 'assistant' as const }),
         ...(error && detail ? { reason: detail } : {}),
         sessionId,
         usage: extractUsage(json),

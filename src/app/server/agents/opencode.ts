@@ -114,7 +114,7 @@ export function parseLine(line: string): ParsedAgentLine | null {
       return null;
     case 'text': {
       const text = part.text as string | undefined;
-      if (text?.trim()) return { text: text.trim() };
+      if (text?.trim()) return { text: text.trim(), source: 'assistant' };
       return null;
     }
     case 'tool_use': {

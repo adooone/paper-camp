@@ -46,6 +46,11 @@ describe('opencode parseLine', () => {
     expect(parseLine(line)).toEqual({ text: 'Reading file…' });
   });
 
+  it('tags text parts as assistant text', () => {
+    const line = JSON.stringify({ type: 'text', part: { text: 'Hello' } });
+    expect(parseLine(line)).toEqual({ text: 'Hello', source: 'assistant' });
+  });
+
   it('ignores an unrelated tool error', () => {
     const line = toolUseLine('bash', {
       status: 'error',
