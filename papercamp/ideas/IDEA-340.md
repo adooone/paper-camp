@@ -2,9 +2,9 @@
 id: IDEA-340
 title: Current toolchain before the second desk
 type: chore
-status: planned
+status: in-progress
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-18
 tags:
   - deps
   - app
@@ -49,3 +49,10 @@ target app, and `paper-camp dev` booting the API through
       Vite 8 with plugin-react-swc 4 across the three configs, Vitest 5 with coverage, the unit and integration projects kept; `pnpm build`, `pnpm test:all` and a `paper-camp dev` boot green.
 - [ ] Biome 2 and the remaining bumps
       `biome migrate` with the config committed; router, query, MCP SDK, zod, commander, web-push, knip, dependency-cruiser, `@types/node` 22 and the minors; all four checks green.
+
+### Thread
+- [ ] 2026-11-18 [question] [agent] Run-all parked on phase 1 ("React 19 and zustand 5") — the agent needs a decision: folk-ui 0.25.0 on npm still needs React ^18 and PR #52 (0.26.0) is unmerged. Wait for 0.26.0, or bump React now?
+      option: Merge folk-ui release PR #52 first, then rerun this phase — follows the idea's "once folk-ui's peer range allows it"
+      option: Bump React 19 now on folk-ui 0.25.0 with a peer warning — works at runtime, but the published peer range is still wrong
+      option: Bump now with a temporary `peerDependencyRules.allowedVersions` — no warning, but a temporary override to remove later
+      context: folk-ui's main already allows `^18.0.0 || ^19.0.0` (commit 111fbe2, IDEA-19 archived), but release-please hasn't published it yet. Merging that release PR publishes to npm, so it's not my call. The working tree already has folk-ui bumped from 0.24 to 0.25.0, which isn't my change; I left it as it is.

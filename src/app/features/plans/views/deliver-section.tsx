@@ -1,4 +1,4 @@
-import { DeliverBar } from '@/app/components';
+import { DeliverBar } from '@/app/components/git/deliver-bar';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
 import { useMemo } from 'react';

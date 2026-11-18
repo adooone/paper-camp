@@ -58,8 +58,8 @@ importers:
         specifier: ^21.0.2
         version: 21.0.2
       '@dendelion/folk-ui':
-        specifier: ^0.24.0
-        version: 0.24.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.25.0
+        version: 0.25.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-router':
         specifier: ^1.58.3
         version: 1.168.26(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -302,8 +302,8 @@ packages:
       conventional-commits-parser:
         optional: true
 
-  '@dendelion/folk-ui@0.24.0':
-    resolution: {integrity: sha512-FDw1uCc2sXMnMDM0cfTggntPP90EPRQTpRuUwGIpVuBQgGuo0EH7w2XnZVhI3LB+ftv4uxcy9hCKLSyFaGxggg==}
+  '@dendelion/folk-ui@0.25.0':
+    resolution: {integrity: sha512-/IZeJYLeHCbhtO9KRwpXf43+l7GoOZ7upDWA3Taz5rQXHJV2MB3bGoWvxlUtMc8MJmOrPRVRPxxtP0JGqjbZsw==}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
@@ -3313,7 +3313,7 @@ snapshots:
     optionalDependencies:
       conventional-commits-parser: 6.4.0
 
-  '@dendelion/folk-ui@0.24.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@dendelion/folk-ui@0.25.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       clsx: 2.1.1
       framer-motion: 12.43.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

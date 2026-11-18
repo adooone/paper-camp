@@ -1,4 +1,5 @@
-import { DeliverBar, GitLocalStateDriftSurface, GitStashSurface } from '@/app/components';
+import { GitLocalStateDriftSurface, GitStashSurface } from '@/app/components';
+import { DeliverBar } from '@/app/components/git/deliver-bar';
 import { GitCommitButton } from '@/app/features/git/actions';
 import { useGitPage } from '@/app/features/git/hooks';
 import { CommitHistory, FileDiffSection } from '@/app/features/git/views';
