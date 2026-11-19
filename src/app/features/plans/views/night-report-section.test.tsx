@@ -27,9 +27,9 @@ function textOf(node: ReactNode): string {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   if (Array.isArray(node)) return node.map(textOf).join('');
-  const element = node as ReactElement;
+  const element = node as ReactElement<{ children?: ReactNode }>;
   if (!element.props) return '';
-  return textOf(element.props.children as ReactNode);
+  return textOf(element.props.children);
 }
 
 // Each chunk is a <ChunkRow>, a real component (it owns a hook), so the tree holds it

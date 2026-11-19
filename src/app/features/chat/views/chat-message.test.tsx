@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ChatMessage } from './chat-message';
 import { EntityLinkText } from './entity-link-text';
 
-function findByType(node: ReactNode, type: unknown): ReactElement | null {
+function findByType(node: ReactNode, type: unknown): ReactElement<Record<string, unknown>> | null {
   if (Array.isArray(node)) {
     for (const child of node) {
       const found = findByType(child, type);
@@ -14,9 +14,9 @@ function findByType(node: ReactNode, type: unknown): ReactElement | null {
     return null;
   }
   if (!node || typeof node !== 'object' || !('type' in node)) return null;
-  const element = node as ReactElement;
+  const element = node as ReactElement<Record<string, unknown>>;
   if (element.type === type) return element;
-  return findByType(element.props?.children as ReactNode, type);
+  return findByType((element.props as { children?: ReactNode }).children, type);
 }
 
 function message(overrides: Partial<ThreadMessage> = {}): ThreadMessage {

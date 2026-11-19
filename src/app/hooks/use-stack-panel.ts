@@ -4,7 +4,7 @@ import { useAppStore } from '@/app/stores/app-store';
 import { type RefObject, useEffect, useRef } from 'react';
 
 export interface StackPanelState {
-  panelRef: RefObject<HTMLElement>;
+  panelRef: RefObject<HTMLElement | null>;
   agentActive: boolean;
 }
 

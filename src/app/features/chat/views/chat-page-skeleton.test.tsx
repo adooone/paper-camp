@@ -3,15 +3,19 @@ import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { ChatPageSkeleton } from './chat-page-skeleton';
 
-function findAllByType(node: ReactNode, type: unknown, found: ReactElement[] = []): ReactElement[] {
+function findAllByType(
+  node: ReactNode,
+  type: unknown,
+  found: ReactElement<Record<string, unknown>>[] = [],
+): ReactElement<Record<string, unknown>>[] {
   if (Array.isArray(node)) {
     for (const child of node) findAllByType(child, type, found);
     return found;
   }
   if (!node || typeof node !== 'object' || !('type' in node)) return found;
-  const element = node as ReactElement;
+  const element = node as ReactElement<Record<string, unknown>>;
   if (element.type === type) found.push(element);
-  findAllByType(element.props?.children as ReactNode, type, found);
+  findAllByType(element.props.children as ReactNode, type, found);
   return found;
 }
 

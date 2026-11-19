@@ -8,7 +8,7 @@ interface FilesSectionProps {
   assets: AssetEntry[];
   dragActive: boolean;
   uploading: boolean;
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   onFileInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onAddFileClick: () => void;
   onOpenPreview: (asset: AssetEntry) => void;
