@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@dendelion/folk-ui/dist/index.css';
+import './styles/fonts.css';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { RouterProvider } from '@tanstack/react-router';
 import { connectRuntime, resolveProject } from '@/app/services/boot';

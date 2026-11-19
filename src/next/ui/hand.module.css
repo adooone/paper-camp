@@ -7,7 +7,7 @@
 .serif {
   font-family: var(--next-font-body);
   line-height: var(--next-leading-body);
-  font-weight: 400;
+  font-weight: var(--next-weight-body);
 }
 
 .display {

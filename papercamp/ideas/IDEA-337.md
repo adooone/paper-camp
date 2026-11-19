@@ -91,7 +91,8 @@ both entries and Vercel serves `/next/anything` from the new entry.
 - [x] The phone's primitives in the DOM
       `src/next/ui/` with the thirteen primitives and `tokens.ts`, CSS modules on folk-ui tokens, values copied from `~/dev/paper-camp-mobile/ui/`; the `/next/ui` gallery route; render tests per primitive.
       run: 6m27s · 124 in · 57.1k out · opus-5-5 · sess:cbc21983-8f1c-475f-b479-7540066dc3da
-- [ ] Faces and Appearance
+- [x] Faces and Appearance
       `fonts.css` for the Kyiv files; `appearance-slice.ts` persisted under `paper-camp-appearance` with the phone's ids and `md`/`kyiv-sans`/`kyiv-serif` defaults; variables applied on the new app's root; slice tests.
+      run: 2m31s · 36 in · 13.6k out · opus-5-5 · sess:87b99d70-506c-4515-bf2e-cd6dd39ad433
 - [ ] Links between the two desks
       "Open the new desk" in `src/app/features/settings/views/general-section.tsx`; "Back to the classic desk" in the new app's Settings placeholder; both keep the project.

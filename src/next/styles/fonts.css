@@ -1,0 +1,103 @@
+@font-face {
+  font-family: "Kyiv Type Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSans-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSans-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Sans";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSans-Heavy.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSerif-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Serif";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSerif-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Serif";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/KyivTypeSerif-Heavy.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Titling";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/KyivTypeTitling-Medium.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Kyiv Type Titling";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/KyivTypeTitling-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/cormorant-garamond-500.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/cormorant-garamond-700.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/caveat-400.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/caveat-700.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Luminari";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Luminari-Regular.woff") format("woff");
+}

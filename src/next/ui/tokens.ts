@@ -36,10 +36,6 @@ const paletteVars = Object.fromEntries(
   ]),
 );
 
-const textVars = Object.fromEntries(
-  Object.entries(textSize).map(([size, px]) => [`--next-text-${size}`, `${px}px`]),
-);
-
 export const tokenVars = {
   '--next-ground': ground,
   '--next-grain': 'url("/img/paper-noise.png")',
@@ -65,14 +61,5 @@ export const tokenVars = {
   '--next-radius-md': radii.md,
   '--next-radius-xl': radii.xl,
   '--next-radius-full': radii.full,
-  '--next-text-scale': '1',
-  '--next-font-body': "'Kyiv Type Sans', ui-sans-serif, system-ui, sans-serif",
-  '--next-font-title': "'Kyiv Type Serif', Georgia, serif",
-  '--next-font-hand': "'Caveat', cursive",
-  '--next-font-mono': "'JetBrains Mono', 'Fira Code', monospace",
-  '--next-weight-title': '900',
-  '--next-leading-body': '1.4',
-  '--next-leading-title': '1.2',
   ...paletteVars,
-  ...textVars,
 } as CSSProperties;
