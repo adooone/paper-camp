@@ -10,6 +10,7 @@ import type { AgentManagerState } from './src/app/server/agent';
 import type { DeskCheckManagerState } from './src/app/server/desk-checks';
 import type { DeskServiceManagerState } from './src/app/server/desk-services';
 import type { PairingManagerState } from './src/app/server/pairing';
+import { nextEntryFallback } from './src/next/entry-path';
 
 // src/app/server/** isn't a config dependency, so Vite never restarts for it — the
 // watcher below clears `g.__paperCampApi` on change so loadApi() rebuilds it instead,
@@ -200,8 +201,24 @@ function watchFolkUi(): Plugin {
   };
 }
 
+function nextEntry(): Plugin {
+  return {
+    name: 'paper-camp-next-entry',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        const accept = req.headers.accept ?? '';
+        if ((req.method === 'GET' || req.method === 'HEAD') && accept.includes('text/html')) {
+          const entry = nextEntryFallback((req.url ?? '/').split('?')[0]);
+          if (entry) req.url = entry;
+        }
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tsconfigPaths(), papercampApi(), watchFolkUi()],
+  plugins: [react(), tsconfigPaths(), papercampApi(), nextEntry(), watchFolkUi()],
   root: '.',
   // Absolute, not relative: a hosted client serves the same bundle at nested paths
   // like /ideas/195/tickets/2, where './assets/…' resolves against the route instead
@@ -249,6 +266,7 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
+        next: resolve(import.meta.dirname, 'next/index.html'),
       },
       output: {
         codeSplitting: {

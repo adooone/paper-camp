@@ -5,68 +5,18 @@ import './styles/utilities.css';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { RouterProvider } from '@tanstack/react-router';
 import { HUB_PATH, router } from './router';
-import { setApiBase, setApiPairingToken } from './services/api-base';
-import {
-  hasChosenProject,
-  machineProjectRuntimeUrl,
-  resolveMachineProjectSlug,
-  runtimeAdditionUrl,
-} from './services/hub';
+import { connectRuntime, resolveProject } from './services/boot';
 import { lastRouteFor } from './services/last-route-store';
 import { machineConnection } from './services/machine-connection';
 import { mountPrefix } from './services/mount';
-import { pairWithToken } from './services/pairing-api';
-import { listProjects, projectEntryId } from './services/project-registry';
-import {
-  persistOptions,
-  queryClient,
-  subscribeProjectToActivityStream,
-} from './services/query-client';
-import { getRuntimeConnection } from './services/runtime-connection';
-import { fetchMachineProjects } from './services/system';
-import { useAppStore } from './stores/app-store';
-import { probeSelfServed } from './stores/slices/runtime-slice';
+import { persistOptions, queryClient } from './services/query-client';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;
 
-const { runtimeUrl, pairingToken } = getRuntimeConnection();
-setApiBase(runtimeUrl || mountPrefix);
-setApiPairingToken(pairingToken);
-
-// A detached, hosted bundle pairs via its `?runtime=&token=` link or a persisted token.
-async function pairIfNeeded(): Promise<void> {
-  if (!runtimeUrl || !pairingToken) return;
-  await pairWithToken(pairingToken);
-}
+const runtimeUrl = connectRuntime();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root element not found');
-
-subscribeProjectToActivityStream(() => useAppStore.getState().refreshProjectState());
-
-// A machine link opens that machine's project list — unless this browser
-// already opened one there, or the machine has only one, then it opens directly.
-async function chooseMachineProject(machineUrl: string): Promise<boolean> {
-  const result = await fetchMachineProjects(machineUrl);
-  if (!result) return false;
-  const chosenRuntimeUrls = listProjects(storage).map(projectEntryId);
-  const slug = resolveMachineProjectSlug(machineUrl, result.projects, chosenRuntimeUrls);
-  if (!slug) return false;
-  window.location.assign(
-    runtimeAdditionUrl(
-      mountPrefix || '/',
-      machineProjectRuntimeUrl(machineUrl, slug),
-      machineConnection.pairingToken,
-    ),
-  );
-  return true;
-}
-
-async function chooseProject(): Promise<boolean> {
-  if (machineConnection.machineUrl) return chooseMachineProject(machineConnection.machineUrl);
-  if (hasChosenProject(mountPrefix, runtimeUrl)) return true;
-  return probeSelfServed();
-}
 
 // The router mounts at once — nothing on the boot path awaits a fetch, so the boot
 // indicator in index.html is on screen for one paint, not one round trip.
@@ -80,25 +30,22 @@ createRoot(rootElement).render(
 
 // The verdict lands after mount now, so a hosted bundle with no project is sent to
 // the hub from the running app instead of the redirect gating first paint on it.
-pairIfNeeded()
-  .then(chooseProject)
-  .catch(() => false)
-  .then((chosenProject) => {
-    if (!chosenProject) {
-      if (!router.state.location.pathname.startsWith(HUB_PATH)) {
-        router.navigate({ to: HUB_PATH, replace: true });
-      }
-      return;
+resolveProject(mountPrefix || '/').then((chosenProject) => {
+  if (!chosenProject) {
+    if (!router.state.location.pathname.startsWith(HUB_PATH)) {
+      router.navigate({ to: HUB_PATH, replace: true });
     }
-    // A resolved machine link is already reloading into its target project,
-    // which is not this runtime, so there is nothing of this browser's to redo here.
-    if (machineConnection.machineUrl) return;
-    // A bare `/` is an implicit "open the project", not a specific deep link —
-    // the only case a remembered route should override where the URL landed.
-    if (router.state.location.pathname !== '/') return;
-    const remembered = lastRouteFor(runtimeUrl, storage, (path) => {
-      const [, , foundRoute] = router.getMatchedRoutes(path);
-      return foundRoute !== undefined;
-    });
-    if (remembered) router.navigate({ to: remembered, replace: true });
+    return;
+  }
+  // A resolved machine link is already reloading into its target project,
+  // which is not this runtime, so there is nothing of this browser's to redo here.
+  if (machineConnection.machineUrl) return;
+  // A bare `/` is an implicit "open the project", not a specific deep link —
+  // the only case a remembered route should override where the URL landed.
+  if (router.state.location.pathname !== '/') return;
+  const remembered = lastRouteFor(runtimeUrl, storage, (path) => {
+    const [, , foundRoute] = router.getMatchedRoutes(path);
+    return foundRoute !== undefined;
   });
+  if (remembered) router.navigate({ to: remembered, replace: true });
+});

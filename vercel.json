@@ -10,6 +10,8 @@
     }
   ],
   "rewrites": [
+    { "source": "/next", "destination": "/next/index.html" },
+    { "source": "/next/(.*)", "destination": "/next/index.html" },
     { "source": "/((?!api/|assets/|img/|fonts/|manifest.json).*)", "destination": "/index.html" }
   ]
 }
