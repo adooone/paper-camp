@@ -2,10 +2,16 @@ import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@
 import { color } from '@dendelion/folk-ui/tokens';
 import { useState } from 'react';
 import { RowSkeleton } from '@/app/components';
+import { deskUrl, NEXT_DESK_PATH } from '@/app/services/desk-links';
+import { mountPrefix } from '@/app/services/mount';
+import { getRuntimeConnection } from '@/app/services/runtime-connection';
 import { SettingsHeader } from '../components/settings-header';
 import { VERSION_STAMP_FILL } from '../constants';
 import { useSettingsPage } from '../hooks';
 import { AgentTaskTable } from './agent-task-table';
+
+const openNextDesk = () =>
+  window.location.assign(deskUrl(NEXT_DESK_PATH, mountPrefix, getRuntimeConnection()));
 
 export const GeneralSection = () => {
   const {
@@ -122,6 +128,15 @@ export const GeneralSection = () => {
                 checked={config.integration?.toolbar?.enabled ?? true}
                 onChange={handleToggleToolbar}
               />
+            }
+          />
+
+          <SettingRow
+            label="New desk"
+            control={
+              <Button size="small" onClick={openNextDesk}>
+                Open the new desk
+              </Button>
             }
           />
 

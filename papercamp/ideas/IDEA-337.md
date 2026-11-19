@@ -2,7 +2,7 @@
 id: IDEA-337
 title: A second desk beside the first
 type: feat
-status: planned
+status: review
 created: 2026-11-16
 updated: 2026-11-19
 tags:
@@ -94,5 +94,6 @@ both entries and Vercel serves `/next/anything` from the new entry.
 - [x] Faces and Appearance
       `fonts.css` for the Kyiv files; `appearance-slice.ts` persisted under `paper-camp-appearance` with the phone's ids and `md`/`kyiv-sans`/`kyiv-serif` defaults; variables applied on the new app's root; slice tests.
       run: 2m31s · 36 in · 13.6k out · opus-5-5 · sess:87b99d70-506c-4515-bf2e-cd6dd39ad433
-- [ ] Links between the two desks
+- [x] Links between the two desks
       "Open the new desk" in `src/app/features/settings/views/general-section.tsx`; "Back to the classic desk" in the new app's Settings placeholder; both keep the project.
+      run: 1m20s · 58 in · 18.9k out · opus-5-5 · sess:87b99d70-506c-4515-bf2e-cd6dd39ad433
