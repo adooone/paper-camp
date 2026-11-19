@@ -12,8 +12,10 @@
       option: Bump React 19 now on folk-ui 0.25.0 with a peer warning — works at runtime, but the published peer range is still wrong
       option: Bump now with a temporary `peerDependencyRules.allowedVersions` — no warning, but a temporary override to remove later
       context: folk-ui's main already allows `^18.0.0 || ^19.0.0` (commit 111fbe2, IDEA-19 archived), but release-please hasn't published it yet. Merging that release PR publishes to npm, so it's not my call. The working tree already has folk-ui bumped from 0.24 to 0.25.0, which isn't my change; I left it as it is.
-- [ ] 2026-11-19T07:42 [question] [agent] [[IDEA-340]] Run-all parked on phase 1 ("React 19 and zustand 5") — the agent needs a decision: folk-ui 0.26.0 (React 19 peer range) is still unpublished; release PR #52 is open. Wait for it, or bump React now?
+- [x] 2026-11-19T07:42 [question] [agent] [[IDEA-340]] Run-all parked on phase 1 ("React 19 and zustand 5") — the agent needs a decision: folk-ui 0.26.0 (React 19 peer range) is still unpublished; release PR #52 is open. Wait for it, or bump React now?
       option: Merge folk-ui release PR #52, then rerun this phase — follows the idea's "once folk-ui's peer range allows it"
       option: Bump React 19 now on folk-ui 0.25.0 and accept the peer warning — works at runtime, but the peer range is wrong
       option: Bump now with a temporary `peerDependencyRules.allowedVersions` — no warning, but an override to remove later
       context: folk-ui's main already allows `^18.0.0 || ^19.0.0`, but release-please hasn't published it. React 19.3.1, @types/react 19.3.0 and zustand 5.1.0 are on npm and ready. Merging the release PR publishes to npm, so it isn't my call.
+- [x] 2026-11-19T08:07 [chat] Merge folk-ui release PR #52, then rerun this phase
+- [x] 2026-11-19T08:07 [chat] [agent] Posted to [[IDEA-340]]: Got it — the answer is wait for 0.26.0, not bump React against an 18-only peer. I can't merge from this chat, so once you've merged release PR #52 and 0.26.0 is on npm, rerun phase 1: the agent bumps the folk-ui range to ^0.26.0 and takes React, react-dom, the types and zustand up in the same pass. Phases 2 and 3 don't depend on this and stay as they are.
