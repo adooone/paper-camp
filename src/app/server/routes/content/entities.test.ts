@@ -418,7 +418,7 @@ describe('POST /api/entities/thread', () => {
     root: string,
     kind: string,
     text: string,
-    resume?: ReturnType<typeof vi.fn>,
+    resume?: Parameters<typeof route>[3],
   ): Promise<unknown> {
     const { res, status, json } = fakeRes();
     await route(root, 'POST', '/api/entities/thread', resume).handle(

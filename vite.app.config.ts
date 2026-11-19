@@ -129,7 +129,7 @@ function papercampApi(): Plugin {
       // The API's graph reaches into core and types, not only the server folder — a
       // core edit that isn't swapped in leaves the dev API serving stale logic.
       const apiRoots = ['src/app/server', 'src/core', 'src/types'].map((dir) =>
-        resolve(__dirname, dir),
+        resolve(import.meta.dirname, dir),
       );
       server.watcher.on('change', (file) => {
         if (!apiRoots.some((root) => file.startsWith(root))) return;
@@ -164,7 +164,7 @@ function papercampApi(): Plugin {
   };
 }
 
-const folkUiRoot = resolve(__dirname, '../folk-ui');
+const folkUiRoot = resolve(import.meta.dirname, '../folk-ui');
 
 // Local `file:../folk-ui` iteration: watches the built dist so a rebuilt
 // local package reaches the browser without restarting `pnpm dev`. CSS and JS
@@ -246,17 +246,17 @@ export default defineConfig({
   build: {
     outDir: 'dist/app',
     sourcemap: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        main: resolve(import.meta.dirname, 'index.html'),
       },
       output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react';
-          if (id.includes('/@tanstack/')) return 'tanstack';
-          if (id.includes('/@dendelion/folk-ui/')) return 'folk-ui';
-          return undefined;
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules\/(react|react-dom|scheduler)\// },
+            { name: 'tanstack', test: /node_modules\/@tanstack\// },
+            { name: 'folk-ui', test: /node_modules\/@dendelion\/folk-ui\// },
+          ],
         },
       },
     },
@@ -268,11 +268,11 @@ export default defineConfig({
     // the registry; required whenever it is linked for local development.
     dedupe: ['react', 'react-dom'],
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@core': resolve(__dirname, './src/core'),
-      '@app': resolve(__dirname, './src/app'),
-      '@cli': resolve(__dirname, './src/cli'),
-      '@types': resolve(__dirname, './src/types'),
+      '@': resolve(import.meta.dirname, './src'),
+      '@core': resolve(import.meta.dirname, './src/core'),
+      '@app': resolve(import.meta.dirname, './src/app'),
+      '@cli': resolve(import.meta.dirname, './src/cli'),
+      '@types': resolve(import.meta.dirname, './src/types'),
     },
   },
 });

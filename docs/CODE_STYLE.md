@@ -372,7 +372,7 @@ build if the unit project doesn't clear that bar.
   not for coverage of JSX shape.
 - **Anything that spawns a process or touches a real repository** (a `bun`
   or `git` subprocess, a live daemon, a real filesystem repo) belongs in the
-  `integration` vitest project (`vitest.workspace.ts`), not `unit` — run it
+  `integration` vitest project (`test.projects` in `vite.config.ts`), not `unit` — run it
   with `pnpm test:integration`, or both projects together with
   `pnpm test:all`. Coverage (`--coverage`) only runs in CI, via
   `pnpm test:all -- --coverage`.

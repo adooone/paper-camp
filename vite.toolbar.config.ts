@@ -21,18 +21,18 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: true,
     lib: {
-      entry: resolve(__dirname, 'src/toolbar/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/toolbar/index.ts'),
       formats: ['es'],
       fileName: () => 'toolbar.js',
     },
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@core': resolve(__dirname, './src/core'),
-      '@app': resolve(__dirname, './src/app'),
-      '@cli': resolve(__dirname, './src/cli'),
-      '@types': resolve(__dirname, './src/types'),
+      '@': resolve(import.meta.dirname, './src'),
+      '@core': resolve(import.meta.dirname, './src/core'),
+      '@app': resolve(import.meta.dirname, './src/app'),
+      '@cli': resolve(import.meta.dirname, './src/cli'),
+      '@types': resolve(import.meta.dirname, './src/types'),
     },
     // A locally-linked peer dependency (e.g. `pnpm add link:../folk-ui` while
     // testing an unreleased folk-ui change) resolves react/react-dom from its

@@ -4,7 +4,7 @@ import { type IncomingMessage, type Server, type ServerResponse, createServer } 
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import { createHeavySlot } from '../app/server/heavy-slot';
 import { createPairCodeManager } from '../app/server/pair-code';
@@ -20,6 +20,7 @@ import { appendNightFindings } from '../core/night-suggestions';
 import type { RateLimitSnapshot } from '../types/index';
 import {
   type MountResult,
+  type UpdateApplierDeps,
   buildNightGateResponse,
   createDaemonRequestHandler,
   createMachineBatchHandler,
@@ -582,21 +583,28 @@ describe('isMachineBusy', () => {
 describe('createUpdateApplier', () => {
   function fakeDeps(
     overrides: {
-      runInstall?: ReturnType<typeof vi.fn>;
-      installedVersion?: ReturnType<typeof vi.fn>;
-      restart?: ReturnType<typeof vi.fn>;
+      runInstall?: Mock<UpdateApplierDeps['runInstall']>;
+      installedVersion?: Mock<UpdateApplierDeps['installedVersion']>;
+      restart?: Mock<UpdateApplierDeps['restart']>;
     } = {},
   ) {
     return {
-      runInstall: overrides.runInstall ?? vi.fn().mockResolvedValue({ ok: true, output: '' }),
-      installedVersion: overrides.installedVersion ?? vi.fn().mockResolvedValue('0.28.4'),
-      restart: overrides.restart ?? vi.fn(),
+      runInstall:
+        overrides.runInstall ??
+        vi.fn<UpdateApplierDeps['runInstall']>().mockResolvedValue({ ok: true, output: '' }),
+      installedVersion:
+        overrides.installedVersion ??
+        vi.fn<UpdateApplierDeps['installedVersion']>().mockResolvedValue('0.28.4'),
+      restart: overrides.restart ?? vi.fn<UpdateApplierDeps['restart']>(),
     };
   }
 
   it('installs and restarts when idle', async () => {
     const deps = fakeDeps({
-      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+      installedVersion: vi
+        .fn<UpdateApplierDeps['installedVersion']>()
+        .mockResolvedValueOnce('0.28.4')
+        .mockResolvedValueOnce('0.29.1'),
     });
     const apply = createUpdateApplier(() => false, deps);
 
@@ -607,7 +615,10 @@ describe('createUpdateApplier', () => {
 
   it('installs but holds the restart while the machine is busy', async () => {
     const deps = fakeDeps({
-      installedVersion: vi.fn().mockResolvedValueOnce('0.28.4').mockResolvedValueOnce('0.29.1'),
+      installedVersion: vi
+        .fn<UpdateApplierDeps['installedVersion']>()
+        .mockResolvedValueOnce('0.28.4')
+        .mockResolvedValueOnce('0.29.1'),
     });
     const apply = createUpdateApplier(() => true, deps);
 
@@ -622,7 +633,9 @@ describe('createUpdateApplier', () => {
     let calls = 0;
     const deps = fakeDeps({
       // Pre-install check misses (forcing an install attempt), post-install check hits.
-      installedVersion: vi.fn(async () => (calls++ % 2 === 0 ? '0.28.4' : '0.29.1')),
+      installedVersion: vi.fn<UpdateApplierDeps['installedVersion']>(async () =>
+        calls++ % 2 === 0 ? '0.28.4' : '0.29.1',
+      ),
     });
     const apply = createUpdateApplier(() => busy, deps);
 
@@ -674,6 +687,8 @@ describe('deriveUpdateEvent', () => {
   });
 });
 
+type ApplyUpdate = Parameters<typeof createMachineUpdateHandler>[1];
+
 describe('createMachineUpdateHandler', () => {
   const servers: Server[] = [];
 
@@ -681,7 +696,7 @@ describe('createMachineUpdateHandler', () => {
     await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
   });
 
-  async function startHandler(updateToken: string, applyUpdate: ReturnType<typeof vi.fn>) {
+  async function startHandler(updateToken: string, applyUpdate: ApplyUpdate) {
     const handler = createMachineUpdateHandler(updateToken, applyUpdate);
     const server = createServer((req, res) => {
       handler(req, res).catch((error) => {
@@ -697,7 +712,7 @@ describe('createMachineUpdateHandler', () => {
   }
 
   it('403s a missing or wrong bearer token without applying anything', async () => {
-    const applyUpdate = vi.fn();
+    const applyUpdate = vi.fn<ApplyUpdate>();
     const { port } = await startHandler('secret', applyUpdate);
 
     const missing = await fetch(`http://127.0.0.1:${port}/`, {
@@ -722,7 +737,7 @@ describe('createMachineUpdateHandler', () => {
   });
 
   it('400s a request missing the version', async () => {
-    const applyUpdate = vi.fn();
+    const applyUpdate = vi.fn<ApplyUpdate>();
     const { port } = await startHandler('secret', applyUpdate);
 
     const response = await fetch(`http://127.0.0.1:${port}/`, {
@@ -736,7 +751,7 @@ describe('createMachineUpdateHandler', () => {
   });
 
   it('answers with whatever the applier decides for a correct token', async () => {
-    const applyUpdate = vi.fn().mockResolvedValue({ outcome: 'installed' });
+    const applyUpdate = vi.fn<ApplyUpdate>().mockResolvedValue({ outcome: 'installed' });
     const { port } = await startHandler('secret', applyUpdate);
 
     const response = await fetch(`http://127.0.0.1:${port}/`, {

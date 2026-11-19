@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { type Mock, describe, expect, it, vi } from 'vitest';
 import { type LazyPageEnv, importWithRecovery } from './lazy-page';
 
 const memoryStorage = () => {
@@ -10,9 +10,9 @@ const memoryStorage = () => {
   };
 };
 
-const env = (): LazyPageEnv & { reload: ReturnType<typeof vi.fn> } => ({
+const env = (): LazyPageEnv & { reload: Mock<LazyPageEnv['reload']> } => ({
   wait: async () => {},
-  reload: vi.fn(),
+  reload: vi.fn<LazyPageEnv['reload']>(),
   storage: memoryStorage(),
 });
 

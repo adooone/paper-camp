@@ -3,9 +3,20 @@ import { builtinModules } from 'node:module';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import { configDefaults } from 'vitest/config';
+
+const integrationTests = [
+  'src/app/server/git.test.ts',
+  'src/cli/daemon-lifecycle.test.ts',
+  'src/app/server/agent.test.ts',
+  'src/cli/registry-commands.test.ts',
+  'src/mcp/tools.test.ts',
+  'src/app/server/login-relay.test.ts',
+  'src/app/server/routes/agent-login-relay.test.ts',
+];
 
 const runtimeDependencies = Object.keys(
-  (JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')) as {
+  (JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf-8')) as {
     dependencies?: Record<string, string>;
   }).dependencies ?? {},
 );
@@ -16,10 +27,10 @@ export default defineConfig(({ command }) => {
       plugins: [],
       resolve: {
         alias: {
-          '@': resolve(__dirname, './src'),
-          '@core': resolve(__dirname, './src/core'),
-          '@cli': resolve(__dirname, './src/cli'),
-          '@types': resolve(__dirname, './src/types'),
+          '@': resolve(import.meta.dirname, './src'),
+          '@core': resolve(import.meta.dirname, './src/core'),
+          '@cli': resolve(import.meta.dirname, './src/cli'),
+          '@types': resolve(import.meta.dirname, './src/types'),
         },
       },
       test: {
@@ -28,6 +39,22 @@ export default defineConfig(({ command }) => {
           reporter: ['text', 'json-summary'],
           reportsDirectory: 'coverage',
         },
+        projects: [
+          {
+            extends: true,
+            test: {
+              name: 'unit',
+              exclude: [...configDefaults.exclude, ...integrationTests],
+            },
+          },
+          {
+            extends: true,
+            test: {
+              name: 'integration',
+              include: integrationTests,
+            },
+          },
+        ],
       },
     };
   }
@@ -46,14 +73,14 @@ export default defineConfig(({ command }) => {
     build: {
       lib: {
         entry: {
-          core: resolve(__dirname, 'src/core/index.ts'),
-          types: resolve(__dirname, 'src/types/index.ts'),
-          cli: resolve(__dirname, 'src/cli/index.ts'),
-          vite: resolve(__dirname, 'src/vite/index.ts'),
+          core: resolve(import.meta.dirname, 'src/core/index.ts'),
+          types: resolve(import.meta.dirname, 'src/types/index.ts'),
+          cli: resolve(import.meta.dirname, 'src/cli/index.ts'),
+          vite: resolve(import.meta.dirname, 'src/vite/index.ts'),
         },
         formats: ['es'],
       },
-      rollupOptions: {
+      rolldownOptions: {
         // Everything installed at runtime stays a runtime import: every `dependencies`
         // entry (and its subpaths) plus Node's built-ins, with or without the `node:` prefix.
         external: (id) =>
@@ -71,10 +98,10 @@ export default defineConfig(({ command }) => {
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, './src'),
-        '@core': resolve(__dirname, './src/core'),
-        '@cli': resolve(__dirname, './src/cli'),
-        '@types': resolve(__dirname, './src/types'),
+        '@': resolve(import.meta.dirname, './src'),
+        '@core': resolve(import.meta.dirname, './src/core'),
+        '@cli': resolve(import.meta.dirname, './src/cli'),
+        '@types': resolve(import.meta.dirname, './src/types'),
       },
     },
   };

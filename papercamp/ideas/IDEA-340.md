@@ -46,8 +46,9 @@ target app, and `paper-camp dev` booting the API through
 - [x] React 19 and zustand 5
       Bump React and its types to 19.3 and zustand to 5; fix what surfaces (refs as props, `act`, `useSyncExternalStore` selectors); check-types, lint and `pnpm test:all` green.
       run: 2m57s · 34 in · 6k out · opus-5-5 · sess:098a7e84-9904-4019-accc-7c3a46e85d2e
-- [ ] Vite 8 and Vitest 5
+- [x] Vite 8 and Vitest 5
       Vite 8 with plugin-react-swc 4 across the three configs, Vitest 5 with coverage, the unit and integration projects kept; `pnpm build`, `pnpm test:all` and a `paper-camp dev` boot green.
+      run: 7m1s · 84 in · 20.6k out · opus-5-5 · sess:098a7e84-9904-4019-accc-7c3a46e85d2e
 - [ ] Biome 2 and the remaining bumps
       `biome migrate` with the config committed; router, query, MCP SDK, zod, commander, web-push, knip, dependency-cruiser, `@types/node` 22 and the minors; all four checks green.
 
