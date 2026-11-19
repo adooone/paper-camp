@@ -1,0 +1,6 @@
+.code {
+  color: var(--next-ink);
+  background-color: var(--next-elevated);
+  font-family: var(--next-font-mono);
+  font-size: var(--next-text-sm);
+}

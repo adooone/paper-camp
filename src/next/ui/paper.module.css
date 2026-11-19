@@ -1,0 +1,16 @@
+.ground {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  background-color: var(--next-ground);
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--next-grain);
+  background-repeat: repeat;
+  opacity: var(--next-grain-opacity);
+}

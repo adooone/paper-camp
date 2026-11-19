@@ -1,0 +1,46 @@
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.sheet {
+  padding: 10px 20px 0;
+  background-color: var(--next-input);
+  border: 1px solid var(--next-stroke);
+  border-bottom: 0;
+  border-radius: 40px 40px 0 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 38px;
+}
+
+.segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.segment:active {
+  opacity: 0.7;
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: -2px;
+}
+
+.segmentActive {
+  background-color: var(--next-stroke-soft);
+}

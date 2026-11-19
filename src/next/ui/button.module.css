@@ -1,0 +1,50 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: var(--next-radius-md);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition:
+    opacity 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+.button:active:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(1px);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.label {
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primary {
+  background-color: var(--next-kraft);
+  border-color: var(--next-slab-edge);
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--next-kraft) 25%, transparent);
+}
+
+.secondary {
+  background-color: var(--next-elevated);
+  border-color: var(--next-sketch-ink);
+}
+
+.ghost {
+  background-color: transparent;
+  padding: 6px 10px;
+}

@@ -1,0 +1,11 @@
+.card {
+  background-color: var(--next-surface);
+  border: 1px solid var(--next-stroke-strong);
+  border-radius: 18px 14px 20px 13px;
+  box-shadow: 0 3px 6px color-mix(in srgb, var(--next-sketch-ink) 8%, transparent);
+}
+
+.body {
+  border-radius: 17px 13px 19px 12px;
+  overflow: hidden;
+}

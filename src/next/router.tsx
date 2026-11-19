@@ -1,9 +1,11 @@
-import { createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { mountPrefix } from '@/app/services/mount';
 import { nextBasepath } from './entry-path';
+import { NextRoot } from './views/next-root';
 import { PlaceholderPage } from './views/placeholder-page';
+import { UiGalleryPage } from './views/ui-gallery-page';
 
-const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: PlaceholderPage });
+const rootRoute = createRootRoute({ component: NextRoot, notFoundComponent: PlaceholderPage });
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -11,6 +13,12 @@ const homeRoute = createRoute({
   component: PlaceholderPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute]);
+const uiRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ui',
+  component: UiGalleryPage,
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, uiRoute]);
 
 export const router = createRouter({ routeTree, basepath: nextBasepath(mountPrefix) });

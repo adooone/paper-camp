@@ -1,0 +1,46 @@
+.stamp {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border: 1px solid var(--tone-border);
+  border-radius: var(--next-radius-full);
+  background-color: var(--tone-fill);
+  color: var(--tone-text);
+  font-family: var(--next-font-mono);
+  font-weight: 700;
+  font-size: calc(11px * var(--next-text-scale));
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.running {
+  --tone-border: var(--next-accent-blue);
+  --tone-text: var(--next-accent-blue-dark);
+  --tone-fill: var(--next-wash-blue);
+}
+
+.done {
+  --tone-border: var(--next-accent-green);
+  --tone-text: var(--next-accent-green-dark);
+  --tone-fill: var(--next-wash-green);
+}
+
+.failed {
+  --tone-border: var(--next-accent-rose);
+  --tone-text: var(--next-accent-rose-dark);
+  --tone-fill: var(--next-wash-rose);
+}
+
+.parked {
+  --tone-border: var(--next-accent-amber);
+  --tone-text: var(--next-accent-amber-dark);
+  --tone-fill: var(--next-wash-amber);
+}
+
+.idle {
+  --tone-border: var(--next-accent-slate);
+  --tone-text: var(--next-accent-slate-dark);
+  --tone-fill: var(--next-wash-slate);
+}

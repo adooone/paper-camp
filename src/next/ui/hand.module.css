@@ -1,0 +1,98 @@
+.text {
+  display: block;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.serif {
+  font-family: var(--next-font-body);
+  line-height: var(--next-leading-body);
+  font-weight: 400;
+}
+
+.display {
+  font-family: var(--next-font-title);
+  line-height: var(--next-leading-title);
+  font-weight: var(--next-weight-title);
+}
+
+.hand {
+  font-family: var(--next-font-hand);
+  line-height: 1.25;
+}
+
+.mono {
+  font-family: var(--next-font-mono);
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.display.bold {
+  font-weight: var(--next-weight-title);
+}
+
+.xs {
+  font-size: var(--next-text-xs);
+}
+
+.sm {
+  font-size: var(--next-text-sm);
+}
+
+.base {
+  font-size: var(--next-text-base);
+}
+
+.md {
+  font-size: var(--next-text-md);
+}
+
+.lg {
+  font-size: var(--next-text-lg);
+}
+
+.xl {
+  font-size: var(--next-text-xl);
+}
+
+.size2xl {
+  font-size: var(--next-text-2xl);
+}
+
+.ink {
+  color: var(--next-ink);
+}
+
+.inkSoft {
+  color: var(--next-ink-soft);
+}
+
+.inkFaint {
+  color: var(--next-ink-faint);
+}
+
+.sketchInk {
+  color: var(--next-sketch-ink);
+}
+
+.canvas700 {
+  color: var(--next-canvas-700);
+}
+
+.danger {
+  color: var(--next-danger);
+}
+
+.good {
+  color: var(--next-good);
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

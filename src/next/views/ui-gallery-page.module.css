@@ -1,0 +1,42 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.chalk {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--next-font-mono);
+  font-size: var(--next-text-sm);
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}

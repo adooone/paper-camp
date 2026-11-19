@@ -1,0 +1,59 @@
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.island {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 64px;
+  width: 100%;
+  max-width: 420px;
+  padding: 6px;
+  border-radius: 32px;
+  background-color: var(--next-kraft);
+  border: 1px solid color-mix(in srgb, var(--next-sketch-ink) 18%, transparent);
+  box-shadow: 0 8px 14px color-mix(in srgb, var(--next-sketch-ink) 18%, transparent);
+  pointer-events: auto;
+}
+
+.tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  border-radius: 26px;
+  color: var(--next-canvas-700);
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.tab:active {
+  opacity: 0.7;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: -2px;
+}
+
+.tabActive {
+  color: var(--next-sketch-ink);
+  background-color: color-mix(in srgb, white 55%, transparent);
+}
+
+.icon {
+  display: flex;
+  width: 20px;
+  height: 20px;
+}

@@ -88,8 +88,9 @@ both entries and Vercel serves `/next/anything` from the new entry.
 - [x] A second entry, built and served
       `next/index.html`, `src/next/main.tsx` and `src/next/router.tsx` (basepath `/next` under the mount prefix); `src/app/services/boot.ts` factored out of `main.tsx` and used by both; second input in `vite.app.config.ts`; `vercel.json` rewrite for `/next/(.*)` and the daemon's static fallback for the second entry; a placeholder page; smoke test for both entries.
       run: 3m49s · 60 in · 19.1k out · opus-5-5 · sess:cbc21983-8f1c-475f-b479-7540066dc3da
-- [ ] The phone's primitives in the DOM
+- [x] The phone's primitives in the DOM
       `src/next/ui/` with the thirteen primitives and `tokens.ts`, CSS modules on folk-ui tokens, values copied from `~/dev/paper-camp-mobile/ui/`; the `/next/ui` gallery route; render tests per primitive.
+      run: 6m27s · 124 in · 57.1k out · opus-5-5 · sess:cbc21983-8f1c-475f-b479-7540066dc3da
 - [ ] Faces and Appearance
       `fonts.css` for the Kyiv files; `appearance-slice.ts` persisted under `paper-camp-appearance` with the phone's ids and `md`/`kyiv-sans`/`kyiv-serif` defaults; variables applied on the new app's root; slice tests.
 - [ ] Links between the two desks
