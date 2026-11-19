@@ -2,7 +2,7 @@
 id: IDEA-340
 title: Current toolchain before the second desk
 type: chore
-status: review
+status: done
 created: 2026-11-16
 updated: 2026-11-19
 tags:
