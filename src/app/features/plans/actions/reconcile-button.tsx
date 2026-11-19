@@ -1,8 +1,8 @@
+import { Button, Tooltip } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { useHasAnyAgent } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { Button, Tooltip } from '@dendelion/folk-ui';
-import { useState } from 'react';
 import { buildReconcilePrompt } from '../prompts';
 
 interface ReconcileButtonProps {

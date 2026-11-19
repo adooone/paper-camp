@@ -1,8 +1,8 @@
+import { useCallback, useMemo, useState } from 'react';
 import { type CommitFormFile, useCommitForm } from '@/app/hooks/use-commit-form';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import type { AgentTaskState, PlanEntry } from '@/types/index';
-import { useCallback, useMemo, useState } from 'react';
 import {
   appendManualPhase,
   isCorpusOnlyCommit,

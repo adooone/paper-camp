@@ -1,3 +1,15 @@
+import {
+  Button,
+  Card,
+  CloseIcon,
+  IconButton,
+  Stamp,
+  type StampVariant,
+  Tooltip,
+  useToast,
+} from '@dendelion/folk-ui';
+import { useQueries } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useScopeRuns } from '@/app/features/activity/hooks';
 import { BatchSheet } from '@/app/features/plans/modals/batch-sheet';
 import { type ScopeRow, useScope } from '@/app/features/scope';
@@ -17,25 +29,13 @@ import {
   type TaskKind,
   type TaskLogEntry,
 } from '@/types/index';
-import {
-  Button,
-  Card,
-  CloseIcon,
-  IconButton,
-  Stamp,
-  type StampVariant,
-  Tooltip,
-  useToast,
-} from '@dendelion/folk-ui';
-import { useQueries } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import { BatchTaskCard } from './batch-task-card';
 import { CapacityRow } from './capacity-row';
 import {
   CAPACITY_CARD_HEIGHT_CLASS,
-  TASK_CARD_HEIGHT_CLASS,
   formatLastRun,
   groupLabelClassName,
+  TASK_CARD_HEIGHT_CLASS,
 } from './shared';
 import { SignedOutCard } from './signed-out-card';
 

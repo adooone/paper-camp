@@ -1,3 +1,4 @@
+import { useQueries } from '@tanstack/react-query';
 import type { MachineReachState, ProjectRunState } from '@/app/services/hub-machines';
 import {
   fetchAgentStatusAt,
@@ -5,7 +6,6 @@ import {
   fetchRuntimeVersionAt,
 } from '@/app/services/system';
 import type { AgentTaskState, AgentTaskStatus } from '@/types/index';
-import { useQueries } from '@tanstack/react-query';
 import { useSlowKeys } from './use-slow-keys';
 
 export interface ProjectLiveState {

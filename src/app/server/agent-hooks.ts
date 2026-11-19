@@ -1,7 +1,6 @@
 import { resolvePrimaryScope } from '@/core/git-pr';
 import { mergeRun } from '@/core/phase-run';
-import { computePlanContentHash } from '@/core/serialize';
-import { todayDateString } from '@/core/serialize';
+import { computePlanContentHash, todayDateString } from '@/core/serialize';
 import type {
   CheckName,
   GitStatusEntry,

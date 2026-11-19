@@ -1,6 +1,6 @@
+import { Divider } from '@dendelion/folk-ui';
 import { useCapabilities } from '@/app/hooks';
 import { CLIENT_VERSION } from '@/app/services/version';
-import { Divider } from '@dendelion/folk-ui';
 
 export function versionLabel(runtimeVersion: string | null, clientVersion: string): string {
   if (!runtimeVersion) return `Paper Camp v${clientVersion}`;

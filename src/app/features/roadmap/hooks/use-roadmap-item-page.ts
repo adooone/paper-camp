@@ -1,6 +1,6 @@
+import { useParams } from '@tanstack/react-router';
 import { useActiveRoadmapItem } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { useParams } from '@tanstack/react-router';
 import { ideaDateRange } from '../helpers';
 
 export const useRoadmapItemPage = () => {

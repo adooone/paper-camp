@@ -1,9 +1,9 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useMemo, useState } from 'react';
 import { useScope } from '@/app/features/scope';
 import { markRead } from '@/app/hooks';
 import { filterLogRows } from '@/core/run-filters';
 import { computeLogStats } from '@/core/run-stats';
-import { useToast } from '@dendelion/folk-ui';
-import { useMemo, useState } from 'react';
 import { LOG_PAGE_SIZE } from '../constants';
 import { markAllReadSettled, markReadIdFor, mergeScopedActivityEntries } from '../helpers';
 import { useActivityFilters } from './use-activity-filters';

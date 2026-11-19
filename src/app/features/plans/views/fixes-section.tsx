@@ -1,7 +1,7 @@
-import { entityLink } from '@/app/hooks';
-import type { PlanEntry } from '@/types/index';
 import { SectionHeading, Stamp } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { entityLink } from '@/app/hooks';
+import type { PlanEntry } from '@/types/index';
 import { PlanIdStamp } from '../components';
 import { STATUS_LABEL, STATUS_STAMP } from '../constants';
 

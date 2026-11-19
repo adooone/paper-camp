@@ -1,6 +1,6 @@
+import { SidebarLabel } from '@dendelion/folk-ui';
 import { CheckboxFilterRow, SidebarAction, SidebarSection } from '@/app/components';
 import type { LogRowOutcome, LogRowType } from '@/types/index';
-import { SidebarLabel } from '@dendelion/folk-ui';
 import { LOG_TYPE_LABELS } from '../constants';
 import { toggleInAll, useActivityFilters, useLogRows } from '../hooks';
 

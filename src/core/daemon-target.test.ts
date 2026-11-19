@@ -1,5 +1,5 @@
 import { mkdtemp, rm } from 'node:fs/promises';
-import { type Server, createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MACHINE_PROJECTS_PATH } from '../types/index';
 import { writeDaemonState } from './daemon-state';
 import { resolveDaemonTarget } from './daemon-target';
-import { type MachineRegistry, addProject, saveRegistry } from './machine-registry';
+import { addProject, type MachineRegistry, saveRegistry } from './machine-registry';
 
 describe('resolveDaemonTarget', () => {
   const dirs: string[] = [];
@@ -20,7 +20,6 @@ describe('resolveDaemonTarget', () => {
 
   afterEach(async () => {
     await Promise.all(servers.splice(0).map((server) => new Promise((r) => server.close(r))));
-    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
   });

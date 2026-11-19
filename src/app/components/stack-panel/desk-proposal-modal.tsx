@@ -1,6 +1,3 @@
-import type { DeskDiff } from '@/app/features/settings/helpers';
-import { randomId } from '@/app/utils/random-id';
-import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
 import {
   Button,
   CloseIcon,
@@ -13,6 +10,9 @@ import {
   UndoIcon,
 } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import type { DeskDiff } from '@/app/features/settings/helpers';
+import { randomId } from '@/app/utils/random-id';
+import type { DeskCheck, DeskCi, DeskConfig, DeskService } from '@/types/index';
 
 interface DeskProposalModalProps {
   current: DeskConfig | null | undefined;

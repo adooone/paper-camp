@@ -1,8 +1,8 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { PrReviewResult } from '@/types/index';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { PrReviewResult } from '@/types/index';
 import {
   parsePrReviewResult,
   postPrReview,

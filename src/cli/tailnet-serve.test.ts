@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  isMissingHttpsCertsError,
+  runTailnetServe,
   TAILNET_HTTPS_CERTS_ADMIN_LINK,
   TAILNET_OPERATOR_MESSAGE,
   TAILNET_SERVE_NOT_ENABLED_MESSAGE,
-  isMissingHttpsCertsError,
-  runTailnetServe,
   tailnetFailureMessage,
   tailnetServeArgs,
 } from './tailnet-serve';

@@ -852,11 +852,11 @@ describe('syncPrTitleToPr', () => {
 
   /** Fake `gh` answering `pr view` (with title) and logging any `pr edit --title`
    * argument to `titleFile` so tests can assert whether/what it retitled. */
-  function withGhForTitle(viewFixture: {
-    title: string;
-    body: string;
-    headRefName: string;
-  }): { root: string; callCount: () => number; editedTitle: () => string | undefined } {
+  function withGhForTitle(viewFixture: { title: string; body: string; headRefName: string }): {
+    root: string;
+    callCount: () => number;
+    editedTitle: () => string | undefined;
+  } {
     const fixtureDir = mkdtempSync(join(tmpdir(), 'papercamp-pr-title-'));
     const viewFile = join(fixtureDir, 'view.json');
     writeFileSync(viewFile, JSON.stringify({ ...viewFixture, labels: [] }));

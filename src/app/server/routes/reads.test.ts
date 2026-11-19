@@ -2,15 +2,16 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { ProjectStats } from '@/types/index';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import type { ProjectStats } from '@/types/index';
 import { createActivityManager } from '../activity';
 import { createProjectStatsStore } from '../project-stats';
-import { READ_CACHE_TTL_MS, createReadCache } from '../read-cache';
+import { createReadCache, READ_CACHE_TTL_MS } from '../read-cache';
 import { readRoutes } from './reads';
 
 const IDEA =
   '---\nid: IDEA-1\ntitle: First idea\nstatus: idea\ncreated: 2026-01-01\n---\n\nBody text.\n';
+
 import type { RouteContext } from './types';
 
 const roots: string[] = [];

@@ -1,6 +1,3 @@
-import { type ServicesClient, useServicesClient } from '@/app/hooks/use-services-client';
-import { SERVICE_DOT_CLASS, serviceStatus } from '@/core/service-status';
-import type { ServiceState } from '@/types/index';
 import {
   Card,
   EmptyState,
@@ -13,6 +10,9 @@ import {
 } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { type ServicesClient, useServicesClient } from '@/app/hooks/use-services-client';
+import { SERVICE_DOT_CLASS, serviceStatus } from '@/core/service-status';
+import type { ServiceState } from '@/types/index';
 import { groupLabelClassName } from './shared';
 
 export const SERVICES_GROUP_LABEL = 'Services';

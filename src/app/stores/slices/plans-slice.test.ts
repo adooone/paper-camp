@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type PlansSlice, createPlansSlice } from './plans-slice';
+import { createPlansSlice, type PlansSlice } from './plans-slice';
 
 const makeStorage = () => {
   const items = new Map<string, string>();

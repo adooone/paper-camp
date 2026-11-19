@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fails on any comment run over the 2-line cap (docs/CODE_STYLE.md §7).
 // `--json` adds machine-readable output for the app's stats view.
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = 'src';

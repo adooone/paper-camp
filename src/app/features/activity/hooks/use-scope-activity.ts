@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ScopeRow } from '@/app/features/scope';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchRunsAt } from '@/app/services/agent-api';
@@ -8,7 +9,6 @@ import {
 } from '@/app/services/content/notifications-api';
 import { buildLogRows } from '@/core/run-rows';
 import type { LogRow } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 interface ScopeActivityData {
   project: ScopeRow;

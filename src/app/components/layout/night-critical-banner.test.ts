@@ -1,5 +1,5 @@
-import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { criticalNightFindings, formatCriticalSummary } from './night-critical-banner';
 
 function finding(overrides: Partial<NightSuggestionEntry> = {}): NightSuggestionEntry {

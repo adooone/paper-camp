@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { fetchPlans } from '@/app/services/content';
 import { plansQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { ParseResult, PlanEntry } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
 
 export interface UsePlansResult {
   plans: ParseResult<PlanEntry> | null;

@@ -1,5 +1,5 @@
-import type { CapacityRecord } from '@/core/capacity';
 import { describe, expect, it } from 'vitest';
+import type { CapacityRecord } from '@/core/capacity';
 import {
   formatEmptyTooltip,
   formatGap,

@@ -1,6 +1,6 @@
-import type { ResolvedRoadmapItem } from '@/types/index';
 import { Accordion } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import type { ResolvedRoadmapItem } from '@/types/index';
 import { RoadmapItemRow } from './roadmap-item-row';
 
 interface ShippedFoldProps {

@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react';
 import { medianSegmentMs, phaseFraction } from '@/core/phase-progress';
 import type { AgentTaskState, TaskLogEntry } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 const ACTIVE_STATUSES = new Set(['starting', 'running', 'stopping']);
 const TICK_MS = 1000;

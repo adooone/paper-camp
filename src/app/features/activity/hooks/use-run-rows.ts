@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useIdeas, useNotifications, useOpenEntity, usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { promoteIssue } from '@/app/services/agent-api';
@@ -12,7 +13,6 @@ import {
 } from '@/core/issues';
 import { buildLogRows } from '@/core/run-rows';
 import type { Issue, LogRow, LogRowType, PlanEntry, TaskLogEntry } from '@/types/index';
-import { useEffect, useMemo, useState } from 'react';
 
 export interface ResolvedFailure extends Issue {
   cleared: boolean;

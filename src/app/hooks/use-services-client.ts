@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { refreshServices, servicesQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { ServiceState } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchServices, restartService, startService, stopService } from '../services/services-api';
 

@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router';
 import {
   useAgentNotSignedIn,
   useCapabilityGapCount,
@@ -7,7 +8,6 @@ import {
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { selectLatestRateLimit, useAppStore } from '@/app/stores/app-store';
 import type { AgentTaskStatus } from '@/types/index';
-import { useNavigate } from '@tanstack/react-router';
 
 export interface StatusBarState {
   gitBranch: string | null;

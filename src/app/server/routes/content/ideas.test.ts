@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseEntityFile } from '@/core/parse';
 import { afterAll, describe, expect, it } from 'vitest';
+import { parseEntityFile } from '@/core/parse';
 import type { RouteContext } from '../types';
 import { ideaRoutes } from './ideas';
 

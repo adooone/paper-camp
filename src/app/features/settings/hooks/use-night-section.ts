@@ -1,3 +1,5 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useCallback, useEffect, useState } from 'react';
 import { parseMachineProjectRuntimeUrl } from '@/app/services/hub-machines';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { NightStatus } from '@/app/services/system';
@@ -20,8 +22,6 @@ import {
   type NightGateStatus,
   type PaperCampConfig,
 } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useCallback, useEffect, useState } from 'react';
 
 export interface KeyedNightCustomCheck extends NightCustomCheck {
   id: string;

@@ -1,8 +1,8 @@
 import { appendThread } from '@/core/corpus';
 import {
-  type PrReviewDelivery,
   createPrReview,
   dispatchPrReview,
+  type PrReviewDelivery,
   scoutReviewFooter,
 } from '@/core/git-pr';
 import { readEntities } from '@/core/readers';

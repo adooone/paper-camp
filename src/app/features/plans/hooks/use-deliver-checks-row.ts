@@ -1,11 +1,11 @@
+import { useNavigate } from '@tanstack/react-router';
+import { useCallback, useState } from 'react';
 import { usePlans } from '@/app/hooks';
 import { useDeskChecks } from '@/app/hooks/use-desk-checks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { DoctorFindingSummary } from '@/core/doctor';
 import { collectCheckIssues } from '@/core/issues';
 import type { AgentTaskState, ConsistencyIssue, DeskCheckState, Issue } from '@/types/index';
-import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
 
 type FailingCheck = Pick<Issue, 'id' | 'sourceKey' | 'title' | 'reason' | 'output'>;
 

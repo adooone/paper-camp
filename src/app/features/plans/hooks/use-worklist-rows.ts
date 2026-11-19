@@ -1,15 +1,15 @@
+import { useQueries } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useRoadmapItemNames } from '@/app/features/roadmap';
 import { configQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchConfigAt } from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
-import { useQueries } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import {
-  type PlanSortKey,
-  type WorklistRow,
   groupRowsByProject,
   groupRowsBySubject,
+  type PlanSortKey,
+  type WorklistRow,
 } from '../helpers';
 
 export const useWorklistRows = (rows: WorklistRow[]) => {

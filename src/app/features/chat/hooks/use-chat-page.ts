@@ -1,8 +1,8 @@
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
 import { type ScopeRow, useScope } from '@/app/features/scope';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
 import { mergeScopedChatMessages, threadEndsWithUserMessage, withIdeaPrefix } from '../helpers';
 import { useChatStage } from './use-chat-stage';
 import { useChatThread } from './use-chat-thread';

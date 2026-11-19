@@ -1,5 +1,5 @@
-import type { DeskConfig } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { DeskConfig } from '@/types/index';
 import { diffDeskConfig, isDiffEmpty } from '../desk-diff';
 
 describe('diffDeskConfig', () => {

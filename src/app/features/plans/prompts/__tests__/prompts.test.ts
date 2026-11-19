@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import { buildAgentPrompt } from '@/app/server/agent';
 import type { IdeaEntry, PlanEntry, ReviewThread, ThreadMessage } from '@/types/index';
-import { describe, expect, it } from 'vitest';
 import {
   buildConvergenceAuditPrompt,
   buildFixReviewPrompt,

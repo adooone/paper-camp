@@ -1,9 +1,9 @@
+import { EmptyState, Input, SidebarItem, SidebarLabel, Skeleton } from '@dendelion/folk-ui';
+import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import { CheckboxFilterRow, SidebarSection } from '@/app/components';
 import { useDocsSidebar } from '@/app/features/docs/hooks';
 import { stripHorizonPrefix, useRoadmapSidebar } from '@/app/features/roadmap';
 import { useActiveSettingsSection } from '@/app/hooks';
-import { EmptyState, Input, SidebarItem, SidebarLabel, Skeleton } from '@dendelion/folk-ui';
-import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 
 const simplecaseLabel = (name: string) =>
   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();

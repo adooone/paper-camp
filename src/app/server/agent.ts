@@ -5,11 +5,11 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import {
   ASSET_GUIDANCE,
-  type ChatActiveRun,
-  NEEDS_DECISION_PROTOCOL,
   buildChatTurnPrompt,
   buildPlanDraftPrompt,
   buildReconcilePrompt,
+  type ChatActiveRun,
+  NEEDS_DECISION_PROTOCOL,
 } from '@/app/features/plans/prompts';
 import { batchReadiness } from '@/core/batch-readiness';
 import {
@@ -17,8 +17,8 @@ import {
   type BatchRunPauseReason,
   type BatchRunRules,
   type BatchRunState,
-  DEFAULT_BATCH_RUN_RULES,
   clearBatchRunState,
+  DEFAULT_BATCH_RUN_RULES,
   evaluateBatchBudget,
   evaluateBatchCapacityGate,
   markBatchRunInterrupted,
@@ -63,17 +63,17 @@ import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import type { createAgentHooks } from './agent-hooks';
 import { killWithEscalation, runProcessWithTimeout } from './agent-process';
 import {
-  SIGNED_OUT_ERROR,
   getAgentSignIn,
   isAuthFailure,
   markAgentSignedOut,
+  SIGNED_OUT_ERROR,
 } from './agent-signin';
 import { AGENTS, type AgentAdapter, resolveAgent } from './agents';
 import { readChatSession, writeChatSession } from './chat-session';
 import { parseFixReviewResult, settleReviewThreads } from './fix-review-settle';
 import {
-  CorpusError,
   appendToChatFile,
+  CorpusError,
   planFile,
   readChatFile,
   readMaybe,
@@ -85,11 +85,11 @@ import { appendNotification } from './notification-log';
 import { parsePrReviewResult, postPrReview } from './pr-review-settle';
 import { clearDeliveryFailures, recordDeliveryFailure, recordReviewedSha } from './pr-review-state';
 import {
-  UNLOGGED_TASK_KINDS,
   appendTaskOutput,
   logTaskCompletion,
   logTaskStart,
   reconcileInterruptedTasks,
+  UNLOGGED_TASK_KINDS,
 } from './task-log';
 
 const MAX_LINES = 50;
@@ -2546,7 +2546,7 @@ export function createAgentManager(
   // is the only thing allowed to wake a batch paused on a conflict (IDEA-321).
   async function resumeBatchAfterConflict(): Promise<void> {
     const persisted = await readBatchRunState(root);
-    if (!persisted || persisted.status !== 'paused' || persisted.pause?.kind !== 'conflict') return;
+    if (persisted?.status !== 'paused' || persisted.pause?.kind !== 'conflict') return;
     // The idea that hit the conflict never got to do its own work — requeue it so the
     // resumed sweep retries it, instead of treating its 'conflict' outcome as settled.
     const conflictedId = persisted.pause.id;
@@ -2985,7 +2985,7 @@ export function createAgentManager(
 
   function getReconcileQueue(): ReconcileQueueItem[] | null {
     const task = currentTask();
-    if (!task || task.taskKind !== 'batch-reconcile') return null;
+    if (task?.taskKind !== 'batch-reconcile') return null;
     return [...(task.reconcileResults ?? [])];
   }
 
@@ -2993,7 +2993,7 @@ export function createAgentManager(
   // would otherwise fetch the same results and raise the same modals again.
   function consumeReconcileQueue(): void {
     const task = currentTask();
-    if (!task || task.taskKind !== 'batch-reconcile') return;
+    if (task?.taskKind !== 'batch-reconcile') return;
     task.reconcileResults = [];
   }
 

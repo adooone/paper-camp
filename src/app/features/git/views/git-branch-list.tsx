@@ -1,3 +1,5 @@
+import { SidebarItem, SidebarLabel, Stamp, useToast } from '@dendelion/folk-ui';
+import { useEffect, useState } from 'react';
 import { SidebarSection } from '@/app/components';
 import { useOpenEntity } from '@/app/hooks';
 import { checkoutBranch, fetchGitBranches } from '@/app/services/git-api';
@@ -5,8 +7,6 @@ import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { GitBranch } from '@/types/index';
-import { SidebarItem, SidebarLabel, Stamp, useToast } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
 
 const trackLabel = (branch: GitBranch): string | undefined => {
   if (branch.gone) return 'merged';

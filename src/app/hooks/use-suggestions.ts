@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { fetchSuggestions } from '@/app/services/content';
 import { suggestionsQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { SuggestionEntry } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
 
 export interface UseSuggestionsResult {
   suggestions: SuggestionEntry[];

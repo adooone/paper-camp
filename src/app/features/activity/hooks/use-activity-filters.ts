@@ -1,11 +1,11 @@
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useMemo } from 'react';
 import {
   type LogFilters,
   type LogSearchParams,
   parseLogFilters,
   serializeLogFilters,
 } from '@/core/run-filters';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useMemo } from 'react';
 
 /** Activity's filters live in the URL, so the page and its sidebar read and write
  *  the same state without a store of their own. */

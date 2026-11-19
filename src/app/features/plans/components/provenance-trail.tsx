@@ -1,6 +1,6 @@
-import type { ProvenanceTrail } from '@/types/index';
 import { Stamp, Tooltip } from '@dendelion/folk-ui';
 import { color, colors } from '@dendelion/folk-ui/tokens';
+import type { ProvenanceTrail } from '@/types/index';
 import { PrBadge } from './pr-badge';
 import { ReviewSignalBadge } from './review-signal-badge';
 

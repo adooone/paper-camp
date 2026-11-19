@@ -1,7 +1,7 @@
-import { Markdown } from '@/app/components/markdown';
-import { useAppStore } from '@/app/stores/app-store';
 import { Button, Divider, EmptyState, PageTitle, Skeleton, Text } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
+import { Markdown } from '@/app/components/markdown';
+import { useAppStore } from '@/app/stores/app-store';
 import { useReleaseNotes } from '../hooks/use-release-notes';
 
 // Each release is its own request, so the page grows on demand instead of fetching all at once.

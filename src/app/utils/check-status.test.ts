@@ -1,5 +1,5 @@
-import type { CheckResult, DeskCheckState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { CheckResult, DeskCheckState } from '@/types/index';
 import { failingCheckNames } from './check-status';
 
 const deskCheck = (name: string, status: CheckResult['status']): DeskCheckState => ({

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAIR_CODE_TTL_MS, createPairCodeManager } from './pair-code';
+import { createPairCodeManager, PAIR_CODE_TTL_MS } from './pair-code';
 
 describe('createPairCodeManager', () => {
   it('mints an 8-character Crockford base32 code valid for ten minutes', () => {

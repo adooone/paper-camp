@@ -1,5 +1,5 @@
-import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { IdeaEntry, PlanEntry } from '@/types/index';
 import { entityLink, entityRouteParam, resolveByIdOrTitle } from './use-route-selection';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({

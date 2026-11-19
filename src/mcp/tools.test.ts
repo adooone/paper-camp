@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { type Server, createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -58,12 +58,7 @@ async function writePlan(root: string, id: string, contents: string): Promise<vo
   await writeFile(join(root, 'papercamp', 'ideas', `${id}.md`), contents);
 }
 
-function planFile(opts: {
-  id: string;
-  title: string;
-  status?: string;
-  phases?: string[];
-}): string {
+function planFile(opts: { id: string; title: string; status?: string; phases?: string[] }): string {
   const { id, title, status = 'in-progress', phases = ['- [ ] First phase'] } = opts;
   return `---
 id: ${id}

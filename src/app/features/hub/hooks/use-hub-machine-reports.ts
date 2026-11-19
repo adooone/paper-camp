@@ -1,8 +1,8 @@
+import { useQueries } from '@tanstack/react-query';
 import type { MachineReachState } from '@/app/services/hub-machines';
 import { queryClient } from '@/app/services/query-client';
 import { fetchMachineProjects, fetchRuntimeVersionAt } from '@/app/services/system';
 import type { MachineProjectSummary, MachineProjectsResponse } from '@/types/index';
-import { useQueries } from '@tanstack/react-query';
 import { useSlowKeys } from './use-slow-keys';
 
 interface MachineReport {

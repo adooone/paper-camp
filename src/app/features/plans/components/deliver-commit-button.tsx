@@ -1,7 +1,7 @@
-import { useDeskChecks } from '@/app/hooks/use-desk-checks';
-import { failingCheckNames } from '@/app/utils/check-status';
 import { Button } from '@dendelion/folk-ui';
 import { useMemo } from 'react';
+import { useDeskChecks } from '@/app/hooks/use-desk-checks';
+import { failingCheckNames } from '@/app/utils/check-status';
 import type { DeliverCommitFormState } from '../hooks';
 
 interface CommitActionButtonProps {

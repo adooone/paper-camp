@@ -1,26 +1,24 @@
 import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { type Mock, afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import type { ApiMiddleware } from '../app/server/api';
 import { createHeavySlot } from '../app/server/heavy-slot';
 import { createPairCodeManager } from '../app/server/pair-code';
 import type { PairingManagerState } from '../app/server/pairing';
 import { writeCapacity } from '../core/capacity';
 import {
-  type MachineRegistry,
   addProject,
+  type MachineRegistry,
   saveRegistry,
   setNightProject,
 } from '../core/machine-registry';
 import { appendNightFindings } from '../core/night-suggestions';
 import type { RateLimitSnapshot } from '../types/index';
 import {
-  type MountResult,
-  type UpdateApplierDeps,
   buildNightGateResponse,
   createDaemonRequestHandler,
   createMachineBatchHandler,
@@ -33,9 +31,11 @@ import {
   deriveUpdateEvent,
   formatDaemonBanner,
   isMachineBusy,
+  type MountResult,
   parseMountRequest,
   readMachineProjectSummaries,
   runMachineBatchQueue,
+  type UpdateApplierDeps,
   watchForIdleRestart,
 } from './daemon-server';
 

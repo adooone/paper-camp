@@ -1,7 +1,7 @@
-import { usePlans } from '@/app/hooks';
-import type { PlanEntry } from '@/types/index';
 import { Button, Checkbox, Modal } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
+import { usePlans } from '@/app/hooks';
+import type { PlanEntry } from '@/types/index';
 
 interface DraftAllModalProps {
   open: boolean;

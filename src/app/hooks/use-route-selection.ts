@@ -1,3 +1,4 @@
+import { useParams } from '@tanstack/react-router';
 import { useAppStore } from '@/app/stores/app-store';
 import { detailToPlan, entityToIdea } from '@/core/entity-view';
 import type {
@@ -6,7 +7,6 @@ import type {
   PlanEntry,
   ResolvedRoadmapItem,
 } from '@/types/index';
-import { useParams } from '@tanstack/react-router';
 import { useEntity } from './use-entity';
 import { useNightReport } from './use-night-report';
 import { useWorklist } from './use-worklist';

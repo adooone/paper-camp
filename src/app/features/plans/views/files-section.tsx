@@ -1,7 +1,7 @@
-import { assetMarkdownLink } from '@/app/features/plans/helpers';
-import type { AssetEntry } from '@/types/index';
 import { Button, SectionHeading } from '@dendelion/folk-ui';
 import type { ChangeEvent, RefObject } from 'react';
+import { assetMarkdownLink } from '@/app/features/plans/helpers';
+import type { AssetEntry } from '@/types/index';
 import { FileRow } from '../components';
 
 interface FilesSectionProps {

@@ -1,4 +1,4 @@
-import { type ScopeKey, parseScopeParam, serializeScopeParam } from './scope';
+import { parseScopeParam, type ScopeKey, serializeScopeParam } from './scope';
 
 const KEY_PREFIX = 'paper-camp.lastScope:';
 

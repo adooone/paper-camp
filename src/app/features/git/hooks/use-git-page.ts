@@ -1,6 +1,6 @@
+import { useEffect, useMemo, useRef } from 'react';
 import { useGitCommitForm } from '@/app/features/git/hooks/use-git-commit-form';
 import { useAppStore } from '@/app/stores/app-store';
-import { useEffect, useMemo, useRef } from 'react';
 
 export const useGitPage = () => {
   const files = useAppStore((s) => s.diffFiles);

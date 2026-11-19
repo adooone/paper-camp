@@ -1,7 +1,7 @@
-import { QuestionCard } from '@/app/features/plans/components/question-card';
-import type { ThreadMessage } from '@/types/index';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { QuestionCard } from '@/app/features/plans/components/question-card';
+import type { ThreadMessage } from '@/types/index';
 import { ChatMessage } from './chat-message';
 import { EntityLinkText } from './entity-link-text';
 

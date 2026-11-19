@@ -1,6 +1,6 @@
-import { type OpenQuestionGroup, collectOpenQuestions } from '@/app/features/plans/helpers';
-import { fetchPlans } from '@/app/services/content';
 import { useCallback, useEffect, useState } from 'react';
+import { collectOpenQuestions, type OpenQuestionGroup } from '@/app/features/plans/helpers';
+import { fetchPlans } from '@/app/services/content';
 
 export interface ScoutClientState {
   openQuestions: OpenQuestionGroup[];

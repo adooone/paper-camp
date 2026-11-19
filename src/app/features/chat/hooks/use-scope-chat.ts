@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import type { ScopeRow } from '@/app/features/scope';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchChatAt } from '@/app/services/content/chat-api';
 import type { ThreadMessage } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 interface ScopeChatData {
   project: ScopeRow;

@@ -57,7 +57,7 @@ export async function listIdeaAssets(assetsDir: string, id: string): Promise<Ass
   const entries = await Promise.all(
     names.map(async (name) => {
       const stats = await stat(join(dir, name)).catch(() => undefined);
-      if (!stats || !stats.isFile()) return undefined;
+      if (!stats?.isFile()) return undefined;
       const entry: AssetEntry = {
         name,
         size: stats.size,

@@ -1,5 +1,5 @@
-import type { AgentTaskState, PlanEntry, ThreadMessage } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { AgentTaskState, PlanEntry, ThreadMessage } from '@/types/index';
 import {
   effectiveStatus,
   latestReviewNote,

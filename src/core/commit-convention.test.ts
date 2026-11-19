@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  DEFAULT_COMMIT_CONVENTION,
   commitTitleViolation,
+  DEFAULT_COMMIT_CONVENTION,
   readCommitConvention,
 } from './commit-convention';
 

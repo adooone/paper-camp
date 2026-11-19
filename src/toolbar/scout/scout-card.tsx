@@ -1,10 +1,10 @@
+import { Button, Card, IconButton, Input, Island, Stamp, WandIcon } from '@dendelion/folk-ui';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { ProgressBar } from '@/app/features/plans/components';
 import { STATUS_COLOR, STATUS_LABEL } from '@/app/features/plans/constants';
 import { type OpenQuestionGroup, phaseProgress } from '@/app/features/plans/helpers';
 import type { StatusClientState } from '@/app/hooks/use-status-client';
 import type { PlanEntry } from '@/types/index';
-import { Button, Card, IconButton, Input, Island, Stamp, WandIcon } from '@dendelion/folk-ui';
-import { type CSSProperties, type ReactNode, useState } from 'react';
 import { ScoutThread } from './scout-thread';
 
 // Renders plain text instead of a dead link while the hosted-client pairing

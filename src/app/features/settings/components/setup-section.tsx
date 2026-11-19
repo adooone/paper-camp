@@ -1,5 +1,5 @@
-import { RowSkeleton } from '@/app/components';
 import { Alert, SettingGroup, SettingRow, Switch } from '@dendelion/folk-ui';
+import { RowSkeleton } from '@/app/components';
 import { useSetupSection } from '../hooks';
 import { ConnectionRow } from './connection-row';
 import { SettingsHeader } from './settings-header';

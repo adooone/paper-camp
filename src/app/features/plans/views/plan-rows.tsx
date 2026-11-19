@@ -1,8 +1,3 @@
-import { ProjectChip, type ScopeRow } from '@/app/features/scope';
-import { entityLink, entityPath } from '@/app/hooks';
-import { useAppStore } from '@/app/stores/app-store';
-import { isBlockingNeed } from '@/core/needs-status';
-import type { PlanEntry } from '@/types/index';
 import {
   LightbulbIcon,
   MergeIcon,
@@ -17,6 +12,11 @@ import {
 import { color, colors } from '@dendelion/folk-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
+import { entityLink, entityPath } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
+import { isBlockingNeed } from '@/core/needs-status';
+import type { PlanEntry } from '@/types/index';
 import { PlanIdStamp } from '../components';
 import { PR_STATE_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, phaseProgress, relativeDate, runningTaskForPlan } from '../helpers';

@@ -1,5 +1,5 @@
-import type { CiReleaseState, DraftPrReadiness } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { CiReleaseState, DraftPrReadiness } from '@/types/index';
 import { draftPrSecretsMissing, versionLine } from './ci-group';
 
 const ci = (overrides: Partial<CiReleaseState> = {}): CiReleaseState => ({

@@ -1,15 +1,15 @@
-import type { MachineProjectSummary } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { MachineProjectSummary } from '@/types/index';
 import {
-  type HubMachineInput,
-  type RememberedProjectInput,
   buildHubMachines,
   collectMachineUrls,
   compareMachines,
   compareProjectRows,
+  type HubMachineInput,
   machineMostRecentActivity,
   parseMachineProjectRuntimeUrl,
   projectRowStamp,
+  type RememberedProjectInput,
 } from './hub-machines';
 import { CLIENT_VERSION } from './version';
 

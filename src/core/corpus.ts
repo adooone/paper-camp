@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type {
   EntityEntry,
@@ -18,12 +18,12 @@ import { resolveIdsWithMainActivity, runGit } from './git-log';
 import { getPrMapFetchedAt, resolvePrsByEntity } from './git-pr/pr-lookup';
 import {
   GITATTRIBUTES_BLOCK_START,
+  hasManagedBlock,
   LEGACY_LOCAL_PATHS,
   PLAN_NAMES,
-  hasManagedBlock,
   planFile,
 } from './local-paths';
-import { type EntriesByRoot, attachResolvedNeeds } from './needs';
+import { attachResolvedNeeds, type EntriesByRoot } from './needs';
 import { parseEntityFile } from './parse/parser';
 import { readEntities } from './readers';
 import {

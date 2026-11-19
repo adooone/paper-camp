@@ -1,9 +1,11 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useCallback, useEffect, useState } from 'react';
 import { mountPrefix } from '@/app/services/mount';
 import {
-  type PushDeviceSummary,
   fetchConfig,
   fetchPushDevices,
   fetchPushPublicKey,
+  type PushDeviceSummary,
   saveConfig,
   subscribeWebPush,
   unsubscribePush,
@@ -14,8 +16,6 @@ import {
   type NotificationSettingKind,
   type PaperCampConfig,
 } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useCallback, useEffect, useState } from 'react';
 
 const SW_PATH = `${mountPrefix}/sw.js`;
 

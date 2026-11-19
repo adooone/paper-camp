@@ -1,9 +1,9 @@
-import webpush from 'web-push';
+import { sendNotification } from 'web-push';
 import type { StoredNotificationKind } from '../types/index';
 import {
-  type PushSubscriptionRecord,
   defaultPushStorePath,
   loadPushStore,
+  type PushSubscriptionRecord,
   removeSubscription,
   savePushStore,
   subscriptionKey,
@@ -35,7 +35,7 @@ async function sendWebPush(
   vapid: { publicKey: string; privateKey: string },
 ): Promise<DeliveryOutcome> {
   try {
-    await webpush.sendNotification(record.subscription, JSON.stringify(payload), {
+    await sendNotification(record.subscription, JSON.stringify(payload), {
       vapidDetails: {
         subject: VAPID_SUBJECT,
         publicKey: vapid.publicKey,

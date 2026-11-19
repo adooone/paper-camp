@@ -1,7 +1,7 @@
-import { hasCompletedPhase } from '@/app/features/plans/helpers';
-import type { PhaseItem, PlanEntry } from '@/types/index';
 import { Button, Tooltip } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { hasCompletedPhase } from '@/app/features/plans/helpers';
+import type { PhaseItem, PlanEntry } from '@/types/index';
 import { buildStylePassPhase } from '../prompts';
 
 interface StylePassButtonProps {

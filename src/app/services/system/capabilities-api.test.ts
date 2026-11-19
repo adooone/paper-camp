@@ -1,7 +1,7 @@
-import { type IncomingMessage, type Server, type ServerResponse, createServer } from 'node:http';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { MACHINE_NIGHT_PATH } from '@/types/index';
 import { afterEach, describe, expect, it } from 'vitest';
+import { MACHINE_NIGHT_PATH } from '@/types/index';
 import { fetchMachineNightGate } from './capabilities-api';
 
 describe('fetchMachineNightGate', () => {

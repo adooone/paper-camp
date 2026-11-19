@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { fetchNotifications, markNotificationRead } from '@/app/services/content';
 import { notificationsQueryKey, queryClient } from '@/app/services/query-client';
 import { getRuntimeConnection, useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { Notification } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
 
 export interface UseNotificationsResult {
   notifications: Notification[] | null;

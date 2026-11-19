@@ -1,5 +1,5 @@
-import { type Mock, describe, expect, it, vi } from 'vitest';
-import { type LazyPageEnv, importWithRecovery } from './lazy-page';
+import { describe, expect, it, type Mock, vi } from 'vitest';
+import { importWithRecovery, type LazyPageEnv } from './lazy-page';
 
 const memoryStorage = () => {
   const map = new Map<string, string>();

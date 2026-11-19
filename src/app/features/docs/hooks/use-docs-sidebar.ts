@@ -1,7 +1,7 @@
-import { useResolvedDocSection } from '@/app/hooks';
-import { useAppStore } from '@/app/stores/app-store';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
+import { useResolvedDocSection } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 
 export const useDocsSidebar = () => {
   const repoDocs = useAppStore((s) => s.repoDocs);

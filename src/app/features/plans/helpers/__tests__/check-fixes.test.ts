@@ -1,5 +1,5 @@
-import type { CheckResult, DeskCheckState, PhaseItem } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { CheckResult, DeskCheckState, PhaseItem } from '@/types/index';
 import { buildCheckFixes, upsertCheckFixes } from '../check-fixes';
 
 const pass = (cmd: string): CheckResult => ({

@@ -1,5 +1,5 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { type Server, createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -57,7 +57,6 @@ function captureErrors() {
 let originalConfigDir: string | undefined;
 
 afterEach(() => {
-  // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
   if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
   else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
 });

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as pty from 'node-pty';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { type LoginRelayHandle, getCurrentLoginRelay, startClaudeLoginRelay } from './login-relay';
+import { getCurrentLoginRelay, type LoginRelayHandle, startClaudeLoginRelay } from './login-relay';
 
 const originalPath = process.env.PATH;
 const dirs: string[] = [];

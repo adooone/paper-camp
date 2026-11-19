@@ -1,24 +1,24 @@
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  buildHubMachines,
+  collectMachineUrls,
   type HubMachine,
   type HubMachineInput,
   type HubProjectRow,
   type RememberedProjectInput,
-  buildHubMachines,
-  collectMachineUrls,
 } from '@/app/services/hub-machines';
 import { lastOpenedAt } from '@/app/services/last-route-store';
 import { listMachines } from '@/app/services/machine-store';
 import { mountPrefix } from '@/app/services/mount';
 import { openProject } from '@/app/services/open-project';
 import {
-  type ProjectEntry,
   listProjects,
+  type ProjectEntry,
   projectEntryId,
   renameProject,
 } from '@/app/services/project-registry';
 import { fetchMachineProjects } from '@/app/services/system';
-import { useNavigate, useRouter } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
 import { useHubMachineReports } from './use-hub-machine-reports';
 import { useHubProjectStates } from './use-hub-project-states';
 
@@ -98,7 +98,10 @@ export function useHubMachines(): UseHubMachinesResult {
     openRow: (row, machineUrl, path) => {
       void openProject(row, machineUrl, path, {
         navigate: (opts) => navigate(opts as never),
-        routeExists: (pathname) => router.getMatchedRoutes(pathname).foundRoute !== undefined,
+        routeExists: (pathname) => {
+          const [, , foundRoute] = router.getMatchedRoutes(pathname);
+          return foundRoute !== undefined;
+        },
       });
     },
     renameRow: (runtimeUrl, label) => {

@@ -1,5 +1,5 @@
-import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { PlanEntry, ThreadMessage } from '@/types/index';
 import { collectOpenQuestions } from '../helpers';
 
 const plan = (overrides: Partial<PlanEntry>): PlanEntry => ({

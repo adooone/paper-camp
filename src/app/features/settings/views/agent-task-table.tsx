@@ -1,3 +1,5 @@
+import { Input, Table } from '@dendelion/folk-ui';
+import { useEffect, useState } from 'react';
 import { InlineSelect } from '@/app/components';
 import {
   AGENT_IDS,
@@ -5,13 +7,11 @@ import {
   AGENT_OPTIONS,
   type AgentConfig,
   type AgentId,
-  DEFAULT_AGENTS,
   DEFAULT_AGENT_KEYS,
+  DEFAULT_AGENTS,
   type DefaultAgentKey,
   type DefaultAgentsMap,
 } from '@/types/index';
-import { Input, Table } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
 import { TASK_TYPE_LABELS } from '../constants';
 
 interface AgentTaskTableRow {

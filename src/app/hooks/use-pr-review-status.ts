@@ -1,5 +1,5 @@
-import type { PrReviewStatus } from '@/types/index';
 import { useEffect, useState } from 'react';
+import type { PrReviewStatus } from '@/types/index';
 import { fetchPrReviewStatus } from '../services/agent-api';
 
 export function usePrReviewStatus(planId: string | undefined): PrReviewStatus | null {

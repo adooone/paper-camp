@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readCorpus } from '@/core/corpus';
 import { afterAll, describe, expect, it, vi } from 'vitest';
+import { readCorpus } from '@/core/corpus';
 import type { RouteContext } from '../types';
 import { entityRoutes } from './entities';
 

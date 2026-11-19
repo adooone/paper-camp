@@ -1,4 +1,16 @@
 import {
+  Button,
+  getSurfaceStyles,
+  IconButton,
+  Layout,
+  SidebarCard,
+  SidebarToggleIcon,
+  ToastProvider,
+} from '@dendelion/folk-ui';
+import { colors, surface, withAlpha } from '@dendelion/folk-ui/tokens';
+import { Outlet } from '@tanstack/react-router';
+import { lazy, Suspense } from 'react';
+import {
   NightCriticalBanner,
   ProjectSwitcher,
   RowSkeleton,
@@ -16,18 +28,6 @@ import { HubShell } from '@/app/features/hub';
 import { PlanActionsColumn, PlansListSkeleton, StatusFilters } from '@/app/features/plans/index';
 import { useAppShell } from '@/app/hooks/use-app-shell';
 import { importWithRecovery } from '@/app/services/lazy-page';
-import {
-  Button,
-  IconButton,
-  Layout,
-  SidebarCard,
-  SidebarToggleIcon,
-  ToastProvider,
-  getSurfaceStyles,
-} from '@dendelion/folk-ui';
-import { colors, surface, withAlpha } from '@dendelion/folk-ui/tokens';
-import { Outlet } from '@tanstack/react-router';
-import { Suspense, lazy } from 'react';
 import { NavLabel, navItems } from './nav';
 
 const MOBILE_NAV_SHADOW = `0 -2px 8px ${withAlpha(colors.sketchInk, 0.08)}`;

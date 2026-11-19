@@ -1,7 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { configQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchConfigAt } from '@/app/services/system';
-import { useQuery } from '@tanstack/react-query';
 
 export interface SubjectVocabulary {
   subjects: string[];

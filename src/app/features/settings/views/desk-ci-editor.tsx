@@ -1,7 +1,7 @@
-import { useCiRelease } from '@/app/hooks/use-ci-release';
-import type { DeskCi, DraftPrReadiness } from '@/types/index';
 import { Input, SettingRow, Switch } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
+import { useCiRelease } from '@/app/hooks/use-ci-release';
+import type { DeskCi, DraftPrReadiness } from '@/types/index';
 
 interface DeskCiEditorProps {
   ci: DeskCi;
@@ -9,7 +9,7 @@ interface DeskCiEditorProps {
 }
 
 export const scoutSecretsValue = (draftPr: DraftPrReadiness | null): string => {
-  if (!draftPr || !draftPr.secretsChecked) return "couldn't check — needs admin on the repo";
+  if (!draftPr?.secretsChecked) return "couldn't check — needs admin on the repo";
   const missing = [
     !draftPr.scoutAppId && 'SCOUT_APP_ID',
     !draftPr.scoutPrivateKey && 'SCOUT_PRIVATE_KEY',

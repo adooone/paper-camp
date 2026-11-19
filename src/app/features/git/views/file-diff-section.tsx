@@ -1,8 +1,8 @@
+import { Accordion, Stamp } from '@dendelion/folk-ui';
 import { CountBadge, FilePath, GitStatusMarker } from '@/app/features/git/components';
 import { useAppStore } from '@/app/stores/app-store';
 import { type DiffLineType, parsePatch, rawContentHunks } from '@/app/utils/parse-diff';
 import type { FileDiffEntry } from '@/types/index';
-import { Accordion, Stamp } from '@dendelion/folk-ui';
 
 const COLLAPSE_LINE_THRESHOLD = 60;
 

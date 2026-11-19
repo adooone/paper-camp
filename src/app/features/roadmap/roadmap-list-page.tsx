@@ -1,7 +1,7 @@
-import { DoodleIllustration, PageToolbar, PageToolbarRow, RowSkeleton } from '@/app/components';
-import type { ResolvedRoadmapItem } from '@/types/index';
 import { Button, Divider, EmptyState, Input, PageTitle } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { DoodleIllustration, PageToolbar, PageToolbarRow, RowSkeleton } from '@/app/components';
+import type { ResolvedRoadmapItem } from '@/types/index';
 import { firstSentence } from './helpers';
 import { useRoadmapPage, useRoadmapSidebar } from './hooks';
 import { AddRoadmapItemModal, PromoteRoadmapItemModal, RemoveRoadmapItemModal } from './modals';

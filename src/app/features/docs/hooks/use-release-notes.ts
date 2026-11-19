@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react';
 import { fetchReleaseNotes } from '@/app/services/release-notes-api';
 import type { ReleaseNoteSection } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 export type ReleaseNotesState =
   | { status: 'loading' }

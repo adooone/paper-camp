@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { fetchChat } from '@/app/services/content';
 import { chatQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { ThreadMessage } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
 
 export interface UseChatResult {
   chatThread: ThreadMessage[] | null;

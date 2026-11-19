@@ -1,5 +1,5 @@
-import type { DeskCheckState } from '@/types/index';
 import { useCallback, useEffect, useState } from 'react';
+import type { DeskCheckState } from '@/types/index';
 import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchChecks, fixDeskCheck, runDeskCheck, stopDeskCheck } from '../services/checks-api';
 

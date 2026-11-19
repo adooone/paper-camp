@@ -1,5 +1,5 @@
-import type { ScopeRow } from '@/app/features/scope';
 import { describe, expect, it, vi } from 'vitest';
+import type { ScopeRow } from '@/app/features/scope';
 import { markAllReadSettled, markReadOrToast } from './helpers';
 
 describe('markReadOrToast', () => {

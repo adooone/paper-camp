@@ -1,5 +1,5 @@
-import type { PhaseItem } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { PhaseItem } from '@/types/index';
 import {
   appendManualPhase,
   isCorpusOnlyCommit,

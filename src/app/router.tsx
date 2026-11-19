@@ -1,3 +1,5 @@
+import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
+import { lazy } from 'react';
 import { AppShell } from '@/app/components/layout/app-shell';
 import { chatAboutParam } from '@/app/features/chat/helpers';
 import { HubHome } from '@/app/features/hub';
@@ -8,8 +10,6 @@ import { importWithRecovery } from '@/app/services/lazy-page';
 import type { ModuleLayer } from '@/app/services/module-layer';
 import { mountPrefix } from '@/app/services/mount';
 import type { LogSearchParams } from '@/core/run-filters';
-import { createRootRoute, createRoute, createRouter, redirect } from '@tanstack/react-router';
-import { lazy } from 'react';
 
 export { HUB_PATH } from '@/app/components/layout/nav';
 

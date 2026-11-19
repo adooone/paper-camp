@@ -1,8 +1,8 @@
+import { Button, Stamp } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { fetchStashDiff, restoreStash } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { GitStashEntry, GitStashRestoreResult } from '@/types/index';
-import { Button, Stamp } from '@dendelion/folk-ui';
-import { useState } from 'react';
 
 const formatStashAge = (days: number) =>
   days <= 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;

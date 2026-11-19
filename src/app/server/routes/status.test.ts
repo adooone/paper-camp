@@ -11,6 +11,7 @@ vi.mock('@/core/git-pr', () => ({
 }));
 
 const { statusRoutes } = await import('./status');
+
 import type { RouteContext } from './types';
 
 function fakeReq(url: string): IncomingMessage {

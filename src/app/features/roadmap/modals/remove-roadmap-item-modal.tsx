@@ -1,8 +1,8 @@
+import { Button, Modal } from '@dendelion/folk-ui';
+import { useEffect, useState } from 'react';
 import { deleteRoadmapItem } from '@/app/services/content/docs-api';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ResolvedRoadmapItem } from '@/types/index';
-import { Button, Modal } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
 
 interface RemoveRoadmapItemModalProps {
   horizonTitle: string | null;

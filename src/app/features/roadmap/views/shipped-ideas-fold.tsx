@@ -1,6 +1,6 @@
-import type { ResolvedIdea } from '@/types/index';
 import { Accordion } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import type { ResolvedIdea } from '@/types/index';
 import { IdeaRow } from './idea-row';
 
 interface ShippedIdeasFoldProps {

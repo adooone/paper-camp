@@ -12,9 +12,9 @@ import {
   writeEntityFile,
 } from '@/core/corpus';
 import {
-  type RunOrderFileEntry,
   formatRunOrderFile,
   parseRunOrderFile,
+  type RunOrderFileEntry,
 } from '@/core/run-order-file';
 import type { BranchHygieneStatus, StaleBaseRef, ThreadMessage } from '@/types/index';
 

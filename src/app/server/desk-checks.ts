@@ -8,7 +8,7 @@ import { deriveSubjectVocabulary, parseRoadmap } from '@/core/roadmap';
 import type { CheckStatus, DeskCheckState, FailingCheck } from '../../types';
 import { killWithEscalation } from './agent-process';
 import { runBiomeFix } from './biome-fix';
-import { type HeavySlot, createHeavySlot } from './heavy-slot';
+import { createHeavySlot, type HeavySlot } from './heavy-slot';
 import { readMaybe } from './helpers';
 
 export interface CheckFingerprint {

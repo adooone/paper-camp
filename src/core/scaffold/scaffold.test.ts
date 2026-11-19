@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { CORPUS_FORMAT_VERSION } from '../corpus-format';
 import { LEGACY_LOCAL_PATHS } from '../local-paths';
 import { addProject, loadRegistry } from '../machine-registry';
-import { PAPER_CAMP_VERSION, initProject } from './scaffold';
+import { initProject, PAPER_CAMP_VERSION } from './scaffold';
 
 const dirs: string[] = [];
 

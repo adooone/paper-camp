@@ -1,5 +1,5 @@
-import type { GitLogCommit, GitLogResponse } from '@/types/index';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { GitLogCommit, GitLogResponse } from '@/types/index';
 import { createDiffSlice } from './diff-slice';
 import type { GetState, SetState } from './slice-helpers';
 

@@ -1,7 +1,7 @@
-import { DoodleIllustration } from '@/app/components';
-import { useAppStore } from '@/app/stores/app-store';
 import { Button, EmptyState } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { DoodleIllustration } from '@/app/components';
+import { useAppStore } from '@/app/stores/app-store';
 
 interface SearchMatch {
   title: string;

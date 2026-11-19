@@ -1,4 +1,3 @@
-import { AGENT_OPTIONS } from '@/types/index';
 import type {
   AgentId,
   AgentOptionsDescriptor,
@@ -7,9 +6,10 @@ import type {
   DefaultAgentsMap,
   TaskKind,
 } from '@/types/index';
+import { AGENT_OPTIONS } from '@/types/index';
 import type { ParsedChatLine } from './chat';
-import * as claudeCode from './claude-code';
 import type { ParsedAgentLine } from './claude-code';
+import * as claudeCode from './claude-code';
 import * as opencode from './opencode';
 
 export interface AgentAdapter {

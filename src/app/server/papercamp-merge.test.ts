@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import { parseEntityFile } from '@/core/parse/parser';
 import { formatEntityFile } from '@/core/serialize';
-import { describe, expect, it } from 'vitest';
 import type { PhaseItem, ThreadMessage } from '../../types';
 import { mergePapercampEntity } from './papercamp-merge';
 

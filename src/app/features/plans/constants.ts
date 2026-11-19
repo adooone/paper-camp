@@ -1,6 +1,6 @@
-import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
 import type { StampVariant } from '@dendelion/folk-ui';
 import { color, colors } from '@dendelion/folk-ui/tokens';
+import type { IdeaStatus, PlanEntry, PrState, ReviewDecision } from '@/types/index';
 
 // Mirrors the resolved text colour of each status's `StampVariant` (below), so the
 // status dot and its stamp always agree.

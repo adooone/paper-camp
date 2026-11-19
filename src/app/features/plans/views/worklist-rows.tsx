@@ -1,7 +1,3 @@
-import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
-import { ProjectChip, type ScopeRow } from '@/app/features/scope';
-import { entityPath } from '@/app/hooks';
-import { useAppStore } from '@/app/stores/app-store';
 import {
   ChevronRightIcon,
   MetaLine,
@@ -14,6 +10,10 @@ import {
 } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
+import type { FixRow, NoteRow, PlanSortKey, WorklistRow } from '@/app/features/plans/helpers';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
+import { entityPath } from '@/app/hooks';
+import { useAppStore } from '@/app/stores/app-store';
 import { PlanIdStamp } from '../components';
 import { IDEA_STATUS_LABEL, IDEA_STATUS_STAMP, STATUS_LABEL, STATUS_STAMP } from '../constants';
 import { effectiveStatus, relativeDate, runningTaskForPlan, worklistEntryToPlan } from '../helpers';
@@ -116,7 +116,7 @@ export const WorklistRows = ({
   const sortHeader = (key: PlanSortKey, label: string, ariaLabel?: string) => {
     const active = key === sortKey;
     return (
-      // biome-ignore lint/a11y/useSemanticElements: this grid cell is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
+      // biome-ignore lint/a11y/useSemanticElements lint/a11y/useFocusableInteractive: this grid cell is CSS-grid, not a <table>; a real <th> would need a <tr>/<table> ancestor.
       <span
         role="columnheader"
         aria-sort={

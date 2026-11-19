@@ -1,6 +1,6 @@
-import { useSignInAction } from '@/app/features/settings/hooks';
 import { Button, Input } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { useSignInAction } from '@/app/features/settings/hooks';
 import { RelayFallbackGuide } from './relay-fallback-guide';
 
 interface SignInActionProps {

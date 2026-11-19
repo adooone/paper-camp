@@ -4,7 +4,7 @@ import type { AgentAuthStatus, AgentId, CapabilityResult, ConnectAction } from '
 import { AGENT_IDS, AGENT_LABELS } from '../../types';
 import { AGENTS } from './agents';
 import { readMaybe } from './helpers';
-import { type ProbeExec, type ProbeResult, VERSION_PROBE_TIMEOUT_MS, run } from './run';
+import { type ProbeExec, type ProbeResult, run, VERSION_PROBE_TIMEOUT_MS } from './run';
 
 // Tools the runtime drives on the machine (git, claude-code, opencode); each keeps its
 // own credential locally on this machine, never a remote account tied to Paper Camp.

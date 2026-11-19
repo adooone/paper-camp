@@ -3,9 +3,9 @@ import { reconnectCurrentRuntime } from './activity-stream';
 import { setApiBase, setApiPairingToken } from './api-base';
 import { mountPrefix } from './mount';
 import {
-  type ProjectEntry,
   activeProjectId,
   listProjects,
+  type ProjectEntry,
   removeProject,
   renameProject,
   selectProject,

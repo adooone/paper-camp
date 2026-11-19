@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { TaskLogEntry } from '../types/index';
 import {
-  PHASE_MAX_FRACTION,
-  PHASE_STALL_MS,
   advanceAnchor,
   classifyAnchor,
   isPhaseStalled,
   medianSegmentMs,
+  PHASE_MAX_FRACTION,
+  PHASE_STALL_MS,
   phaseFraction,
 } from './phase-progress';
 

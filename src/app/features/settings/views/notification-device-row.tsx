@@ -1,5 +1,5 @@
-import type { PushDeviceSummary } from '@/app/services/system';
 import { CloseIcon, Divider, IconButton, Stamp } from '@dendelion/folk-ui';
+import type { PushDeviceSummary } from '@/app/services/system';
 
 interface NotificationDeviceRowProps {
   device: PushDeviceSummary;

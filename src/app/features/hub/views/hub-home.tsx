@@ -1,9 +1,9 @@
+import { Button, Page, PageTitle, Stamp } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { resolveCurrentProject } from '@/app/features/scope/current-project';
 import { useProjectIdentity } from '@/app/hooks';
 import { totalLocalStateDrift } from '@/app/services/hub-machines';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
-import { Button, Page, PageTitle, Stamp } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
 import { AddMachineFooter } from '../components';
 import { useHubMachines } from '../hooks';
 

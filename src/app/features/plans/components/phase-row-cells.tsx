@@ -1,8 +1,8 @@
-import { formatDuration, formatTokens } from '@/core/phase-run';
 import { Checkbox, Spinner, Stamp } from '@dendelion/folk-ui';
+import { formatDuration, formatTokens } from '@/core/phase-run';
 import { AgentStartButton } from '../actions/agent-start-button';
 import { STATUS_STAMP } from '../constants';
-import { type WorkRow, isRunningRow } from '../helpers';
+import { isRunningRow, type WorkRow } from '../helpers';
 import type { RunningPhaseFill } from '../hooks';
 
 interface PhaseCheckboxCellProps {

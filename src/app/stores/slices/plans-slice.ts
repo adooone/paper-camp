@@ -1,9 +1,9 @@
 import {
   DEFAULT_PLAN_LIST_FILTERS,
   type GroupMode,
+  isGroupMode,
   type PlanListFilters,
   type PlanSortKey,
-  isGroupMode,
 } from '@/app/features/plans/helpers';
 import { readLocalDraft, writeLocalDraft } from '@/app/utils/local-draft-store';
 import type { IdeaStatus, PlanStatus } from '@/types/index';

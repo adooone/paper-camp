@@ -6,7 +6,7 @@ import { loadPushStore, savePushStore } from './push-store';
 
 const sendNotification = vi.fn();
 vi.mock('web-push', () => ({
-  default: { sendNotification: (...args: unknown[]) => sendNotification(...args) },
+  sendNotification: (...args: unknown[]) => sendNotification(...args),
 }));
 
 const { sendPushForProject } = await import('./push-send');

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { ScopeRow } from '@/app/features/scope';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchRunsAt } from '@/app/services/agent-api';
@@ -7,7 +8,6 @@ import {
   markNotificationReadAt,
 } from '@/app/services/content/notifications-api';
 import type { AgentTaskState, Notification, TaskLogEntry } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 interface ScopeRunData {
   project: ScopeRow;

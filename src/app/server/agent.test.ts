@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readBatchRunState } from '@/core/batch-run';
 import { parseEntityFile } from '@/core/parse';
 import { entityToIdea, entityToPlan } from '@/core/readers';
 import type { FailingCheck, PhaseItem, PlanEntry, ReviewThread, TaskLogEntry } from '@/types/index';
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildAgentPrompt,
   buildFixItemPrompt,
@@ -19,10 +19,10 @@ import {
 } from './agent';
 import { createAgentHooks } from './agent-hooks';
 import {
-  SIGNED_OUT_ERROR,
   getAgentSignIn,
   markAgentSignedIn,
   resetAgentSignInForTests,
+  SIGNED_OUT_ERROR,
 } from './agent-signin';
 import { createGitManager } from './git';
 
@@ -1827,7 +1827,8 @@ describe('git sync between ideas (IDEA-321)', () => {
     const paused = await readBatchRunState(root);
     expect(paused?.status).toBe('paused');
     expect(paused?.pause).toMatchObject({ kind: 'conflict', id: plan.id });
-    const conflictPrompt = (paused?.pause as { conflictPrompt: string }).conflictPrompt;
+    const conflictPrompt =
+      (paused?.pause as { conflictPrompt: string } | undefined)?.conflictPrompt ?? '';
     expect(conflictPrompt).toContain('CONFLICT.md');
 
     // The resolve-conflict agent reproduces the rebase (the earlier one was aborted,

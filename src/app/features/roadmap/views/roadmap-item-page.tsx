@@ -1,5 +1,3 @@
-import { Markdown } from '@/app/components/markdown';
-import type { ResolvedRoadmapItem } from '@/types/index';
 import {
   Button,
   Card,
@@ -11,8 +9,10 @@ import {
   Text,
 } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
+import { Markdown } from '@/app/components/markdown';
+import type { ResolvedRoadmapItem } from '@/types/index';
 import { ITEM_STATE_STAMP } from '../constants';
-import { type IdeaDateRange, formatFactDate } from '../helpers';
+import { formatFactDate, type IdeaDateRange } from '../helpers';
 import { AddCandidateForm } from './add-candidate-form';
 import { CandidateRow } from './candidate-row';
 import { IdeaRow } from './idea-row';

@@ -1,15 +1,3 @@
-import { BatchStopControls } from '@/app/components/stack-panel/batch-task-card';
-import { CapacityRow } from '@/app/components/stack-panel/capacity-row';
-import { useBranchSync } from '@/app/hooks/use-branch-sync';
-import { entityLink } from '@/app/hooks/use-route-selection';
-import type { BatchPreviewItem } from '@/app/services/batch-api';
-import { patchEntity } from '@/app/services/content';
-import { refreshPlans } from '@/app/services/query-client';
-import { useAppStore } from '@/app/stores/app-store';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import type { BatchBacklogItem } from '@/core/batch-readiness';
-import type { BatchRunPauseReason, BatchRunRules } from '@/core/batch-run';
-import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import {
   Button,
   Checkbox,
@@ -25,6 +13,18 @@ import {
 } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { BatchStopControls } from '@/app/components/stack-panel/batch-task-card';
+import { CapacityRow } from '@/app/components/stack-panel/capacity-row';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import { entityLink } from '@/app/hooks/use-route-selection';
+import type { BatchPreviewItem } from '@/app/services/batch-api';
+import { patchEntity } from '@/app/services/content';
+import { refreshPlans } from '@/app/services/query-client';
+import { useAppStore } from '@/app/stores/app-store';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import type { BatchBacklogItem } from '@/core/batch-readiness';
+import type { BatchRunPauseReason, BatchRunRules } from '@/core/batch-run';
+import { DEFAULT_NIGHT_CONFIG } from '@/types/index';
 import { resolveConflict } from '../../../services/git-api';
 
 const gitLevelCopy: Record<string, string> = {

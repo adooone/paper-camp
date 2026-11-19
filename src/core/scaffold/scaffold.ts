@@ -8,17 +8,17 @@ import { addProject, defaultRegistryPath, loadRegistry, saveRegistry } from '../
 import { paperCampConfigSchema } from '../parse/schemas';
 import { formatEntityFile, todayDateString } from '../serialize';
 import {
-  DRAFT_PR_WORKFLOW_CONTENT,
-  DRAFT_PR_WORKFLOW_HEADER,
-  PULL_REQUEST_TEMPLATE_CONTENT,
-  PULL_REQUEST_TEMPLATE_HEADER,
-  SKILL_MD_CONTENT,
   buildClaudeSettingsJson,
   buildMcpJson,
   buildOpencodeJson,
+  DRAFT_PR_WORKFLOW_CONTENT,
+  DRAFT_PR_WORKFLOW_HEADER,
   mergeClaudeSettingsJson,
   mergeMcpJson,
   mergeOpencodeJson,
+  PULL_REQUEST_TEMPLATE_CONTENT,
+  PULL_REQUEST_TEMPLATE_HEADER,
+  SKILL_MD_CONTENT,
 } from './templates';
 
 const PACKAGE_JSON_SEARCH_DEPTH = 5;

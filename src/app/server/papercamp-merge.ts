@@ -1,7 +1,7 @@
 import { parseEntityFile } from '@/core/parse/parser';
 import { formatEntityFile } from '@/core/serialize';
-import { PLAN_STATUSES } from '../../types';
 import type { EntityStatus, PhaseItem, PhaseRun, ThreadMessage } from '../../types';
+import { PLAN_STATUSES } from '../../types';
 
 const STATUS_RANK = new Map<EntityStatus, number>(
   PLAN_STATUSES.map((status, index) => [status, index + 1]),

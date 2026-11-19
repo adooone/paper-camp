@@ -3,10 +3,10 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { readCorpus } from '@/core/corpus';
 import { squashMergePr } from '@/core/git-pr';
-import { afterAll, describe, expect, it, vi } from 'vitest';
-import { FetchFailedError, createGitManager } from '../git';
+import { createGitManager, FetchFailedError } from '../git';
 import { gitRoutes } from './git';
 import type { RouteContext } from './types';
 

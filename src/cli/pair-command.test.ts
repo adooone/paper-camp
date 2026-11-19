@@ -87,7 +87,6 @@ describe('runPair', () => {
   afterEach(async () => {
     for (const server of servers.splice(0)) server.close();
     for (const dir of dirs.splice(0)) await rm(dir, { recursive: true, force: true });
-    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
     if (isTtyChanged) process.stdout.isTTY = originalIsTTY as boolean;

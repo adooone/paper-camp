@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
-  CORPUS_FORMAT_VERSION,
-  CorpusTooNewError,
   assertCorpusWritable,
   bumpCorpusFormat,
+  CORPUS_FORMAT_VERSION,
+  CorpusTooNewError,
 } from './corpus-format';
 
 const dirs: string[] = [];

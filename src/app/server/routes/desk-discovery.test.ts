@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { DeskConfig } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
+import type { DeskConfig } from '@/types/index';
 import { deskDiscoveryRoutes } from './desk-discovery';
 import type { RouteContext } from './types';
 

@@ -1,6 +1,6 @@
-import type { ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
 import { Button, Card, InlineCode } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import type { ChatPermissionAsk, ChatPermissionChoice } from '@/types/index';
 
 const TOOL_VERBS: Record<string, string> = {
   bash: 'Run',

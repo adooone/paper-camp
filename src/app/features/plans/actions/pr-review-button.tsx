@@ -1,9 +1,9 @@
+import { GithubIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { useGhOk, useHasAnyAgent } from '@/app/hooks';
 import { usePrReviewStatus } from '@/app/hooks/use-pr-review-status';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PlanEntry } from '@/types/index';
-import { GithubIcon, SidebarItem, Tooltip } from '@dendelion/folk-ui';
-import { useState } from 'react';
 
 interface PrReviewButtonProps {
   plan: PlanEntry;

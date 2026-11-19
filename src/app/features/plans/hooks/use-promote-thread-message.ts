@@ -1,10 +1,10 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { promoteFeedbackMessage } from '@/app/services/agent-api';
 import { createIdea } from '@/app/services/content';
 import { refreshPlans } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useState } from 'react';
 
 // Distillation: turns one ephemeral `chat` thread message into a durable
 // decision/log entry, or into a whole new idea entity — see IDEA-130 phase 4.

@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import {
   type ApiMiddleware,
   applyCorsHeaders,
@@ -10,15 +10,15 @@ import {
   isLoopbackHost,
   isTrustedHost,
 } from '../app/server/api';
-import { type HeavySlot, createHeavySlot } from '../app/server/heavy-slot';
+import { createHeavySlot, type HeavySlot } from '../app/server/heavy-slot';
 import { readBody, sendJson } from '../app/server/http';
 import { migrateLocalState } from '../app/server/migrate-local-state';
-import { type PairCodeManager, createPairCodeManager } from '../app/server/pair-code';
+import { createPairCodeManager, type PairCodeManager } from '../app/server/pair-code';
 import {
-  type PairingManagerState,
   createPairingManager,
   loadOrMintPairingState,
   machinePairingPath,
+  type PairingManagerState,
   savePairingState,
 } from '../app/server/pairing';
 import { parseBatchRules } from '../app/server/routes/batch';
@@ -26,19 +26,19 @@ import type { BatchRunRules } from '../core/batch-run';
 import { readCapacity } from '../core/capacity';
 import {
   type DaemonState,
-  type UpdateEvent,
   daemonLogPath,
   daemonStatePath,
   formatDaemonTailnetLine,
   removeDaemonState,
+  type UpdateEvent,
   writeDaemonState,
 } from '../core/daemon-state';
 import {
-  type MachineProject,
   defaultRegistryPath,
   isProjectMissing,
   listProjects,
   loadRegistry,
+  type MachineProject,
 } from '../core/machine-registry';
 import { evaluateNightGate } from '../core/night-gate';
 import { computeNightHealthMap } from '../core/night-health';
@@ -62,9 +62,9 @@ import {
   type MachineUpdateResponse,
 } from '../types/index';
 import {
-  type InstallResult,
   applyMachineUpdate,
   checkForUpdateAtBoot,
+  type InstallResult,
   installedVersionAt,
   runNpmInstall,
   skipsUpdateCheck,
@@ -75,15 +75,15 @@ import { portInUseMessage } from './dev-port';
 import { readNightConfig, resolveNightConfig, runNightPass } from './night-command';
 import { buildRegistrationLinkForMachine } from './registration-link';
 import {
-  TAILNET_NOT_RUNNING_MESSAGE,
   runTailnetServe,
+  TAILNET_NOT_RUNNING_MESSAGE,
   tailnetFailureMessage,
 } from './tailnet-serve';
 import { isToolbarAssetRequest, serveToolbarAsset } from './toolbar-assets';
 import {
   CLOUDFLARED_MISSING_MESSAGE,
-  type QuickTunnel,
   isCloudflaredAvailable,
+  type QuickTunnel,
   startQuickTunnel,
 } from './tunnel';
 

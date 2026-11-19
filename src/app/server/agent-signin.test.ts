@@ -4,8 +4,8 @@ import {
   isAuthFailure,
   markAgentSignedIn,
   markAgentSignedOut,
-  onAgentSignInChange,
   onAgentSignedIn,
+  onAgentSignInChange,
   resetAgentSignInForTests,
 } from './agent-signin';
 

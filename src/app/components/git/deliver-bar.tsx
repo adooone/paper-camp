@@ -1,10 +1,7 @@
-import { useDeliverChecksRow } from '@/app/features/plans/hooks';
-import { entityLink } from '@/app/hooks';
-import { useBranchSync } from '@/app/hooks/use-branch-sync';
-import type { CheckStatus } from '@/types/index';
 import {
   Button,
   CloseIcon,
+  getSurfaceStyles,
   IconButton,
   Menu,
   type MenuEntry,
@@ -13,10 +10,13 @@ import {
   Stamp,
   type StampVariant,
   Tooltip,
-  getSurfaceStyles,
 } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import type { ReactNode } from 'react';
+import { useDeliverChecksRow } from '@/app/features/plans/hooks';
+import { entityLink } from '@/app/hooks';
+import { useBranchSync } from '@/app/hooks/use-branch-sync';
+import type { CheckStatus } from '@/types/index';
 import { CommitMessageFields, type CommitMessageFieldsState } from './commit-message-fields';
 
 const CHECK_VARIANT: Record<CheckStatus, StampVariant> = {

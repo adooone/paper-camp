@@ -1,5 +1,5 @@
-import type { CapabilityStatus, DefaultAgentKey, NotificationSettingKind } from '@/types/index';
 import { color, colors, withAlpha } from '@dendelion/folk-ui/tokens';
+import type { CapabilityStatus, DefaultAgentKey, NotificationSettingKind } from '@/types/index';
 
 export const TASK_TYPE_LABELS: Record<DefaultAgentKey, { label: string; detail: string }> = {
   build: { label: 'Build', detail: 'Phase runs, fixes and conflicts' },

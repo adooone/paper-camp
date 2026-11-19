@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type SidebarAreaFlags, computeHasSidebar, shouldShowUsageFallback } from './use-app-shell';
+import { computeHasSidebar, type SidebarAreaFlags, shouldShowUsageFallback } from './use-app-shell';
 
 const baseFlags: SidebarAreaFlags = {
   pathname: '/',

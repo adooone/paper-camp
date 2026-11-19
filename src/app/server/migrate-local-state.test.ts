@@ -2,9 +2,9 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readCapacity } from '@/core/capacity';
 import { LEGACY_LOCAL_PATHS } from '@/core/local-paths';
-import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { migrateLocalState } from './migrate-local-state';
 import { loadPairingState } from './pairing';
 

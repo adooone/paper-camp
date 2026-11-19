@@ -1,5 +1,5 @@
-import type { PlanEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { PlanEntry } from '@/types/index';
 import {
   addRoadmapCandidate,
   addRoadmapItem,

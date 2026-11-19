@@ -1,6 +1,6 @@
-import { useAppStore } from '@/app/stores/app-store';
 import { useToast } from '@dendelion/folk-ui';
 import { useEffect, useRef } from 'react';
+import { useAppStore } from '@/app/stores/app-store';
 
 const RELAY_POLL_MS = 2000;
 

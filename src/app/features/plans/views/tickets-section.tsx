@@ -1,9 +1,9 @@
+import { SectionHeading } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { entityLink } from '@/app/hooks';
 import { createTicket } from '@/app/services/content';
 import { refreshPlans } from '@/app/services/query-client';
 import type { PlanEntry } from '@/types/index';
-import { SectionHeading } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
 import { AddTicketButton } from '../actions';
 import { PlanRows } from './plan-rows';
 

@@ -1,7 +1,7 @@
-import { formatTokens } from '@/core/phase-run';
-import type { ProjectStats } from '@/types/index';
 import { EmptyState, Progress } from '@dendelion/folk-ui';
 import { color } from '@dendelion/folk-ui/tokens';
+import { formatTokens } from '@/core/phase-run';
+import type { ProjectStats } from '@/types/index';
 import { StatCard, StatRow } from './stat-card';
 
 export interface UsagePerWeekCardProps {

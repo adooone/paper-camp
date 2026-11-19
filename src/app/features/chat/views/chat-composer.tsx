@@ -1,7 +1,7 @@
-import type { ScopeRow } from '@/app/features/scope';
 import { Button, Card, Select, Textarea } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import type { KeyboardEvent, Ref } from 'react';
+import type { ScopeRow } from '@/app/features/scope';
 import { isSendKey } from '../helpers';
 
 export interface ChatComposerProps {

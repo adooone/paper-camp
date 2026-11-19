@@ -1,8 +1,8 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchEntity } from '@/app/services/content';
 import { entityQueryKey, worklistQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import type { EntityDetailEntry, WorklistEntry } from '@/types/index';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const rowAsEntity = (row: WorklistEntry): EntityDetailEntry => ({
   id: row.id,

@@ -1,6 +1,6 @@
-import { useAppStore } from '@/app/stores/app-store';
 import { Button, RunIcon } from '@dendelion/folk-ui';
 import { useEffect } from 'react';
+import { useAppStore } from '@/app/stores/app-store';
 
 export const RunQueueButton = () => {
   const preview = useAppStore((s) => s.batchPreview);

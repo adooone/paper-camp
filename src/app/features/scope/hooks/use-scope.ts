@@ -1,3 +1,6 @@
+import { useQueries } from '@tanstack/react-query';
+import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
+import { useEffect, useMemo } from 'react';
 import { useHubMachines } from '@/app/features/hub/hooks/use-hub-machines';
 import { useProjectIdentity } from '@/app/hooks';
 import { fetchChat, fetchChatAt } from '@/app/services/content/chat-api';
@@ -7,9 +10,9 @@ import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
 import { chatQueryKey, notificationsQueryKey, worklistQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import {
-  type ScopeKey,
   parseScopeParam,
   resolveScope,
+  type ScopeKey,
   scopeKey,
   serializeScopeParam,
 } from '@/app/services/scope';
@@ -19,9 +22,6 @@ import {
   unreadActivityCount,
 } from '@/app/services/scope-counts';
 import { lastScopeFor, rememberScope } from '@/app/services/scope-store';
-import { useQueries } from '@tanstack/react-query';
-import { useNavigate, useRouterState, useSearch } from '@tanstack/react-router';
-import { useEffect, useMemo } from 'react';
 import { resolveCurrentProject } from '../current-project';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;

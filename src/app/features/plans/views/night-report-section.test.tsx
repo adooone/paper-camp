@@ -1,10 +1,10 @@
-import { nightFindingKey } from '@/core/night-findings';
-import type { NightSuggestionEntry } from '@/types/index';
 import type { ReactElement, ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
+import { nightFindingKey } from '@/core/night-findings';
+import type { NightSuggestionEntry } from '@/types/index';
 import {
-  NightReportSection,
   groupByChunk,
+  NightReportSection,
   severityCounts,
   sortedFindings,
 } from './night-report-section';

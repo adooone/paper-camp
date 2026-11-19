@@ -1,7 +1,7 @@
+import { useEffect, useRef, useState } from 'react';
 import type { ActivityMessage } from '@/app/services/activity-stream';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import type { ChatPermissionAsk } from '@/types/index';
-import { useEffect, useRef, useState } from 'react';
 
 export type ChatStage = 'reading' | 'thinking' | 'replying';
 

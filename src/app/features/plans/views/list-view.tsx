@@ -1,6 +1,6 @@
+import { useEffect, useRef } from 'react';
 import type { WorklistRow } from '@/app/features/plans/helpers';
 import type { ScopeRow } from '@/app/features/scope';
-import { useEffect, useRef } from 'react';
 import { WorklistRows } from './worklist-rows';
 
 interface ListViewProps {

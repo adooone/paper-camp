@@ -1,10 +1,10 @@
+import { Text } from '@dendelion/folk-ui';
+import { useEffect, useMemo } from 'react';
 import { useIdeaAssets, usePlanStatusPatch, useRunningPhaseFill } from '@/app/features/plans/hooks';
 import { useWorklist } from '@/app/hooks';
 import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
 import { rollupUsage } from '@/core/phase-run';
 import type { IdeaEntry, PhaseItem, PlanEntry } from '@/types/index';
-import { Text } from '@dendelion/folk-ui';
-import { useEffect, useMemo } from 'react';
 import { RefreshButton } from '../actions';
 import { PlanIdStamp } from '../components';
 import { STATUS_COLOR } from '../constants';

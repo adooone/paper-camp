@@ -1,9 +1,8 @@
-import { formatDuration } from '@/core/phase-run';
-import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { ProjectStats } from '@/types/index';
-import type { RateLimitWindowKey } from '@/types/index';
 import { EmptyState, Stamp } from '@dendelion/folk-ui';
 import { useEffect, useState } from 'react';
+import { formatDuration } from '@/core/phase-run';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { ProjectStats, RateLimitWindowKey } from '@/types/index';
 import { CAPACITY_STAMP } from '../constants';
 import { StatCard, StatRow } from './stat-card';
 

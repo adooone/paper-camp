@@ -1,6 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
-import { rmSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -10,8 +9,8 @@ import {
   findReleaseLineForId,
   resolveEntityIdForCommit,
   resolveEntityTrail,
-  resolveIdFromCommitMessage,
   resolveIdeasForRelease,
+  resolveIdFromCommitMessage,
   resolveReleaseRanges,
 } from './trail';
 

@@ -1,6 +1,6 @@
+import { CloseIcon, CopyButton, IconButton, ListItem, NoteIcon } from '@dendelion/folk-ui';
 import { assetKind, formatFileSize, relativeDate } from '@/app/features/plans/helpers';
 import type { AssetEntry } from '@/types/index';
-import { CloseIcon, CopyButton, IconButton, ListItem, NoteIcon } from '@dendelion/folk-ui';
 
 interface FileRowProps {
   asset: AssetEntry;

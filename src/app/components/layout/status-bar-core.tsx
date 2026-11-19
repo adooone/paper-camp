@@ -1,9 +1,8 @@
-import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 import {
   BellIcon,
   ChatIcon,
   GitBranchIcon,
+  getTextureStyles,
   IconButton,
   type MenuEntry,
   OverflowToolbar,
@@ -11,9 +10,10 @@ import {
   Spinner,
   Stamp,
   Tooltip,
-  getTextureStyles,
 } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { AgentTaskStatus, RateLimitSnapshot } from '@/types/index';
 
 function capacityTooltip(snapshot: RateLimitSnapshot): string {
   const parts = [`Claude usage: ${snapshot.status}`];

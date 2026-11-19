@@ -1,6 +1,6 @@
+import { Button, ChevronRightIcon, Row } from '@dendelion/folk-ui';
 import type { ScopeRow } from '@/app/features/scope';
 import type { LogSort } from '@/core/run-filters';
-import { Button, ChevronRightIcon, Row } from '@dendelion/folk-ui';
 import type { ScopedActivityEntry } from '../helpers';
 import { LOG_ROW_GRID_CLASS, LogRowView, WIDE_ONLY_CLASS } from './run-row';
 
@@ -25,7 +25,7 @@ const SortLabel = ({
   onSort: (sort: LogSort) => void;
   className?: string;
 }) => (
-  // biome-ignore lint/a11y/useSemanticElements: a CSS-grid cell, not a <table>; a real <th> would need a <tr>/<table> ancestor.
+  // biome-ignore lint/a11y/useSemanticElements lint/a11y/useFocusableInteractive: a CSS-grid cell, not a <table>; a real <th> would need a <tr>/<table> ancestor.
   <span role="columnheader" aria-sort={active ? 'descending' : undefined} className={className}>
     <button
       type="button"

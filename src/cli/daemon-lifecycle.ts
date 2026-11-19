@@ -17,11 +17,11 @@ import {
   removeDaemonState,
 } from '../core/daemon-state';
 import {
-  type MachineProject,
   defaultRegistryPath,
   isProjectMissing,
   listProjects,
   loadRegistry,
+  type MachineProject,
 } from '../core/machine-registry';
 import { checkLatestVersion } from '../core/registry-version';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';

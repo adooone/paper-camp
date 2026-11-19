@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   type AgentId,
+  coerceDefaultAgents,
   type DefaultAgentsMap,
   type DeskConfig,
   type PaperCampConfig,
-  coerceDefaultAgents,
 } from '../types/index';
 import { deskConfigSchema } from './parse';
 import { deriveSubjectVocabulary, parseRoadmap } from './roadmap';

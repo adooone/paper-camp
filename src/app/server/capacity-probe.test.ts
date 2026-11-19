@@ -1,5 +1,5 @@
-import type { RateLimitSnapshot } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
+import type { RateLimitSnapshot } from '@/types/index';
 
 const { mockSpawn } = vi.hoisted(() => ({ mockSpawn: vi.fn() }));
 vi.mock('node:child_process', () => ({ spawn: mockSpawn }));

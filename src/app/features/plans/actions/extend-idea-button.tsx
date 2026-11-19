@@ -1,10 +1,10 @@
+import { Button, Tooltip, useToast } from '@dendelion/folk-ui';
 import { useHasAnyAgent } from '@/app/hooks';
 import { useActionFeedback } from '@/app/hooks/use-action-feedback';
 import { getCachedIdeas } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { IdeaEntry } from '@/types/index';
-import { Button, Tooltip, useToast } from '@dendelion/folk-ui';
 import { buildIdeaExtendPrompt } from '../prompts';
 
 interface ExtendIdeaButtonProps {

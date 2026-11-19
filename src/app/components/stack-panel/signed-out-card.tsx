@@ -1,10 +1,10 @@
+import { Button, Card, Tooltip, useToast } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useAgentAuthStatus } from '@/app/hooks/use-agent-auth-status';
 import { refreshAgentAuthStatus } from '@/app/services/query-client';
 import { checkAgentSignIn } from '@/app/services/system';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { Button, Card, Tooltip, useToast } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
 
 export const SignedOutCard = () => {
   const status = useAgentAuthStatus();

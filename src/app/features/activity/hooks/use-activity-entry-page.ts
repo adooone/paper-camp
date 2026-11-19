@@ -1,9 +1,9 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useEffect, useRef } from 'react';
 import { markRead } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import { resolveLogRow } from '@/core/run-rows';
 import type { LogRow } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useEffect, useRef } from 'react';
 import { markReadIdFor, markReadOrToast } from '../helpers';
 import { useLogRows } from './use-run-rows';
 

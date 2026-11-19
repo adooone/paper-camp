@@ -1,8 +1,8 @@
+import { Stamp } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { entityLink } from '@/app/hooks';
 import { isBlockingNeed } from '@/core/needs-status';
 import type { PlanEntry } from '@/types/index';
-import { Stamp } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
 
 interface NeedsRowProps {
   plan: PlanEntry;

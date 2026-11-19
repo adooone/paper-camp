@@ -1,5 +1,5 @@
-import type { Notification, ThreadMessage, WorklistEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { Notification, ThreadMessage, WorklistEntry } from '@/types/index';
 import { openIdeasCount, unansweredChatCount, unreadActivityCount } from './scope-counts';
 
 const entry = (status: WorklistEntry['status']) => ({ status }) as WorklistEntry;

@@ -1,8 +1,3 @@
-import { useCapacity } from '@/app/hooks/use-capacity';
-import { useAppStore } from '@/app/stores/app-store';
-import type { CapacityRecord } from '@/core/capacity';
-import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { RateLimitSnapshot, RateLimitWindow } from '@/types/index';
 import {
   Card,
   IconButton,
@@ -14,6 +9,11 @@ import {
   Tooltip,
 } from '@dendelion/folk-ui';
 import { useEffect, useRef, useState } from 'react';
+import { useCapacity } from '@/app/hooks/use-capacity';
+import { useAppStore } from '@/app/stores/app-store';
+import type { CapacityRecord } from '@/core/capacity';
+import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
+import type { RateLimitSnapshot, RateLimitWindow } from '@/types/index';
 import { chalkStatusText } from './shared';
 
 const levelVariant = {

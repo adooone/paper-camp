@@ -1,7 +1,7 @@
-import { entityLink } from '@/app/hooks';
-import type { PlanEntry } from '@/types/index';
 import { Stamp } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { entityLink } from '@/app/hooks';
+import type { PlanEntry } from '@/types/index';
 
 interface ParentLinkRowProps {
   plan: PlanEntry;

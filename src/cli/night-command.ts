@@ -10,11 +10,11 @@ import {
   readRunningDaemonState,
 } from '../core/daemon-state';
 import {
-  type MachineProject,
-  type MachineRegistry,
   clearNightProject,
   defaultRegistryPath,
   loadRegistry,
+  type MachineProject,
+  type MachineRegistry,
   saveRegistry,
   setNightProject,
 } from '../core/machine-registry';
@@ -31,6 +31,7 @@ import { readTaskLog } from '../core/parse';
 import { todayDateString } from '../core/serialize';
 import {
   type ChunkHealth,
+  coerceDefaultAgents,
   DEFAULT_NIGHT_CONFIG,
   type MachineNightGateResponse,
   type NightChunkPassResult,
@@ -40,7 +41,6 @@ import {
   type NightHealthMap,
   type NightReportGroup,
   type NightSuggestionEntry,
-  coerceDefaultAgents,
 } from '../types/index';
 import { runNightChunkPass } from './night-pass';
 

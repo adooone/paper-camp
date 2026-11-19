@@ -1,8 +1,8 @@
+import { Accordion, Stamp } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { PlanIdStamp } from '@/app/features/plans/components/plan-id-stamp';
 import { STATUS_LABEL, STATUS_STAMP } from '@/app/features/plans/constants';
 import type { RoadmapItemRef } from '@/types/index';
-import { Accordion, Stamp } from '@dendelion/folk-ui';
-import { useState } from 'react';
 
 interface UnfiledSectionProps {
   entities: RoadmapItemRef[];

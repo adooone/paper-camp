@@ -1,6 +1,3 @@
-import { useHasAnyAgent, useIdeas, useSuggestions } from '@/app/hooks';
-import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import {
   CheckIcon,
   IconButton,
@@ -10,10 +7,13 @@ import {
   NoteIcon,
   RunIcon,
   ShuffleIcon,
-  WandIcon,
   useToast,
+  WandIcon,
 } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { useHasAnyAgent, useIdeas, useSuggestions } from '@/app/hooks';
+import { selectAgentBusy, useAppStore } from '@/app/stores/app-store';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { DraftAllModal } from '../modals/draft-all-modal';
 import { buildSuggestIdeasPrompt } from '../prompts';
 

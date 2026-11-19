@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { corpusFingerprint } from '@/core/corpus';
 import { afterAll, describe, expect, it } from 'vitest';
-import { CHECK_TIMEOUT_MS, MissingFixCmdError, createDeskCheckManager } from './desk-checks';
+import { corpusFingerprint } from '@/core/corpus';
+import { CHECK_TIMEOUT_MS, createDeskCheckManager, MissingFixCmdError } from './desk-checks';
 import { createGitManager } from './git';
 import { createHeavySlot } from './heavy-slot';
 

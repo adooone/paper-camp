@@ -1,5 +1,5 @@
-import type { ResolvedRoadmapItem } from '@/types/index';
 import type { StampVariant } from '@dendelion/folk-ui';
+import type { ResolvedRoadmapItem } from '@/types/index';
 
 export const ITEM_STATE_STAMP: Record<
   ResolvedRoadmapItem['state'],

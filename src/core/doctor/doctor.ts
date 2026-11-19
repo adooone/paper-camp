@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import type { PaperCampConfig } from '../../types/index';
 import type { LocalStateDrift } from '../corpus';
@@ -63,7 +63,7 @@ async function readAssetFolders(paperCampDir: string): Promise<DoctorAssetFolder
   for (const name of names) {
     const dirPath = join(assetsDir, name);
     const dirStats = await stat(dirPath).catch(() => undefined);
-    if (!dirStats || !dirStats.isDirectory()) continue;
+    if (!dirStats?.isDirectory()) continue;
     const fileNames = await readdirOptional(dirPath);
     const files: DoctorAssetFile[] = [];
     for (const fileName of fileNames) {

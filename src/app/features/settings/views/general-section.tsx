@@ -1,7 +1,7 @@
-import { RowSkeleton } from '@/app/components';
 import { Alert, Button, Input, SettingGroup, SettingRow, Stamp, Switch } from '@dendelion/folk-ui';
 import { color } from '@dendelion/folk-ui/tokens';
 import { useState } from 'react';
+import { RowSkeleton } from '@/app/components';
 import { SettingsHeader } from '../components/settings-header';
 import { VERSION_STAMP_FILL } from '../constants';
 import { useSettingsPage } from '../hooks';

@@ -1,9 +1,9 @@
-import { DiscussInChatButton } from '@/app/features/chat/views/discuss-in-chat-button';
-import { usePromoteThreadMessage } from '@/app/features/plans/hooks';
-import type { PlanEntry } from '@/types/index';
 import { Card, SectionHeading } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import { useState } from 'react';
+import { DiscussInChatButton } from '@/app/features/chat/views/discuss-in-chat-button';
+import { usePromoteThreadMessage } from '@/app/features/plans/hooks';
+import type { PlanEntry } from '@/types/index';
 import { FeedbackThread, type PromoteTarget } from '../components';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 

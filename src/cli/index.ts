@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
@@ -27,10 +27,10 @@ import {
   validatePrTitle,
 } from '../core/git-pr';
 import {
-  type MachineProject,
   addProject,
   defaultRegistryPath,
   loadRegistry,
+  type MachineProject,
   removeProject,
   saveRegistry,
   scanForProjects,
@@ -44,22 +44,26 @@ import {
 } from '../core/release-notes';
 import {
   AlreadyInitializedError,
-  PAPER_CAMP_VERSION,
   initProject,
+  PAPER_CAMP_VERSION,
   scaffoldClaudeCodeIntegration,
 } from '../core/scaffold';
-import { computePlanContentHash } from '../core/serialize';
-import { assignEntityId, formatEntityFile, todayDateString } from '../core/serialize';
+import {
+  assignEntityId,
+  computePlanContentHash,
+  formatEntityFile,
+  todayDateString,
+} from '../core/serialize';
 import { threadFromLegacy } from '../core/thread';
 import { resolveIdeasForRelease, resolveReleaseRanges } from '../core/trail';
 import { loadOrMintUpdateToken, updateTokenPath } from '../core/update-token';
 import { startMcpServer } from '../mcp/server';
 import {
   type AgentRunOptions,
+  coerceDefaultAgents,
   type LogEntry,
   PLAN_KINDS,
   type PlanEntry,
-  coerceDefaultAgents,
 } from '../types/index';
 import {
   DEFAULT_LOG_LINES,

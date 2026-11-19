@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { DeskCheckState } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
+import type { DeskCheckState } from '@/types/index';
 import { MissingFixCmdError, UnknownCheckError } from '../desk-checks';
 import { checkRoutes } from './checks';
 import type { RouteContext } from './types';

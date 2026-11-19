@@ -1,8 +1,8 @@
+import { Input } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
 import { PageToolbar, PageToolbarRow, SidebarAction } from '@/app/components';
 import { isDefaultStatusFilter } from '@/app/features/plans/helpers';
 import { useAppStore } from '@/app/stores/app-store';
-import { Input } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
 import type { GroupMode } from '../helpers';
 import { GroupSelect } from './group-select';
 

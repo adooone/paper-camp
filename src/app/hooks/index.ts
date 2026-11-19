@@ -6,15 +6,14 @@ export {
   useHasAnyAgent,
 } from './use-capabilities';
 export { useChat, useUnansweredChatQuestionCount } from './use-chat';
-export { useIdeas } from './use-ideas';
-export { markRead, useNotifications } from './use-notifications';
-export { useNightReport } from './use-night-report';
-export { useOpenEntity } from './use-open-entity';
 export { useEntity } from './use-entity';
+export { useIdeas } from './use-ideas';
+export { useNightReport } from './use-night-report';
+export { markRead, useNotifications } from './use-notifications';
+export { useOpenEntity } from './use-open-entity';
 export { usePlans } from './use-plans';
-export { useWorklist } from './use-worklist';
 export { useProjectIdentity } from './use-project-identity';
-export { useSuggestions } from './use-suggestions';
+export type { ActiveNightChunk } from './use-route-selection';
 export {
   bareId,
   chunkRouteParam,
@@ -28,6 +27,7 @@ export {
   useActiveSettingsSection,
   useResolvedDocSection,
 } from './use-route-selection';
-export type { ActiveNightChunk } from './use-route-selection';
 export { useSimilarIdeas } from './use-similar-ideas';
 export { useSubjectVocabulary } from './use-subject-vocabulary';
+export { useSuggestions } from './use-suggestions';
+export { useWorklist } from './use-worklist';

@@ -1,9 +1,3 @@
-import { ServiceActionButtons } from '@/app/components/stack-panel/services-group';
-import { useServicesClient } from '@/app/hooks/use-services-client';
-import { fetchServiceLog } from '@/app/services/services-api';
-import { useAppStore } from '@/app/stores/app-store';
-import { type ServiceTone, serviceStatus } from '@/core/service-status';
-import type { ServiceState } from '@/types/index';
 import {
   Button,
   EmptyState,
@@ -14,6 +8,12 @@ import {
 } from '@dendelion/folk-ui';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { useCallback, useEffect } from 'react';
+import { ServiceActionButtons } from '@/app/components/stack-panel/services-group';
+import { useServicesClient } from '@/app/hooks/use-services-client';
+import { fetchServiceLog } from '@/app/services/services-api';
+import { useAppStore } from '@/app/stores/app-store';
+import { type ServiceTone, serviceStatus } from '@/core/service-status';
+import type { ServiceState } from '@/types/index';
 import { pageClass } from './activity-entry-page';
 import { formatFullTimestamp } from './helpers';
 import { useLiveLines } from './hooks/use-live-lines';

@@ -5,6 +5,8 @@ import { scaffoldDraftPrIntegration } from '@/core/scaffold/scaffold';
 import {
   AGENT_IDS,
   type AgentId,
+  agentConfigsEqual,
+  coerceDefaultAgents,
   type DefaultAgentsMap,
   type IntegrationConfig,
   type NightConfig,
@@ -12,8 +14,6 @@ import {
   type PaperCampConfig,
   TOOLBAR_SEGMENT_IDS,
   type ToolbarSegmentId,
-  agentConfigsEqual,
-  coerceDefaultAgents,
 } from '@/types/index';
 import { readMaybe } from '../../helpers';
 import { readJson, requestUrl, sendJson } from '../../http';

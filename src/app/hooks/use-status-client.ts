@@ -1,5 +1,5 @@
-import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AgentTaskStatus, BranchHygieneStatus, RateLimitSnapshot } from '@/types/index';
 import { subscribeToActivityStream } from '../services/activity-stream';
 import { fetchAgentStatus } from '../services/agent-api';
 import {

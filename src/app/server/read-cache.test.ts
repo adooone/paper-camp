@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { READ_CACHE_TTL_MS, createReadCache } from './read-cache';
+import { createReadCache, READ_CACHE_TTL_MS } from './read-cache';
 
 afterEach(() => vi.useRealTimers());
 

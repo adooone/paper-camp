@@ -5,11 +5,11 @@ import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { NightFinding, NightSuggestionEntry, TaskLogEntry } from '../types/index';
 import {
-  NIGHT_FINDINGS_HEADING,
   appendNightFindings,
   buildNightReportGroups,
   dropOverlappingFindings,
   isOverlappingFinding,
+  NIGHT_FINDINGS_HEADING,
   parseNightFindings,
   readNightFindings,
   removeNightFindingLine,

@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import type { DoctorFindingSummary } from '@/core/doctor';
 import type { AgentTaskState, ConsistencyIssue, DeskCheckState } from '@/types/index';
-import { describe, expect, it } from 'vitest';
 import { activeCheckFix, firstFailingCheck } from './use-deliver-checks-row';
 
 const task = (overrides: Partial<AgentTaskState>): AgentTaskState =>

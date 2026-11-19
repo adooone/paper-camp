@@ -1,5 +1,5 @@
-import type { ThreadMessageOption } from '@/types/index';
 import { describe, expect, it, vi } from 'vitest';
+import type { ThreadMessageOption } from '@/types/index';
 import { runPick, runSendReply } from './question-card';
 
 const option: ThreadMessageOption = { label: 'Ship it', consequence: '' };

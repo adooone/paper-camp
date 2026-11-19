@@ -1,3 +1,7 @@
+import { Button, Card, Divider, FactsGrid, Stamp, useToast } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
+import { useNavigate } from '@tanstack/react-router';
+import { Fragment, useState } from 'react';
 import { buildSuggestionPromotePrompt } from '@/app/features/plans/prompts';
 import type { ActiveNightChunk } from '@/app/hooks';
 import { entityRouteParam } from '@/app/hooks';
@@ -6,10 +10,6 @@ import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { nightFindingKey, sortedFindings } from '@/core/night-findings';
 import type { NightSuggestionEntry } from '@/types/index';
-import { Button, Card, Divider, FactsGrid, Stamp, useToast } from '@dendelion/folk-ui';
-import { surface } from '@dendelion/folk-ui/tokens';
-import { useNavigate } from '@tanstack/react-router';
-import { Fragment, useState } from 'react';
 import { useFindingFixTask } from '../hooks';
 import { SEVERITY_STAMP_VARIANT, severityCounts } from './night-report-section';
 

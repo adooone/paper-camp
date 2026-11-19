@@ -1,8 +1,8 @@
-import type { ChangeArea, IdeaEntry, ParseResult, PlanEntry } from '@/types/index';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import type { PersistQueryClientOptions } from '@tanstack/react-query-persist-client';
 import { createStore, del, get, set } from 'idb-keyval';
+import type { ChangeArea, IdeaEntry, ParseResult, PlanEntry } from '@/types/index';
 import { subscribeToActivityStream } from './activity-stream';
 import { getRuntimeConnection } from './runtime-connection';
 import { CLIENT_VERSION } from './version';

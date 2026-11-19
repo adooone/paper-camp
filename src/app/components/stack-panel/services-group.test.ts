@@ -1,5 +1,5 @@
-import type { ServiceState } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { ServiceState } from '@/types/index';
 import { serviceActions } from './services-group';
 
 const service = (overrides: Partial<ServiceState> = {}): ServiceState => ({

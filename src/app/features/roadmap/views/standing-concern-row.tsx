@@ -1,5 +1,5 @@
-import type { ResolvedRoadmapItem } from '@/types/index';
 import { Row, Text } from '@dendelion/folk-ui';
+import type { ResolvedRoadmapItem } from '@/types/index';
 
 interface StandingConcernRowProps {
   item: ResolvedRoadmapItem;

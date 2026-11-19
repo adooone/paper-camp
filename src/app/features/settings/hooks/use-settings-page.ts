@@ -1,3 +1,6 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
 import { HUB_PATH } from '@/app/components/layout/nav';
 import { useHubMachines } from '@/app/features/hub';
 import { useProjectIdentity } from '@/app/hooks';
@@ -5,15 +8,12 @@ import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchConfig, saveConfig, uploadIcon } from '@/app/services/system';
 import {
   type AgentConfig,
+  agentConfigsEqual,
   DEFAULT_AGENTS,
   type DefaultAgentKey,
   type DefaultAgentsMap,
   type PaperCampConfig,
-  agentConfigsEqual,
 } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
 
 export const useSettingsPage = () => {
   const fileRef = useRef<HTMLInputElement>(null);

@@ -1,11 +1,11 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { capacityQueryKey, refreshCapacity } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchCapacity, probeCapacity } from '@/app/services/system/capacity-api';
 import type { CapacityRecord } from '@/core/capacity';
-import { useToast } from '@dendelion/folk-ui';
-import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
 
 export interface UseCapacityResult {
   record: CapacityRecord | null;

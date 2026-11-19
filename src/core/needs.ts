@@ -1,10 +1,10 @@
 import type { EntityEntry, PlanEntry, ResolvedNeed } from '../types/index';
 import type { CorpusSnapshot } from './corpus';
-import { type MachineRegistry, defaultRegistryPath, loadRegistry } from './machine-registry';
+import { defaultRegistryPath, loadRegistry, type MachineRegistry } from './machine-registry';
 import { isBlockingNeed } from './needs-status';
 import { isClosedEntity } from './status';
 
-export { isBlockingNeed, hasBlockingNeed } from './needs-status';
+export { hasBlockingNeed, isBlockingNeed } from './needs-status';
 
 /** Supplied by the caller (always `readCorpus` from `./corpus`) rather than imported
  * directly — `corpus.ts` calls into this module, so importing it back here would be

@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { packageNameQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchIconDataUri, fetchPackageName, projectDisplayName } from '@/app/services/system';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 
 export interface ProjectIdentity {
   projectName: string | null;

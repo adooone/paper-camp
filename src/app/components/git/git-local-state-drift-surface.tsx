@@ -1,7 +1,7 @@
-import { fixLocalStateDrift } from '@/app/services/git-api';
-import { useAppStore } from '@/app/stores/app-store';
 import { Button, Stamp } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { fixLocalStateDrift } from '@/app/services/git-api';
+import { useAppStore } from '@/app/stores/app-store';
 
 const LOCAL_STATE_RULES = new Set([
   'local-state-tracked-outside-plan',

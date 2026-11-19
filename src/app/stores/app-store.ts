@@ -2,27 +2,27 @@ import { create } from 'zustand';
 import { cachedProjectState } from './project-resources';
 import { type AgentSlice, createAgentSlice, createInitialAgentState } from './slices/agent-slice';
 import { type BatchSlice, createBatchSlice, createInitialBatchState } from './slices/batch-slice';
-import { type DiffSlice, createDiffSlice, createInitialDiffState } from './slices/diff-slice';
-import { type DocsSlice, createDocsSlice, createInitialDocsState } from './slices/docs-slice';
-import { type IdeasSlice, createIdeasSlice } from './slices/ideas-slice';
-import { type NightReportSlice, createNightReportSlice } from './slices/night-report-slice';
-import { type PlansSlice, createPlansSlice } from './slices/plans-slice';
+import { createDiffSlice, createInitialDiffState, type DiffSlice } from './slices/diff-slice';
+import { createDocsSlice, createInitialDocsState, type DocsSlice } from './slices/docs-slice';
+import { createIdeasSlice, type IdeasSlice } from './slices/ideas-slice';
+import { createNightReportSlice, type NightReportSlice } from './slices/night-report-slice';
+import { createPlansSlice, type PlansSlice } from './slices/plans-slice';
 import {
-  type RoadmapSlice,
   createInitialRoadmapState,
   createRoadmapSlice,
+  type RoadmapSlice,
 } from './slices/roadmap-slice';
-import { type RuntimeSlice, createRuntimeSlice } from './slices/runtime-slice';
+import { createRuntimeSlice, type RuntimeSlice } from './slices/runtime-slice';
 import {
-  type StatusSlice,
   createInitialStatusState,
   createStatusSlice,
+  type StatusSlice,
 } from './slices/status-slice';
-import { type SuggestionsSlice, createSuggestionsSlice } from './slices/suggestions-slice';
+import { createSuggestionsSlice, type SuggestionsSlice } from './slices/suggestions-slice';
 import {
-  type TaskLogSlice,
   createInitialTaskLogState,
   createTaskLogSlice,
+  type TaskLogSlice,
 } from './slices/task-log-slice';
 
 type RestoreSlice = {

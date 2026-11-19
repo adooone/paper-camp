@@ -96,10 +96,9 @@ pairIfNeeded()
     // A bare `/` is an implicit "open the project", not a specific deep link —
     // the only case a remembered route should override where the URL landed.
     if (router.state.location.pathname !== '/') return;
-    const remembered = lastRouteFor(
-      runtimeUrl,
-      storage,
-      (path) => router.getMatchedRoutes(path).foundRoute !== undefined,
-    );
+    const remembered = lastRouteFor(runtimeUrl, storage, (path) => {
+      const [, , foundRoute] = router.getMatchedRoutes(path);
+      return foundRoute !== undefined;
+    });
     if (remembered) router.navigate({ to: remembered, replace: true });
   });

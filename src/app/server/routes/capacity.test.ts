@@ -2,9 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readCapacity } from '@/core/capacity';
 import type { RateLimitSnapshot } from '@/types/index';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockProbeCapacity } = vi.hoisted(() => ({ mockProbeCapacity: vi.fn() }));
 vi.mock('../capacity-probe', () => ({ probeCapacity: mockProbeCapacity }));

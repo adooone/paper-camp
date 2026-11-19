@@ -1,6 +1,6 @@
+import { useEffect, useState } from 'react';
 import { fetchTrail } from '@/app/services/trail-api';
 import type { ProvenanceTrail } from '@/types/index';
-import { useEffect, useState } from 'react';
 
 export const useTrail = (id: string | undefined): ProvenanceTrail | null => {
   const [trail, setTrail] = useState<ProvenanceTrail | null>(null);

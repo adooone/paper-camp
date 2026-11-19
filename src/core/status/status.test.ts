@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityStatus, PrInfo } from '../../types/index';
 import {
-  type StatusDerivationInput,
   deriveBoardStatus,
   deriveStatus,
   isArchivable,
   isStatusFallback,
+  type StatusDerivationInput,
 } from './status';
 
 const phase = (done: boolean) => ({ done, text: 'phase' });

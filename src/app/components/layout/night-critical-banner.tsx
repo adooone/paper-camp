@@ -1,7 +1,7 @@
-import { useNightReport } from '@/app/hooks';
-import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { Button } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { useNightReport } from '@/app/hooks';
+import type { NightReportGroup, NightSuggestionEntry } from '@/types/index';
 
 export function criticalNightFindings(groups: NightReportGroup[]): NightSuggestionEntry[] {
   return groups

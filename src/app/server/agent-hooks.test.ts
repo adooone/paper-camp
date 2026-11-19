@@ -3,8 +3,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { parseEntityFile } from '@/core/parse';
 import { afterAll, describe, expect, it } from 'vitest';
+import { parseEntityFile } from '@/core/parse';
 import { createAgentHooks } from './agent-hooks';
 import { createGitManager } from './git';
 

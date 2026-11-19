@@ -1,3 +1,5 @@
+import { Breadcrumb } from '@dendelion/folk-ui';
+import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 import {
   entityLink,
   useActiveIdea,
@@ -8,8 +10,6 @@ import {
   useResolvedDocSection,
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { Breadcrumb } from '@dendelion/folk-ui';
-import { useNavigate, useParams, useRouterState } from '@tanstack/react-router';
 
 /** The one breadcrumb in the app: rendered once at the top of the sheet, for every
  *  route that has a trail. Each trail is derived here from route + store, so no page

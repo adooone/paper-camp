@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { MachineNightGateResponse, NightHealthMap } from '../types/index';
 import {
-  type NightShiftDeps,
   createNightShiftState,
   isNightPassRunning,
+  type NightShiftDeps,
   nightShiftTick,
 } from './night-shift';
 

@@ -1,7 +1,7 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { notificationsQueryKey, queryClient } from '@/app/services/query-client';
 import { getRuntimeConnection } from '@/app/services/runtime-connection';
 import type { Notification } from '@/types/index';
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import { markRead } from './use-notifications';
 
 describe('markRead', () => {

@@ -8,23 +8,23 @@ import { PAIRING_TOKEN_HEADER } from '@/types/index';
 import { type ActivityManagerState, createActivityManager } from './activity';
 import { type AgentManager, type AgentManagerState, createAgentManager } from './agent';
 import { createAgentHooks } from './agent-hooks';
-import { onAgentSignInChange, onAgentSignedIn } from './agent-signin';
+import { onAgentSignedIn, onAgentSignInChange } from './agent-signin';
 import {
   CHECK_TIMEOUT_MS,
+  createDeskCheckManager,
   type DeskCheckManager,
   type DeskCheckManagerState,
-  createDeskCheckManager,
 } from './desk-checks';
 import {
+  createDeskServiceManager,
   type DeskServiceManager,
   type DeskServiceManagerState,
-  createDeskServiceManager,
 } from './desk-services';
 import { createGitManager } from './git';
-import { type HeavySlot, createHeavySlot } from './heavy-slot';
+import { createHeavySlot, type HeavySlot } from './heavy-slot';
 import { HttpError, sendJson } from './http';
 import type { PairCodeManager } from './pair-code';
-import { type PairingManager, type PairingManagerState, createPairingManager } from './pairing';
+import { createPairingManager, type PairingManager, type PairingManagerState } from './pairing';
 import { cachedProbe } from './probe-cache';
 import { createProjectStatsStore } from './project-stats';
 import { createReadCache } from './read-cache';

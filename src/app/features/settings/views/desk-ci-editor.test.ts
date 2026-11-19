@@ -1,5 +1,5 @@
-import type { DraftPrReadiness } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { DraftPrReadiness } from '@/types/index';
 import { scoutSecretsValue } from './desk-ci-editor';
 
 const draftPr = (overrides: Partial<DraftPrReadiness> = {}): DraftPrReadiness => ({

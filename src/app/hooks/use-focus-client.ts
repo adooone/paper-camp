@@ -1,5 +1,5 @@
-import type { PlanEntry } from '@/types/index';
 import { useEffect, useState } from 'react';
+import type { PlanEntry } from '@/types/index';
 import { findFocusPlan } from '../features/plans/helpers';
 import { fetchPlans } from '../services/content';
 

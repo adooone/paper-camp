@@ -9,25 +9,25 @@ import {
   rm,
   writeFile,
 } from 'node:fs/promises';
-import { type Server, createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { type DaemonState, isProcessAlive, writeDaemonState } from '../core/daemon-state';
 import {
+  addProject,
   type MachineProject,
   type MachineRegistry,
-  addProject,
   saveRegistry,
 } from '../core/machine-registry';
 import { PAPER_CAMP_VERSION } from '../core/scaffold';
 import { MACHINE_PROJECTS_PATH, type MachineProjectSummary } from '../types/index';
 import {
-  MISSING_PROJECT_HINT,
   buildDaemonArgs,
   formatProjectTable,
   lastLines,
+  MISSING_PROJECT_HINT,
   projectState,
   restartOptionsFromState,
   runLogs,
@@ -332,14 +332,12 @@ describe('paper-camp start / stop / restart / status / ls / logs', () => {
     for (const child of children.splice(0)) {
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     }
-    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
     else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
     process.env.PATH = originalPath;
     if (originalVoltaHome === undefined) Reflect.deleteProperty(process.env, 'VOLTA_HOME');
     else process.env.VOLTA_HOME = originalVoltaHome;
     process.stdout.isTTY = originalIsTTY;
-    // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
     if (originalNoColor === undefined) delete process.env.NO_COLOR;
     else process.env.NO_COLOR = originalNoColor;
     vi.unstubAllGlobals();

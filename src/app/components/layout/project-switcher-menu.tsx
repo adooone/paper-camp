@@ -1,9 +1,3 @@
-import { useHubMachines } from '@/app/features/hub';
-import { useProjectIdentity } from '@/app/hooks';
-import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
-import { useRuntimeConnection } from '@/app/services/runtime-connection';
-import { startMachineBatch } from '@/app/services/system';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import {
   Button,
   CheckIcon,
@@ -14,6 +8,12 @@ import {
   useToast,
 } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { useHubMachines } from '@/app/features/hub';
+import { useProjectIdentity } from '@/app/hooks';
+import type { HubMachine, HubProjectRow } from '@/app/services/hub-machines';
+import { useRuntimeConnection } from '@/app/services/runtime-connection';
+import { startMachineBatch } from '@/app/services/system';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import { HUB_PATH } from './nav';
 
 function rowLabel(row: HubProjectRow): string {

@@ -2,7 +2,7 @@
 id: IDEA-340
 title: Current toolchain before the second desk
 type: chore
-status: in-progress
+status: review
 created: 2026-11-16
 updated: 2026-11-19
 tags:
@@ -49,8 +49,9 @@ target app, and `paper-camp dev` booting the API through
 - [x] Vite 8 and Vitest 5
       Vite 8 with plugin-react-swc 4 across the three configs, Vitest 5 with coverage, the unit and integration projects kept; `pnpm build`, `pnpm test:all` and a `paper-camp dev` boot green.
       run: 7m1s · 84 in · 20.6k out · opus-5-5 · sess:098a7e84-9904-4019-accc-7c3a46e85d2e
-- [ ] Biome 2 and the remaining bumps
+- [x] Biome 2 and the remaining bumps
       `biome migrate` with the config committed; router, query, MCP SDK, zod, commander, web-push, knip, dependency-cruiser, `@types/node` 22 and the minors; all four checks green.
+      run: 10m59s · 170 in · 54.4k out · opus-5-5 · sess:098a7e84-9904-4019-accc-7c3a46e85d2e
 
 ### Thread
 - [ ] 2026-11-18 [question] [agent] Run-all parked on phase 1 ("React 19 and zustand 5") — the agent needs a decision: folk-ui 0.25.0 on npm still needs React ^18 and PR #52 (0.26.0) is unmerged. Wait for 0.26.0, or bump React now?

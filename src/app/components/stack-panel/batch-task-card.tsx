@@ -1,6 +1,3 @@
-import { useAppStore } from '@/app/stores/app-store';
-import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { AGENT_LABELS } from '@/types/index';
 import {
   Button,
   Card,
@@ -10,6 +7,9 @@ import {
   type StampVariant,
   useToast,
 } from '@dendelion/folk-ui';
+import { useAppStore } from '@/app/stores/app-store';
+import { oneLineErrorSummary } from '@/app/utils/error-summary';
+import { AGENT_LABELS } from '@/types/index';
 import { TASK_CARD_HEIGHT_CLASS } from './shared';
 
 const pauseLabel = (reasonKind: string): string => {

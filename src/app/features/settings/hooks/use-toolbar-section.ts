@@ -1,9 +1,9 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useEffect, useState } from 'react';
 import { useHasAnyAgent } from '@/app/hooks';
 import { fetchConfig, fetchToolbarHostState, saveConfig } from '@/app/services/system';
 import { useAppStore } from '@/app/stores/app-store';
 import type { PaperCampConfig, ToolbarHostState } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useEffect, useState } from 'react';
 
 export const useToolbarSection = () => {
   const [config, setConfig] = useState<PaperCampConfig | null | undefined>(undefined);

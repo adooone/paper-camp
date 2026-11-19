@@ -1,5 +1,5 @@
-import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { EmptyState, PageTitle } from '@dendelion/folk-ui';
+import { DoodleIllustration, RowSkeleton } from '@/app/components';
 import { useActivityPage } from './hooks';
 import {
   ActivityStatsLine,

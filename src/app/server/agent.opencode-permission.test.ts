@@ -1,10 +1,10 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseEntityFile } from '@/core/parse';
 import { entityToPlan } from '@/core/readers';
 import type { PlanEntry } from '@/types/index';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAgentManager } from './agent';
 
 // Reproduces IDEA-125's original report end to end: an opencode run reading a sibling

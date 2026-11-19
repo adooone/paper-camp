@@ -1,3 +1,6 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   chunkRouteParam,
   entityRouteParam,
@@ -11,9 +14,6 @@ import {
 } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
 import type { ArchivableIdea, SuggestionEntry } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
 import { type GroupMode, isGroupMode } from '../helpers';
 
 export const usePlansPage = () => {

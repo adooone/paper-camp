@@ -1,10 +1,10 @@
+import { useCallback, useEffect, useState } from 'react';
 import { withIdeaPrefix } from '@/app/features/chat/helpers';
 import { type ChatTurnInfo, useChatStage } from '@/app/features/chat/hooks/use-chat-stage';
 import { type ActivityMessage, subscribeToActivityStream } from '@/app/services/activity-stream';
 import { fetchChat, postChatMessage } from '@/app/services/content/chat-api';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { MountContext, ThreadMessage } from '@/types/index';
-import { useCallback, useEffect, useState } from 'react';
 
 export function mountContextFor(
   location: { pathname: string },

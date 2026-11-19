@@ -1,6 +1,6 @@
-import { SidebarAction, SidebarSection } from '@/app/components';
 import { SidebarItem, SidebarLabel } from '@dendelion/folk-ui';
 import { useNavigate } from '@tanstack/react-router';
+import { SidebarAction, SidebarSection } from '@/app/components';
 import { type ScopeCountKind, useScope } from '../hooks/use-scope';
 import { ScopeProjectRow } from './scope-project-row';
 

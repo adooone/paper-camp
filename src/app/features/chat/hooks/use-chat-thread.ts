@@ -1,3 +1,5 @@
+import { useToast } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import type { ScopeRow } from '@/app/features/scope';
 import { useChat } from '@/app/hooks';
 import {
@@ -11,8 +13,6 @@ import {
 import { refreshChat } from '@/app/services/query-client';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { ChatPermissionAsk, ChatPermissionChoice, ThreadMessage } from '@/types/index';
-import { useToast } from '@dendelion/folk-ui';
-import { useState } from 'react';
 import { nowMinuteString } from '../helpers';
 
 type Toast = ReturnType<typeof useToast>['toast'];

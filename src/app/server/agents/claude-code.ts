@@ -8,7 +8,7 @@ import type {
   RateLimitWindowKey,
   RunUsage,
 } from '@/types/index';
-import { type ParsedChatLine, clip, describePaperCampTool, stringField } from './chat';
+import { clip, describePaperCampTool, type ParsedChatLine, stringField } from './chat';
 
 export type AgentTextSource = 'assistant' | 'tool';
 

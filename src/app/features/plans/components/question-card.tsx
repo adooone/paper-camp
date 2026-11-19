@@ -1,9 +1,9 @@
-import { isSendKey } from '@/app/features/chat/helpers';
-import { splitQuestionText } from '@/core/decision-text';
-import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
 import { Button, Card, Disclosure, ListItem, Stamp, Textarea } from '@dendelion/folk-ui';
 import type { KeyboardEvent } from 'react';
 import { useState } from 'react';
+import { isSendKey } from '@/app/features/chat/helpers';
+import { splitQuestionText } from '@/core/decision-text';
+import type { ThreadMessage, ThreadMessageOption } from '@/types/index';
 
 interface QuestionCardProps {
   message: ThreadMessage;

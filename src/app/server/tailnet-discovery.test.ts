@@ -1,5 +1,5 @@
-import type { TailnetStatus } from '@/core/tailnet';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { TailnetStatus } from '@/core/tailnet';
 
 const { mockReadTailnetStatus } = vi.hoisted(() => ({
   mockReadTailnetStatus: vi.fn<() => Promise<TailnetStatus | undefined>>(),

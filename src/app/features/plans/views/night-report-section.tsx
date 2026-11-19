@@ -1,7 +1,7 @@
-import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
-import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { Card, Divider, Row, Stamp, type StampVariant } from '@dendelion/folk-ui';
 import { Fragment } from 'react';
+import { SEVERITY_ORDER, sortedFindings } from '@/core/night-findings';
+import type { NightFindingSeverity, NightReportGroup, NightSuggestionEntry } from '@/types/index';
 import { useFindingFixTask } from '../hooks';
 
 interface NightReportSectionProps {

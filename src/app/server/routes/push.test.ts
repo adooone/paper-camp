@@ -2,8 +2,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { defaultPushStorePath, loadPushStore } from '@/core/push-store';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { defaultPushStorePath, loadPushStore } from '@/core/push-store';
 import { pushRoutes } from './push';
 import type { RouteContext } from './types';
 
@@ -22,7 +22,6 @@ async function makeTempDir(prefix: string): Promise<string> {
 let originalConfigDir: string | undefined;
 
 afterEach(() => {
-  // biome-ignore lint/performance/noDelete: an undefined assignment stringifies to "undefined" on process.env, unlike a plain object.
   if (originalConfigDir === undefined) delete process.env.PAPERCAMP_CONFIG_DIR;
   else process.env.PAPERCAMP_CONFIG_DIR = originalConfigDir;
 });

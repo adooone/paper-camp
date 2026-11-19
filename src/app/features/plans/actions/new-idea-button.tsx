@@ -1,7 +1,7 @@
-import { createIdea } from '@/app/services/content';
-import { refreshIdeas } from '@/app/services/query-client';
 import { Button, LightbulbIcon } from '@dendelion/folk-ui';
 import { useState } from 'react';
+import { createIdea } from '@/app/services/content';
+import { refreshIdeas } from '@/app/services/query-client';
 import { CreateIdeaModal } from '../modals/create-idea-modal';
 
 export const NewIdeaButton = () => {

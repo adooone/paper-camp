@@ -1,8 +1,8 @@
+import { useQueries } from '@tanstack/react-query';
 import type { ScopeRow } from '@/app/features/scope';
 import { fetchWorklistAt } from '@/app/services/content/entities-api';
 import { worklistQueryKey } from '@/app/services/query-client';
-import { useQueries } from '@tanstack/react-query';
-import { type PlanListFilters, type WorklistRow, selectWorklistRows } from '../helpers';
+import { type PlanListFilters, selectWorklistRows, type WorklistRow } from '../helpers';
 
 export interface ScopeWorklistResult {
   rows: WorklistRow[];

@@ -1,8 +1,10 @@
+import { useNavigate, useRouterState } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   HUB_PATHS,
   LARGE_SCREEN_QUERY,
-  SIDEBAR_BREAKPOINT_QUERY,
   navItems,
+  SIDEBAR_BREAKPOINT_QUERY,
 } from '@/app/components/layout/nav';
 import { useScope } from '@/app/features/scope';
 import { fetchIdeas, fetchPlans } from '@/app/services/content';
@@ -10,8 +12,6 @@ import { rememberRoute } from '@/app/services/last-route-store';
 import { type ModuleLayer, moduleReadiness } from '@/app/services/module-layer';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { useAppStore } from '@/app/stores/app-store';
-import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { useEffect, useRef, useState } from 'react';
 import { useMediaQuery } from './use-media-query';
 
 const storage = typeof window === 'undefined' ? null : window.localStorage;

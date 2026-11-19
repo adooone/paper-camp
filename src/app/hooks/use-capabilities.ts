@@ -1,8 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { capabilitiesQueryKey } from '@/app/services/query-client';
 import { useRuntimeConnection } from '@/app/services/runtime-connection';
 import { fetchCapabilitiesPayload } from '@/app/services/system';
 import type { CapabilityResult } from '@/types/index';
-import { useQuery } from '@tanstack/react-query';
 
 export interface UseCapabilitiesResult {
   capabilities: CapabilityResult[];

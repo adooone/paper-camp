@@ -1,6 +1,6 @@
-import type { ResolvedRoadmapItem } from '@/types/index';
 import { Progress, Row, Stamp, Text } from '@dendelion/folk-ui';
 import { color } from '@dendelion/folk-ui/tokens';
+import type { ResolvedRoadmapItem } from '@/types/index';
 import { ITEM_STATE_STAMP } from '../constants';
 
 interface RoadmapItemRowProps {

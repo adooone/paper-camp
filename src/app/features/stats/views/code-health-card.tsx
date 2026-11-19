@@ -1,5 +1,5 @@
-import type { ChunkHealth, ProjectStats } from '@/types/index';
 import { EmptyState, Stamp } from '@dendelion/folk-ui';
+import type { ChunkHealth, ProjectStats } from '@/types/index';
 import { StatCard, StatRow } from './stat-card';
 
 const scoreVariant = (score: number): 'error' | 'warning' | 'success' => {

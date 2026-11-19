@@ -1,6 +1,6 @@
+import { Button, CodeBlock, Modal } from '@dendelion/folk-ui';
 import { assetKind } from '@/app/features/plans/helpers';
 import type { AssetPreview } from '@/app/features/plans/hooks';
-import { Button, CodeBlock, Modal } from '@dendelion/folk-ui';
 
 interface AssetPreviewModalProps {
   preview: AssetPreview;

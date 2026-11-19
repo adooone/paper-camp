@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { LogRow } from '../types/index';
 import {
   DEFAULT_LOG_FILTERS,
-  type LogFilters,
   filterLogRows,
+  type LogFilters,
   parseLogFilters,
   serializeLogFilters,
 } from './run-filters';

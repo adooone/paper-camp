@@ -1,6 +1,3 @@
-import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
-import { ProjectChip, type ScopeRow } from '@/app/features/scope';
-import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 import {
   Card,
   CheckIcon,
@@ -14,6 +11,9 @@ import {
   Stamp,
 } from '@dendelion/folk-ui';
 import { colors } from '@dendelion/folk-ui/tokens';
+import { CollapsibleText } from '@/app/features/plans/components/collapsible-text';
+import { ProjectChip, type ScopeRow } from '@/app/features/scope';
+import type { ThreadMessage, ThreadMessageKind } from '@/types/index';
 
 const THREAD_KIND_LABEL: Partial<Record<ThreadMessageKind, string>> = {
   review: 'review',

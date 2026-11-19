@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { TailnetPeerRuntime } from '@/types/index';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { TailnetPeerRuntime } from '@/types/index';
 
 const { mockDiscoverTailnetPeerRuntimes } = vi.hoisted(() => ({
   mockDiscoverTailnetPeerRuntimes: vi.fn<(refresh: boolean) => Promise<TailnetPeerRuntime[]>>(),

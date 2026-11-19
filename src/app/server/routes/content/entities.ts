@@ -1,8 +1,8 @@
 import {
   CorpusError,
   type CreateIdeaInput,
-  type EntityFileInput,
   createIdea,
+  type EntityFileInput,
   readCorpus,
   updateEntity,
 } from '@/core/corpus';

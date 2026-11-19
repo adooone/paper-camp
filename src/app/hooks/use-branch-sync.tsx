@@ -1,15 +1,15 @@
+import { Button, useToast } from '@dendelion/folk-ui';
+import { useCallback } from 'react';
 import {
-  type SyncResult,
   fixGitDivergence,
   pullFromOrigin,
   pushChanges,
   resolveConflict,
+  type SyncResult,
 } from '@/app/services/git-api';
 import { refreshIdeas, refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
-import { Button, useToast } from '@dendelion/folk-ui';
-import { useCallback } from 'react';
 
 type GitAction = 'push' | 'pull' | 'fix-divergence';
 

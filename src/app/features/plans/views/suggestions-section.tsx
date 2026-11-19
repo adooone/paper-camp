@@ -1,5 +1,5 @@
-import type { SuggestionEntry } from '@/types/index';
 import { IconButton, LightbulbIcon, Row } from '@dendelion/folk-ui';
+import type { SuggestionEntry } from '@/types/index';
 
 interface SuggestionsSectionProps {
   suggestions: SuggestionEntry[];

@@ -1,5 +1,5 @@
-import type { PhaseItem, PlanEntry, PrInfo } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { PhaseItem, PlanEntry, PrInfo } from '@/types/index';
 import { completionGate } from '../helpers';
 
 const phase = (done: boolean): PhaseItem => ({ done, text: 'phase' });

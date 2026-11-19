@@ -1,5 +1,5 @@
-import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { describe, expect, it } from 'vitest';
+import type { ProjectEvidence } from '@/core/desk-discovery/evidence';
 import { discoverDeskConfig } from './desk-discovery';
 
 const EVIDENCE: ProjectEvidence = {

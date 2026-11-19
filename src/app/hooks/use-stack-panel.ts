@@ -1,7 +1,7 @@
+import { type RefObject, useEffect, useRef } from 'react';
 import { subscribeToActivityStream } from '@/app/services/activity-stream';
 import { refreshPlans } from '@/app/services/query-client';
 import { useAppStore } from '@/app/stores/app-store';
-import { type RefObject, useEffect, useRef } from 'react';
 
 export interface StackPanelState {
   panelRef: RefObject<HTMLElement | null>;

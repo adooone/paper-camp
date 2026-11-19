@@ -1,5 +1,3 @@
-import { SidebarSection } from '@/app/components';
-import { usePlanActionsColumn } from '@/app/features/plans/hooks';
 import {
   CheckIcon,
   CloseIcon,
@@ -11,6 +9,8 @@ import {
   SidebarItem,
   Stamp,
 } from '@dendelion/folk-ui';
+import { SidebarSection } from '@/app/components';
+import { usePlanActionsColumn } from '@/app/features/plans/hooks';
 import {
   CompleteIdeaButton,
   CreateBranchButton,

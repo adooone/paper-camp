@@ -1,9 +1,12 @@
+import { Button, Card, CommandLine, Input } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
+import { type ReactNode, useEffect, useState } from 'react';
 import { daemonStartCommand } from '@/app/services/hub';
 import {
-  type PairCodeInput,
   buildMachineLink,
   hostLabel,
   normalizePairCode,
+  type PairCodeInput,
   pairMachine,
   parsePairCode,
   readPairCodeFromHash,
@@ -13,9 +16,6 @@ import { listMachines } from '@/app/services/machine-store';
 import { mountPrefix } from '@/app/services/mount';
 import { pairWithCode } from '@/app/services/pairing-api';
 import { fetchMachineProjects } from '@/app/services/system';
-import { Button, Card, CommandLine, Input } from '@dendelion/folk-ui';
-import { surface } from '@dendelion/folk-ui/tokens';
-import { type ReactNode, useEffect, useState } from 'react';
 
 type Attempt =
   | { status: 'idle' }

@@ -1,11 +1,11 @@
-import { usePlanStatusPatch } from '@/app/features/plans/hooks';
-import { entityRouteParam, useOpenEntity, usePlans, useSimilarIdeas } from '@/app/hooks';
-import { checkIdeaOverlap } from '@/app/services/content';
-import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { Button, Card, Input, Modal, Switch, Textarea } from '@dendelion/folk-ui';
 import { surface } from '@dendelion/folk-ui/tokens';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
+import { usePlanStatusPatch } from '@/app/features/plans/hooks';
+import { entityRouteParam, useOpenEntity, usePlans, useSimilarIdeas } from '@/app/hooks';
+import { checkIdeaOverlap } from '@/app/services/content';
+import type { IdeaEntry, LogEntry, OverlapVerdict } from '@/types/index';
 import { DraftPlanButton } from '../actions/draft-plan-button';
 import { PlanIdStamp } from '../components';
 

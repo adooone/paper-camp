@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  type RunOrderEntry,
   classifyRunOrderEntries,
   normalizeRunOrder,
+  type RunOrderEntry,
   sameRunOrder,
 } from './run-order';
 

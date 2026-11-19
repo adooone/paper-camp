@@ -1,7 +1,7 @@
-import { connectService, fetchConfig, fetchConnections, saveConfig } from '@/app/services/system';
-import type { ConnectionResult } from '@/types/index';
 import { useToast } from '@dendelion/folk-ui';
 import { useCallback, useEffect, useState } from 'react';
+import { connectService, fetchConfig, fetchConnections, saveConfig } from '@/app/services/system';
+import type { ConnectionResult } from '@/types/index';
 
 export const useSetupSection = () => {
   const [connections, setConnections] = useState<ConnectionResult[] | null>(null);

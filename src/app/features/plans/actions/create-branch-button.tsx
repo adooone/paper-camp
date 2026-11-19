@@ -1,9 +1,9 @@
+import { GitBranchIcon, SidebarItem, Tooltip, useToast } from '@dendelion/folk-ui';
+import { useState } from 'react';
 import { createPlanBranch } from '@/app/services/git-api';
 import { useAppStore } from '@/app/stores/app-store';
 import { oneLineErrorSummary } from '@/app/utils/error-summary';
 import type { PlanEntry } from '@/types/index';
-import { GitBranchIcon, SidebarItem, Tooltip, useToast } from '@dendelion/folk-ui';
-import { useState } from 'react';
 
 interface CreateBranchButtonProps {
   plan: PlanEntry;

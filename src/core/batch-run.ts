@@ -112,7 +112,7 @@ export async function clearBatchRunState(root: string): Promise<void> {
  * itself chose — and the app offers *Resume* either way (IDEA-321). */
 export async function markBatchRunInterrupted(root: string): Promise<boolean> {
   const state = await readBatchRunState(root);
-  if (!state || state.status !== 'running') return false;
+  if (state?.status !== 'running') return false;
   await writeBatchRunState(root, {
     ...state,
     status: 'interrupted',

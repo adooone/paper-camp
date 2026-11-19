@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlanEntry } from '../../types';
-import { FetchFailedError, createGitManager } from './git';
+import { createGitManager, FetchFailedError } from './git';
 
 // Every test works against a real throwaway git repo: createGitManager shells out to
 // the git binary, and the bugs this file guards against (a fresh feature branch

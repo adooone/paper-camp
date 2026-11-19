@@ -1,5 +1,5 @@
-import type { AssetEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { AssetEntry } from '@/types/index';
 import { assetKind, assetMarkdownLink, formatFileSize, parseAssetUrl } from '../helpers';
 
 const asset = (name: string, type: string): AssetEntry => ({

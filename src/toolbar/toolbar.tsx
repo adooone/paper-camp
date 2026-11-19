@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useFocusClient } from '@/app/hooks/use-focus-client';
 import { useScoutClient } from '@/app/hooks/use-scout-client';
 import { useStatusClient } from '@/app/hooks/use-status-client';
-import { type PairingInfo, fetchPairingInfo } from '@/app/services/pairing-api';
-import { useEffect, useState } from 'react';
+import { fetchPairingInfo, type PairingInfo } from '@/app/services/pairing-api';
 import { ScoutCard } from './scout/scout-card';
 import { ScoutTrigger } from './scout/scout-trigger';
 

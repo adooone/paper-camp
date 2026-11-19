@@ -1,10 +1,10 @@
+import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/folk-ui';
+import type { CSSProperties } from 'react';
+import { useEffect, useRef } from 'react';
 import { type ChatTurnInfo, chatStageLine } from '@/app/features/chat/hooks/use-chat-stage';
 import type { OpenQuestionGroup } from '@/app/features/plans/helpers';
 import { useChatClient } from '@/app/hooks/use-chat-client';
 import type { PlanEntry, ThreadMessage } from '@/types/index';
-import { Button, Card, Spinner, Stamp, Textarea } from '@dendelion/folk-ui';
-import type { CSSProperties } from 'react';
-import { useEffect, useRef } from 'react';
 
 const rootStyle: CSSProperties = {
   display: 'flex',

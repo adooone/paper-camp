@@ -4,9 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  CorpusError,
-  WATCHED_RECHECK_MS,
   appendThread,
+  CorpusError,
   corpusFingerprint,
   createIdea,
   invalidateCorpus,
@@ -16,6 +15,7 @@ import {
   readCorpus,
   readLocalStateDrift,
   updateEntity,
+  WATCHED_RECHECK_MS,
 } from './corpus';
 import { watchCorpus } from './corpus-watch';
 import { clearPrCache } from './git-pr/pr';

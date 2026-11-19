@@ -1,14 +1,23 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.3/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
+      "a11y": {
+        "noStaticElementInteractions": "off",
+        "useAriaPropsSupportedByRole": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "off",
+        "noUnusedVariables": "off"
+      },
       "suspicious": {
-        "noExplicitAny": "off"
+        "noArrayIndexKey": "off",
+        "noExplicitAny": "off",
+        "noTemplateCurlyInString": "off",
+        "noUnknownAtRules": "off"
       },
       "style": {
         "noNonNullAssertion": "off"
@@ -38,16 +47,29 @@
       "trailingCommas": "none"
     }
   },
+  "markdown": {
+    "formatter": { "enabled": false },
+    "linter": { "enabled": false }
+  },
+  "html": {
+    "formatter": { "enabled": false },
+    "linter": { "enabled": false }
+  },
+  "yaml": {
+    "formatter": { "enabled": false },
+    "linter": { "enabled": false }
+  },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      "coverage",
-      "*.config.js",
-      "*.config.ts",
-      "*.timestamp-*.mjs",
-      "package.json",
-      "papercamp/**"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/coverage",
+      "!**/*.config.js",
+      "!**/*.config.ts",
+      "!**/*.timestamp-*.mjs",
+      "!**/package.json",
+      "!**/papercamp"
     ]
   }
 }

@@ -1,5 +1,5 @@
-import type { NightSuggestionEntry } from '@/types/index';
 import { describe, expect, it } from 'vitest';
+import type { NightSuggestionEntry } from '@/types/index';
 import { findingFixReason, findingIssueId, findingsIssueId } from './use-finding-fix-task';
 
 const finding = (overrides: Partial<NightSuggestionEntry> = {}): NightSuggestionEntry => ({

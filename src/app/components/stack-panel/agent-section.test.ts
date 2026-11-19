@@ -1,6 +1,6 @@
+import { describe, expect, it } from 'vitest';
 import type { ScopeRow } from '@/app/features/scope';
 import type { AgentTaskState, PlanEntry, TaskLogEntry } from '@/types/index';
-import { describe, expect, it } from 'vitest';
 import {
   buildScopedNotices,
   closedIdsFromPlans,

@@ -1,7 +1,7 @@
+import { Avatar, Card } from '@dendelion/folk-ui';
 import { QuestionCard } from '@/app/features/plans/components/question-card';
 import { ProjectChip, type ScopeRow } from '@/app/features/scope';
 import type { ThreadMessage } from '@/types/index';
-import { Avatar, Card } from '@dendelion/folk-ui';
 import { EntityLinkText } from './entity-link-text';
 
 interface ChatMessageProps {

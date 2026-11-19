@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { loadDeskConfig } from '@/core/desk-config';
 import type * as Pty from 'node-pty';
+import { loadDeskConfig } from '@/core/desk-config';
 import type { DeskService, ServiceHealth, ServiceRunStatus, ServiceState } from '../../types';
 import { appendNotification } from './notification-log';
 

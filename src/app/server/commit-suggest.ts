@@ -1,7 +1,7 @@
 import {
   type CommitConvention,
-  DEFAULT_COMMIT_CONVENTION,
   commitTitleViolation,
+  DEFAULT_COMMIT_CONVENTION,
 } from '@/core/commit-convention';
 
 function conventionLine(convention: CommitConvention): string {

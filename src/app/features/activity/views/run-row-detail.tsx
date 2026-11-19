@@ -1,3 +1,6 @@
+import { Button, Card, type FactItem, FactsGrid, Spinner, Stamp } from '@dendelion/folk-ui';
+import { surface } from '@dendelion/folk-ui/tokens';
+import { useState } from 'react';
 import { DiscussInChatButton } from '@/app/features/chat/views/discuss-in-chat-button';
 import { FeedbackThread, PlanIdStamp } from '@/app/features/plans/components';
 import { useAppStore } from '@/app/stores/app-store';
@@ -11,9 +14,6 @@ import {
   type PlanEntry,
   type StoredNotification,
 } from '@/types/index';
-import { Button, Card, type FactItem, FactsGrid, Spinner, Stamp } from '@dendelion/folk-ui';
-import { surface } from '@dendelion/folk-ui/tokens';
-import { useState } from 'react';
 import { LOG_OUTCOME_VARIANT, LOG_TYPE_LABELS } from '../constants';
 import { formatCost, formatFullTimestamp, promoteLabel, summaryLine } from '../helpers';
 import type { LogRowActions } from '../hooks/use-run-rows';

@@ -150,7 +150,7 @@ export async function checkForUpdateAtBoot(
   apply: (version: string) => Promise<MachineUpdateResponse>,
 ): Promise<BootUpdateCheck> {
   const check = await checkLatestVersion(currentVersion);
-  if (!check || !check.isNewer) return { newerFound: false };
+  if (!check?.isNewer) return { newerFound: false };
   const result = await apply(check.latestVersion);
   return { newerFound: true, version: check.latestVersion, result };
 }

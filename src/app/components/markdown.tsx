@@ -1,8 +1,8 @@
-import { apiUrl } from '@/app/services/api-base';
 import { InlineCode } from '@dendelion/folk-ui';
 import type { ReactNode } from 'react';
 import ReactMarkdown, { type Components, type Options } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { apiUrl } from '@/app/services/api-base';
 
 const headingClass = (fontSizeClass: string): string =>
   `font-display-luminari font-semibold ${fontSizeClass} mt-6 mb-3 leading-tight`;

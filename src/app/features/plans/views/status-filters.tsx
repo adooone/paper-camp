@@ -1,10 +1,9 @@
-import { SidebarAction, SidebarSection } from '@/app/components';
-import { CheckboxFilterRow } from '@/app/components';
+import { SidebarLabel } from '@dendelion/folk-ui';
+import { CheckboxFilterRow, SidebarAction, SidebarSection } from '@/app/components';
 import { useWorklist } from '@/app/hooks';
 import { useAppStore } from '@/app/stores/app-store';
-import { SidebarLabel } from '@dendelion/folk-ui';
 import { STATUS_LABEL } from '../constants';
-import { STATUS_FILTER_ORDER, isDefaultStatusFilter, selectPlanRows } from '../helpers';
+import { isDefaultStatusFilter, STATUS_FILTER_ORDER, selectPlanRows } from '../helpers';
 
 export const StatusFilters = () => {
   const { worklist } = useWorklist();

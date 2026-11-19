@@ -5,8 +5,8 @@ import {
   type ConsistencyIssue,
   type EntityEntry,
   type EntityType,
-  PLAN_KINDS,
   type PhaseItem,
+  PLAN_KINDS,
 } from '../../types/index';
 import { findConsistencyIssues, parseEntityFile } from '../parse/parser';
 import { entityToPlan, readEntities } from '../readers';
@@ -22,10 +22,10 @@ export {
   entitiesWithNewChangesRequested,
   fetchUnresolvedThreads,
   getPrMapFetchedAt,
-  peekCachedPrs,
   type PrReviewComment,
   type PrReviewDelivery,
   type PrReviewInput,
+  peekCachedPrs,
   replyToReviewThread,
   resolvePrsByEntity,
   resolveReviewThread,

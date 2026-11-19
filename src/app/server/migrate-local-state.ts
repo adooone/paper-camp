@@ -7,8 +7,8 @@ import {
   GITATTRIBUTES_BLOCK_BODY,
   GITATTRIBUTES_BLOCK_END,
   GITATTRIBUTES_BLOCK_START,
-  PLAN_NAMES,
   localFile,
+  PLAN_NAMES,
 } from '@/core/corpus';
 import { LEGACY_LOCAL_PATHS, withManagedBlock, withoutManagedBlock } from '@/core/local-paths';
 import { ensureLocalGitignore } from '@/core/scaffold/scaffold';

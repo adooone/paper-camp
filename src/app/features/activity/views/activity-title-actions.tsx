@@ -1,5 +1,5 @@
-import { SidebarAction } from '@/app/components';
 import { Stamp } from '@dendelion/folk-ui';
+import { SidebarAction } from '@/app/components';
 
 export interface ActivityTitleActionsProps {
   unreadCount: number;

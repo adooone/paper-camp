@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { formatEntityFile } from '@/core/serialize';
 import { afterAll, describe, expect, it } from 'vitest';
+import { formatEntityFile } from '@/core/serialize';
 import { releaseNotesRoutes } from './release-notes';
 import type { RouteContext } from './types';
 

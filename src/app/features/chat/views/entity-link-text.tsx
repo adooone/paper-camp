@@ -1,7 +1,7 @@
-import { entityLink, useIdeas } from '@/app/hooks';
-import type { IdeaEntry } from '@/types/index';
 import { useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
+import { entityLink, useIdeas } from '@/app/hooks';
+import type { IdeaEntry } from '@/types/index';
 
 const ENTITY_LINK_RE = /\[\[(IDEA-\d+)\]\]|\b(IDEA-\d+)\b/g;
 

@@ -1,7 +1,7 @@
-import { setApiBase } from '@/app/services/api-base';
 import folkUiCss from '@dendelion/folk-ui/dist/index.css?raw';
-import { type Root, createRoot } from 'react-dom/client';
-import { ROUTE_ATTRIBUTE, TOOLBAR_SCRIPT_ID, scriptOrigin } from './route-attribute';
+import { createRoot, type Root } from 'react-dom/client';
+import { setApiBase } from '@/app/services/api-base';
+import { ROUTE_ATTRIBUTE, scriptOrigin, TOOLBAR_SCRIPT_ID } from './route-attribute';
 import { Toolbar } from './toolbar';
 
 export const TOOLBAR_TAG_NAME = 'paper-camp-toolbar';
