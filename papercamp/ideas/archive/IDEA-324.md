@@ -2,9 +2,9 @@
 id: IDEA-324
 title: Lighter daemon on a small box
 type: fix
-status: review
+status: done
 created: 2026-11-03
-updated: 2026-11-14
+updated: 2026-11-20
 tags:
   - server
   - app
@@ -86,3 +86,4 @@ in under 50 ms.
 ### Thread
 - [x] 2026-11-14 [decision] [agent] Restored from a stranded `papercamp-reconcile` stash on 2026-11-14 (see IDEA-331). Since it was written, IDEA-327 and IDEA-328 landed: probes now go through `probe-cache.ts` per root with a 60 s TTL (not per machine, not 10 min), `changed` ticks carry an area and invalidate only that area's queries, and `/api/stats` is computed off the request path. Still open from this plan: the heavy-command slot for desk checks and the cached doctor. Decide whether to narrow this idea to those two phases or drop it in favour of filing them fresh.
 - [x] 2026-11-15 [log] [agent] Reviewed 2026-11-15: phases 1–3 verified with tests (the per-command facts cache composes with IDEA-328's per-root probe cache rather than duplicating it). Held in review for two regressions filed as IDEA-333: phase 4 deleted the IDEA-328 precomputed stats store so `/api/stats` is lazy again, and phase 2 made `services` ticks skip the capabilities query although the daemon only ticks on a changed probe. Close once IDEA-333 lands.
+- [x] 2026-11-20 [log] [agent] Reviewed 2026-11-20: IDEA-333 restored the precomputed stats and the services-tick refetch, so nothing blocks this idea; phases 1 and 3 verified again with their tests. The body's doctor-and-stats and skip-capabilities paragraphs describe more than finally shipped; this thread is the record. Closing as done.

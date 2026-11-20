@@ -2,9 +2,9 @@
 id: IDEA-334
 title: Parked questions need a real marker
 type: fix
-status: in-progress
+status: done
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-20
 tags:
   - server
   - agent
@@ -42,4 +42,4 @@ the run with its options.
       Adapters mark text events `source: 'assistant' | 'tool'` (`agents/claude-code.ts`, `agents/opencode.ts`); `extractDecision` in `agent.ts` ignores tool text, anchors the marker to a line start and validates both forms (question length and `?`, 2–4 options of at most 80 characters, no angle-bracket placeholders); tests with the leaked command line as a fixture and a valid block.
 
 ### Thread
-- [ ] 2026-11-15 [question] [agent] Run-all parked on phase 1 ("Decision marker only from assistant text") — the agent needs a decision: ` block written by the assistant, not on one that turns up in tool output. Type-check and biome pass, and the three test files I edited pass (127 tests in `agent.test.ts`, 53 across the two adapter test files). I haven't committed anything.
+- [x] 2026-11-20 [log] [agent] Reviewed 2026-11-20: implemented and tested (source-tagged text events, line-anchored marker, both forms validated, the leaked pgrep fixture parks nothing). The fixing run was itself parked by the installed daemon's old extractor on its closing summary, so the code landed in bookkeeping commit 8aa1111c instead of a fix(server) commit; the false question is removed here. Closing as done.

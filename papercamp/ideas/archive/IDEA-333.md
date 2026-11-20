@@ -2,9 +2,9 @@
 id: IDEA-333
 title: Stats off the request path again
 type: fix
-status: review
+status: done
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-20
 tags:
   - server
   - app
@@ -52,3 +52,6 @@ next probe refresh updates the Services card without a reload.
 - [x] Services tick refetches capabilities
       `query-client.ts`: the `services` area invalidates `capabilities` and `connections` (active refetch); update `query-client.test.ts`; delete the stale comment above the formatter in `desk-checks.ts`.
       run: 1m30s · 54 in · 13.9k out · opus-5-5 · sess:a9e69b39-88b1-4004-9c74-ab80da57fa2a
+
+### Thread
+- [x] 2026-11-20 [log] [agent] Reviewed 2026-11-20: both phases verified with tests (project-stats store restored and disposed on close, read-cache serves doctor only, services tick refetches capabilities, stale comment gone). Note for later: a request landing inside a stats recompute waits for it rather than getting the last value, as before IDEA-324; the `connections` query entry has no consumer yet. Closing as done.

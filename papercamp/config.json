@@ -8,13 +8,13 @@
     "chore": 2,
     "docs": 4,
     "refactor": 5,
-    "idea": 341,
+    "idea": 342,
     "ticket": 7
   },
   "defaultAgents": {
     "build": {
       "agent": "claude-code",
-      "model": "opus",
+      "model": "sonnet",
       "effort": "high"
     },
     "plan": {
@@ -24,7 +24,7 @@
     },
     "chat": {
       "agent": "claude-code",
-      "model": "fable",
+      "model": "opus",
       "effort": "medium"
     },
     "quick": {

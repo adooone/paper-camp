@@ -2,9 +2,9 @@
 id: IDEA-337
 title: A second desk beside the first
 type: feat
-status: review
+status: done
 created: 2026-11-16
-updated: 2026-11-19
+updated: 2026-11-20
 tags:
   - app
   - ui
@@ -18,8 +18,8 @@ The desk should look like the phone, and the current desk should stay as
 it is until the new one is better. So the new look is a second client in
 this repository, served beside the first: `src/next/` with its own
 `main.tsx` and `next/index.html`, a second rollup input in
-`vite.app.config.ts`, reachable at `/next/` under `paper-camp dev`, the
-hosted build and every project mount. `src/app/` is not touched by this
+`vite.app.config.ts`, reachable at `/next/` under `paper-camp dev` and the
+hosted build (the daemon ships no frontend since IDEA-240). `src/app/` is not touched by this
 work; both apps are built and shipped together until one is deleted.
 
 **What the second client shares.** Everything below the view layer is
@@ -86,7 +86,7 @@ both entries and Vercel serves `/next/anything` from the new entry.
 
 ### Phases
 - [x] A second entry, built and served
-      `next/index.html`, `src/next/main.tsx` and `src/next/router.tsx` (basepath `/next` under the mount prefix); `src/app/services/boot.ts` factored out of `main.tsx` and used by both; second input in `vite.app.config.ts`; `vercel.json` rewrite for `/next/(.*)` and the daemon's static fallback for the second entry; a placeholder page; smoke test for both entries.
+      `next/index.html`, `src/next/main.tsx` and `src/next/router.tsx` (basepath `/next` under the mount prefix); `src/app/services/boot.ts` factored out of `main.tsx` and used by both; second input in `vite.app.config.ts`; `vercel.json` rewrite for `/next/(.*)` and a Vite dev middleware that serves the second entry; a placeholder page; smoke test for both entries.
       run: 3m49s · 60 in · 19.1k out · opus-5-5 · sess:cbc21983-8f1c-475f-b479-7540066dc3da
 - [x] The phone's primitives in the DOM
       `src/next/ui/` with the thirteen primitives and `tokens.ts`, CSS modules on folk-ui tokens, values copied from `~/dev/paper-camp-mobile/ui/`; the `/next/ui` gallery route; render tests per primitive.
@@ -97,3 +97,4 @@ both entries and Vercel serves `/next/anything` from the new entry.
 - [x] Links between the two desks
       "Open the new desk" in `src/app/features/settings/views/general-section.tsx`; "Back to the classic desk" in the new app's Settings placeholder; both keep the project.
       run: 1m20s · 58 in · 18.9k out · opus-5-5 · sess:87b99d70-506c-4515-bf2e-cd6dd39ad433
+- [x] 2026-11-20 [log] [agent] Reviewed 2026-11-20: all four phases verified (shared boot, both entries built and rewritten, thirteen primitives matching the phone's values with 21 render tests, Appearance scoped to the new root with md/kyiv-sans/kyiv-serif, the two links). Phase 1's wording about a daemon static fallback was corrected here: the daemon has shipped no frontend since IDEA-240. Small notes for IDEA-338: `--next-font-mono` has no JetBrains Mono face on the web, and `src/next/main.tsx` ignores `resolveProject`'s hub redirect. Closing as done.
