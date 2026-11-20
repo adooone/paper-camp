@@ -1,0 +1,43 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--next-sketch-ink) 30%, transparent);
+  border-radius: var(--next-radius-lg);
+  background-color: var(--next-kraft);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--next-radius-full);
+}
+
+.success {
+  background-color: var(--next-accent-green-dark);
+}
+
+.failure {
+  background-color: var(--next-accent-rose-dark);
+}
+
+.in_progress {
+  background-color: var(--next-accent-blue-dark);
+}
+
+.queued {
+  background-color: var(--next-accent-amber-dark);
+}
+
+.cancelled,
+.unknown {
+  background-color: var(--next-accent-slate-dark);
+}

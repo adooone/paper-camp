@@ -1,0 +1,23 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.body {
+  padding-bottom: 96px;
+}
+
+@media (min-width: 1024px) {
+  .frame {
+    max-width: none;
+    margin: 0;
+    padding: 0 8px;
+  }
+
+  .body {
+    max-width: 720px;
+    padding-bottom: 24px;
+  }
+}

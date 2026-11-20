@@ -16,3 +16,5 @@ export function deskUrl(
 export const NEXT_DESK_PATH = `${NEXT_PATH}/`;
 
 export const CLASSIC_DESK_PATH = '/';
+
+export const HUB_DESK_PATH = '/projects';

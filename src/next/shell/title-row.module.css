@@ -1,0 +1,58 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 12px 16px;
+}
+
+.titleWrap {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.switcher {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 0;
+  border-radius: var(--next-radius-md);
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.switcher:active {
+  opacity: 0.6;
+}
+
+.switcher:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.caret {
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--next-ink-soft);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.island {
+  flex-shrink: 0;
+  width: 380px;
+  margin-left: 24px;
+}

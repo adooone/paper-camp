@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLASSIC_DESK_PATH, deskUrl, NEXT_DESK_PATH } from './desk-links';
+import { CLASSIC_DESK_PATH, deskUrl, HUB_DESK_PATH, NEXT_DESK_PATH } from './desk-links';
 
 const local = { runtimeUrl: '', pairingToken: null };
 const hosted = { runtimeUrl: 'https://deimos.example/p/camp', pairingToken: 'secret' };
@@ -20,5 +20,9 @@ describe('deskUrl', () => {
     expect(url.pathname).toBe('/next/');
     expect(url.searchParams.get('runtime')).toBe(hosted.runtimeUrl);
     expect(url.searchParams.get('token')).toBe('secret');
+  });
+
+  it('reaches the classic desk project hub under the mount', () => {
+    expect(deskUrl(HUB_DESK_PATH, '/p/camp', local)).toBe('/p/camp/projects');
   });
 });

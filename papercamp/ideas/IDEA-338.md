@@ -4,7 +4,7 @@ title: The phone's screens on the desk
 type: feat
 status: planned
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-20
 tags:
   - app
   - ui
@@ -67,8 +67,9 @@ selected idea side by side with the island in the title row; nothing
 desk-only appears yet.
 
 ### Phases
-- [ ] Shell, Projects and the island
+- [x] Shell, Projects and the island
       `Paper`, `TitleRow`, `ProjectSwitcher`, `NavIsland` with the width rule, the Projects screen; shell tests.
+      run: 6m26s · 88 in · 48.2k out · sonnet-5-5 · sess:636d1e6d-f2ab-4232-a5c5-284815583962
 - [ ] Ideas
       Grouped rows, labels with counts, `SubIsland` segments, skeleton and empty states; the two-column layout from 1024px with the Idea column.
 - [ ] Idea

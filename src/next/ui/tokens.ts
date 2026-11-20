@@ -59,6 +59,7 @@ export const tokenVars = {
   '--next-danger': colors.accentRoseDark,
   '--next-good': colors.accentGreenDark,
   '--next-radius-md': radii.md,
+  '--next-radius-lg': radii.lg,
   '--next-radius-xl': radii.xl,
   '--next-radius-full': radii.full,
   ...paletteVars,
