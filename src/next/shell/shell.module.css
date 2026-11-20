@@ -20,4 +20,8 @@
     max-width: 720px;
     padding-bottom: 24px;
   }
+
+  .bodySplit {
+    padding-bottom: 24px;
+  }
 }

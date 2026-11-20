@@ -30,7 +30,7 @@ export function Shell() {
           stamp={shell.stamp}
           island={shell.wide ? island : undefined}
         />
-        <main className={styles.body}>
+        <main className={shell.split && shell.wide ? styles.bodySplit : styles.body}>
           <Outlet />
         </main>
       </div>

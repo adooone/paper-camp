@@ -39,6 +39,7 @@ interface ListRowProps {
   onPress?: () => void;
   accessibilityLabel?: string;
   muted?: boolean;
+  selected?: boolean;
 }
 
 // folk-ui's ListItem is a ruled line; the phone's row is a stroked sheet of fixed height.
@@ -50,8 +51,13 @@ export function ListRow({
   onPress,
   accessibilityLabel,
   muted,
+  selected,
 }: ListRowProps) {
-  const rowClass = join(styles.row, eyebrow || detail ? styles.rowTall : styles.rowShort);
+  const rowClass = join(
+    styles.row,
+    eyebrow || detail ? styles.rowTall : styles.rowShort,
+    selected && styles.rowSelected,
+  );
   const body = (
     <>
       <span className={styles.rowMain}>
@@ -83,6 +89,7 @@ export function ListRow({
       <button
         type="button"
         aria-label={accessibilityLabel}
+        aria-current={selected ? 'true' : undefined}
         onClick={onPress}
         className={join(rowClass, styles.pressable)}
       >

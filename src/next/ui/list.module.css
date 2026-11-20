@@ -23,6 +23,11 @@
   border: 1px solid var(--next-stroke-strong);
 }
 
+.rowSelected {
+  border-color: var(--next-sketch-ink);
+  background-color: var(--next-elevated);
+}
+
 .rowShort {
   min-height: 48px;
 }

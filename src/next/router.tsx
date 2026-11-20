@@ -4,6 +4,7 @@ import { mountPrefix } from '@/app/services/mount';
 import { nextBasepath } from './entry-path';
 import { Shell } from './shell/shell';
 import { ComingPage } from './views/coming-page';
+import { IdeasPage } from './views/ideas-page';
 import { NextRoot } from './views/next-root';
 import { NotFoundPage } from './views/not-found-page';
 import { ProjectsPage } from './views/projects-page';
@@ -26,7 +27,8 @@ const uiRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   shellRoute.addChildren([
     shellScreen('/', ProjectsPage),
-    shellScreen('/ideas', ComingPage),
+    shellScreen('/ideas', IdeasPage),
+    shellScreen('/ideas/$ideaId', IdeasPage),
     shellScreen('/chat', ComingPage),
     shellScreen('/log', ComingPage),
     shellScreen('/git', ComingPage),

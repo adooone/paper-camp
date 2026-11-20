@@ -70,8 +70,9 @@ desk-only appears yet.
 - [x] Shell, Projects and the island
       `Paper`, `TitleRow`, `ProjectSwitcher`, `NavIsland` with the width rule, the Projects screen; shell tests.
       run: 6m26s · 88 in · 48.2k out · sonnet-5-5 · sess:636d1e6d-f2ab-4232-a5c5-284815583962
-- [ ] Ideas
+- [x] Ideas
       Grouped rows, labels with counts, `SubIsland` segments, skeleton and empty states; the two-column layout from 1024px with the Idea column.
+      run: 2m13s · 36 in · 17.2k out · sonnet-5-5 · sess:ae48fccc-af72-4047-ac1e-9b6603b8e5c5
 - [ ] Idea
       Body cards, phases with stamps and run actions, read-only thread, "Discuss in chat".
 - [ ] Chat

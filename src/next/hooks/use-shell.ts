@@ -24,6 +24,7 @@ export interface ShellState {
   projectName: string | null;
   tab: TabId;
   wide: boolean;
+  split: boolean;
   switcherOpen: boolean;
   openSwitcher: () => void;
   closeSwitcher: () => void;
@@ -48,6 +49,7 @@ export function useShell(): ShellState {
     projectName,
     tab: tabOf(screen),
     wide,
+    split: screen === 'ideas',
     switcherOpen,
     openSwitcher: () => setSwitcherOpen(true),
     closeSwitcher: () => setSwitcherOpen(false),

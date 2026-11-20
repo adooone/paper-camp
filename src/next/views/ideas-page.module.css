@@ -1,0 +1,43 @@
+.split {
+  display: flex;
+  flex-direction: column;
+}
+
+.listColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 68px;
+}
+
+.detailColumn {
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.centered {
+  text-align: center;
+}
+
+.retry {
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+@media (min-width: 1024px) {
+  .split {
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+  }
+
+  .listColumn {
+    padding-bottom: 16px;
+  }
+}
