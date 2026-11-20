@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { mountPrefix } from '@/app/services/mount';
 import { nextBasepath } from './entry-path';
 import { Shell } from './shell/shell';
+import { ChatPage } from './views/chat-page';
 import { ComingPage } from './views/coming-page';
 import { IdeasPage } from './views/ideas-page';
 import { NextRoot } from './views/next-root';
@@ -29,7 +30,7 @@ const routeTree = rootRoute.addChildren([
     shellScreen('/', ProjectsPage),
     shellScreen('/ideas', IdeasPage),
     shellScreen('/ideas/$ideaId', IdeasPage),
-    shellScreen('/chat', ComingPage),
+    shellScreen('/chat', ChatPage),
     shellScreen('/log', ComingPage),
     shellScreen('/git', ComingPage),
     shellScreen('/settings', SettingsPage),

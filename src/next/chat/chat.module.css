@@ -1,0 +1,216 @@
+.chat {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 112px);
+  margin-bottom: -96px;
+}
+
+.thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 24px;
+}
+
+.bubbleRow {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.rowYou {
+  align-items: flex-end;
+}
+
+.rowAgent {
+  align-items: flex-start;
+}
+
+.bubble {
+  padding: 12px;
+  border-radius: var(--next-radius-lg);
+}
+
+.bubbleYou {
+  max-width: 85%;
+  background-color: var(--next-elevated);
+  border: 1px solid var(--next-stroke-strong);
+}
+
+.bubbleAgent {
+  width: 100%;
+  padding: 12px 4px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.delivery {
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.retryButton {
+  cursor: pointer;
+}
+
+.retryButton:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.questionWrap {
+  width: 100%;
+}
+
+.questionWrap .questionCard {
+  border-color: var(--next-accent-amber);
+}
+
+.questionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.questionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ideaLink {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--next-radius-full);
+  border: 1px solid var(--next-stroke-muted);
+  background-color: var(--next-surface);
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.ideaLink:active {
+  opacity: 0.85;
+}
+
+.ideaLink:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.working {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.tool {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.permission {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.permissionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status {
+  padding: 0 4px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 20px 96px;
+  background-color: var(--next-input);
+  border: 1px solid var(--next-stroke);
+  border-bottom: 0;
+  border-radius: 40px 40px 0 0;
+}
+
+.walkRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  max-height: 140px;
+  padding: 2px;
+  field-sizing: content;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--next-ink);
+  font-family: var(--next-font-body);
+  font-weight: var(--next-weight-body);
+  font-size: var(--next-text-base);
+  line-height: var(--next-leading-body);
+}
+
+.input::placeholder {
+  color: var(--next-ink-faint);
+  font-family: var(--next-font-hand);
+  font-weight: 400;
+  font-size: var(--next-text-md);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (min-width: 1024px) {
+  .chat {
+    margin-bottom: 0;
+  }
+
+  .composer {
+    padding-bottom: 12px;
+  }
+}

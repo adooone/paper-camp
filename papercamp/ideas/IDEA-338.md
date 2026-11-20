@@ -76,8 +76,9 @@ desk-only appears yet.
 - [x] Idea
       Body cards, phases with stamps and run actions, read-only thread, "Discuss in chat".
       run: 3m25s · 84 in · 45k out · sonnet-5-5 · sess:ae48fccc-af72-4047-ac1e-9b6603b8e5c5
-- [ ] Chat
+- [x] Chat
       Bubbles, question cards, tool lines, streamed reply, allow card, the composer; the shared chat hooks.
+      run: 3m44s · 42 in · 30.7k out · sonnet-5-5 · sess:dfed8c17-930e-48ce-9da2-ce6f326299af
 - [ ] Log and Git
       Run list with stamps and output on the grey chalkboard; repo status card and git actions.
 - [ ] Settings
