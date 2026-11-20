@@ -49,7 +49,7 @@ export function useShell(): ShellState {
     projectName,
     tab: tabOf(screen),
     wide,
-    split: screen === 'ideas',
+    split: screen === 'ideas' || screen === 'log',
     switcherOpen,
     openSwitcher: () => setSwitcherOpen(true),
     closeSwitcher: () => setSwitcherOpen(false),

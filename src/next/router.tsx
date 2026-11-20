@@ -4,8 +4,9 @@ import { mountPrefix } from '@/app/services/mount';
 import { nextBasepath } from './entry-path';
 import { Shell } from './shell/shell';
 import { ChatPage } from './views/chat-page';
-import { ComingPage } from './views/coming-page';
+import { GitPage } from './views/git-page';
 import { IdeasPage } from './views/ideas-page';
+import { LogPage } from './views/log-page';
 import { NextRoot } from './views/next-root';
 import { NotFoundPage } from './views/not-found-page';
 import { ProjectsPage } from './views/projects-page';
@@ -31,8 +32,9 @@ const routeTree = rootRoute.addChildren([
     shellScreen('/ideas', IdeasPage),
     shellScreen('/ideas/$ideaId', IdeasPage),
     shellScreen('/chat', ChatPage),
-    shellScreen('/log', ComingPage),
-    shellScreen('/git', ComingPage),
+    shellScreen('/log', LogPage),
+    shellScreen('/log/$entryId', LogPage),
+    shellScreen('/git', GitPage),
     shellScreen('/settings', SettingsPage),
   ]),
   uiRoute,

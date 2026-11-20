@@ -79,7 +79,8 @@ desk-only appears yet.
 - [x] Chat
       Bubbles, question cards, tool lines, streamed reply, allow card, the composer; the shared chat hooks.
       run: 3m44s · 42 in · 30.7k out · sonnet-5-5 · sess:dfed8c17-930e-48ce-9da2-ce6f326299af
-- [ ] Log and Git
+- [x] Log and Git
       Run list with stamps and output on the grey chalkboard; repo status card and git actions.
+      run: 5m47s · 68 in · 48.2k out · sonnet-5-5 · sess:755b9b3e-5c5c-4500-9a86-d1d5a9029c4e
 - [ ] Settings
       Appearance section, project config, devices, version stamp, the classic-desk link.

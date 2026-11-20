@@ -148,19 +148,33 @@ export type SyncResult =
   | { ok: false; recovering: boolean; message: string }
   // A genuine content conflict — never auto-escalated. `conflictPrompt` is fed
   // to resolveConflict() only on explicit "ask the agent to resolve" confirmation.
-  | { ok: false; recovering: false; conflictPrompt: string; message: string };
+  | {
+      ok: false;
+      recovering: false;
+      conflictPrompt: string;
+      message: string;
+      conflictedFiles?: string[];
+    };
+
+async function syncFailure(response: Response): Promise<Extract<SyncResult, { ok: false }>> {
+  const data = await response.json();
+  return data.conflictPrompt
+    ? {
+        ok: false,
+        recovering: false,
+        conflictPrompt: data.conflictPrompt,
+        message: data.error,
+        conflictedFiles: data.conflictedFiles,
+      }
+    : { ok: false, recovering: data.recovering, message: data.error };
+}
 
 export const syncToMain = async (): Promise<SyncResult> => {
   const response = await apiFetch(apiUrl('/api/git/sync'), {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
-  if (response.status === 202) {
-    const data = await response.json();
-    return data.conflictPrompt
-      ? { ok: false, recovering: false, conflictPrompt: data.conflictPrompt, message: data.error }
-      : { ok: false, recovering: data.recovering, message: data.error };
-  }
+  if (response.status === 202) return syncFailure(response);
   await throwIfNotOk(response, 'Sync failed');
   return { ok: true };
 };
@@ -181,12 +195,7 @@ export const fixGitDivergence = async (): Promise<SyncResult> => {
     method: 'POST',
     signal: AbortSignal.timeout(GIT_TIMEOUT_MS),
   });
-  if (response.status === 202) {
-    const data = await response.json();
-    return data.conflictPrompt
-      ? { ok: false, recovering: false, conflictPrompt: data.conflictPrompt, message: data.error }
-      : { ok: false, recovering: data.recovering, message: data.error };
-  }
+  if (response.status === 202) return syncFailure(response);
   await throwIfNotOk(response, 'Fix failed');
   return { ok: true };
 };

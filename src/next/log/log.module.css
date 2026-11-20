@@ -1,0 +1,152 @@
+.chips {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  padding: 6px 12px;
+  border: 1.5px solid var(--next-stroke);
+  border-radius: var(--next-radius-full);
+  background-color: var(--next-base);
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.chip:active {
+  opacity: 0.85;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.chipActive {
+  border-color: var(--tone-border);
+  background-color: var(--tone-fill);
+}
+
+.running {
+  --tone-border: var(--next-accent-blue);
+  --tone-fill: var(--next-wash-blue);
+}
+
+.done {
+  --tone-border: var(--next-accent-green);
+  --tone-fill: var(--next-wash-green);
+}
+
+.failed {
+  --tone-border: var(--next-accent-rose);
+  --tone-fill: var(--next-wash-rose);
+}
+
+.parked {
+  --tone-border: var(--next-accent-amber);
+  --tone-fill: var(--next-wash-amber);
+}
+
+.idle {
+  --tone-border: var(--next-accent-slate);
+  --tone-fill: var(--next-wash-slate);
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 120px;
+  max-height: 60vh;
+  padding: 14px;
+  overflow: auto;
+  color: var(--pui-chalk-text);
+}
+
+.boardEmpty {
+  color: var(--pui-chalk-muted);
+}
+
+.boardLine {
+  font-family: var(--next-font-mono);
+  font-size: var(--next-text-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 24px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailsTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 8px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.live {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.liveLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.openIdea {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.actionBar {
+  position: sticky;
+  bottom: 104px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 10px;
+}
+
+.actionBar > * {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 1024px) {
+  .actionBar {
+    bottom: 0;
+  }
+}

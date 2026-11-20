@@ -1,0 +1,28 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 12px 0;
+}
+
+.back {
+  min-width: 72px;
+  padding: 6px 4px;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.back:active {
+  opacity: 0.85;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.spacer {
+  min-width: 72px;
+}
