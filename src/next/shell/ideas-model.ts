@@ -1,4 +1,4 @@
-import type { PlanStatus, WorklistEntry } from '@/types/index';
+import type { EntityStatus, PlanStatus, WorklistEntry } from '@/types/index';
 import type { StampMeaning } from '../ui/stamp';
 
 export type WorkTab = 'todo' | 'review' | 'done';
@@ -66,8 +66,8 @@ export interface IdeaGroup {
   entries: WorklistEntry[];
 }
 
-export const statusOf = (entry: Pick<WorklistEntry, 'status'>): PlanStatus =>
-  entry.status === 'open' ? 'idea' : entry.status;
+export const statusOf = (entry: { status?: EntityStatus }): PlanStatus =>
+  entry.status === undefined || entry.status === 'open' ? 'idea' : entry.status;
 
 export const progressOf = (entry: WorklistEntry): string | null =>
   entry.phasesTotal === 0 ? null : `${entry.phasesDone} / ${entry.phasesTotal} phases`;

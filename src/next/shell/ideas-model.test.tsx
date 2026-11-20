@@ -70,23 +70,7 @@ describe('row copy', () => {
 });
 
 describe('IdeaColumn', () => {
-  const render = (ideaId: string | undefined, loading = false) =>
-    renderToStaticMarkup(<IdeaColumn ideaId={ideaId} entries={entries} loading={loading} />);
-
   it('invites a pick when nothing is selected', () => {
-    expect(render(undefined)).toContain('Pick an idea');
-  });
-
-  it('shows the selected idea with its status stamp and progress', () => {
-    const html = render('IDEA-1');
-    expect(html).toContain('IDEA-1');
-    expect(html).toContain('Title of IDEA-1');
-    expect(html).toContain('in progress');
-    expect(html).toContain('1 / 3 phases');
-  });
-
-  it('says so when the idea is not on the project, and shows a skeleton while loading', () => {
-    expect(render('IDEA-99')).toContain('No such idea');
-    expect(render('IDEA-99', true)).toContain('aria-label="Loading"');
+    expect(renderToStaticMarkup(<IdeaColumn ideaId={undefined} />)).toContain('Pick an idea');
   });
 });

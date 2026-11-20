@@ -121,12 +121,7 @@ export const IdeasPage = () => {
       ) : null}
       {showDetail ? (
         <section className={styles.detailColumn} aria-label="Idea">
-          <IdeaColumn
-            ideaId={ideaId}
-            entries={screen.entries}
-            loading={screen.load === 'loading'}
-            onBack={wide ? undefined : backToList}
-          />
+          <IdeaColumn ideaId={ideaId} onBack={wide ? undefined : backToList} />
         </section>
       ) : null}
     </div>

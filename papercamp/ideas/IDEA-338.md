@@ -73,8 +73,9 @@ desk-only appears yet.
 - [x] Ideas
       Grouped rows, labels with counts, `SubIsland` segments, skeleton and empty states; the two-column layout from 1024px with the Idea column.
       run: 2m13s · 36 in · 17.2k out · sonnet-5-5 · sess:ae48fccc-af72-4047-ac1e-9b6603b8e5c5
-- [ ] Idea
+- [x] Idea
       Body cards, phases with stamps and run actions, read-only thread, "Discuss in chat".
+      run: 3m25s · 84 in · 45k out · sonnet-5-5 · sess:ae48fccc-af72-4047-ac1e-9b6603b8e5c5
 - [ ] Chat
       Bubbles, question cards, tool lines, streamed reply, allow card, the composer; the shared chat hooks.
 - [ ] Log and Git

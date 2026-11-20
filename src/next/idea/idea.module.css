@@ -1,0 +1,165 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.back {
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.back:active {
+  opacity: 0.85;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.headTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.headId {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.headCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bodyButton {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--next-radius-lg);
+  transition: opacity 150ms ease-out;
+}
+
+.bodyButton:active {
+  opacity: 0.85;
+}
+
+.bodyButton:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.bodyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phaseRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: var(--next-radius-md);
+  background-color: var(--next-surface);
+  border: 1px solid var(--next-stroke-strong);
+}
+
+.phaseBox {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid var(--next-stroke);
+  background-color: var(--next-base);
+}
+
+.phaseBoxDone {
+  background-color: var(--next-accent-green);
+  border-color: var(--next-accent-green);
+}
+
+.phaseMain {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.tail {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.threadRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: var(--next-radius-md);
+  background-color: var(--next-surface);
+  border: 1px solid var(--next-stroke-soft);
+}
+
+.discuss {
+  align-self: flex-start;
+}
+
+.actionBar {
+  position: sticky;
+  bottom: 104px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 10px;
+}
+
+.actionBar > * {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 1024px) {
+  .actionBar {
+    bottom: 0;
+  }
+}
