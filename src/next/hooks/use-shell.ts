@@ -1,9 +1,8 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useMediaQuery } from '@/app/hooks/use-media-query';
-import { deskUrl, HUB_DESK_PATH } from '@/app/services/desk-links';
-import { mountPrefix } from '@/app/services/mount';
-import { getRuntimeConnection } from '@/app/services/runtime-connection';
+import { HUB_DESK_PATH } from '@/app/services/desk-links';
+import { openDesk } from '../shell/open-desk';
 import {
   SCREEN_PATHS,
   SCREEN_TITLES,
@@ -54,8 +53,7 @@ export function useShell(): ShellState {
     openSwitcher: () => setSwitcherOpen(true),
     closeSwitcher: () => setSwitcherOpen(false),
     selectTab: (tab) => void navigate({ to: SCREEN_PATHS[tab] }),
-    addMachine: () =>
-      window.location.assign(deskUrl(HUB_DESK_PATH, mountPrefix, getRuntimeConnection())),
+    addMachine: () => openDesk(HUB_DESK_PATH),
     switcher,
   };
 }

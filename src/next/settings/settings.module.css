@@ -1,0 +1,199 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 16px 32px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.inline {
+  align-self: flex-start;
+}
+
+.sliderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.sliderEnds {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.sliderHit {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  margin: 0 13px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.sliderHit:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 4px;
+}
+
+.track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--next-stroke);
+}
+
+.stop {
+  position: absolute;
+  top: -2px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background-color: var(--next-stroke);
+  pointer-events: none;
+}
+
+.stopPassed {
+  background-color: var(--next-kraft);
+}
+
+.thumb {
+  position: absolute;
+  top: -11px;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  box-sizing: border-box;
+  border: 2px solid var(--next-slab-edge);
+  border-radius: 50%;
+  background-color: var(--next-kraft);
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--next-kraft) 30%, transparent);
+  pointer-events: none;
+}
+
+.sliderCaption {
+  text-align: center;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice {
+  flex: 1 1 30%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--next-stroke-strong);
+  border-radius: var(--next-radius-md);
+  background-color: var(--next-surface);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.choice:active {
+  opacity: 0.85;
+}
+
+.choice:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.choiceActive {
+  padding: 9px 11px;
+  border: 2px solid var(--next-kraft);
+  background-color: var(--next-elevated);
+}
+
+.sample {
+  color: var(--next-ink);
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 24px;
+}
+
+.choiceGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.choiceLabel {
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border: 1.5px solid var(--next-kraft);
+  border-radius: var(--next-radius-full);
+  background-color: var(--next-elevated);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+
+.chip:active {
+  opacity: 0.85;
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--next-sketch-ink);
+  outline-offset: 2px;
+}
+
+.chipActive {
+  border-color: var(--next-slab-edge);
+  background-color: var(--next-kraft);
+}
+
+.error {
+  margin-top: 12px;
+}
+
+.sheetActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}

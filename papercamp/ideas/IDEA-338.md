@@ -2,7 +2,7 @@
 id: IDEA-338
 title: The phone's screens on the desk
 type: feat
-status: planned
+status: review
 created: 2026-11-16
 updated: 2026-11-20
 tags:
@@ -82,5 +82,6 @@ desk-only appears yet.
 - [x] Log and Git
       Run list with stamps and output on the grey chalkboard; repo status card and git actions.
       run: 5m47s · 68 in · 48.2k out · sonnet-5-5 · sess:755b9b3e-5c5c-4500-9a86-d1d5a9029c4e
-- [ ] Settings
+- [x] Settings
       Appearance section, project config, devices, version stamp, the classic-desk link.
+      run: 3m41s · 54 in · 27.9k out · sonnet-5-5 · sess:23591377-31f6-4cda-8bac-ff8fe75a9ea2
