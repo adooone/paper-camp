@@ -2,9 +2,9 @@
 id: IDEA-339
 title: The desk's own features on new paper
 type: feat
-status: planned
+status: in-progress
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-22
 tags:
   - app
   - ui
@@ -44,8 +44,9 @@ stops exactly as on `/`; a run's output streams onto the grey chalkboard, and no
 chalkboard appears anywhere under `/next/`.
 
 ### Phases
-- [ ] The Stack panel on the grey chalkboard
+- [x] The Stack panel on the grey chalkboard
       Port the stack-panel sections onto the grey chalkboard surface with the new controls, docking, overlay and reopen tab; action parity tests against the shared agent store.
+      run: 13m17s · 96 in · 60.7k out · sonnet-5-5 · sess:73ef8f91-2928-4f26-8f3b-75e8ebceab6b
 - [ ] Roadmap and stats
       Horizons and unfiled rows; stat tiles with mono figures.
 - [ ] Diff and docs

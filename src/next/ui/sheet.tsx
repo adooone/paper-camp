@@ -6,10 +6,11 @@ interface SheetProps {
   onRequestClose: () => void;
   children: ReactNode;
   label?: string;
+  chalk?: boolean;
 }
 
 // folk-ui's Drawer slides from the side; the phone's sheet rises from the bottom over a fading scrim.
-export function Sheet({ visible, onRequestClose, children, label }: SheetProps) {
+export function Sheet({ visible, onRequestClose, children, label, chalk }: SheetProps) {
   const [mounted, setMounted] = useState(visible);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export function Sheet({ visible, onRequestClose, children, label }: SheetProps) 
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className={styles.panel}
+        className={chalk ? `${styles.panel} ${styles.chalk}` : styles.panel}
         onAnimationEnd={onAnimationEnd}
       >
         {children}

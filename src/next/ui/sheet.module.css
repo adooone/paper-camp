@@ -25,6 +25,17 @@
   animation: slide-up 280ms cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
+.chalk {
+  max-height: 88dvh;
+  padding: 16px 0 0;
+  overflow-y: auto;
+  border-top-color: rgba(var(--pui-chalk-border-base), 0.4);
+  background-color: var(--pui-chalk-bg);
+  background-image: var(--pui-chalk-texture);
+  background-size: 200px 200px;
+  color: var(--pui-chalk-text);
+}
+
 .closing .scrim {
   animation: fade-out 200ms cubic-bezier(0.32, 0, 0.67, 0) both;
 }

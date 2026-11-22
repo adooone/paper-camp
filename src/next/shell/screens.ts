@@ -4,6 +4,8 @@ export type TabId = 'projects' | 'ideas' | 'chat' | 'settings';
 
 export const WIDE_QUERY = '(min-width: 1024px)';
 
+export const STACK_DOCK_QUERY = '(min-width: 1199px)';
+
 export const SCREEN_PATHS: Record<Screen, string> = {
   projects: '/',
   ideas: '/ideas',

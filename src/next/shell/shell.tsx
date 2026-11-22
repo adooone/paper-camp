@@ -1,5 +1,7 @@
 import { Outlet } from '@tanstack/react-router';
 import { useShell } from '../hooks/use-shell';
+import { useStackDock } from '../hooks/use-stack-dock';
+import { StackPanel } from '../stack/stack-panel';
 import { NavIsland } from '../ui/nav-island';
 import { Paper } from '../ui/paper';
 import { NAV_TABS } from './nav-tabs';
@@ -12,6 +14,7 @@ const isTab = (id: string): id is TabId => NAV_TABS.some((tab) => tab.id === id)
 
 export function Shell() {
   const shell = useShell();
+  const dock = useStackDock();
   const island = (
     <NavIsland
       tabs={NAV_TABS}
@@ -21,7 +24,7 @@ export function Shell() {
     />
   );
   return (
-    <Paper>
+    <Paper className={styles.root}>
       <div className={styles.frame}>
         <TitleRow
           title={shell.title}
@@ -35,6 +38,7 @@ export function Shell() {
         </main>
       </div>
       {shell.wide ? null : island}
+      <StackPanel dock={dock} />
       <ProjectSwitcher
         visible={shell.switcherOpen}
         onRequestClose={shell.closeSwitcher}

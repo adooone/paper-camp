@@ -13,7 +13,7 @@ import { useCapacity } from '@/app/hooks/use-capacity';
 import { useAppStore } from '@/app/stores/app-store';
 import type { CapacityRecord } from '@/core/capacity';
 import { capacityLevel, resetsAtMs } from '@/core/rate-limit';
-import type { RateLimitSnapshot, RateLimitWindow } from '@/types/index';
+import type { AgentTaskState, RateLimitSnapshot, RateLimitWindow } from '@/types/index';
 import { chalkStatusText } from './shared';
 
 const levelVariant = {
@@ -158,34 +158,30 @@ const CapacityBarRow = ({
   );
 };
 
-export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
-  const agentStatus = useAppStore((s) => s.agentStatus);
-  const { record, isLoading, refreshing, error, refresh } = useCapacity();
-  const [now, setNow] = useState(() => Date.now());
+export interface CapacityReading {
+  level: keyof typeof levelVariant;
+  fiveHour: WindowView | null;
+  weekly: WindowView | null;
+  fallback: string;
+  neutral: boolean;
+  overage: boolean;
+  title: string;
+  fiveHourTooltip: string;
+  weeklyTooltip: string;
+}
 
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const live: RateLimitSnapshot | null =
-    agentStatus.find((t) => LIVE_STATUSES.has(t.status) && t.rateLimit)?.rateLimit ?? null;
-
-  const settledRef = useRef(false);
-  useEffect(() => {
-    const decision = mountProbeDecision(settledRef.current, isLoading, record, Date.now());
-    if (!decision.settle) return;
-    settledRef.current = true;
-    if (decision.probe) refresh();
-  }, [isLoading, record, refresh]);
-
+function capacityReading(
+  live: RateLimitSnapshot | null,
+  record: CapacityRecord | null,
+  error: Error | null,
+  now: number,
+): CapacityReading {
   const snapshot = live ?? record?.snapshot ?? null;
   const level = capacityLevel(snapshot?.status ?? 'allowed');
   const fiveHourWindow = snapshot?.unifiedWindows?.five_hour;
   const weeklyWindow = snapshot?.unifiedWindows?.seven_day;
   const fiveHour = windowView(fiveHourWindow, now);
   const weekly = windowView(weeklyWindow, now);
-  const fallback = snapshot?.status ?? 'no reading';
 
   const capturedAtMs = !live && record ? Date.parse(record.capturedAt) : null;
   const isStale = capturedAtMs !== null && now - capturedAtMs > ONE_DAY_MS;
@@ -196,25 +192,81 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
     : isEmpty
       ? formatEmptyTooltip(error)
       : null;
-  const neutral = isOutdated || isEmpty;
 
-  const fiveHourTooltip = fiveHour?.isReset
-    ? formatResetTooltip(fiveHour.resetAtMs as number)
-    : (readingTooltip ?? `5-hour window usage: ${level}`);
-  const weeklyTooltip = weekly?.isReset
-    ? formatResetTooltip(weekly.resetAtMs as number)
-    : (readingTooltip ?? formatWeeklyTooltip(weekly?.pct ?? 0, weekly?.resetAtMs));
+  return {
+    level,
+    fiveHour,
+    weekly,
+    fallback: snapshot?.status ?? 'no reading',
+    neutral: isOutdated || isEmpty,
+    overage: Boolean(snapshot?.overage),
+    title:
+      fiveHourWindow?.resetsAt === undefined
+        ? 'Capacity'
+        : fiveHour?.isReset
+          ? 'Window reset'
+          : `Resets in ${formatGap(resetsAtMs(fiveHourWindow.resetsAt) - now)}`,
+    fiveHourTooltip: fiveHour?.isReset
+      ? formatResetTooltip(fiveHour.resetAtMs as number)
+      : (readingTooltip ?? `5-hour window usage: ${level}`),
+    weeklyTooltip: weekly?.isReset
+      ? formatResetTooltip(weekly.resetAtMs as number)
+      : (readingTooltip ?? formatWeeklyTooltip(weekly?.pct ?? 0, weekly?.resetAtMs)),
+  };
+}
+
+const liveRateLimit = (agentStatus: AgentTaskState[]): RateLimitSnapshot | null =>
+  agentStatus.find((t) => LIVE_STATUSES.has(t.status) && t.rateLimit)?.rateLimit ?? null;
+
+export function useCapacityReading(): {
+  reading: CapacityReading;
+  refreshing: boolean;
+  refresh: () => void;
+} {
+  const agentStatus = useAppStore((s) => s.agentStatus);
+  const { record, isLoading, refreshing, error, refresh } = useCapacity();
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const settledRef = useRef(false);
+  useEffect(() => {
+    const decision = mountProbeDecision(settledRef.current, isLoading, record, Date.now());
+    if (!decision.settle) return;
+    settledRef.current = true;
+    if (decision.probe) refresh();
+  }, [isLoading, record, refresh]);
+
+  return {
+    reading: capacityReading(liveRateLimit(agentStatus), record, error, now),
+    refreshing,
+    refresh,
+  };
+}
+
+export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
+  const { reading, refreshing, refresh } = useCapacityReading();
+  const {
+    level,
+    fiveHour,
+    weekly,
+    fallback,
+    neutral,
+    overage,
+    title,
+    fiveHourTooltip,
+    weeklyTooltip,
+  } = reading;
 
   return (
     <Card surface="chalkboard" size="small" className={heightClassName}>
       <div className="flex h-full flex-col justify-between gap-1">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <span className="min-w-0 truncate pr-1 font-handwritten text-sm leading-tight text-desk-chalk">
-            {fiveHourWindow?.resetsAt === undefined
-              ? 'Capacity'
-              : fiveHour?.isReset
-                ? 'Window reset'
-                : `Resets in ${formatGap(resetsAtMs(fiveHourWindow.resetsAt) - now)}`}
+            {title}
           </span>
           {refreshing ? (
             <span className="inline-flex shrink-0">
@@ -244,7 +296,7 @@ export const CapacityRow = ({ heightClassName = '' }: CapacityRowProps) => {
           tooltip={fiveHourTooltip}
           neutral={neutral}
           extraStamp={
-            snapshot?.overage && (
+            overage && (
               <Tooltip
                 content="Extra usage beyond the plan's included capacity."
                 surface="chalkboard"
