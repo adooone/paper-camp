@@ -140,9 +140,8 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commitCorpus(`docs(ideas): ${plan.title} — plan`, plan.id);
   }
 
-  // Catches the corpus writes a run's own commits didn't ride on, in one commit per
-  // run (IDEA-319). Source never rides here: a finished run's leftovers get their own
-  // typed commit, a parked or failed run's stay in the tree and are named on the thread.
+  // One corpus-only commit per run (IDEA-319); source never rides here — a finished
+  // run's leftovers get a typed commit, a parked or failed run's are named on the thread.
   async function commitBookkeeping(
     plan: Pick<PlanEntry, 'id' | 'title'>,
     outcome: 'done' | 'error',
