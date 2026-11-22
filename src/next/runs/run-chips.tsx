@@ -1,8 +1,8 @@
 import type { LogRowOutcome, LogRowType } from '@/types/index';
-import { type LogFilterState, OUTCOME_CHIPS, TYPE_CHIPS } from '../shell/log-model';
+import { type LogFilterState, OUTCOME_CHIPS, TYPE_CHIPS } from '../shell/run-model';
 import { Hand } from '../ui/hand';
 import type { StampMeaning } from '../ui/stamp';
-import styles from './log.module.css';
+import styles from './runs.module.css';
 
 interface ChipProps {
   label: string;

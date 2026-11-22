@@ -2,7 +2,7 @@ import { Card } from '@dendelion/folk-ui';
 import { useMemo } from 'react';
 import { useTaskOutput } from '@/app/features/activity/hooks/use-task-output';
 import { Hand } from '../ui/hand';
-import styles from './log.module.css';
+import styles from './runs.module.css';
 
 interface OutputBoardProps {
   taskId: string;

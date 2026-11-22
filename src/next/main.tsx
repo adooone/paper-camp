@@ -5,10 +5,12 @@ import './styles/fonts.css';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { RouterProvider } from '@tanstack/react-router';
 import { connectRuntime, resolveProject } from '@/app/services/boot';
+import { HUB_DESK_PATH } from '@/app/services/desk-links';
 import { mountPrefix } from '@/app/services/mount';
 import { persistOptions, queryClient } from '@/app/services/query-client';
 import { nextBasepath } from './entry-path';
 import { router } from './router';
+import { openDesk } from './shell/open-desk';
 
 connectRuntime();
 
@@ -23,4 +25,6 @@ createRoot(rootElement).render(
   </StrictMode>,
 );
 
-void resolveProject(`${nextBasepath(mountPrefix)}/`);
+resolveProject(`${nextBasepath(mountPrefix)}/`).then((chosenProject) => {
+  if (!chosenProject) openDesk(HUB_DESK_PATH);
+});

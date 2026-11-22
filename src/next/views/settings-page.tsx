@@ -1,12 +1,15 @@
+import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { HUB_DESK_PATH } from '@/app/services/desk-links';
 import { CLIENT_VERSION } from '@/app/services/version';
 import { type DefaultAgentKey, NOTIFICATION_SETTING_KINDS } from '@/types/index';
-import { useSettingsScreen } from '../hooks/use-settings-screen';
+import { type SettingsMachine, useSettingsScreen } from '../hooks/use-settings-screen';
 import { AgentSheet } from '../settings/agent-sheet';
 import { AppearanceSection } from '../settings/appearance-section';
 import styles from '../settings/settings.module.css';
+import { UnpairSheet } from '../settings/unpair-sheet';
 import { openDesk } from '../shell/open-desk';
+import { DESK_SETUP_PATH } from '../shell/screens';
 import {
   AGENT_ROLE_LABELS,
   AGENT_ROLES,
@@ -33,7 +36,9 @@ const Chevron = ({ glyph = '›' }: { glyph?: string }) => (
 
 export const SettingsPage = () => {
   const screen = useSettingsScreen();
+  const navigate = useNavigate();
   const [editing, setEditing] = useState<DefaultAgentKey | null>(null);
+  const [unpairing, setUnpairing] = useState<SettingsMachine | null>(null);
   const label = screen.projectName ?? 'No project';
   const stamp = pushStamp(screen.permission);
 
@@ -109,6 +114,17 @@ export const SettingsPage = () => {
       ) : null}
 
       <div className={styles.list}>
+        <ListLabel>Desk · {label}</ListLabel>
+        <ListRow
+          title="Desk setup"
+          detail="Services, checks and CI"
+          trailing={<Chevron />}
+          accessibilityLabel="Open the desk setup"
+          onPress={() => void navigate({ to: DESK_SETUP_PATH })}
+        />
+      </div>
+
+      <div className={styles.list}>
         <ListLabel>Machines</ListLabel>
         {screen.machines.map((machine) => (
           <ListRow
@@ -121,7 +137,7 @@ export const SettingsPage = () => {
                   label="Unpair"
                   variant="ghost"
                   size="sm"
-                  onPress={() => screen.unpair(machine)}
+                  onPress={() => setUnpairing(machine)}
                 />
               ) : undefined
             }
@@ -160,6 +176,11 @@ export const SettingsPage = () => {
         <VersionStamp />
       </div>
 
+      <UnpairSheet
+        machine={unpairing}
+        onUnpair={screen.unpair}
+        onClose={() => setUnpairing(null)}
+      />
       <AgentSheet
         role={editing}
         agent={editing ? (screen.agents?.[editing] ?? null) : null}

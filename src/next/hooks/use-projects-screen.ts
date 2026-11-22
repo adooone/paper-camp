@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { useWorklist } from '@/app/hooks/use-worklist';
 import { type AttentionLine, deriveAttention, runningTasks } from '@/app/stores/attention';
 import type { AgentTaskState } from '@/types/index';
-import { useLogSnapshot } from './use-log-snapshot';
 import { useProjectName } from './use-project-name';
 import { type RepoStatus, useRepoStatus } from './use-repo-status';
+import { useLogSnapshot } from './use-runs-snapshot';
 
 export interface ProjectsScreenState {
   projectName: string | null;

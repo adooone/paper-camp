@@ -7,13 +7,13 @@ import {
   outcomeLabel,
   outcomeMeaning,
   parkedFor,
-} from '../shell/log-model';
+} from '../shell/run-model';
 import { Button } from '../ui/button';
 import { Hand } from '../ui/hand';
 import { KraftCard } from '../ui/kraft-card';
 import { Stamp } from '../ui/stamp';
-import styles from './log.module.css';
 import { OutputBoard } from './output-board';
+import styles from './runs.module.css';
 
 interface EntryViewProps {
   row: LogRow;

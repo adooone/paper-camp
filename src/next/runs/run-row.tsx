@@ -1,7 +1,7 @@
 import type { LogRow } from '@/types/index';
 import { useNow } from '../hooks/use-now';
-import { earnsStamp, formatTime, outcomeLabel, outcomeMeaning, rowTitle } from '../shell/log-model';
 import { formatElapsed } from '../shell/projects-copy';
+import { earnsStamp, formatTime, outcomeLabel, outcomeMeaning, rowTitle } from '../shell/run-model';
 import { Hand } from '../ui/hand';
 import { ListRow } from '../ui/list';
 import { Stamp } from '../ui/stamp';

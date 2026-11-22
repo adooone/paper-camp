@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markRead } from '@/app/hooks/use-notifications';
 import { useAppStore } from '@/app/stores/app-store';
 import type { AgentTaskState, LogRow } from '@/types/index';
-import { discussTarget, isLive, liveTaskFor } from '../shell/log-model';
+import { discussTarget, isLive, liveTaskFor } from '../shell/run-model';
 
 export interface EntryScreenState {
   live: AgentTaskState | null;

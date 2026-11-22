@@ -2,18 +2,18 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { useMediaQuery } from '@/app/hooks/use-media-query';
 import type { LogRow } from '@/types/index';
 import { useEntryScreen } from '../hooks/use-entry-screen';
-import { useLogScreen } from '../hooks/use-log-screen';
 import { useProjectName } from '../hooks/use-project-name';
-import { EntryView } from '../log/entry-view';
-import { LogChips } from '../log/log-chips';
-import { LogListRow } from '../log/log-row';
+import { useLogScreen } from '../hooks/use-runs-screen';
+import { EntryView } from '../runs/entry-view';
+import { LogChips } from '../runs/run-chips';
+import { LogListRow } from '../runs/run-row';
 import { BackHeader } from '../shell/back-header';
 import { SCREEN_PATHS, WIDE_QUERY } from '../shell/screens';
 import { EmptyState } from '../ui/empty-state';
 import { Hand } from '../ui/hand';
 import { ListLabel } from '../ui/list';
 import { SkeletonRows } from '../ui/skeleton-rows';
-import styles from './log-page.module.css';
+import styles from './runs-page.module.css';
 
 function EntryColumn({
   row,

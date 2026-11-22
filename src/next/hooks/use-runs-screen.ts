@@ -7,9 +7,9 @@ import {
   type LogFilterState,
   splitRows,
   toggled,
-} from '../shell/log-model';
+} from '../shell/run-model';
 import { useAgentStatusStream } from './use-agent-status-stream';
-import { useLogSnapshot } from './use-log-snapshot';
+import { useLogSnapshot } from './use-runs-snapshot';
 
 export interface LogScreenState {
   load: 'loading' | 'unreachable' | 'ready';

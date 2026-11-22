@@ -12,10 +12,10 @@ import {
   tabOf,
   WIDE_QUERY,
 } from '../shell/screens';
-import { useLogSnapshot } from './use-log-snapshot';
 import { useProjectName } from './use-project-name';
 import { useProjectState } from './use-project-state';
 import { type ProjectSwitcherState, useProjectSwitcher } from './use-project-switcher';
+import { useLogSnapshot } from './use-runs-snapshot';
 
 export interface ShellState {
   title: string;

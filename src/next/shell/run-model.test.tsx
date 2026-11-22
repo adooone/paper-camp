@@ -2,8 +2,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { AgentTaskState, LogRow, TaskLogEntry } from '@/types/index';
 import type { EntryScreenState } from '../hooks/use-entry-screen';
-import { EntryView } from '../log/entry-view';
-import { LogChips } from '../log/log-chips';
+import { EntryView } from '../runs/entry-view';
+import { LogChips } from '../runs/run-chips';
 import {
   applyFilters,
   discussTarget,
@@ -19,7 +19,7 @@ import {
   splitRows,
   TYPE_CHIPS,
   toggled,
-} from './log-model';
+} from './run-model';
 
 const noop = () => {};
 
