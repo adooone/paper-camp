@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0](https://github.com/adooone/paper-camp/compare/v0.47.0...v0.48.0) (2026-11-22)
+
+
+### Features
+
+* **app:** A second entry, built and served ([a6938be](https://github.com/adooone/paper-camp/commit/a6938be4866c4b00a287f4017c995e941d4dfccd))
+* **app:** Chat ([a65250b](https://github.com/adooone/paper-camp/commit/a65250bfa45c2ab6a0bee379d372dd3df8e4d7fe))
+* **app:** Faces and Appearance ([71e354e](https://github.com/adooone/paper-camp/commit/71e354e9869a8376a1afbf03a5478f9d5157652e))
+* **app:** Idea ([b5f4e5b](https://github.com/adooone/paper-camp/commit/b5f4e5bcfb1caafcf0fbbd96b7facaab02f0afdd))
+* **app:** Ideas ([6af52a4](https://github.com/adooone/paper-camp/commit/6af52a4f9130d05f4995a221805199e9a0d8b83b))
+* **app:** Links between the two desks ([a01313f](https://github.com/adooone/paper-camp/commit/a01313f02911c97abac38da60fb3bb6a46d61835))
+* **app:** Log and Git ([a89b3b9](https://github.com/adooone/paper-camp/commit/a89b3b906cd87c70cd8cd221ceb20775b8a88b16))
+* **app:** Settings ([03b4eb3](https://github.com/adooone/paper-camp/commit/03b4eb335adcbb17845eb73e15c549f981c6de99))
+* **app:** Shell, Projects and the island ([ddc39d1](https://github.com/adooone/paper-camp/commit/ddc39d1ce6b219af7c60111eef9aab1e35e304fb))
+* **app:** The phone's primitives in the DOM ([56c0067](https://github.com/adooone/paper-camp/commit/56c0067b1b2a05cfe2df8e3bf761bf190a8f591d))
+* **server:** Docs and the skill know the chat ([fba4517](https://github.com/adooone/paper-camp/commit/fba4517bf81cd2e858b60420127a058a95a7b243))
+* **server:** One composer: the idea surfaces open the chat ([3045237](https://github.com/adooone/paper-camp/commit/304523705c8cf57373f9036c2db95236ccc4120a))
+* **server:** Project chat on the session ([c771fc5](https://github.com/adooone/paper-camp/commit/c771fc5a99b42d7f57a3e6b0f1b954d93f3055d8))
+* **server:** Publish feedback stages from the pipeline ([64a60df](https://github.com/adooone/paper-camp/commit/64a60df7032c26461bc4792a65f22656a2696e34))
+* **server:** Show the live stage under the newest bubble ([859e4ce](https://github.com/adooone/paper-camp/commit/859e4ce417f3d2b8f73b9327614baed5498e0840))
+* **server:** Stream partial reply text from read-only runs ([283d129](https://github.com/adooone/paper-camp/commit/283d129cd1bceb1665b2b7f79bfecf867bbc804f))
+* **server:** The chat session runner ([fbf4047](https://github.com/adooone/paper-camp/commit/fbf4047468f030a80ad409133a1c59436168f23f))
+* **server:** The web page streams ([4dcd6b3](https://github.com/adooone/paper-camp/commit/4dcd6b30e4cb9e26224e27d7ec7c64e89726d0f6))
+* **server:** Type the streamed reply into the thread ([3a8b990](https://github.com/adooone/paper-camp/commit/3a8b990c30149f3a187cff37f310ee3f1481c99c))
+
+
+### Bug Fixes
+
+* **cli:** Check timeout and stop ([0aad1c6](https://github.com/adooone/paper-camp/commit/0aad1c665cc67818ba5dcbaea0aea9148d1821d7))
+* **cli:** lint ([d6d69fe](https://github.com/adooone/paper-camp/commit/d6d69feb17dda06c6d1364c209d4c0e824e65a41))
+* **cli:** Single-flight mount ([1c8a648](https://github.com/adooone/paper-camp/commit/1c8a648fb2c223e46eac64664b0f305165dcc480))
+* **cli:** Slow is not down ([ad7a687](https://github.com/adooone/paper-camp/commit/ad7a6879a5051243f39fcb3f3b5cb4e0fcda7541))
+* **cli:** State file tied to pid and port ([1a66ad1](https://github.com/adooone/paper-camp/commit/1a66ad1f1ec67127189534a5f2b31948149edca6))
+* **server:** Ack feedback-message once the message is filed ([44ce324](https://github.com/adooone/paper-camp/commit/44ce32432c3bac161128db6d13a552b40164adb6))
+* **server:** Bookkeeping stages the corpus only ([20f7416](https://github.com/adooone/paper-camp/commit/20f741616f9e5856cc27a779a7d5b4d41c73ad54))
+* **server:** Cached doctor and stats ([aae5507](https://github.com/adooone/paper-camp/commit/aae5507320cc2fdc78b6dc6f7c636862b7c5d204))
+* **server:** Change ticks skip probe queries ([cd5d248](https://github.com/adooone/paper-camp/commit/cd5d2482c154f42402c0fd930321dadfbe946bf9))
+* **server:** lint ([dd7538f](https://github.com/adooone/paper-camp/commit/dd7538f24e1d8b13f7f976b80716158241883450))
+* **server:** Move the web send hook onto the feedback event ([edfcd44](https://github.com/adooone/paper-camp/commit/edfcd44847e4848d0d42b8204d7dcc410ac9e178))
+* **server:** One heavy command at a time ([d80988a](https://github.com/adooone/paper-camp/commit/d80988ac8f7a49d2340438e6ad303c1870984518))
+* **server:** One probe cache per machine ([55c84d3](https://github.com/adooone/paper-camp/commit/55c84d318cb0f8ff1d72670032903393f6559193))
+* **server:** Reconcile commits the corpus instead of stashing ([f1c5ccd](https://github.com/adooone/paper-camp/commit/f1c5ccd120fbc5f876d019036c629270edbc5a2e))
+* **server:** Services tick refetches capabilities ([37f559e](https://github.com/adooone/paper-camp/commit/37f559e5457e2681a2d8d0ac67901e170c1ca5aa))
+* **server:** Stats precomputed again ([a234955](https://github.com/adooone/paper-camp/commit/a2349551150b7193f177aa69c9888dc0a2937f4f))
+* **server:** Stranded stashes in doctor and the git card ([b289c94](https://github.com/adooone/paper-camp/commit/b289c94c7a79d81594b27e9894804ad6cf964ba4))
+
 ## [0.47.0](https://github.com/adooone/paper-camp/compare/v0.46.0...v0.47.0) (2026-11-08)
 
 ### Features
