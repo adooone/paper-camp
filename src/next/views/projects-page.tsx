@@ -94,11 +94,25 @@ export const ProjectsPage = () => {
             onPress={open(SCREEN_PATHS.git)}
           />
           <ListRow
+            title="Diff"
+            detail="Working-tree changes, stage and unstage"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the diff"
+            onPress={open(SCREEN_PATHS.diff)}
+          />
+          <ListRow
             title="Roadmap"
             detail="Horizons and unfiled ideas"
             trailing={<Chevron />}
             accessibilityLabel="Open the roadmap"
             onPress={open(SCREEN_PATHS.roadmap)}
+          />
+          <ListRow
+            title="Docs"
+            detail="Repo docs and release notes"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the docs"
+            onPress={open(SCREEN_PATHS.docs)}
           />
           <ListRow
             title="Stats"

@@ -50,7 +50,8 @@ chalkboard appears anywhere under `/next/`.
 - [x] Roadmap and stats
       Horizons and unfiled rows; stat tiles with mono figures.
       run: 2m51s · 34 in · 21.6k out · sonnet-5-5 · sess:4ea42e19-0920-44e2-88d4-af0212cc4e25
-- [ ] Diff and docs
+- [x] Diff and docs
       Diff on the grey chalkboard with `CodeBlock`; docs pages on `Paper`.
+      run: 3m22s · 74 in · 46.7k out · sonnet-5-5 · sess:4ea42e19-0920-44e2-88d4-af0212cc4e25
 - [ ] Settings tables, night report, run order
       Desk-check, service and CI tables, the night report, run-order management with segment pills.

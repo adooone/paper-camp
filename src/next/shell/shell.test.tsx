@@ -9,7 +9,7 @@ import { ProjectSwitcher } from './project-switcher';
 import { attentionTitle, formatElapsed, newestLine, runDetail } from './projects-copy';
 import { relativeDay, releaseLine, repoProgress } from './repo-status';
 import { RepoStatusCard } from './repo-status-card';
-import { SCREEN_PATHS, screenOf, tabOf, WIDE_QUERY } from './screens';
+import { docPath, SCREEN_PATHS, screenOf, tabOf, WIDE_QUERY } from './screens';
 import { TitleRow } from './title-row';
 import { VersionStamp } from './version-stamp';
 
@@ -41,6 +41,11 @@ describe('screens', () => {
     expect(tabOf('git')).toBe('projects');
     expect(screenOf('/roadmap')).toBe('roadmap');
     expect(screenOf('/stats/')).toBe('stats');
+    expect(screenOf('/docs/MAIN.md')).toBe('docs');
+    expect(screenOf('/diff')).toBe('diff');
+    expect(tabOf('diff')).toBe('projects');
+    expect(tabOf('docs')).toBe('projects');
+    expect(docPath('docs/A B.md')).toBe('/docs/docs%2FA%20B.md');
     expect(tabOf('roadmap')).toBe('projects');
     expect(tabOf('stats')).toBe('projects');
     expect(tabOf('settings')).toBe('settings');

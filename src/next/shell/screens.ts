@@ -6,7 +6,9 @@ export type Screen =
   | 'log'
   | 'git'
   | 'roadmap'
-  | 'stats';
+  | 'stats'
+  | 'diff'
+  | 'docs';
 
 export type TabId = 'projects' | 'ideas' | 'chat' | 'settings';
 
@@ -23,7 +25,13 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   git: '/git',
   roadmap: '/roadmap',
   stats: '/stats',
+  diff: '/diff',
+  docs: '/docs',
 };
+
+export const RELEASES_PATH: string = '/docs/releases';
+
+export const docPath = (name: string): string => `${SCREEN_PATHS.docs}/${encodeURIComponent(name)}`;
 
 export const SCREEN_TITLES: Record<Screen, string> = {
   projects: 'Projects',
@@ -34,6 +42,8 @@ export const SCREEN_TITLES: Record<Screen, string> = {
   git: 'Git',
   roadmap: 'Roadmap',
   stats: 'Stats',
+  diff: 'Diff',
+  docs: 'Docs',
 };
 
 const SCREEN_TAB: Record<Screen, TabId> = {
@@ -45,6 +55,8 @@ const SCREEN_TAB: Record<Screen, TabId> = {
   git: 'projects',
   roadmap: 'projects',
   stats: 'projects',
+  diff: 'projects',
+  docs: 'projects',
 };
 
 export const TAB_ORDER: readonly TabId[] = ['projects', 'ideas', 'chat', 'settings'];
