@@ -1189,8 +1189,8 @@ export function createGitManager(root: string, onRemoteChanged?: () => void) {
   }
 
   return {
-    async getStatus(): Promise<GitStatusEntry[]> {
-      return runGitStatus();
+    async getStatus(options?: { untrackedFiles?: 'all' }): Promise<GitStatusEntry[]> {
+      return runGitStatus(options);
     },
     assertCleanWorkingTree,
     verifyDirectCompletion,

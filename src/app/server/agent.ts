@@ -668,7 +668,11 @@ export function createAgentManager(
       onCommitBookkeeping
     ) {
       try {
-        await onCommitBookkeeping({ id: task.planId, title: task.planTitle });
+        await onCommitBookkeeping(
+          { id: task.planId, title: task.planTitle },
+          status,
+          task.phaseIndex,
+        );
       } catch (err) {
         pushLine(task, `Warning: could not commit run bookkeeping: ${(err as Error).message}`);
       }

@@ -1,6 +1,7 @@
+import { appendThread, readCorpus } from '@/core/corpus';
 import { resolvePrimaryScope } from '@/core/git-pr';
 import { mergeRun } from '@/core/phase-run';
-import { computePlanContentHash, todayDateString } from '@/core/serialize';
+import { agentThreadMessage, computePlanContentHash, todayDateString } from '@/core/serialize';
 import type {
   CheckName,
   GitStatusEntry,
@@ -12,6 +13,8 @@ import type {
 import { runBiomeFix } from './biome-fix';
 import type { GitManager } from './git';
 import { CorpusError, checkStaleBaseForRunAll, updateEntity } from './helpers';
+
+const LEFTOVER_PATHS_SHOWN = 10;
 
 function resolveCommitScope(plan: Pick<PlanEntry, 'tags'>): string {
   return resolvePrimaryScope(plan.tags, 'plans');
@@ -137,15 +140,49 @@ export function createAgentHooks(root: string, git: GitManager) {
     await git.commitCorpus(`docs(ideas): ${plan.title} — plan`, plan.id);
   }
 
-  // Catches whatever a run's own commits didn't ride on, in one commit per run
-  // instead of trickling out one commit per write (IDEA-319).
-  async function commitBookkeeping(plan: Pick<PlanEntry, 'id' | 'title'>): Promise<void> {
-    await git.stageAll();
-    if ((await git.getStatus()).length === 0) return;
-    const refs = plan.id ? `Refs: ${plan.id}` : undefined;
-    await git.commit([], `docs(ideas): ${plan.id ?? plan.title} run bookkeeping`, refs, {
-      noVerify: true,
-    });
+  // Catches the corpus writes a run's own commits didn't ride on, in one commit per
+  // run (IDEA-319). Source never rides here: a finished run's leftovers get their own
+  // typed commit, a parked or failed run's stay in the tree and are named on the thread.
+  async function commitBookkeeping(
+    plan: Pick<PlanEntry, 'id' | 'title'>,
+    outcome: 'done' | 'error',
+    phaseIndex?: number,
+  ): Promise<void> {
+    const leftover = (await git.getStatus({ untrackedFiles: 'all' }))
+      .map((entry) => entry.path)
+      .filter((path) => !path.startsWith('papercamp/'));
+    if (leftover.length > 0 && outcome === 'error' && plan.id) {
+      await appendThread(root, plan.id, agentThreadMessage(describeLeftover(leftover)));
+    }
+    await git.commitCorpus(`docs(ideas): ${plan.id ?? plan.title} run bookkeeping`, plan.id);
+    if (leftover.length > 0 && outcome === 'done') {
+      await commitLeftoverSource(plan, phaseIndex, leftover);
+    }
+  }
+
+  function describeLeftover(paths: string[]): string {
+    const shown = paths.slice(0, LEFTOVER_PATHS_SHOWN).join(', ');
+    const more = paths.length - LEFTOVER_PATHS_SHOWN;
+    return `Run ended with uncommitted changes left in the working tree: ${shown}${more > 0 ? `, and ${more} more` : ''}`;
+  }
+
+  async function commitLeftoverSource(
+    plan: Pick<PlanEntry, 'id' | 'title'>,
+    phaseIndex: number | undefined,
+    paths: string[],
+  ): Promise<void> {
+    const entry = plan.id
+      ? (await readCorpus(root)).entries.find((candidate) => candidate.id === plan.id)
+      : undefined;
+    const type = entry?.type ?? 'feat';
+    const scope = resolvePrimaryScope(entry?.tags, 'app');
+    const subject =
+      (phaseIndex === undefined ? undefined : entry?.phases[phaseIndex]?.text) ?? plan.title;
+    await git.commit(
+      paths,
+      `${type}(${scope}): ${subject}`,
+      plan.id ? `Refs: ${plan.id}` : undefined,
+    );
   }
 
   // After a resolve-conflict agent exits, the repo state decides success, not the

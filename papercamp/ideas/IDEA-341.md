@@ -2,9 +2,9 @@
 id: IDEA-341
 title: Bookkeeping commits stay in papercamp
 type: fix
-status: planned
+status: review
 created: 2026-11-20
-updated: 2026-11-20
+updated: 2026-11-22
 tags:
   - server
   - agent
@@ -39,5 +39,6 @@ bookkeeping commit and a typed phase commit; `git log --format=%s` after
 a run never shows source files under a `docs(ideas)` subject.
 
 ### Phases
-- [ ] Bookkeeping stages the corpus only
+- [x] Bookkeeping stages the corpus only
       `commitBookkeeping` stages `papercamp/` only; after a finished run, leftover source is committed as `<type>(<scope>): <phase title>` with `Refs`; after a parked or failed run the dirty paths are logged on the thread. Tests in `agent-hooks.test.ts` for the three outcomes.
+      run: 2m8s · 34 in · 8.1k out · sonnet-5-5 · sess:f2f186f1-ee04-443d-917d-0543d98c897c

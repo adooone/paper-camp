@@ -192,3 +192,75 @@ describe('annotateFixRun', () => {
     expect(entry.fixes?.[0].run).toEqual(expect.objectContaining({ sessionId: 'sess-abc123' }));
   });
 });
+
+describe('commitBookkeeping', () => {
+  async function dirtyRun(root: string) {
+    await mkdir(join(root, 'src'), { recursive: true });
+    await writeFile(join(root, 'src', 'feature.ts'), 'export const x = 1;\n');
+    await writeFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), `${PLAN_MD}\nRun note.\n`);
+  }
+
+  const plan = { id: 'IDEA-1', title: 'Test plan' };
+
+  async function subjects(root: string): Promise<string[]> {
+    const { stdout } = await run('git', ['log', '--format=%s'], { cwd: root });
+    return stdout.trim().split('\n');
+  }
+
+  async function filesIn(root: string, rev: string): Promise<string[]> {
+    const { stdout } = await run('git', ['show', '--name-only', '--format=', rev], { cwd: root });
+    return stdout.trim().split('\n');
+  }
+
+  async function threadOf(root: string) {
+    const raw = await readFile(join(root, 'papercamp', 'ideas', 'IDEA-1.md'), 'utf-8');
+    return parseEntityFile(raw).entries[0].thread ?? [];
+  }
+
+  it('commits only the corpus and logs the dirty paths when the run parked', async () => {
+    const root = await makeGitRoot();
+    const hooks = createAgentHooks(root, createGitManager(root));
+    await dirtyRun(root);
+
+    await hooks.commitBookkeeping(plan, 'error', 0);
+
+    expect(await subjects(root)).toEqual(['docs(ideas): IDEA-1 run bookkeeping', 'init']);
+    expect((await filesIn(root, 'HEAD')).every((file) => file.startsWith('papercamp/'))).toBe(true);
+    const { stdout } = await run('git', ['status', '--porcelain'], { cwd: root });
+    expect(stdout).toContain('src/');
+    expect((await threadOf(root)).map((message) => message.text).join('\n')).toContain(
+      'src/feature.ts',
+    );
+  });
+
+  it('commits the corpus, then the leftover source under the phase title when the run finished', async () => {
+    const root = await makeGitRoot();
+    const hooks = createAgentHooks(root, createGitManager(root));
+    await dirtyRun(root);
+
+    await hooks.commitBookkeeping(plan, 'done', 0);
+
+    expect(await subjects(root)).toEqual([
+      'feat(app): First phase',
+      'docs(ideas): IDEA-1 run bookkeeping',
+      'init',
+    ]);
+    expect(await filesIn(root, 'HEAD')).toEqual(['src/feature.ts']);
+    expect((await filesIn(root, 'HEAD~1')).every((file) => file.startsWith('papercamp/'))).toBe(
+      true,
+    );
+    const { stdout } = await run('git', ['log', '-1', '--format=%b'], { cwd: root });
+    expect(stdout.trim()).toBe('Refs: IDEA-1');
+    expect(await threadOf(root)).toEqual([]);
+  });
+
+  it('commits nothing and logs nothing when the tree is clean', async () => {
+    const root = await makeGitRoot();
+    const hooks = createAgentHooks(root, createGitManager(root));
+
+    await hooks.commitBookkeeping(plan, 'error', 0);
+
+    expect(await subjects(root)).toEqual(['init']);
+    expect(await threadOf(root)).toEqual([]);
+  });
+});
