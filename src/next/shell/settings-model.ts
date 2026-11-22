@@ -48,6 +48,9 @@ export const NOTIFICATION_KIND_LABELS: Record<
   'agent-signed-out': { title: 'Claude signed out', detail: 'The agent needs signing in again' },
 };
 
+export const discoverLabel = (discovering: boolean, configured: boolean): string =>
+  discovering ? 'Discovering…' : configured ? 'Re-scan with discovery' : 'Discover from project';
+
 export const DESK_PAGES: readonly { label: string; detail: string; path: string }[] = [
   { label: 'Classic desk', detail: 'The full desk, every page', path: '/' },
   { label: 'Docs', detail: 'How Paper Camp works', path: '/docs' },

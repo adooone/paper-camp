@@ -115,6 +115,20 @@ export const ProjectsPage = () => {
             onPress={open(SCREEN_PATHS.docs)}
           />
           <ListRow
+            title="Run order"
+            detail="Queue, reorder and run ideas"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the run order"
+            onPress={open(SCREEN_PATHS.queue)}
+          />
+          <ListRow
+            title="Night report"
+            detail="Review findings by chunk"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the night report"
+            onPress={open(SCREEN_PATHS.night)}
+          />
+          <ListRow
             title="Stats"
             detail="Project health at a glance"
             trailing={<Chevron />}

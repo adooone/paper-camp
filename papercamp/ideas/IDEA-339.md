@@ -2,7 +2,7 @@
 id: IDEA-339
 title: The desk's own features on new paper
 type: feat
-status: in-progress
+status: review
 created: 2026-11-16
 updated: 2026-11-22
 tags:
@@ -53,5 +53,6 @@ chalkboard appears anywhere under `/next/`.
 - [x] Diff and docs
       Diff on the grey chalkboard with `CodeBlock`; docs pages on `Paper`.
       run: 3m22s · 74 in · 46.7k out · sonnet-5-5 · sess:4ea42e19-0920-44e2-88d4-af0212cc4e25
-- [ ] Settings tables, night report, run order
+- [x] Settings tables, night report, run order
       Desk-check, service and CI tables, the night report, run-order management with segment pills.
+      run: 4m27s · 86 in · 37.7k out · sonnet-5-5 · sess:da743a59-1da2-4925-969a-25100fa71446

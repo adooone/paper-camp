@@ -46,6 +46,11 @@ describe('screens', () => {
     expect(tabOf('diff')).toBe('projects');
     expect(tabOf('docs')).toBe('projects');
     expect(docPath('docs/A B.md')).toBe('/docs/docs%2FA%20B.md');
+    expect(screenOf('/queue')).toBe('queue');
+    expect(screenOf('/night/')).toBe('night');
+    expect(screenOf('/settings/desk')).toBe('settings');
+    expect(tabOf('queue')).toBe('projects');
+    expect(tabOf('night')).toBe('projects');
     expect(tabOf('roadmap')).toBe('projects');
     expect(tabOf('stats')).toBe('projects');
     expect(tabOf('settings')).toBe('settings');

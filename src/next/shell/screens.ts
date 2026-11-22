@@ -8,7 +8,9 @@ export type Screen =
   | 'roadmap'
   | 'stats'
   | 'diff'
-  | 'docs';
+  | 'docs'
+  | 'night'
+  | 'queue';
 
 export type TabId = 'projects' | 'ideas' | 'chat' | 'settings';
 
@@ -27,7 +29,11 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   stats: '/stats',
   diff: '/diff',
   docs: '/docs',
+  night: '/night',
+  queue: '/queue',
 };
+
+export const DESK_SETUP_PATH: string = '/settings/desk';
 
 export const RELEASES_PATH: string = '/docs/releases';
 
@@ -44,6 +50,8 @@ export const SCREEN_TITLES: Record<Screen, string> = {
   stats: 'Stats',
   diff: 'Diff',
   docs: 'Docs',
+  night: 'Night report',
+  queue: 'Run order',
 };
 
 const SCREEN_TAB: Record<Screen, TabId> = {
@@ -57,6 +65,8 @@ const SCREEN_TAB: Record<Screen, TabId> = {
   stats: 'projects',
   diff: 'projects',
   docs: 'projects',
+  night: 'projects',
+  queue: 'projects',
 };
 
 export const TAB_ORDER: readonly TabId[] = ['projects', 'ideas', 'chat', 'settings'];
