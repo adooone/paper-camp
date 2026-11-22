@@ -39,6 +39,10 @@ describe('screens', () => {
     expect(screenOf('/elsewhere')).toBe('projects');
     expect(tabOf('log')).toBe('projects');
     expect(tabOf('git')).toBe('projects');
+    expect(screenOf('/roadmap')).toBe('roadmap');
+    expect(screenOf('/stats/')).toBe('stats');
+    expect(tabOf('roadmap')).toBe('projects');
+    expect(tabOf('stats')).toBe('projects');
     expect(tabOf('settings')).toBe('settings');
   });
 

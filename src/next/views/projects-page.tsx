@@ -93,6 +93,20 @@ export const ProjectsPage = () => {
             accessibilityLabel="Open the repository"
             onPress={open(SCREEN_PATHS.git)}
           />
+          <ListRow
+            title="Roadmap"
+            detail="Horizons and unfiled ideas"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the roadmap"
+            onPress={open(SCREEN_PATHS.roadmap)}
+          />
+          <ListRow
+            title="Stats"
+            detail="Project health at a glance"
+            trailing={<Chevron />}
+            accessibilityLabel="Open the stats"
+            onPress={open(SCREEN_PATHS.stats)}
+          />
           <RepoStatusCard {...screen.repo} />
         </List>
       ) : null}

@@ -47,8 +47,9 @@ chalkboard appears anywhere under `/next/`.
 - [x] The Stack panel on the grey chalkboard
       Port the stack-panel sections onto the grey chalkboard surface with the new controls, docking, overlay and reopen tab; action parity tests against the shared agent store.
       run: 13m17s · 96 in · 60.7k out · sonnet-5-5 · sess:73ef8f91-2928-4f26-8f3b-75e8ebceab6b
-- [ ] Roadmap and stats
+- [x] Roadmap and stats
       Horizons and unfiled rows; stat tiles with mono figures.
+      run: 2m51s · 34 in · 21.6k out · sonnet-5-5 · sess:4ea42e19-0920-44e2-88d4-af0212cc4e25
 - [ ] Diff and docs
       Diff on the grey chalkboard with `CodeBlock`; docs pages on `Paper`.
 - [ ] Settings tables, night report, run order

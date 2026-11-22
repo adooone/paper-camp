@@ -1,4 +1,12 @@
-export type Screen = 'projects' | 'ideas' | 'chat' | 'settings' | 'log' | 'git';
+export type Screen =
+  | 'projects'
+  | 'ideas'
+  | 'chat'
+  | 'settings'
+  | 'log'
+  | 'git'
+  | 'roadmap'
+  | 'stats';
 
 export type TabId = 'projects' | 'ideas' | 'chat' | 'settings';
 
@@ -13,6 +21,8 @@ export const SCREEN_PATHS: Record<Screen, string> = {
   settings: '/settings',
   log: '/log',
   git: '/git',
+  roadmap: '/roadmap',
+  stats: '/stats',
 };
 
 export const SCREEN_TITLES: Record<Screen, string> = {
@@ -22,6 +32,8 @@ export const SCREEN_TITLES: Record<Screen, string> = {
   settings: 'Settings',
   log: 'Log',
   git: 'Git',
+  roadmap: 'Roadmap',
+  stats: 'Stats',
 };
 
 const SCREEN_TAB: Record<Screen, TabId> = {
@@ -31,6 +43,8 @@ const SCREEN_TAB: Record<Screen, TabId> = {
   settings: 'settings',
   log: 'projects',
   git: 'projects',
+  roadmap: 'projects',
+  stats: 'projects',
 };
 
 export const TAB_ORDER: readonly TabId[] = ['projects', 'ideas', 'chat', 'settings'];
