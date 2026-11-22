@@ -2,9 +2,9 @@
 id: IDEA-338
 title: The phone's screens on the desk
 type: feat
-status: review
+status: done
 created: 2026-11-16
-updated: 2026-11-20
+updated: 2026-11-22
 tags:
   - app
   - ui
@@ -85,3 +85,6 @@ desk-only appears yet.
 - [x] Settings
       Appearance section, project config, devices, version stamp, the classic-desk link.
       run: 3m41s · 54 in · 27.9k out · sonnet-5-5 · sess:23591377-31f6-4cda-8bac-ff8fe75a9ea2
+
+### Thread
+- [x] 2026-11-22 [log] [agent] Reviewed 2026-11-22: all six screens verified against the phone and the server contracts (shared services and stores, attention and plan-walk ported into src/app/stores, chat stage/chunk/tool/permission handled, grey chalkboard output, Appearance as on the phone). Three blockers fixed in review: the log-named module files under src/next renamed to runs/ and run-* (EasyPrivacy blocks them; the /log route stays) with a guard test in src/served-paths.guard.test.ts; the new entry now opens the hub when no project resolves; Unpair asks first through an UnpairSheet. Left as polish: the running-run row and attention rows open the plain Ideas list and Log instead of the idea and a filtered Log; the version stamp lacks the build hash and date; the Ideas empty state has no Draft action; 'Nothing needs you' shows when notifications failed to load; the unread stamp hides from 1024px; chat send/retry/allow duplicate the classic hooks and the allow buttons only lock on `sending`; Discuss in chat only on parked runs; About shows the version twice; unused exports (TAB_ORDER, taskEntityId, isLive and a few types). Closing as done.
