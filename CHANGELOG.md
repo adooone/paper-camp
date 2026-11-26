@@ -4,13 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.49.0](https://github.com/adooone/paper-camp/compare/v0.48.0...v0.49.0) (2026-11-26)
 
-
 ### Features
 
-* **app:** Diff and docs ([5baae20](https://github.com/adooone/paper-camp/commit/5baae207ec049df6b87694d178e666e2464c04c0))
-* **app:** Roadmap and stats ([81077dd](https://github.com/adooone/paper-camp/commit/81077dd97f0983e5807cfa79c04d457a0249fbb3))
-* **app:** Settings tables, night report, run order ([f641b54](https://github.com/adooone/paper-camp/commit/f641b544dfa39ccb301c69725c767f2e85dcf3b6))
-* **app:** The Stack panel on the grey chalkboard ([c2e9e58](https://github.com/adooone/paper-camp/commit/c2e9e58644547f5aa305691c02509c4e85e706a2))
+- **The desk's own features on new paper** (IDEA-339)
 
 ## [0.48.0](https://github.com/adooone/paper-camp/compare/v0.47.0...v0.48.0) (2026-11-22)
 
