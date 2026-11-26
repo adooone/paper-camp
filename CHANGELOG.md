@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.49.0](https://github.com/adooone/paper-camp/compare/v0.48.0...v0.49.0) (2026-11-26)
+
+### Features
+
+- **The desk's own features on new paper** (IDEA-339)
+
 ## [0.48.0](https://github.com/adooone/paper-camp/compare/v0.47.0...v0.48.0) (2026-11-22)
 
 ### Features
